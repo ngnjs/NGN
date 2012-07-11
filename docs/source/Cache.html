@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var events      = require('events'),
+    NGN         = require('./NGN.Base');
+
+<span id='NGN-Cache'>/**
+</span> * @class NGN.Cache
+ * Represents a connection to a database instance.
+ * @extends NGN.Base
+ * @requires NGN
+ * @mixins NGN.Cache.Connection
+ * @docauthor Corey Butler
+ * TODO: get, put, remove, mixin a database
+ */
+var Cache = NGN.extend({
+    
+<span id='NGN-Cache-method-constructor'>    /**
+</span>     * @constructor
+     */
+    constructor: function( config ){
+        
+        // Self reference
+        var me = this;
+        
+        // Default configuration
+        config = config || {};
+        
+        // Inherit parent object
+        Cache.super.constructor.call( this, config );
+        
+        // Define properties of the class
+        Object.defineProperties(this,{
+            
+<span id='NGN-Cache-property-type'>            /**
+</span>             * @property {String}
+             * @readonly
+             * @protected
+             * Identifies what type of database connection the object is referencing.
+             */
+            type: {
+                value:          'Unknown',
+                enumerable:     false,
+                writable:       false
+            },
+            
+<span id='NGN-Cache-cfg-host'>            /**
+</span>             * @cfg {String} [host=127.0.0.1]
+             * The host server.
+             */
+            host: {
+                value:          config.host   || '127.0.0.1',
+                enumerable:     true
+            },
+            
+<span id='NGN-Cache-cfg-port'>            /**
+</span>             * @cfg {Number} [port]
+             * The host port.
+             */
+            port: {
+                value:          config.port     || null,
+                enumerable:     true
+            },
+            
+<span id='NGN-Cache-cfg-password'>            /**
+</span>             * @cfg {String} password
+             * An optional password passed to the database instance.
+             */
+            password: {
+                value:          config.password || null,
+                enumerable:     false
+            },
+            
+<span id='NGN-Cache-cfg-username'>            /**
+</span>             * @cfg {String} username
+             * An optional username passed to the database instance.
+             */
+            username: {
+                value:          config.username || null,
+                enumerable:     true
+            },
+            
+<span id='NGN-Cache-property-securedConnection'>            /**
+</span>             * @property {Boolean} [securedConnection=false]
+             * Indicates the connection has been authorized using #password. 
+             */
+            securedConnection: {
+                value:          false,
+                enumerable:     true,
+                writable:       true
+            },
+            
+<span id='NGN-Cache-property-connected'>            /**
+</span>             * @property {Boolean} [connected=false]
+             * This property is set to `true` once the connection is established. 
+             */
+            connected: {
+                value:          false,
+                enumerable:     true,
+                writable:       true
+            }
+            
+        });
+        
+    },
+    
+<span id='NGN-Cache-event-databaseconnection'>    /**
+</span>     * @event databaseconnection 
+     * Fired when a datbase connection is established.
+     * @returns {NGN.datasource.Connection}
+     */
+    onConnect: function() {
+        this.connected = true;
+        this.fireEvent('databaseconnection', this);
+    }
+    
+});
+
+// Create a module out of this.
+module.exports = Cache;
+</pre>
+</body>
+</html>

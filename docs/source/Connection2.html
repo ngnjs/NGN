@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var events      = require('events'),
+    NGN         = require('../NGN.Base');
+
+<span id='NGN-datasource-Connection'>/**
+</span> * @class NGN.datasource.Connection
+ * Represents a connection to a database instance.
+ * @extends NGN.Base
+ * @requires NGN
+ * @docauthor Corey Butler
+ */
+var Connection = NGN.extend({
+    
+<span id='NGN-datasource-Connection-method-constructor'>    /**
+</span>     * @constructor
+     * Initialize a data source connection.
+     */
+    constructor: function( config ){
+        
+        // Self reference
+        var me = this;
+        
+        // Default configuration
+        config = config || {};
+        
+        // Inherit parent object
+        Connection.super.constructor.call( this, config );
+        
+        // Define properties of the class
+        Object.defineProperties(this,{
+            
+<span id='NGN-datasource-Connection-property-type'>            /**
+</span>             * @property {String}
+             * @readonly
+             * @protected
+             * Identifies what type of database connection the object is referencing.
+             */
+            type: {
+                value:          'Unknown',
+                enumerable:     false,
+                writable:       false
+            },
+            
+<span id='NGN-datasource-Connection-cfg-host'>            /**
+</span>             * @cfg {String} [host=127.0.0.1]
+             * The host server.
+             */
+            host: {
+                value:          config.host   || '127.0.0.1',
+                enumerable:     true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-port'>            /**
+</span>             * @cfg {Number} [port]
+             * The host port.
+             */
+            port: {
+                value:          config.port     || null,
+                enumerable:     true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-password'>            /**
+</span>             * @cfg {String} password
+             * An optional password passed to the database instance.
+             */
+            password: {
+                value:          config.password || null,
+                enumerable:     false
+            },
+            
+<span id='NGN-datasource-Connection-cfg-username'>            /**
+</span>             * @cfg {String} username
+             * An optional username passed to the database instance.
+             */
+            username: {
+                value:          config.username || null,
+                enumerable:     true
+            },
+            
+<span id='NGN-datasource-Connection-property-securedConnection'>            /**
+</span>             * @property {Boolean} [securedConnection=false]
+             * Indicates the connection has been authorized using #password. 
+             */
+            securedConnection: {
+                value:          false,
+                enumerable:     true,
+                writable:       true
+            },
+            
+<span id='NGN-datasource-Connection-property-connected'>            /**
+</span>             * @property {Boolean} [connected=false]
+             * This property is set to `true` once the connection is established. 
+             */
+            connected: {
+                value:          false,
+                enumerable:     true,
+                writable:       true
+            }
+            
+        });
+        
+    },
+    
+<span id='NGN-datasource-Connection-method-insert'>    /**
+</span>     * @method
+     * Insert a record into the database. 
+     */
+    insert: function(){
+    	this.onInsert.apply(this, arguments);
+    	console.log(arguments);
+    },
+    
+<span id='NGN-datasource-Connection-method-update'>    /**
+</span>     * @method
+     * Modify a record 
+     */
+    update: function(){},
+    
+<span id='NGN-datasource-Connection-method-remove'>    /**
+</span>     * @method
+     * Delete a record. 
+     */
+    remove: function(){},
+    
+<span id='NGN-datasource-Connection-method-upsert'>    /**
+</span>     * @method
+     * Add a record if it does not already exist. 
+     */
+    upsert: function(){},
+    
+<span id='NGN-datasource-Connection-method-select'>    /**
+</span>     * @method
+     * Retrieve a specific record. 
+     */
+    select: function(){},
+    
+    
+    
+    
+<span id='NGN-datasource-Connection-event-insert'>    /**
+</span>     * @event insert
+     * Fired when a new record is inserted.
+     * @returns {Object}
+     * Returns the record. 
+     */
+    onInsert: function(){},
+    
+<span id='NGN-datasource-Connection-event-update'>    /**
+</span>     * @event update
+     * Fired when a record is updated.
+     * @returns {Object}
+     * Returns the record. 
+     */
+    onUpdate: function(){},
+    
+<span id='NGN-datasource-Connection-event-remove'>    /**
+</span>     * @event remove
+     * Fired when a record is removed. 
+     * @returns {Object}
+     * Returns the record. 
+     */
+    onRemove: function(){},
+        
+<span id='NGN-datasource-Connection-event-databaseconnection'>    /**
+</span>     * @event databaseconnection 
+     * Fired when a datbase connection is established.
+     * @returns {NGN.datasource.Connection}
+     */
+    onConnect: function() {
+        this.connected = true;
+        this.fireEvent('databaseconnection', this);
+    }
+    
+});
+
+// Create a module out of this.
+module.exports = Connection;
+</pre>
+</body>
+</html>

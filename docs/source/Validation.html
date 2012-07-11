@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var TemplateEngine  = require('../Mustache')
+
+<span id='NGN-template-email-Validation'>/**
+</span> * @class NGN.template.email.Validation
+ * The validation email template used when sending an validation code to a user..
+ * 
+ * The **HTML** email looks like:
+ * &lt;div style=&quot;border:1px dashed #ccc;padding:8px;border-radius:6px;margin:12px;width:80%;background: #eee !important;&quot;&gt;
+ * &lt;h2&gt;Welcome to {{service}}, {{firstname}}!&lt;/h2&gt;
+ * &lt;p&gt;Please validate your email address within 48 hours at &lt;a href=&quot;{{urlRoot}}/{{code}}&quot;&gt;{{urlRoot}}/{{code}}&lt;/a&gt;.&lt;/p&gt;
+ * &lt;hr/&gt;&lt;h3&gt;Having trouble?&lt;/h3&gt;
+ * &lt;p&gt;If the link above does not work, please visit &lt;a href=&quot;{{urlRoot}}&quot;&gt;{{urlRoot}}&lt;/a&gt; and enter &lt;u&gt;{{code}}&lt;/u&gt; (your validation code).&lt;/p&gt;
+ * &lt;p&gt;Remember, your code is only valid for 48 hours. If you need further assistance, please contact &lt;i&gt;{{supportEmailAddress}}&lt;/i&gt;. Again, welcome to the service!&lt;/p&gt;
+ * &lt;/div&gt;
+ * 
+ * The **text** version looks like:
+ * &lt;div style=&quot;color:#333;font-family:Courier;border:1px dashed #ccc !important;padding:8px;border-radius:6px;margin:12px;width:80%;background: #eee !important;&quot;&gt;
+ * Welcome to {{service}}, {{firstname}}!
+ * &lt;br/&gt;&lt;br/&gt;
+ * Please validate your email address within 48 hours at {{urlRoot}}/{{code}}.
+ * &lt;br/&gt;&lt;br/&gt;
+ * HAVING TROUBLE?
+ * &lt;br/&gt;&lt;br/&gt;  
+ * If the link above does not work, please visit {{urlRoot}} and enter {{code}} (your validation code).
+ * Remember, your code is only valid for 48 hours. If you need further assistance, please contact {{supportEmailAddress}}. 
+ * Again, welcome to the service!
+ * &lt;/div&gt;
+ * @param {Object} [config] 
+ * Configuration
+ * @requires mustache
+ * @docauthor Corey Butler
+ * @extends NGN.template.renderer.Mustache
+ */
+var TPL = TemplateEngine.extend({
+    
+    constructor: function( config ){
+        
+        config = config || {};
+        
+        TPL.super.constructor.call( this, config );
+        
+        Object.defineProperties(this,{
+            
+<span id='NGN-template-email-Validation-cfg-code'>            /**
+</span>             * @cfg {String} (required)
+             * The validation code to be delivered to the user.
+             */
+            code: {
+                value:      config.code         || 'UNKNOWN',
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-template-email-Validation-cfg-firstname'>            /**
+</span>             * @cfg {String} (required)
+             * The given name of the person to whom the email is sent.
+             */
+            firstname: {
+                value:      config.firstname    || 'User',
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-template-email-Validation-cfg-service'>            /**
+</span>             * @cfg {String} [service=Move Your Axis]
+             * The name of the service or website on whose behalf the vaidation message is sent.
+             */
+            service: {
+                value:      'Move Your Axis',
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-template-email-Validation-cfg-urlRoot'>            /**
+</span>             * @cfg {String} [urlRoot=http://moveyouraxis.com/validate]
+             * The base URL prepended to the #code. This string is concatenated with #code
+             * to create a complete validation link.
+             * 
+             * For example, if the urlRoot is `http://mydomain.com/validate` and the validation code is
+             * `12345`, the template will generate `http://mydomain.com/validate/12345` in the message body.
+             */
+            urlRoot: {
+                value:      'http://moveyouraxis.com/validate',
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-template-email-Validation-cfg-supportEmailAddress'>            /**
+</span>             * @cfg {String} [supportEmailAddress=support@moveyouraxis.com]
+             * The email address to contact when support is required. 
+             */
+            supportEmailAddress: {
+                value:      'support@moveyouraxis.com',
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-template-email-Validation-property-_htmlTpl'>            /**
+</span>             * @property {String}
+             * The HTML template.
+             * @private
+             * @hide
+             */
+            _htmlTpl: {
+                value:      '&lt;h2&gt;Welcome to {{service}}, {{firstname}}!&lt;/h2&gt;'
+                            + '&lt;p&gt;Please validate your email address within 48 hours at &lt;a href=&quot;{{urlRoot}}/{{code}}&quot;&gt;{{urlRoot}}/{{code}}&lt;/a&gt;.&lt;/p&gt;'
+                            + '&lt;hr/&gt;&lt;h3&gt;Having trouble?&lt;/h3&gt;'
+                            + '&lt;p&gt;If the link above does not work, please visit &lt;a href=&quot;{{urlRoot}}&quot;&gt;{{urlRoot}}&lt;/a&gt; and enter &lt;u&gt;{{code}}&lt;/u&gt; (your validation code).&lt;/p&gt;'
+                            + '&lt;p&gt;Remember, your code is only valid for 48 hours. If you need further assistance, please contact &lt;i&gt;{{supportEmailAddress}}&lt;/i&gt;. Again, welcome to the service!&lt;/p&gt;',
+                enumerable: false,
+                writable:   true
+            },
+            
+<span id='NGN-template-email-Validation-property-_textTpl'>            /**
+</span>             * @property {String}
+             * The text template.
+             * @private
+             * @hide
+             */
+            _textTpl: {
+                value:      'Welcome to {{service}}, {{firstname}}!\n\n'
+                            + 'Please validate your email address within 48 hours at {{urlRoot}}/{{code}}.\n\n'
+                            + 'HAVING TROUBLE?\n\n'
+                            + 'If the link above does not work, please visit {{urlRoot}} and enter {{code}} (your validation code).\n\n'
+                            + 'Remember, your code is only valid for 48 hours. If you need further assistance, please contact {{supportEmailAddress}}. Again, welcome to the service!',
+                enumerable: false,
+                writable:   true
+            },
+            
+<span id='NGN-template-email-Validation-property-data'>            /**
+</span>             * @property {Object}
+             * The key/value store used to pass arguments to the template generator.
+             * @private
+             * @hide
+             */
+            data: {
+                enumerable: false,
+                get:        function(){
+                                return {
+                                    code:                   this.code                   || null,
+                                    firstname:              this.firstname              || null,
+                                    service:                this.service                || null,
+                                    urlRoot:                this.urlRoot                || null,
+                                    supportEmailAddress:    this.supportEmailAddress    || null
+                                };
+                            }
+            }
+            
+        });
+        
+    },
+    
+<span id='NGN-template-email-Validation-method-render'>    /**
+</span>     * @method
+     * Render the template using he configured values.
+     *      var tpl = new NGN.template.email.Validation({
+     *                  code:       '12345',
+     *                  firstname:  'John',
+     *                  service:    'Awesome Service',
+     *                  urlRoot:    'http//mydomain.com/validate'
+     *              });
+     *      
+     *      tpl.render('html', function(generatedContent){
+     *          console.log(generatedContent);
+     *      });
+     * @param {String} [contentType=html]
+     * The type of content to generate. Either `html` or `text`.
+     * @param {Function} callback
+     * A callback function that receives the generated content.
+     * This is provided as a single argument. 
+     */
+    render: function( contentType, callback ) {
+        if (typeof contentType === 'function') {
+            callback    = contentType;
+            contentType = 'html'
+        }
+        this.renderTemplate(this.data, contentType == 'html' ? this._htmlTpl : this._textTpl, callback);
+    }
+    
+});
+
+// Create a module out of this.
+module.exports =TPL;
+</pre>
+</body>
+</html>
