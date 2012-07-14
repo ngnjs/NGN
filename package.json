@@ -1,6 +1,6 @@
 {
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
-  "name": "NGN",
+  "name": "ngn",
   "description": "The NGN Framework",
   "version": "0.0.1",
   "main": "./lib/NGN.js",
@@ -15,8 +15,8 @@
     "should": "~0.6.3"
   },
   "optionalDependencies": {
-  	"redis": "~0.7.2",
-  	"stripe": "~1.1.0",
+    "redis": "~0.7.2",
+    "stripe": "~1.1.0",
     "everyauth": "~0.2.32",
     "mu2": "~0.5.15",
     "mailer": "~0.6.7"
@@ -25,6 +25,9 @@
     "node": ">= 0.8.2"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha test/base.js"
+  },
+  "repository": {
+    "url": "https://github.com/coreybutler/NGN.git"
   }
 }
