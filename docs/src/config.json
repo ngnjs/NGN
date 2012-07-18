@@ -3,7 +3,6 @@
 	"--welcome":	"assets/html/welcome.html",
 	"--warnings":	["-link", "-no-doc"],
 	"--": [
-		"../../_sandbox",	// Customized API
 		"../../lib"
 	],
 	"--categories":	"categories.json",
