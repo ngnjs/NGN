@@ -1,6 +1,10 @@
 [{
   "title": "Guides",
   "items": [{
+          "name": "getting_started",
+          "title": "Getting Started",
+          "description": "Start using NGN to build your own API's and applications."
+      },{
           "name": "global_features",
           "title": "Global Features",
           "description": "Use NGN global features to simplify application configuration and promote DRY code."
@@ -12,10 +16,22 @@
           "name": "application_scope",
           "title": "Application Scope",
           "description": "Use the application scope to encapsulate custom properties for an application."
-      },{
+      }/*,{
+          "name": "session_scope",
+          "title": "Session Scope",
+          "description": "Use the application scope to encapsulate custom properties for an application."
+      }*/,{
           "name": "class_system",
           "title": "The Class System",
           "description": "Creating custom classes through NGN inheritance."
+      },{
+          "name": "cli",
+          "title": "Command Line Tools",
+          "description": "Use NGN from the command line."
+      },{
+          "name": "webserver",
+          "title": "Creating Web Servers",
+          "description": "Quickly build robust web servers."
       }
    ]
 }]
