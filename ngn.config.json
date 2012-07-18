@@ -1,5 +1,5 @@
 {
-	"extensions": 	["C:\\Users\\cbutler\\workspace\\projects\\NGN\\_extensions"],
+	"extensions": 	["/Users/Corey/Documents/workspace_experiments/NGN/_sandbox"],
 	"application":	{"test":"test"},
 	"default":		{}
 }
