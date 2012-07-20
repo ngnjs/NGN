@@ -30,7 +30,7 @@
           "description": "Use NGN from the command line."
       },{
           "name": "webserver",
-          "title": "Creating Web Servers",
+          "title": "Web Server Fundamentals",
           "description": "Quickly build robust web servers."
       }
    ]
