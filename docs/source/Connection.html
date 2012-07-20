@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var events      = require('events'),
+    Base        = require('../NGN.Base');
+
+<span id='NGN-datasource-Connection'>/**
+</span> * @class NGN.datasource.Connection
+ * Represents a connection to a database instance.
+ * @extends NGN.Base
+ * @requires NGN
+ * @docauthor Corey Butler
+ */
+var Class = Base.extend({
+    
+<span id='NGN-datasource-Connection-method-constructor'>    /**
+</span>     * @constructor
+     * Initialize a data source connection.
+     */
+    constructor: function( config ){
+
+        // Self reference
+        var me = this;
+        
+        // Default configuration
+        config = config || {};
+        
+        // Inherit parent object
+        Class.super.constructor.call( this, config );
+        
+        // Define properties of the class
+        Object.defineProperties(this,{
+            
+<span id='NGN-datasource-Connection-property-type'>            /**
+</span>             * @property {String}
+             * @readonly
+             * @protected
+             * Identifies what type of database connection the object is referencing.
+             */
+            type: {
+                value:          'Unknown',
+                enumerable:     true,
+                writable:       true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-host'>            /**
+</span>             * @cfg {String} [host=127.0.0.1]
+             * The host server.
+             */
+            host: {
+                value:          config.host   || '127.0.0.1',
+                enumerable:     true,
+                writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-port'>            /**
+</span>             * @cfg {Number} [port]
+             * The host port.
+             */
+            port: {
+                value:          config.port     || null,
+                enumerable:     true,
+                writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-password'>            /**
+</span>             * @cfg {String} password
+             * An optional password passed to the database instance.
+             */
+            password: {
+                value:          config.password || null,
+                enumerable:     false,
+                writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-username'>            /**
+</span>             * @cfg {String} username
+             * An optional username passed to the database instance.
+             */
+            username: {
+                value:          config.username || null,
+                enumerable:     true,
+                writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-property-securedConnection'>            /**
+</span>             * @property {Boolean} [securedConnection=false]
+             * Indicates the connection has been authorized using #password. 
+             */
+            securedConnection: {
+                value:          false,
+                enumerable:     true,
+                writable:       true
+            },
+            
+<span id='NGN-datasource-Connection-property-isAuthorized'>            /**
+</span>             * @property {Boolean} [isAuthorized=false]
+             * Indicates the connection has been authorized using a login/account. 
+             */
+            isAuthorized: {
+            	value:			false,
+            	enumerable:		true,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-database'>            /**
+</span>             * @cfg {String} [database=null]
+             * The name of the database/store to connect to
+             */
+            database: {
+            	value:			config.database || null,
+            	enumerable:		true,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-property-connecting'>            /**
+</span>             * @property {Boolean}
+             * Indicates the connection is being established.
+             */
+            connecting: {
+            	value:			false,
+            	enumerable:		true,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-property-timedout'>            /**
+</span>             * @property {Boolean}
+             * Set to true when the connection is timed out.
+             */
+            timedout: {
+            	value:			false,
+            	enumerable:		true,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-timeout'>            /**
+</span>             * @cfg {Number} [timeout=3]
+             * The number of seconds to wait before the connection times out.
+             */
+            timeout: {
+            	value:			config.timeout*1000 || 3000,
+            	enumberable:	true,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-property-connected'>            /**
+</span>             * @property {Boolean} [connected=false]
+             * This property is set to `true` once the connection is established. 
+             */
+            connected: {
+                value:          false,
+                enumerable:     true,
+                writable:       true
+            },
+            
+<span id='NGN-datasource-Connection-property-connection'>            /**
+</span>             * @property {Object}
+             * The raw connection
+             */
+            connection: {
+            	value:			null,
+            	enumerable:		true,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-cfg-autoConnect'>            /**
+</span>             * @cfg {Boolean} [autoConnect=true]
+             * Automatically connect to the database when this object is initialized.
+             */
+            autoConnect: {
+            	value:			config.autoConnect !== undefined ? config.autoConnect : true,
+            	enumerable:		true,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-property-client'>            /**
+</span>             * @property
+             * @readonly
+             * The client used to communicate with with the data source.
+             */
+            client: {
+                enumerable:     true,
+                writable:       true,
+                value:          {connected:false,placeholder:true}
+            },
+            
+<span id='NGN-datasource-Connection-cfg-dsnName'>            /**
+</span>             * @cfg {String} [dsnName]
+             * Optionally specify a datasource name. This will be automatically registered
+             * using NGN#createDatasource.
+             */
+            _name:	{
+            	value:			config.name || null,
+            	enumerable:		false,
+            	writable:		true
+            },
+            
+<span id='NGN-datasource-Connection-property-dsnName'>            /**
+</span>             * @property {String} [dsnName]
+             * The name of the NGN#DSN that will be registered for this connection.
+             */
+            dsnName:	{
+            	enumerable:		true,
+            	get:			function() {
+				            		return this._name;	
+				            	},
+				set:			function(newName) {
+									if (__NGN.DSN[this._name] !== undefined)
+										__NGN.destroyDatasource(this._name);
+									this._name = newName.trim();
+									__NGN.createDatasource(this._name,this);
+								}
+            }
+        });
+        
+        this.registerAsDatasource();
+        
+    },
+    
+<span id='NGN-datasource-Connection-method-disconnect'>    /**
+</span>     * @method
+     * Terminate the connection.
+     */
+    disconnect: function() {
+    	this.onDisconnect();
+    },
+    
+<span id='NGN-datasource-Connection-method-registerAsDatasource'>    /**
+</span>     * @method
+     * Register this connection as a NGN#DSN.
+     * @private
+     */
+    registerAsDatasource: function(){
+    	if (this._name !== null)
+    		__NGN.createDatasource(this._name,this);
+    },
+    
+<span id='NGN-datasource-Connection-method-connect'>    /**
+</span>     * @method
+     * Establish a connection.
+     */
+    connect: function(){
+    	this.onConnect();
+    },
+    
+<span id='NGN-datasource-Connection-method-getClient'>    /**
+</span>     * @method
+     * Return the data client for sending commands to the datasource.
+     */
+    getClient: function(){
+    	return this.client;
+    },
+    
+<span id='NGN-datasource-Connection-event-disconnect'>    /**
+</span>     * @event disconnect
+     * Fired when the connection is terminated. This event is bubbled to #NGN.
+     * @returns {NGN.datasource.Connection}
+     */
+    onDisconnect: function(){
+    	if (__NGN.DSN[this._name] !== undefined)
+    		__NGN.removeDatasource(this._name);
+    	this.connected = false;
+    	this.connecting = false;
+    	this.emit('disconnect',this);
+    	this.fireEvent('disconnect',this._name);
+    },
+    
+<span id='NGN-datasource-Connection-event-connect'>    /**
+</span>     * @event connect
+     * Fired when a database link/connection is attempted.
+     * @returns {NGN.datasource.Connection}
+     */
+    onConnect: function(){
+    	if (!this.connected) {   	
+	    	this.connected = false;
+    		this.connecting = true;
+    		this.emit('connect', this);
+    	}
+    },
+        
+<span id='NGN-datasource-Connection-event-connected'>    /**
+</span>     * @event connected 
+     * Fired when a datbase connection is established.
+     * @returns {NGN.datasource.Connection}
+     */
+    onConnected: function() {
+    	if (!this.connected) {
+	        this.connected = true;
+    	    this.connecting = false;
+        	this.emit('connected', this);
+       }
+    },
+    
+<span id='NGN-datasource-Connection-event-disconnect'>    /**
+</span>     * @event disconnect
+     * Fired when the database connection is dropped.
+     * @returns {NGN.datasource.Connection}
+     */
+    onDisconnect: function(){
+    	if (!this.connected) {
+	    	this.connected = false;
+    		this.connecting = false;
+    		this.emit('disconnect', this);
+		}
+    },
+    
+<span id='NGN-datasource-Connection-event-timeout'>    /**
+</span>     * @event timeout
+     * Fired when the connection times out.
+     * @returns {NGN.datasource.Connection}
+     */
+    onTimeout: function(){
+    	this.timedout = true;
+    	this.emit('timeout', this);
+    },
+    
+<span id='NGN-datasource-Connection-event-authorize'>    /**
+</span>     * @event authorize
+     * Fired when an authorization attempt is made.
+     * @returns {NGN.datasource.Connection}
+     */
+    onAuthorization: function(){
+    	this.emit('authorize',this);
+    },
+    
+<span id='NGN-datasource-Connection-event-authorized'>    /**
+</span>     * @event authorized
+     * Fired when the authorization attempt is completed.
+     * Automatically sets the #isAuthorized property to true or false.
+     */
+    onAuthorized: function(success){
+    	success = success || false;
+    	this.emit('authorized',success);
+    	this.isAuthorized = success;
+    	this.securedConnection = success;
+    }
+    
+});
+
+// Create a module out of this.
+module.exports = Class;
+</pre>
+</body>
+</html>
