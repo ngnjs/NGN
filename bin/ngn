@@ -42,7 +42,7 @@ if (CREATE !== null) {
 }
 
 // Publish to an npm registry
-if (PUBLISH !== undefined){
+if (PUBLISH !== null){
 	console.log('Publishing to npm Registry'.green);
 	console.log(' >> Packaging...'.grey);
 	
@@ -109,7 +109,7 @@ function generateDocumentation() {
 		}*/
 	
 	
-	var cmd = 'jsduck --builtin-classes'+(CFG.trim().length>0?' --config '+CFG:'');
+	var cmd = 'jsduck --builtin-classes'+(CFG.trim().length>0?' --config '+CFG:'')+' --output "'+OUT_DIR+'"';
 	
 	console.log(' >> Building docs...'.grey);
 	var child = exec(cmd,{
