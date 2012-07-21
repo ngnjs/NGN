@@ -53,7 +53,7 @@ if (PUBLISH !== null){
 	var v   = pkg.version || '0.0.0';
 		
 	var cmd = 'npm --registry '+registry+(registry !== publicRegistry ? '_design/scratch/_rewrite/' : '')+' publish --force';
-	var cmd2= 'npm --registry '+registry+(registry !== publicRegistry ? '_design/scratch/_rewrite/' : '')+' tag ngn@'+v+' latest';
+	var cmd2= 'npm --registry '+registry+(registry !== publicRegistry ? '_design/scratch/_rewrite/' : '')+' tag '+pkg.name+'@'+v+' latest';
 
 	console.log(' >> Publishing...'.grey);
 	console.log('    + '.grey+cmd.blue);
@@ -61,7 +61,7 @@ if (PUBLISH !== null){
 		console.log(' >> Tagging Release...'.grey);
 		console.log('    + '.grey+cmd2.blue);
 		exec(cmd2,{cwd:__dirname+'/../'},function(e,so,se){
-			console.log('DONE'.green.bold);
+			console.log('Published as '.green.bold+pkg.name.green.bold.underline+' v'.green.underline+v.green.bold.underline);
 		});
 	});
 }
