@@ -10,3 +10,10 @@ NGN Command Line
 Nice to Have
 ============
 * UML processing -> Create stubs from doc
+
+
+Working
+=======
+`ngn --create docs` (outputs to docs/manual)
+`ngn --create docs --output /path/to/docs` (outputs to /path/to/docs)
+`ngn --publish` (publishes to a npm registry)
