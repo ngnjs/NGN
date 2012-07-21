@@ -83,7 +83,7 @@ var NGN = require('./BaseClass').extend({
             	enumerable:	true,
             	writable:	false,
             	configurable:false
-           },
+            },
         	
 <span id='NGN-property-DSN'>        	/**
 </span>             * @property {Object} [DSN=Object]
@@ -95,6 +95,7 @@ var NGN = require('./BaseClass').extend({
              * *OR*
              * 
              * 		var userDB = NGN.DSN['users'];
+             * @protected
              */
             DSN: {
                 value:      {},
@@ -107,6 +108,7 @@ var NGN = require('./BaseClass').extend({
             * This is an [EventEmitter](http://nodejs.org/docs/latest/api/events.html) made available as a common 
             * hook for bridging events bubbled up through the NGN API.
             * @uses events
+            * @protected
             */
             BUS: {
                 value:      new emitter(),
@@ -114,21 +116,12 @@ var NGN = require('./BaseClass').extend({
                 writable:   true
             },
             
-<span id='NGN-property-MAIL'>            /**
-</span>             * @property {Object} [MAIL=Object]
-             * Stores email server connections (SMTP, Web API) for the application.
+<span id='NGN-property-SERVER'>            /**
+</span>             * @property {Object} [SERVER=Object]
+             * Stores servers used in the application.
+             * @protected
              */
-            MAIL: {
-                value:      {},
-                enumerable: true,
-                writable:   true
-            },
-            
-<span id='NGN-property-SSN'>            /**
-</span>             * @property {Object} [SSN=Object]
-             * Service source name. 
-             */
-            SSN: {
+            SERVER: {
                 value:      {},
                 enumerable: true,
                 writable:   true
@@ -138,6 +131,7 @@ var NGN = require('./BaseClass').extend({
 </span>             * @property {Object} [CFG=Object]
              * Default configuration parameters. This is a key/value store containing
              * frequently or repetitively used values. 
+             * @protected
              */
             CFG: {
                 value:      {},
@@ -145,45 +139,26 @@ var NGN = require('./BaseClass').extend({
                 writable:   true
             },
             
-<span id='NGN-property-WEB'>            /**
-</span>             * @property {Object} [WEB=Object]
-             * A convenience reference to web servers.
+<span id='NGN-method-config'>            /**
+</span>             * @method
+             * This convenience method will get or set configuration values.
+             * @param {String} name
+             * The name of the configuration item to return.
+             * @param {Any} value
+             * The value to assign to the configuration item.
              */
-            WEB: {
-            	value:		{},
+            config: {
             	enumerable:	true,
-            	writable:	true
-            },
-            
-<span id='NGN-property-WS'>            /**
-</span>             * @property {Object} [WS=Object]
-             * A convenience reference to socket servers.
-             */
-            WS: {
-            	value:		{},
-            	enumerable:	true,
-            	writable:	true
-            },
-            
-<span id='NGN-property-WEB'>            /**
-</span>             * @property {Object} [WEB=Object]
-             * A convenience reference to REST servers. NGN considers a REST
-             * server to be similar to a web server, but dedicated to serving data.
-             */
-            REST: {
-            	value:		{},
-            	enumerable:	true,
-            	writable:	true
-            },
-            
-<span id='NGN-property-FTP'>            /**
-</span>             * @property {Object} [FTP=Object]
-             * A convenience reference to FTP servers.
-             */
-            FTP: {
-            	value:		{},
-            	enumerable:	true,
-            	writable:	true
+            	get:		function(name){
+			            		return this.CFG[name];
+			            	},
+			            	
+			    set:		function(name,value){
+			    				value = value || null;
+						    	if (value == null)
+						    		return;
+						    	this.CFG[name] = value;
+						    }
             },
             
 <span id='NGN-property-_xtn'>            /**
@@ -534,6 +509,55 @@ var NGN = require('./BaseClass').extend({
         this.CFG = value;
     },
     
+<span id='NGN-method-registerServer'>    /**
+</span>      * @method
+      * Register a server 
+	  * @param {NGN.util.Server}
+	  * The server instance
+      */     	
+     registerServer: function(server){
+     	if (this.SERVER['__'+server.type] == undefined)
+     		this.SERVER['__'+server.type] = {};
+     	var ct = 0;
+     	while (this.SERVER['__'+server.type][server.name] !== undefined || this.SERVER[server.name] !== undefined ){
+     		ct++;
+     		server.name = server.name + ct.toString();
+     	}
+     	this.SERVER['__'+server.type][server.name] = server;
+     	this.SERVER[server.name] = server;
+     	this.onRegisterServer(server);
+     	return server.name;
+     },
+     
+<span id='NGN-method-unregisterServer'>     /**
+</span>      * @method
+      * Unregister a server. This will remove the instance from the application.
+      * 
+      */
+     unregisterServer: function(name) {
+     	this.onUnregisterServer(this.SERVER[name]);
+     	delete this.SERVER[name];
+     },
+     
+<span id='NGN-method-getServer'>     /**
+</span>      * @method
+      * Get a specific server instance by name.
+      */
+     getServer: function(name){
+     	return this.SERVER[name];
+     },
+     
+<span id='NGN-method-getServersByType'>     /**
+</span>      * @method
+      * Get servers by a specific type. This returns an object with each attribute of the
+      * object being the name of a server and each value being a reference to the server object. 
+	  * @param {String} type
+	  * @returns {Object}
+      */
+     getServersByType: function(type){
+     	return this.SERVER[type] || {};
+     },
+    
 <span id='NGN-method-traverse'>    /**
 </span>     * @method
      * Recursively traverse a namespace and apply new configuration elements to classes.
@@ -560,6 +584,34 @@ var NGN = require('./BaseClass').extend({
         }
     },
     
+<span id='NGN-method-uuid'>    /**
+</span>     * @method
+     * Generate a UUID.
+     * 
+     * **Simple Example**
+     * 
+     * 		console.log(NGN.uuid()); // --&gt; Outputs a time-based UUID.
+     * 		console.log(NGN.uuid(true)); // --&gt; Outputs a random UUID.
+     * 
+     * @param {Boolean} [random=false]
+     * Setting this to `true` generates a random UUID. Otherwise, a time-based UUID is created.
+     * @param {Object} [options]
+     * Properties may include:
+     * 
+	 * * `random` - ({Number}[16]) Array of 16 numbers (0-255) to use in place of randomly generated values
+	 * * `rng` - ({Function}) Random # generator to use.  Set to one of the built-in generators - `uuid.mathRNG` (all platforms), `uuid.nodeRNG` (node.js only), `uuid.whatwgRNG` (WebKit only) - or a custom function that returns an array[16] of byte values.
+	 * * `buffer` - ({Array/Buffer}) Array or buffer where UUID bytes are to be written.
+	 * * `offset` - ({Number}) Starting index in `buffer` at which to begin writing.
+	 * @param {Array/Buffer}
+	 * Array or buffer where UUID bytes are to be written.
+	 * @param {Number} Starting index in `buffer` at which to begin writing.
+     * @returns {String}
+     */
+    uuid: function(random, options, buffer, offset){
+    	random = random || false;
+    	return random == true ? require('node-uuid').v4(options||null,buffer||null,offset||null) : require('node-uuid').v1(options||null,buffer||null,offset||null);
+    },
+    
 <span id='NGN-method-broadcast'>    /**
 </span>     * @method
      * Broadcast an event on the #BUS.
@@ -584,43 +636,75 @@ var NGN = require('./BaseClass').extend({
 </span>     * @event applicationstart
      * Fired when the NGN application starts.
      */
-    onApplicationStart: function(){},
+    onApplicationStart: function(){
+    	this.fireEvent('applicationstart');
+    },
     
 <span id='NGN-event-applicationend'>    /**
 </span>     * @event applicationend
      * Fired when the application ends.
      */
-    onApplicationEnd: function(){},
+    onApplicationEnd: function(){
+    	this.fireEvent('applictionend');
+    },
     
 <span id='NGN-event-sessionstart'>    /**
 </span>     * @event sessionstart
      * Fired when a user session starts. 
      */
-    onSessionStart: function(){},
+    onSessionStart: function(){
+    	this.fireEvent('sessionstart');
+    },
     
 <span id='NGN-event-sessionend'>    /**
 </span>     * @event sessionend
      * Fired when a session ends.
      */
-    onSessionEnd: function(){},
+    onSessionEnd: function(){
+    	this.fireEvent('sessionend');
+    },
     
 <span id='NGN-event-requeststart'>    /**
 </span>     * @event requeststart
      * Fired when a request starts.
      */
-    onRequestStart: function(){},
+    onRequestStart: function(){
+    	this.fireEvent('requeststart');
+    },
     
 <span id='NGN-event-requestend'>    /**
 </span>     * @event requestend
      * Fired just before the request ends
      */
-    onRequestEnd: function(){},
+    onRequestEnd: function(){
+    	this.fireEvent('requestend');
+    },
     
 <span id='NGN-event-error'>    /**
 </span>     * @event error
      * Fired whenever an error is detected 
      */
-    onError: function(){}
+    onError: function(e){
+    	this.fireError(e);
+    },
+    
+<span id='NGN-event-registerserver'>    /**
+</span>     * @event registerserver
+     * Fired when a server is registered
+     * @returns {NGN.util.Server/null}
+     */
+    onRegisterServer: function(server){
+    	this.fireEvent('serverunregistered',server||null);
+    },
+    
+<span id='NGN-event-unregisterserver'>    /**
+</span>     * @event unregisterserver
+     * Fired when a server is unregistered/removed
+     * @returns {NGN.util.Server/null}
+     */
+    onRegisterServer: function(server){
+    	this.fireEvent('unregisterserver',server||null);
+    }
 });	
 
 
