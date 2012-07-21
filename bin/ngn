@@ -20,7 +20,7 @@ var CREATE 			= argv['create'] || null,
 	OUT_DIR			= argv['output'] || __dirname+'/../docs/manual';
 	
 try {
-	var cfg			= require('./ngn.config.json');
+	var cfg			= require('./config.json');
 } catch(e) {
 	var cfg 		= {};
 }
