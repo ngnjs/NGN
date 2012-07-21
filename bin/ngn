@@ -15,20 +15,55 @@ require('colors');
  * Statics 
  */
 var CREATE 			= argv['create'] || null,
+	PUBLISH			= argv['publish'] || null,
 	CFG				= argv['configuration'] || 'config.json',
 	OUT_DIR			= argv['output'] || __dirname+'/../docs/manual';
+	
+try {
+	var cfg			= require('./ngn.config.json');
+} catch(e) {
+	var cfg 		= {};
+}
 
-switch(CREATE.toLowerCase()) {
-	case null:
-		break;
-	case 'docs':
-	case 'doc':
-	case 'documentation':
-		console.log('Generating documentation '.cyan+' at '.cyan+OUT_DIR.toString().trim().cyan.bold+':'.cyan);
-		generateDocumentation();
-		break;
-	default:
-		console.log(CREATE+' not recognized.');
+// Create things
+if (CREATE !== null) {
+	switch(CREATE.toLowerCase()) {
+		case null:
+			break;
+		case 'docs':
+		case 'doc':
+		case 'documentation':
+			console.log('Generating documentation '.cyan+' at '.cyan+OUT_DIR.toString().trim().cyan.bold+':'.cyan);
+			generateDocumentation();
+			break;
+		default:
+			console.log(CREATE+' not recognized.');
+	}
+}
+
+// Publish to an npm registry
+if (PUBLISH !== undefined){
+	console.log('Publishing to npm Registry'.green);
+	console.log(' >> Packaging...'.grey);
+	
+	var publicRegistry = 'http://registry.npmjs.org';
+	var registry = cfg.npmregistry || publicRegistry;
+	
+	var pkg = require('../package.json');
+	var v   = pkg.version || '0.0.0';
+		
+	var cmd = 'npm --registry '+registry+(registry !== publicRegistry ? '_design/scratch/_rewrite/' : '')+' publish --force';
+	var cmd2= 'npm --registry '+registry+(registry !== publicRegistry ? '_design/scratch/_rewrite/' : '')+' tag ngn@'+v+' latest';
+
+	console.log(' >> Publishing...'.grey);
+	console.log('    + '.grey+cmd.blue);
+	exec(cmd,{cwd:__dirname+'/../'},function(error, stdout, stderr){
+		console.log(' >> Tagging Release...'.grey);
+		console.log('    + '.grey+cmd2.blue);
+		exec(cmd2,{cwd:__dirname+'/../'},function(e,so,se){
+			console.log('DONE'.green.bold);
+		});
+	});
 }
 
 // Generate docs
