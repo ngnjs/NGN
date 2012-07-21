@@ -1,6 +1,6 @@
 {
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
-  "name": "ngn",
+  "name": "NGN",
   "description": "The NGN Framework",
   "version": "0.0.1",
   "main": "./lib/NGN.js",
