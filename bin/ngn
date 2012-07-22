@@ -52,8 +52,8 @@ if (PUBLISH !== null){
 	var pkg = require('../package.json');
 	var v   = pkg.version || '0.0.0';
 		
-	var cmd = 'npm --registry '+registry+(registry !== publicRegistry ? '_design/scratch/_rewrite/' : '')+' publish --force';
-	var cmd2= 'npm --registry '+registry+(registry !== publicRegistry ? '_design/scratch/_rewrite/' : '')+' tag '+pkg.name+'@'+v+' latest';
+	var cmd = 'npm --registry '+registry+' publish --force';
+	var cmd2= 'npm --registry '+registry+' tag '+pkg.name+'@'+v+' latest';
 
 	console.log(' >> Publishing...'.grey);
 	console.log('    + '.grey+cmd.blue);
