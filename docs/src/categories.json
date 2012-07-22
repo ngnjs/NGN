@@ -37,7 +37,7 @@
 		},{
 			"name": "HTTP",
 			"classes": [
-				"NGN.http.*"
+				"NGN.web.*"
 			]
 		},{
 			"name": "Base",

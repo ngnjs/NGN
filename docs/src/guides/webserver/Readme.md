@@ -1,18 +1,18 @@
 # Web Server Fundamentals
 
-The web server is based on [express](http://expressjs.com)(v3.0) from [TJ Holowaychuk](https://github.com/visionmedia).
+The web server is based on [express](http://expressjs.com)(v3.0).
 Express, which works on [Connect](http://senchalabs.github/com/connect) is the most widely used web server framework in
 the node community. Express can be used independently or with NGN objects, but NGN strives to
-simplify many of the common boilerplate configurations of Express. Furthermore, NGN.http.Sever acts as a
+simplify many of the common boilerplate configurations of Express. Furthermore, NGN.web.Sever acts as a
 consistent API interface, should it be necessary to switch to an alternative web server.
 
-The remainder of this guide is dedicated to both basic and advanced use of the NGN.http.Server.
+The remainder of this guide is dedicated to both basic and advanced use of the NGN.web.Server.
 
 ## The Most Basic Server
 
 The most basic web server can be used like
 
-	var server = new NGN.http.Server();
+	var server = new NGN.web.Server();
 
 This will launch a `localhost` server on port `80`. Since no routes are specified,
 the server generates a test route for developers to verify the server is actually running.
@@ -43,7 +43,7 @@ structure around express.
 
 Take the following server:
 
-	var server = new NGN.http.Server({
+	var server = new NGN.web.Server({
 		port: 		81,
 		assets: 	'/path/to/static/files',
 		views: 		'/path/to/templates',
@@ -134,9 +134,9 @@ less to type, and (hopefully) friendlier overall. However; the wrapper supports 
 for those who wish to continue using it. There are several additional inherited variables made available
 to route methods (regardless of the syntax you choose). These include:
 
-* **res/response:** The raw `response` object. This is the same object typically passed in app.get('/',function(**req**,...){}).
-* **req/request:** The raw `request` object. This is the same object typically passed in app.get('/',function(req, **res**,...){}).
-* **next:** The `next` method. This is the same method typically passed in app.get('/',function(req,res,**next**){}).
+* **res/response:** The raw `response` object. This is the same object typically passed in app.get('/',function(**req**,req, next){}).
+* **req/request:** The raw `request` object. This is the same object typically passed in app.get('/',function(req, **res**, next){}).
+* **next:** The `next` method. This is the same method typically passed in app.get('/',function(req, res, **next**){}).
 * **url:** A key/value object containing any URL parameters. For example, `http://localhost/?hello=world` would be the same as `url = {hello:"world"}`.
 * **session:** A reference to `req.session`.
 * **form**: A key/value object containing any <form> attributes POSTed to the URL. This is a blank object if no form attributes are submitted.
