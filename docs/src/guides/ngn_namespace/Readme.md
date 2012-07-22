@@ -71,11 +71,11 @@ For example, let's assume NGN/lib/user exists as shown below. This directory con
             > user
                 - Person.js
                 - Login.js
-NGN recognizes `user` is a directory and creates a subspace for it (i.e. NGN.user). It then loops through
+NGN recognizes `user` is a directory and creates a subspace for it (i.e. NGN.app). It then loops through
 the `user` directory and requires each `.js` file it encounters. In this case, it would automatically
-generate two classes: `NGN.user.Person` and `NGN.user.Login`. As a result, developers can use a sugar syntax like:
-    var Person = new NGN.user.Person({ first:'John', last:'Doe' });
-    var Login  = new NGN.user.Login({ type:'facebook', id:'1234567890' });
+generate two classes: `NGN.app.Person` and `NGN.app.Login`. As a result, developers can use a sugar syntax like:
+    var Person = new NGN.app.Person({ first:'John', last:'Doe' });
+    var Login  = new NGN.app.Login({ type:'facebook', id:'1234567890' });
 It is important to note that the `lib` directory contains three files in the root, with the rest of the core API
 being contained in `ngn/lib` subdirectories. These files include `BaseClass.js`, `NGN.js` (this file), and `NGN.Global.js`.
 

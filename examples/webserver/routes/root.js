@@ -23,14 +23,14 @@ module.exports = {
 			res.end();
 		}
 	},
-	'/': {
-		get: function(){
-			res.end('Hello. I am root.');
-		}
-	},
 	'/^\/([a-zA-Z0-9_\.~-]+)\/(.*)/': {
 		get: function(){
 			res.end('Yo!');
+		}
+	},
+	'/': {
+		get: function(){
+			res.end('Hello. I am root.');
 		}
 	}
 }

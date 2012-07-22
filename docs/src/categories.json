@@ -1,9 +1,9 @@
 [
 	{
-		"name":	"People",
+		"name":	"Application Building Blocks",
 		"groups": [{
 			"classes": [
-				"NGN.user.*"
+				"NGN.app.*"
 			]
 		}]
 	},/*{
@@ -35,12 +35,12 @@
 				"NGN.datasource.*"
 			]
 		},{
-			"name": "HTTP",
+			"name": "Web",
 			"classes": [
 				"NGN.web.*"
 			]
 		},{
-			"name": "Base",
+			"name": "Core",
 			"classes": [
 				"NGN",
 				"Application",
