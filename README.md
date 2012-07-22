@@ -8,7 +8,6 @@ Docs are available at http://coreybutler.github.com/NGN.
 TODO
 ====
 * Guides
-* npm module
 * Executable for building docs
 * IDE Integration
 

@@ -6,34 +6,42 @@ var should = require('should');
 
 
 /**
- * Make sure datasource connections can be created.
+ * Make sure web server can be created & used by a client.
  */
-describe('NGN.http.Server',function(){
+describe('NGN.web.Server',function(){
 	
 	var port = 8387;
-	var web = new NGN.http.Server({
+	var web = new NGN.web.Server({
 		port: port
 	});
 	
-	var client = new NGN.http.Client();
+	web.on('beforeget',function(){
+		require('colors');
+		console.log('Heard a GET'.green);
+	})
+	
+	var client = new NGN.web.Client();
+	
 	
 	it('should respond with generic view when no route is provided.',function(done){
 		client.GET('http://localhost:'+port,function(err,res,body){
 			body.should.equal('The web server works, but no routes have been configured.');
+			
 			done();
 		});
 	});
 	
-	web.stop();
-	web.routes = __dirname+'/../examples/webserver/routes';
-	web.start();
 	
-	it('should respond to the view.',function(done){
-		client.GET('http://localhost:'+port,function(err,res,body){
+	it('should respond with basic content provided by a route.',function(done){
+		
+		web.stop();
+		web.routes = __dirname+'/../examples/webserver/routes';			
+		web.start();
+		
+		client.GET('http://localhost:'+port+'/test',function(err,res,body){
 			body.should.equal('Basic Test');
 			done();
-		})
-	})
-	
-});
+		});
+	});
 
+});
