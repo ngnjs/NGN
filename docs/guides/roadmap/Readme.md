@@ -14,6 +14,11 @@ Add the following base classes:
 * NGN.core.SmtpServer
 * NGN.core.Cluster (mixin?)
 
+**Core Data Libraries**
+* NGN.date.Date, NGN.date.Month, NGN.date.Year, NGN.date.Day, NGN.date.Week
+_perhaps include datejs?_
+_Add commonly used funcitonality like DateAdd(), DateDiff(), etc._
+
 **Application Helpers**
 
 * NGN.app.EventBus
@@ -111,3 +116,11 @@ CLI Commands
 `ngn --extend api` Create a stubb for a new extension API class.
 `ngn --extend api --uml /path/to/file` Create a stub library for a new API, based on a UML file. 
 `ngn --create template` Create a new NGN project using a template.
+
+
+
+Simple Functionality
+====================
+* NGN.isArray(), NGN.isString(), NGN.isNumber(), NGN.isDate, NGN.isBoolean(), NGN.isSimple(), etc.
+* NGN.
+

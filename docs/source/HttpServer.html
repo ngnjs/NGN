@@ -74,7 +74,7 @@ var Class = Base.extend({
 			 * Path to directory where routes are stored. Also accepts an 
 			 * array of file paths. Routes are created by recursively
 			 * processing each specified directory and importing each `.js` file
-			 * it finds. 
+			 * it finds. Supports relative and absolute paths.
 			 */
 			routes: {
 				value:		config.routes || [],
@@ -511,6 +511,9 @@ var Class = Base.extend({
 			
 			// Loop through the directories and add each JS file, assuming each is a route.
 			var rt = this.routes[i].trim();
+			
+			if (!fs.existsSync(rt) &amp;&amp; fs.existsSync(__NGN.path.join(__NGN.rootDir,rt)))
+				rt = __NGN.path.join(__NGN.rootDir,rt);
 			/*
 			// Async Route Loader
 			require('wrench').readdirRecursive( rt, function(err, filepath){

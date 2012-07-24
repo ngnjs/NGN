@@ -231,11 +231,11 @@ var NGN = require('./BaseClass').extend({
 		 	 * 
 		 	 * * **NGN.path.normalize('/foo/bar//baz/asdf/quux/..')** returns `'/foo/bar/baz/asdf'`
 		 	 * * **NGN.path.join([path1], [path2], [...])** returns `'path1/path2'
-			 * * **path.resolve([from ...], to)** resolves to an absolute path.
-			 * * **path.relative(from, to)** resolves to a relative directory path. This is used when traversing from one directory to another.
-			 * * **path.dirname(p)** if p = '/my/path', returns `/my/path`
-			 * * **path.basename(p, [ext])** returns the filename portion of the path.
-			 * * **path.extname(p)** returns the extension of the filename portion of the path.
+			 * * **NGN.path.resolve([from ...], to)** resolves to an absolute path.
+			 * * **NGN.path.relative(from, to)** resolves to a relative directory path. This is used when traversing from one directory to another.
+			 * * **NGN.path.dirname(p)** if p = '/my/path', returns `/my/path`
+			 * * **NGN.path.basename(p, [ext])** returns the filename portion of the path.
+			 * * **NGN.path.extname(p)** returns the extension of the filename portion of the path.
 			 * 
 			 * @static
 			 * @readonly
@@ -244,6 +244,18 @@ var NGN = require('./BaseClass').extend({
 		 		enumerable:	true,
 		 		get:		function(){ return require('path'); },
 		 	},
+            
+<span id='NGN-static-property-rootDir'>            /**
+</span>             * @property
+             * The root directory in which the node process is running. For example, running
+             * `node /path/to/myapp.js` would be `/path/to`.
+             * @static
+             * @readonly
+             */
+            rootDir: {
+            	enumerable:	true,
+            	get:		function() { return this.path.dirname(process.mainModule.filename); }
+            },
             
 <span id='NGN-property-_xtn'>            /**
 </span>             * @property {Array}
@@ -740,7 +752,7 @@ var NGN = require('./BaseClass').extend({
         this.BUS.emit(eventName, metadata || null);
     },
     
-<span id='NGN-method-app'>    /**
+<span id='NGN-method-createApp'>    /**
 </span>     * @method
      * A shortcut for creating a new application. This can only be done once per node process (i.e. `node myapp.js`).
      * 
@@ -754,7 +766,7 @@ var NGN = require('./BaseClass').extend({
      * @param {Object} config
      * For a list of configuration options, please see NGN.app.Application.
      */
-    app: function(config) {
+    createApp: function(config) {
     	if (global.application == undefined){
 	    	var app = new __NGN.app.Application(config);
     	}
