@@ -40,11 +40,10 @@
 				"NGN.web.*"
 			]
 		},{
-			"name": "Core",
+			"name": "Libraries",
 			"classes": [
 				"NGN",
-				"Application",
-				"Session"
+				"NGNX"
 			]
 		}]
 	}
