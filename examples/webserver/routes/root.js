@@ -4,16 +4,10 @@ module.exports = {
 			get: function(){
 				res.write(url.toString());
 				res.write('Testing more nested routes');
-				/*for (var i in req){
-					if (typeof req[i] !== 'function')
-					res.write(i+'<hr>'+req[i].toString());
-				}*/
-				//console.log(req);
-				//res.write(req.toString());
 				res.end();
 			}
 		},
-		'/more2':{
+		'/redirect':{
 			get: function(){
 				res.redirect('http://www.google.com');
 			}
