@@ -289,6 +289,39 @@ var Class = Base.extend({
 				configurable:true
 			}*/
 			
+<span id='NGN-core-HttpServer-cfg-basicAuthUsers'>			/**
+</span>			 * @cfg {Object}
+			 * A key/value object containing `&lt;username&gt;:&lt;password&gt;`.
+			 * 
+			 * **Example**
+			 * 		{
+			 * 			jdoe: 'password1',
+			 * 			msmith: 'password2',
+			 * 			bpatel: 'password3'
+			 * 		} 
+			 * By providing a basic authorization map, the server will automatically enable BasicAuth restrictions.
+			 * These are applied _instead of_ #authenticate and #authorize middleware, unless BasicAuth is explicitly
+			 * disabled using #disableBasicAuth. It is possible to configure code with all three auth middleware features and
+			 * toggle them on/off by enabling/disabling BasicAuth. However; most applications only require one feature.      
+			 */
+			basicAuthUsers: {
+				value:		config.basicAuthUsers || null,
+				enumerable:	false,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-basicAuthCaseSensitive'>			/**
+</span>			 * @cfg {Boolean} [basicAuthCaseSensitive=true]
+			 * When using #basicAuthUsers, all password matching will be done with respect to upper/lower case.
+			 */
+			basicAuthCaseSensitive: {
+				value:		config.basicAuthCaseSensitive || true,
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
 <span id='NGN-core-HttpServer-cfg-enableBasicAuth'>			/**
 </span>			 * @cfg {Boolean} [enableBasicAuth=false]
 			 * Setting this to true will require basic authentication before completing a request. This should be 
@@ -296,19 +329,11 @@ var Class = Base.extend({
 			 * 
 			 * Basic authentication is executed _before_ #authenticate and #authorize.
 			 */
-			enableBasicAuth: {
+			disableBasicAuth: {
 				value:		config.enableBasicAuth || false,
 				enumerable:	true,
 				writable:	true,
 				configurable:true
-			},
-			
-<span id='NGN-core-HttpServer-cfg-basicAuthUsers'>			/**
-</span>			 * @cfg {Object}
-			 * A key/value 
-			 */
-			basicAuthUsers: {
-				
 			}
 			
 		});
@@ -321,6 +346,30 @@ var Class = Base.extend({
 				this._serverOptions.rejectUnauthorizedCert = true;
 		}
 		
+	},
+	
+<span id='NGN-core-HttpServer-method-testBasicAuth'>	/**
+</span>	 * @method
+	 * A basic authentication method for testing a user against the #basicAuthUsers mapping.
+	 * @param {String} username
+	 * @param {String} password
+	 * Plain text password.
+	 * @returns {Boolean}
+	 */
+	testBasicAuth: function(username, password) {
+		if (disaleBasicAuth)
+			return true;
+		
+		if (this.basicAuthUsers[username] == undefined)
+			return false;
+		
+		if (!this.basicAuthCaseSensitive) {
+			if (this.basicAuthUsers[username].toLowerCase() == password.toLowerCase())
+				return true;
+		} else if (this.basicAuthUsers[username] == password)
+			return true;
+		
+		return false;
 	},
 	
 <span id='NGN-core-HttpServer-method-generateRoutes'>	/**
@@ -919,6 +968,24 @@ var Class = Base.extend({
 	 */
 	onXXX: function(code,response){
 		this.emit('xxx',{code:code,response:(response||null)});
+	},
+	
+<span id='NGN-core-HttpServer-event-beforerequest'>	/**
+</span>	 * @event beforerequest
+	 * @param {Object} req
+	 * Request stream object.
+	 */
+	onBeforeRequest: function(req){
+		this.emit('beforerequest',req||null);
+	},
+	
+<span id='NGN-core-HttpServer-event-afterrequest'>	/**
+</span>	 * @event afterrequest
+	 * @param {Object} req
+	 * Request stream object.
+	 */
+	onAfterRequest: function(req){
+		this.emit('afterrequest',req);
 	}
 	
 });

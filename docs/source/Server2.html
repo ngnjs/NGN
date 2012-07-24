@@ -241,15 +241,36 @@ var Class = Base.extend({
 		});
 		
 		this._server = express();
-	
+		
 	//	this._server.use(express.logger());
 	
 		if (!this.disableBodyParsing || this.preventCsrf)
 			this._server.use(express.bodyParser());
-	
+		
 		this._server.use(express.methodOverride());
+		
+		// PreBasicAuth Middleware
+		if (!this.disableBasicAuth &amp;&amp; this.basicAuthUsers !== null)
+			this._server.use(express.basicAuth(this.testBasicAuth))
+		
+		// PostBasicAuth Middleware
+		
+		// PreAuthenticate Middleware
 		this._server.use(this.authenticate);
+		
+		// PostAuthenticate Middleware
+		
+		// PreAuthorize Middleware
 		this._server.use(this.authorize);
+		
+		// PostAuthorize Middleware
+		
+		// PreRequest Middleware
+		
+		// PostRequest Middleware
+		express.request.on('end',function(req,res,next){
+			console.log('I am done!');
+		});
 		
 		if (this.autoStart)
 			this.start();
@@ -344,8 +365,6 @@ var Class = Base.extend({
 		
 			this._server.use(this.handleError);
 			
-			if (this.enableCompression)
-				this._server.use(express.compress());
 			
 			this.enableSessionManagement();
 			this.enableTemplateRendering();
@@ -358,6 +377,10 @@ var Class = Base.extend({
 				var opts = this.maxAssetAge == null ? null : {maxAge:this.maxAssetAge};
 				this._server.use(express.static(this.assets,opts));
 			}
+			
+			
+			if (this.enableCompression)
+				this._server.use(express.compress());
 			
 			if (this._serverOptions !== null) 
 				this._httpServer = require('https').createServer(this._serverOptions,this._server);

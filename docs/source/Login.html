@@ -15,12 +15,10 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var events      = require('events'),
-    request     = require('request'),
-    NGN			= require('../NGN.core');
+  <pre class="prettyprint lang-js">var Base = require('../NGN.core');
 
-<span id='NGN-app-Login'>/**
-</span> * @class NGN.app.Login
+<span id='NGNX-Login'>/**
+</span> * @class NGNX.Login
  * Represents an OAuth or other third party login such as Facebook, Twitter, LinkedIn, etc.
  * 
  * This object makes interacting with user logins simple and abstracted from the OAuth process.
@@ -32,7 +30,7 @@
  * instantiate a {@link NGN.app.Person} for the specified account (i.e. user lookup).
  * 
  *     @example
- * 	   var Login = new NGN.app.Login({
+ * 	   var Login = new NGNX.Login({
  * 			person: 	'12345',
  * 			logintype:	'fb'		// Facebook shortcut
  * 	   });
@@ -41,7 +39,7 @@
  * 
  *     @example
  * 	   app.get('/',function(req,res){
- * 			var Login = new NGN.app.Login(req);
+ * 			var Login = new NGNX.Login(req);
  * 
  * 			Login.authorize(function( success ){
  * 				res.send(success == true ? 200 : 401 );
@@ -52,34 +50,29 @@
  * 
  *     @example
  * 	   app.get('/:person',function(req,res){
- * 			var Login = new NGN.app.Login({
+ * 			var Login = new NGNX.Login({
  * 				person: req.params.person,
  * 				request: req
  * 	   		});
  * 	   });
- * @param {Object} [config] Configuration Object
- * @param {Object} [request] Request Object
- * @requires NGN
- * @requires events
- * @requires request
  * @docauthor Corey Butler
  * @extends NGN.core
  */
-var Login = NGN.extend({
+var Class = Base.extend({
 	
-<span id='NGN-app-Login-method-constructor'>	/**
+<span id='NGNX-Login-method-constructor'>	/**
 </span>	 * @constructor
 	 */
 	constructor: function( config ){
 		
-		Login.super.constructor.call( this, config );
+		Class.super.constructor.call( this, config );
 		
 		//TODO: If the config is a request object, create the login
 		config			= config 			|| {};
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-app-Login-cfg-request'>			/**
+<span id='NGNX-Login-cfg-request'>			/**
 </span>			 * @cfg {Object} [request]
 			 * The HTTP request stream returned from an OAuth authentication.
 			 *     app.get('/',function(req,res){
@@ -97,7 +90,7 @@ var Login = NGN.extend({
 				writable:	false
 			},
 			
-<span id='NGN-app-Login-property-_data'>			/**
+<span id='NGNX-Login-property-_data'>			/**
 </span>			 * @property {Object}
 			 * @private
 			 * Holds the data returned from an OAuth response
@@ -114,7 +107,7 @@ var Login = NGN.extend({
 				writable:	true
 			},
 			
-<span id='NGN-app-Login-property-ID'>			/**
+<span id='NGNX-Login-property-ID'>			/**
 </span>			 * @property {String}
 			 * The login ID of the OAuth/third party provider.
 			 */
@@ -129,7 +122,7 @@ var Login = NGN.extend({
 	            enumerable:     false
 	        },
 			
-<span id='NGN-app-Login-property-accesstoken'>			/**
+<span id='NGNX-Login-property-accesstoken'>			/**
 </span>			 * @property {String}
 			 * The active access token
 			 */
@@ -153,7 +146,7 @@ var Login = NGN.extend({
 	                            }
 			},
 			
-<span id='NGN-app-Login-property-oauthprovider'>			/**
+<span id='NGNX-Login-property-oauthprovider'>			/**
 </span>			 * @property {String} [oauthprovider=null]
 			 * A lowercase string representing the OAuth service provider. Examples include `facebook`, `twitter`, and `linkedin`.
 			 * This property is only available when a valid #request is provided. However, it can also be set manually.
@@ -167,7 +160,7 @@ var Login = NGN.extend({
 							}
 			},
 			
-<span id='NGN-app-Login-property-oauth'>			/**
+<span id='NGNX-Login-property-oauth'>			/**
 </span>			 * @property {String} [oauth=null]
 			 * The lowercase abbreviation of the #oauthprovider. Example: `fb` for Facebook.
 			 */
@@ -207,7 +200,7 @@ var Login = NGN.extend({
 	            enumerable:     false
 			},
 			
-<span id='NGN-app-Login-property-modified'>			/**
+<span id='NGNX-Login-property-modified'>			/**
 </span>			 * @property [modified=false]
 			 * @readonly
 			 * When the object is modified, this will be true.
@@ -224,48 +217,45 @@ var Login = NGN.extend({
 			
 		});
 		
+	},
+
+<span id='NGNX-Login-method-processHttpRequest'>	/**
+</span>	 * @method 
+	 * This method extracts information from the #request or any other HTTP request stream.
+	 * The #ID, #oauthprovider, #oauth, #data, and #accesstoken (if applicable) are extracted using `everyauth` (node).
+	 * `everyauth` appends a `user` attribute to `req` as `req.app`.  
+	 * @private
+	 */	
+	processHttpRequest: function( req ) {
+	
+		this.ID 			= req.app.id;
+		this._data			= req.app;
+		this._accesstoken	= req.app.accessToken;
+		this._oauthprovider = function (){
+								for (var obj in req.app) {
+									return obj.trim().toLowerCase();
+								}
+							}
+	},
+	
+<span id='NGNX-Login-method-authenticate'>	/**
+</span>	 * @method
+	 * @param {Object} [req=request]
+	 * Authenticate the request stream. By default, this uses the #request object.  
+	 */
+	authenticate: function ( req ){
+		req = req || this._request || null;
+		if (req == null) {
+			this.bus.emit('error','No request stream available.');
+			return;
+		}
+	
+		//TODO: Lookup the user.
 	}
 	
 });
 
-<span id='NGN-app-Login-method-processHttpRequest'>/**
-</span> * @method processHttpRequest
- * @private
- * This method extracts information from the #request or any other HTTP request stream.
- * The #ID, #oauthprovider, #oauth, #data, and #accesstoken (if applicable) are extracted using `everyauth` (node).
- * `everyauth` appends a `user` attribute to `req` as `req.app`.  
- */
-Login.prototype.processHttpRequest = function( req ) {
-	
-	this.ID 			= req.app.id;
-	this._data			= req.app;
-	this._accesstoken	= req.app.accessToken;
-	this._oauthprovider = function (){
-							for (var obj in req.app) {
-								return obj.trim().toLowerCase();
-							}
-						}
-}
-
-<span id='NGN-app-Login-method-authenticate'>/**
-</span> * @method
- * @param {Object} [req=request]
- * Authenticate the request stream. By default, this uses the #request object.  
- */
-Login.prototype.authenticate = function ( req ){
-	req = req || this._request || null;
-	if (req == null) {
-		this.bus.emit('error','No request stream available.');
-		return;
-	}
-	
-	//TODO: Lookup the 
-}
-
-
-
 // Create a module out of this.
-module.exports = Login;
-</pre>
+module.exports = Class;</pre>
 </body>
 </html>
