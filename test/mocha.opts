@@ -1,4 +1,0 @@
---require should
---reporter list
---growl
---globals __NGN,NGN,application,session,url,form,req,res,request,response,cgi,next,browser,fn

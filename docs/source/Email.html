@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var events      = require('events'),
+    request     = require('request'),
+    uuid        = require('node-uuid'),
+    NGN			= require('./NGN.Base');
+
+<span id='NGN-Email'>/**
+</span> * @class NGN.Email
+ * Represents an email address and provides helper methods for managing it, such as
+ * validation.
+ * @extends NGN.Base
+ * @param {String} address Email address
+ * @requires node-uuid
+ * @docauthor Corey Butler
+ * @uses NGN.datasource.Redis
+ */
+var EmailAddress = NGN.extend({
+	
+<span id='NGN-Email-method-constructor'>	/**
+</span>	 * @constructor
+	 */
+	constructor: function( config ){
+		
+		EmailAddress.super.constructor.call( this );
+		
+		Object.defineProperties(this,{
+			
+<span id='NGN-Email-property-_emailRegex'>			/**
+</span>             * @property
+             * The {@see RegExp} pattern that complies with (RFC 2822)[http://www.faqs.org/rfcs/rfc2822.html].
+             * @private
+             */
+            _emailRegex: {
+                value:       /(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|&quot;(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*&quot;)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
+                enumerable:  false,
+                writable:    false
+            },
+			
+<span id='NGN-Email-property-address'>			/**
+</span>			 * @property {String} address
+			 * The email address (i.e. me@domain.com);
+			 */
+			address: {
+			    value:      config.address || null,
+			    enumerable: true,
+			    writable:   false
+			},
+			
+<span id='NGN-Email-property-isValidSyntax'>			/**
+</span>			 * @property
+			 * @returns {Boolean}
+			 * @readonly
+			 * `true`/`false` indicator of whether #address is syntactically valid.
+			 */
+		    isValidSyntax: {
+			    enumerable: true,
+			    get:        function() {
+                                return this._emailRegex.test(this.address);
+            			    }
+			},
+			
+<span id='NGN-Email-property-validationCode'>			/**
+</span>			 * @property {String} [validationCode=null]
+			 * The validation code assigned to this email address
+	         * @readonly  
+			 */
+			validationCode: {
+                value:       null,
+			    enumerable:  true,
+			    writable:    false
+			}
+		});
+		
+	},
+	
+<span id='NGN-Email-method-createValidationCode'>	/**
+</span>	 * @method
+	 * Generates a validation code.
+	 * @returns {String} 
+	 */
+	createValidationCode: function() {
+	    this.validationCode = uuid.v1().replace(/-/gi,'');
+	    
+	    //TODO: Throw an error if the email address is syntactically invalid.
+	    //TODO: Add the code to redis for the email address.
+	    
+	    return this.validationCode;
+	},
+	
+	test: function(){
+	    console.log('Test');
+	}
+	
+});
+
+
+// Create a module out of this.
+module.exports = EmailAddress;
+</pre>
+</body>
+</html>
