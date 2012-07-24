@@ -15,18 +15,20 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var fs			= require('fs'),
+  <pre class="prettyprint lang-js">var fs	 = require('fs'),
 	Base = require('./Server');
 
-<span id='NGN-util-HttpServer'>/**
-</span> * @class NGN.util.HttpServer
+<span id='NGN-core-HttpServer'>/**
+</span> * @class NGN.core.HttpServer
  * A generic utility/base class representing a HTTP server.
  * This class typically isn't invoked directly. It is designed as a base class
  * for different server types like NGN.web.Server, NGN.web.ApiServer, etc.
+ * @private
+ * @extends NGN.core.Server
  */
 var Class = Base.extend({
 	
-<span id='NGN-util-HttpServer-method-constructor'>	/**
+<span id='NGN-core-HttpServer-method-constructor'>	/**
 </span>	 * @constructor
 	 * Create a new server.
 	 * @params {Object} config
@@ -41,7 +43,7 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-util-HttpServer-property-_server'>			/**
+<span id='NGN-core-HttpServer-property-_server'>			/**
 </span>			 * @property
 			 * The core server object.
 			 * @private
@@ -50,14 +52,278 @@ var Class = Base.extend({
 			_server: {
 				value:		{},
 				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-HttpServer-property-_serverOptions'>			/**
+</span>			 * @property
+			 * The core server options object.
+			 * @private
+			 * @readonly.
+			 */
+			_serverOptions: {
+				value:		config.ssl || null,
+				enumerable:	false,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-routes'>			/**
+</span>			 * @cfg {String/Array} routes (required)
+			 * Path to directory where routes are stored. Also accepts an 
+			 * array of file paths. Routes are created by recursively
+			 * processing each specified directory and importing each `.js` file
+			 * it finds. 
+			 */
+			routes: {
+				value:		config.routes || [],
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-ssl'>			/**
+</span>			 * @cfg {Object} [ssl=null]
+			 * The certificate and key used for encrypting HTTP**S** traffic.
+			 * 
+			 * 		{
+			 * 			cert: 	'/path/to/cert.pem',
+			 * 			key:	'/path/to/key.pem',
+			 * 			ca:		'/path/to/ca.crt' // Optional
+			 * 		}
+			 * For more information about generating SSL certificates, please see the [NGN Command Line Interface Guide](#!/guide/cli). 
+			 */
+			ssl: {
+				value:		config.ssl || null,
+				enumerable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-requireClientSsl'>			/**
+</span>			 * @cfg {Boolean} [requireClientSsl=false]
+			 * Require a client/browser SSL certificate to access the server.
+			 */
+			requireClientCert: {
+				value:		config.requireClientSsl || false,
+				enumerable:	true,
 				writable:	true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-rejectUnauthorizedClientCert'>			/**
+</span>			 * @cfg {Boolean} [rejectUnauthorizedClientCert=false]
+			 * Reject a client connection if the certificate presented is not assigned by the CA cert (see #ssl), has expired, or has been revoked.
+			 * 
+			 * **Only applicable when #requireClientSsl is** `true`**.**
+			 */
+			rejectUnauthorizedCert: {
+				value:		config.rejectUnauthorizedClientCert || false,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-port'>			/**
+</span>			 * @cfg {Number} [port=80|443]
+			 * The port on which the web server will listen. Each web server must
+			 * listen on a unique port. If no port is defined, the default port `80`
+			 * will be used. If #ssl is supplied, the port will be set to `443` by default. 
+			 */
+			port: {
+				value:		config.port || (this.ssl == null ? 80 : 443),
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-autoStart'>			/**
+</span>			 * @cfg {Boolean} [autoStart=true]
+			 * Automatically start the server. If this is set to `false`, the
+			 * server will need to be running explicitly using the #start method.
+			 */
+			autoStart: {
+				value:		config.autoStart || true,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-HttpServer-property-_httpServer'>			/**
+</span>			 * @property {Object}
+			 * The raw HTTP Server.
+			 * @readonly
+			 * @private
+			 */
+			_httpServer: {
+				value:		null,
+				enumerable:	false,
+				writable:	true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-enableCompression'>			/**
+</span>			 * @cfg {Boolean} [enableCompression=false]
+			 * Compress output sent to the browser using gzip.
+			 */
+			enableCompression: {
+				value:		config.enableCompression || false,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-authenticate'>			/**
+</span>			 * @cfg {Function}
+			 * A middleware function designed for authenticating client requests before processing them.
+			 * 
+			 * The function will receive three arguments, including `request`, `response`, and `next` (optional).
+			 * If the function returns `false`, the server will respond with a `401 - Unauthorized`. If it returns
+			 * `true`, processing continues.
+			 * 
+			 * **Example**
+			 * 		var memberIds = [123,456,789,1011,1213]; 
+			 * 		
+			 * 		{
+			 * 			authenticate: function(req,res,next){
+			 * 				if (memberIds.indexOf(req.user.id) !== -1) {
+			 * 					return true;
+			 * 				} else {
+			 * 					return false;
+			 * 				}
+			 * 			}
+			 * 		}
+			 * 
+			 * If the application requires custom authentication responses (such as sending a `403 -Forbidden` instead of `401`), this configuration 
+			 * should be ignored. A custom #preRequestMiddleware method can be used instead.
+			 * 
+			 */
+			authenticate: {
+				value:		config.authenticate || function(req,res,next){next()},
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-authorize'>			/**
+</span>			 * @cfg {Function}
+			 * A middleware function designed for authorizing client requests before processing them. This is always
+			 * executed _after_ #authenticate.
+			 * 
+			 * The function will receive three arguments, including `request`, `response`, and `next` (optional).
+			 * If the function returns `false`, the server will respond with a `401 - Unauthorized`. If it returns
+			 * `true`, processing continues.
+			 * 
+			 * **Example**
+			 * 		var adminIds = [123,456]; 
+			 * 		
+			 * 		{
+			 * 			authorize: function(req,res,next){
+			 * 				if (adminIds.indexOf(req.user.id) !== -1) {
+			 * 					return true;
+			 * 				} else {
+			 * 					return false;
+			 * 				}
+			 * 			}
+			 * 		}
+			 * 
+			 * If the application requires custom authentication responses (such as sending a `403 -Forbidden` instead of `401`), this configuration 
+			 * should be ignored. A custom #preRequestMiddleware method can be used instead.
+			 * 
+			 */
+			authorize: {
+				value:		config.authorize || function(req,res,next){next()},
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
+			_ALLOWCORS: {
+				value:		config.allowCrossOrigin || null,
+				enumerable:	false,
+				writable:	true
+			},
+			
+			
+			_ALLOWMETHODS: {
+				value:		config.allowMethods || null,
+				enumerable:	false,
+				writable:	true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-enableCrossOrigin'>			/**
+</span>			 * @cfg {Boolean/String/Array} [enableCrossOrigin=false]
+			 * Set to `true` to enable requests from all origins. Alternatively,
+			 * provide a {String} domain, such as `my.safedomain.com` or `my.safedomain.com, other.domain.net`. 
+			 * Also accepts an array of domains:
+			 * 
+			 * 		['first.safedomain.com','second.safedomain.com']
+			 */
+			enableCrossOrigin: {
+				enumerable: true,
+				get:		function(){ return this._ALLOWCORS; },
+				set:		function(value){
+								if (typeof value === 'boolean'){
+									this._ALLOWCORS = value == true ? '*' : null;
+								} else {
+									this._ALLOWCORS = Array.isArray(value) == true ? value.join() : value;
+								}
+							}
+			},
+			
+<span id='NGN-core-HttpServer-cfg-enableMethods'>			/**
+</span>			 * @cfg {String/Array}
+			 * Restrict traffic to specific HTTP methods/verbs such as `GET`,`POST`,`PUT`,`DELETE`, and `TRACE`.
+			 * By default, everything is allowed. Only configure this when the application needs to explicitly
+			 * use a limited number of verbs. For example, a read-only site may set this to `GET`.
+			 */
+			enableMethods: {
+				enumerable: true,
+				get:		function(){ return this._ALLOWMETHODS; },
+				set:		function(value){
+								this._ALLOWMETHODS = (Array.isArray(value) == true ? value.join() : value).toUpperCase();
+							}
+			},
+			
+			/*
+			 * @cfg {Object}
+			 * A key/value object containing custom middleware functions executed before.  
+			 */
+			/*preRequestMiddleware: {
+				value:		config.middleware || {},
+				enumerable:	true,
+				configurable:true
+			}*/
+			
+<span id='NGN-core-HttpServer-cfg-enableBasicAuth'>			/**
+</span>			 * @cfg {Boolean} [enableBasicAuth=false]
+			 * Setting this to true will require basic authentication before completing a request. This should be 
+			 * used in conjunction with #basicAuthUsers. If no users are specified, every request will fail!
+			 * 
+			 * Basic authentication is executed _before_ #authenticate and #authorize.
+			 */
+			enableBasicAuth: {
+				value:		config.enableBasicAuth || false,
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-HttpServer-cfg-basicAuthUsers'>			/**
+</span>			 * @cfg {Object}
+			 * A key/value 
+			 */
+			basicAuthUsers: {
+				
 			}
 			
 		});
 		
+		if (this.requireClientCert || this.rejectUnauthorizedCert) {
+			this._serverOptions = this._serverOptions || {};
+			this._serverOptions.requireClientCert = true;
+		
+			if (this.rejectUnauthorizedCert)
+				this._serverOptions.rejectUnauthorizedCert = true;
+		}
+		
 	},
 	
-<span id='NGN-util-HttpServer-method-generateRoutes'>	/**
+<span id='NGN-core-HttpServer-method-generateRoutes'>	/**
 </span>	 * @method
 	 * Generates server routes. If no #routes are configured, a generic
 	 * route will be created for the URL root.
@@ -69,7 +335,7 @@ var Class = Base.extend({
 		return this._generateRoutes(callback);
 	},
 	
-<span id='NGN-util-HttpServer-method-_generateRoutes'>	/**
+<span id='NGN-core-HttpServer-method-_generateRoutes'>	/**
 </span>	 * @method
 	 * Generates server routes. If no #routes are configured, a generic
 	 * route will be created for the URL root.
@@ -145,11 +411,13 @@ var Class = Base.extend({
 														if (__res.locals) {
 															__res.locals({
 																session: this.session,
-																application: application,
 																url: this.url,
 																browser: this.browser
 															});
-														
+															
+															if (global.application !== undefined)
+																__res.locals.application = global.application.toJson;
+															
 															if (this.form !== {})
 																__res.locals.form = this.form;
 														}
@@ -182,7 +450,7 @@ var Class = Base.extend({
 		
 		// If the routes configuration provides an array of filepaths, loop
 		// through them to process them all
-		this.routes = this.routes == null ? [] : this.routes.split(',');
+		this.routes = (typeof this.routes == 'string' ? this.routes.split(',') : this.routes);
 		
 		var _hasRootRoute = false;
 		for (var i=0; i&lt;this.routes.length; i++) {	
@@ -211,15 +479,25 @@ var Class = Base.extend({
 			});*/
 			
 			// Sync Route Loader
+			console.log(this.routes,rt);
 			var filepath = require('wrench').readdirSyncRecursive(rt);
 			for (var n=0;n&lt;filepath.length;n++){
-				if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js'){
+				if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js' &amp;&amp; filepath[n].toString().trim().toLowerCase() !== 'root.js'){
 					var _rt = require(rt+'/'+filepath[n]);
 					if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
 						_hasRootRoute = true;
 					this._server.map(_rt);
 				}
 			}
+			
+			if (!_hasRootRoute &amp;&amp; require('fs').existsSync(rt+'/root.js')) {
+				console.log(rt);
+				var _rt = require(rt+'/root.js');
+				if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
+					_hasRootRoute = true;
+				this._server.map(_rt);
+			}
+				
 		}
 		
 		if (callback !== null)
@@ -228,7 +506,39 @@ var Class = Base.extend({
 			return _hasRootRoute;
 	},
 	
-<span id='NGN-util-HttpServer-event-1xx'>	/**
+<span id='NGN-core-HttpServer-event-sessionstart'>	/**
+</span>     * @event sessionstart
+     * Fired when a user session starts. 
+     */
+    onSessionStart: function(){
+    	this.fireEvent('sessionstart');
+    },
+    
+<span id='NGN-core-HttpServer-event-sessionend'>    /**
+</span>     * @event sessionend
+     * Fired when a session ends.
+     */
+    onSessionEnd: function(){
+    	this.fireEvent('sessionend');
+    },
+    
+<span id='NGN-core-HttpServer-event-requeststart'>    /**
+</span>     * @event requeststart
+     * Fired when a request starts.
+     */
+    onRequestStart: function(){
+    	this.fireEvent('requeststart');
+    },
+    
+<span id='NGN-core-HttpServer-event-requestend'>    /**
+</span>     * @event requestend
+     * Fired just before the request ends
+     */
+    onRequestEnd: function(){
+    	this.fireEvent('requestend');
+    },
+	
+<span id='NGN-core-HttpServer-event-1xx'>	/**
 </span>	 * @event 1xx
 	 * Fired on every HTTP 100-level response.
 	 */
@@ -237,7 +547,7 @@ var Class = Base.extend({
 		this.onXXX(code,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-100'>	/**
+<span id='NGN-core-HttpServer-event-100'>	/**
 </span>	 * @event 100
 	 */
 	on100: function(response){
@@ -245,7 +555,7 @@ var Class = Base.extend({
 		this.on1xx(100,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-101'>	/**
+<span id='NGN-core-HttpServer-event-101'>	/**
 </span>	 * @event 101
 	 */
 	on101: function(response){
@@ -254,7 +564,7 @@ var Class = Base.extend({
 	},
 	
 	
-<span id='NGN-util-HttpServer-event-2xx'>	/**
+<span id='NGN-core-HttpServer-event-2xx'>	/**
 </span>	 * @event 2xx
 	 * Fired on every HTTP 200-level response.
 	 */
@@ -263,7 +573,7 @@ var Class = Base.extend({
 		this.onXXX(code,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-200'>	/**
+<span id='NGN-core-HttpServer-event-200'>	/**
 </span>	 * @event 200
 	 */
 	on200: function(response){
@@ -271,7 +581,7 @@ var Class = Base.extend({
 		this.on2xx(200,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-201'>	/**
+<span id='NGN-core-HttpServer-event-201'>	/**
 </span>	 * @event 201
 	 */
 	on201: function(response){
@@ -279,7 +589,7 @@ var Class = Base.extend({
 		this.on2xx(201,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-202'>	/**
+<span id='NGN-core-HttpServer-event-202'>	/**
 </span>	 * @event 202
 	 */
 	on202: function(response){
@@ -287,7 +597,7 @@ var Class = Base.extend({
 		this.on2xx(202,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-203'>	/**
+<span id='NGN-core-HttpServer-event-203'>	/**
 </span>	 * @event 203
 	 */
 	on203: function(response){
@@ -295,7 +605,7 @@ var Class = Base.extend({
 		this.on2xx(203,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-204'>	/**
+<span id='NGN-core-HttpServer-event-204'>	/**
 </span>	 * @event 204
 	 */
 	on204: function(response){
@@ -303,7 +613,7 @@ var Class = Base.extend({
 		this.on2xx(204,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-205'>	/**
+<span id='NGN-core-HttpServer-event-205'>	/**
 </span>	 * @event 205
 	 */
 	on205: function(response){
@@ -311,7 +621,7 @@ var Class = Base.extend({
 		this.on2xx(205,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-206'>	/**
+<span id='NGN-core-HttpServer-event-206'>	/**
 </span>	 * @event 206
 	 */
 	on206: function(response){
@@ -319,7 +629,7 @@ var Class = Base.extend({
 		this.on2xx(206,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-3xx'>	/**
+<span id='NGN-core-HttpServer-event-3xx'>	/**
 </span>	 * @event 3xx
 	 * Fired on every HTTP 300-level response.
 	 */
@@ -328,7 +638,7 @@ var Class = Base.extend({
 		this.onXXX(code,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-300'>	/**
+<span id='NGN-core-HttpServer-event-300'>	/**
 </span>	 * @event 300
 	 */
 	on300: function(response){
@@ -336,7 +646,7 @@ var Class = Base.extend({
 		this.on3xx(300,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-301'>	/**
+<span id='NGN-core-HttpServer-event-301'>	/**
 </span>	 * @event 301
 	 */
 	on301: function(response){
@@ -344,7 +654,7 @@ var Class = Base.extend({
 		this.on3xx(301,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-302'>	/**
+<span id='NGN-core-HttpServer-event-302'>	/**
 </span>	 * @event 302
 	 */
 	on302: function(response){
@@ -352,7 +662,7 @@ var Class = Base.extend({
 		this.on3xx(302,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-303'>	/**
+<span id='NGN-core-HttpServer-event-303'>	/**
 </span>	 * @event 303
 	 */
 	on303: function(response){
@@ -360,7 +670,7 @@ var Class = Base.extend({
 		this.on3xx(303,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-304'>	/**
+<span id='NGN-core-HttpServer-event-304'>	/**
 </span>	 * @event 304
 	 */
 	on304: function(response){
@@ -368,7 +678,7 @@ var Class = Base.extend({
 		this.on3xx(304,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-305'>	/**
+<span id='NGN-core-HttpServer-event-305'>	/**
 </span>	 * @event 305
 	 */
 	on305: function(response){
@@ -376,7 +686,7 @@ var Class = Base.extend({
 		this.on3xx(305,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-306'>	/**
+<span id='NGN-core-HttpServer-event-306'>	/**
 </span>	 * @event 306
 	 */
 	on306: function(response){
@@ -384,7 +694,7 @@ var Class = Base.extend({
 		this.on3xx(306,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-307'>	/**
+<span id='NGN-core-HttpServer-event-307'>	/**
 </span>	 * @event 307
 	 */
 	on307: function(response){
@@ -392,7 +702,7 @@ var Class = Base.extend({
 		this.on3xx(307,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-4xx'>	/**
+<span id='NGN-core-HttpServer-event-4xx'>	/**
 </span>	 * @event 4xx
 	 * Fired on every HTTP 400-level response.
 	 */
@@ -401,7 +711,7 @@ var Class = Base.extend({
 		this.onXXX(code,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-400'>	/**
+<span id='NGN-core-HttpServer-event-400'>	/**
 </span>	 * @event 400
 	 */
 	on400: function(response){
@@ -409,7 +719,7 @@ var Class = Base.extend({
 		this.on4xx(400,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-401'>	/**
+<span id='NGN-core-HttpServer-event-401'>	/**
 </span>	 * @event 401
 	 */
 	on401: function(response){
@@ -417,7 +727,7 @@ var Class = Base.extend({
 		this.on4xx(401,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-402'>	/**
+<span id='NGN-core-HttpServer-event-402'>	/**
 </span>	 * @event 402
 	 */
 	on402: function(response){
@@ -425,7 +735,7 @@ var Class = Base.extend({
 		this.on4xx(402,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-403'>	/**
+<span id='NGN-core-HttpServer-event-403'>	/**
 </span>	 * @event 403
 	 */
 	on403: function(response){
@@ -433,7 +743,7 @@ var Class = Base.extend({
 		this.on4xx(403,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-404'>	/**
+<span id='NGN-core-HttpServer-event-404'>	/**
 </span>	 * @event 404
 	 */
 	on404: function(response){
@@ -441,7 +751,7 @@ var Class = Base.extend({
 		this.on4xx(404,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-405'>	/**
+<span id='NGN-core-HttpServer-event-405'>	/**
 </span>	 * @event 405
 	 */
 	on405: function(response){
@@ -449,7 +759,7 @@ var Class = Base.extend({
 		this.on4xx(405,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-406'>	/**
+<span id='NGN-core-HttpServer-event-406'>	/**
 </span>	 * @event 406
 	 */
 	on406: function(response){
@@ -457,7 +767,7 @@ var Class = Base.extend({
 		this.on4xx(406,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-407'>	/**
+<span id='NGN-core-HttpServer-event-407'>	/**
 </span>	 * @event 407
 	 */
 	on407: function(response){
@@ -465,7 +775,7 @@ var Class = Base.extend({
 		this.on4xx(407,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-408'>	/**
+<span id='NGN-core-HttpServer-event-408'>	/**
 </span>	 * @event 408
 	 */
 	on408: function(response){
@@ -473,7 +783,7 @@ var Class = Base.extend({
 		this.on4xx(408,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-409'>	/**
+<span id='NGN-core-HttpServer-event-409'>	/**
 </span>	 * @event 409
 	 */
 	on409: function(response){
@@ -481,7 +791,7 @@ var Class = Base.extend({
 		this.on4xx(409,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-410'>	/**
+<span id='NGN-core-HttpServer-event-410'>	/**
 </span>	 * @event 410
 	 */
 	on410: function(response){
@@ -489,7 +799,7 @@ var Class = Base.extend({
 		this.on4xx(410,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-411'>	/**
+<span id='NGN-core-HttpServer-event-411'>	/**
 </span>	 * @event 411
 	 */
 	on411: function(response){
@@ -497,7 +807,7 @@ var Class = Base.extend({
 		this.on4xx(411,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-412'>	/**
+<span id='NGN-core-HttpServer-event-412'>	/**
 </span>	 * @event 412
 	 */
 	on412: function(response){
@@ -505,7 +815,7 @@ var Class = Base.extend({
 		this.on4xx(412,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-413'>	/**
+<span id='NGN-core-HttpServer-event-413'>	/**
 </span>	 * @event 413
 	 */
 	on413: function(response){
@@ -513,7 +823,7 @@ var Class = Base.extend({
 		this.on4xx(413,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-414'>	/**
+<span id='NGN-core-HttpServer-event-414'>	/**
 </span>	 * @event 414
 	 */
 	on414: function(response){
@@ -521,7 +831,7 @@ var Class = Base.extend({
 		this.on4xx(414,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-415'>	/**
+<span id='NGN-core-HttpServer-event-415'>	/**
 </span>	 * @event 415
 	 */
 	on415: function(response){
@@ -529,7 +839,7 @@ var Class = Base.extend({
 		this.on4xx(415,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-416'>	/**
+<span id='NGN-core-HttpServer-event-416'>	/**
 </span>	 * @event 416
 	 */
 	on416: function(response){
@@ -537,7 +847,7 @@ var Class = Base.extend({
 		this.on4xx(416,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-417'>	/**
+<span id='NGN-core-HttpServer-event-417'>	/**
 </span>	 * @event 417
 	 */
 	on417: function(response){
@@ -545,7 +855,7 @@ var Class = Base.extend({
 		this.on4xx(417,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-5xx'>	/**
+<span id='NGN-core-HttpServer-event-5xx'>	/**
 </span>	 * @event 5xx
 	 * Fired on every HTTP 500-level response.
 	 */
@@ -555,7 +865,7 @@ var Class = Base.extend({
 	
 	},
 	
-<span id='NGN-util-HttpServer-event-500'>	/**
+<span id='NGN-core-HttpServer-event-500'>	/**
 </span>	 * @event 500
 	 */
 	on500: function(response){
@@ -563,7 +873,7 @@ var Class = Base.extend({
 		this.on5xx(500,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-501'>	/**
+<span id='NGN-core-HttpServer-event-501'>	/**
 </span>	 * @event 501
 	 */
 	on501: function(response){
@@ -571,7 +881,7 @@ var Class = Base.extend({
 		this.on5xx(501,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-502'>	/**
+<span id='NGN-core-HttpServer-event-502'>	/**
 </span>	 * @event 502
 	 */
 	on502: function(response){
@@ -579,7 +889,7 @@ var Class = Base.extend({
 		this.on5xx(502,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-503'>	/**
+<span id='NGN-core-HttpServer-event-503'>	/**
 </span>	 * @event 503
 	 */
 	on503: function(response){
@@ -587,7 +897,7 @@ var Class = Base.extend({
 		this.on5xx(503,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-504'>	/**
+<span id='NGN-core-HttpServer-event-504'>	/**
 </span>	 * @event 504
 	 */
 	on504: function(response){
@@ -595,7 +905,7 @@ var Class = Base.extend({
 		this.on5xx(504,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-505'>	/**
+<span id='NGN-core-HttpServer-event-505'>	/**
 </span>	 * @event 505
 	 */
 	on505: function(response){
@@ -603,7 +913,7 @@ var Class = Base.extend({
 		this.on5xx(505,response||null);
 	},
 	
-<span id='NGN-util-HttpServer-event-xxx'>	/**
+<span id='NGN-core-HttpServer-event-xxx'>	/**
 </span>	 * @event xxx
 	 * Fired on every HTTP response.
 	 */

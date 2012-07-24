@@ -15,10 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Base = require('../NGN.Base'),
-	eyes = require('eyes');
-
-require('colors');
+  <pre class="prettyprint lang-js">var Base = require('../core/Syslog');
 
 <span id='NGN-util-Logger'>/**
 </span> * @class NGN.util.Logger
@@ -31,7 +28,8 @@ require('colors');
  * by overriding functions like #info, #warn, and #error to use `node-bunyan` or `winston` methods.
  * 
  * As a result of this standardization, other NGN classes can make calls to these common methods, regardless of which underlying logging
- * utility is implemented.   
+ * utility is implemented.  
+ * @extends NGN.core.Syslog 
  */
 var Class = Base.extend({
 	
@@ -39,7 +37,7 @@ var Class = Base.extend({
 </span>	 * @constructor
 	 * Create a logger.
 	 * @params {Object} [config]
-	 * @returns {NGN.util.Logger}
+	 * @returns {NGN.core.Syslog}
 	 */
 	constructor: function(config){
 		
@@ -47,175 +45,8 @@ var Class = Base.extend({
 		
 		Class.super.constructor.call(this,config);
 		
-		Object.defineProperties(this,{
-			
-<span id='NGN-util-Logger-cfg-exitOnError'>			/**
-</span>			 * @cfg {Boolean} [exitOnError=false]
-			 * Stop the node process/application on error.
-			 */
-			exitOnError: {
-				value:		config.exitOnError || false,
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-util-Logger-cfg-disabled'>			/**
-</span>			 * @cfg {Boolean} [disabled=false]
-			 * Set to `true` to disable logging.
-			 */
-			disabled: {
-				value:		config.disabled || false,
-				enumerable:	true,
-				writable:	true
-			}
-			
-		});
-		
-	},
-	
-<span id='NGN-util-Logger-method-log'>	/**
-</span>	 * @method
-	 * Log a record.
-	 * @param {Object/String} record
-	 * The object or record to be logged.
-	 */
-	log: function(record) {
-		this.info(record);
-	},
-	
-<span id='NGN-util-Logger-method-info'>	/**
-</span>	 * @method
-	 * Logs basic information.
-	 * @param {Object/String} record
-	 * The object or record to be logged.
-	 */
-	info: function(record){
-		if (!this.disabled) {
-			if (typeof record === 'object')
-				eyes.inspect(record);
-			else
-				console.log('INFO: '.yellow.bold+record.yellow);
-			this.onInfo(record);
-		}
-	},
-	
-<span id='NGN-util-Logger-method-error'>	/**
-</span>	 * @method
-	 * Logs an error.
-	 * @param {Object/String} record
-	 * The object or record to be logged.
-	 */
-	error: function(record){
-		if (!this.disabled) {
-			if (typeof record === 'object')
-				eyes.inspect(record);
-			else
-				console.log('ERROR: '.red.bold+record.red);
-			
-			this.onError();
-		}
-	},
-	
-<span id='NGN-util-Logger-method-warn'>	/**
-</span>	 * @method
-	 * Logs a warning.
-	 * @param {Object/String} record
-	 * The object or record to be logged.
-	 */
-	warn: function(record){
-		if (!this.disabled) {
-			if (typeof record === 'object')
-				eyes.inspect(record);
-			else
-				console.log('WARNING: '.magenta.bold+record.magenta);
-			this.onWarn(record);
-		}
-	},
-	
-<span id='NGN-util-Logger-method-disable'>	/**
-</span>	 * @method
-	 * A direct method for disabling logging.
-	 */
-	disable: function(){
-		this.onDisable();
-	},
-	
-<span id='NGN-util-Logger-method-enable'>	/**
-</span>	 * @method
-	 * A direct method for enabling logging 
-	 */
-	enable: function(option){
-		this.onEnable();
-	},
-	
-<span id='NGN-util-Logger-method-toggle'>	/**
-</span>	 * @method
-	 * Toggle whether logging is enabled or not.
-	 */
-	toggle: function(){
-		if (this.disabled)
-			this.enable();
-		else
-			this.disable();
-	},
-	
-<span id='NGN-util-Logger-event-log'>	/**
-</span>	 * @event log::disabled
-	 * Fired when the logging mechanism is disabled.
-	 * @returns {NGN.util.Logger}
-	 */
-	onDisable: function(){
-		if (!this.disabled) {
-			this.disabled = true;
-			this.fireEvent('log::disabled',this);
-		}
-	},
-	
-<span id='NGN-util-Logger-event-log'>	/**
-</span>	 * @event log::enabled
-	 * Fired when the logging mechanism is enabled.
-	 * @returns {NGN.util.Logger}
-	 */
-	onEnable: function(){
-		if(this.disabled){
-			this.disabled = false;
-			this.fireEvent('log::enabled',this);
-		}
-	},
-	
-	onLog: function(record) {
-		this.onInfo(record||null);
-	},
-	
-<span id='NGN-util-Logger-event-log'>	/**
-</span>	 * @event log::info
-	 * Fired when a record is logged.
-	 * @param {Object} record
-	 */
-	onInfo: function(record){
-		this.fireEvent('log::info',record||null);
-	},
-	
-<span id='NGN-util-Logger-event-log'>	/**
-</span>	 * @event log::warn
-	 * Fired when a warning is logged.
-	 * @param {Object} record
-	 */
-	onWarn: function(record){
-		this.fireEvent('log::warn',record||null);
-	},
-	
-<span id='NGN-util-Logger-event-log'>	/**
-</span>	 * @event log::error
-	 * Fired when an error is logged.
- 	 * @param {Object} e
-	 */
-	onError: function(e) {
-		this.fireError(e);
-		if (this.exitOnError)
-			process.exit();
 	}
-	
+		
 });
 
 module.exports = Class;</pre>

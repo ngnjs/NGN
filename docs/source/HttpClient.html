@@ -16,18 +16,20 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var fs			= require('fs'),
-	Base		= require('../NGN.Base');
+	Base		= require('../NGN.core');
 
-<span id='NGN-util-HttpClient'>/**
-</span> * @class NGN.util.HttpClient
+<span id='NGN-core-HttpClient'>/**
+</span> * @class NGN.core.HttpClient
  * A base class for HTTP operations. This provides common functionality to NGN.web.Client,
  * NGN.web.JsonClient, etc.
  * 
  * This is a utility class not designed for direct use. It is meant to be extended by HTTP clients.
+ * @private
+ * @extends NGN.core
  */
 var Class = Base.extend({
 	
-<span id='NGN-util-HttpClient-method-constructor'>	/**
+<span id='NGN-core-HttpClient-method-constructor'>	/**
 </span>	 * @constructor
 	 * Create a TCP client.
 	 */
@@ -39,12 +41,12 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-util-HttpClient-cfg-userAgent'>			/**
+<span id='NGN-core-HttpClient-cfg-userAgent'>			/**
 </span>			 * @cfg {String} [userAgent=node.js]
 			 * A custom user agent string to use when making requests.
 			 */
 			userAgent: {
-				value:		config.userAgent || 'node.js',
+				value:		config.appAgent || 'node.js',
 				enumerable:	true,
 				writable:	true
 			}
@@ -54,32 +56,32 @@ var Class = Base.extend({
 	},
 	
 	// The following must be overridden
-<span id='NGN-util-HttpClient-method-get'>	/**
+<span id='NGN-core-HttpClient-method-get'>	/**
 </span>	 * @method
 	 */
 	get: function(){},
-<span id='NGN-util-HttpClient-method-put'>	/**
+<span id='NGN-core-HttpClient-method-put'>	/**
 </span>	 * @method
 	 */
 	put: function(){},
-<span id='NGN-util-HttpClient-method-post'>	/**
+<span id='NGN-core-HttpClient-method-post'>	/**
 </span>	 * @method
 	 */
 	post:function(){},
-<span id='NGN-util-HttpClient-method-del'>	/**
+<span id='NGN-core-HttpClient-method-del'>	/**
 </span>	 * @method
 	 */
 	del: function(){},
-<span id='NGN-util-HttpClient-method-head'>	/**
+<span id='NGN-core-HttpClient-method-head'>	/**
 </span>	 * @method
 	 */
 	head:function(){},
-<span id='NGN-util-HttpClient-method-trace'>	/**
+<span id='NGN-core-HttpClient-method-trace'>	/**
 </span>	 * @method
 	 */
 	trace:function(){},
 	
-<span id='NGN-util-HttpClient-method-GET'>	/**
+<span id='NGN-core-HttpClient-method-GET'>	/**
 </span>	 * @method GET
 	 * Fire the #beforeget event, then execute #get.
 	 */
@@ -88,7 +90,7 @@ var Class = Base.extend({
 		this.get.apply(this,arguments);
 	},
 	
-<span id='NGN-util-HttpClient-method-PUT'>	/**
+<span id='NGN-core-HttpClient-method-PUT'>	/**
 </span>	 * @method
 	 * Fire the #beforeput event, then execute #put
 	 */
@@ -97,7 +99,7 @@ var Class = Base.extend({
 		this.put.apply(this,arguments);
 	},
 	
-<span id='NGN-util-HttpClient-method-POST'>	/**
+<span id='NGN-core-HttpClient-method-POST'>	/**
 </span>	 * @method
 	 * Fire the #beforepost event, then execute #post.
 	 */
@@ -106,7 +108,7 @@ var Class = Base.extend({
 		this.post.apply(this,arguments);
 	},
 	
-<span id='NGN-util-HttpClient-method-DEL'>	/**
+<span id='NGN-core-HttpClient-method-DEL'>	/**
 </span>	 * @method
 	 * Fire the #beforedelete event, then execute #del
 	 */
@@ -115,7 +117,7 @@ var Class = Base.extend({
 		this.del.apply(this,arguments);
 	},
 	
-<span id='NGN-util-HttpClient-method-HEAD'>	/**
+<span id='NGN-core-HttpClient-method-HEAD'>	/**
 </span>	 * @method
 	 * Fire the #beforehead event, then execute #head 
 	 */
@@ -124,7 +126,7 @@ var Class = Base.extend({
 		this.head.apply(this,arguments);
 	},
 	
-<span id='NGN-util-HttpClient-method-TRACE'>	/**
+<span id='NGN-core-HttpClient-method-TRACE'>	/**
 </span>	 * @method
 	 * Fire the #beforetrace event, then execute #trace 
 	 */
@@ -133,7 +135,7 @@ var Class = Base.extend({
 		this.head.apply(this,arguments);
 	},
 	
-<span id='NGN-util-HttpClient-event-beforeget'>	/**
+<span id='NGN-core-HttpClient-event-beforeget'>	/**
 </span>	 * @event beforeget
 	 * Fired before a `GET` request. 
 	 */
@@ -141,7 +143,7 @@ var Class = Base.extend({
 		this.emit('beforeget',this);
 	},
 	
-<span id='NGN-util-HttpClient-event-beforeput'>	/**
+<span id='NGN-core-HttpClient-event-beforeput'>	/**
 </span>	 * @event beforeput
 	 * Fired before a `PUT` request. 
 	 */
@@ -149,7 +151,7 @@ var Class = Base.extend({
 		this.emit('beforeput',this);
 	},
 	
-<span id='NGN-util-HttpClient-event-beforepost'>	/**
+<span id='NGN-core-HttpClient-event-beforepost'>	/**
 </span>	 * @event beforepost
 	 * Fired before a `POST` request 
 	 */
@@ -157,7 +159,7 @@ var Class = Base.extend({
 		this.emit('beforepost',this);
 	},
 	
-<span id='NGN-util-HttpClient-event-beforedelete'>	/**
+<span id='NGN-core-HttpClient-event-beforedelete'>	/**
 </span>	 * @event beforedelete
 	 * Fired before a `DELETE` request. 
 	 */
@@ -165,7 +167,7 @@ var Class = Base.extend({
 		this.emit('beforedelete',this);
 	},
 	
-<span id='NGN-util-HttpClient-event-beforehead'>	/**
+<span id='NGN-core-HttpClient-event-beforehead'>	/**
 </span>	 * @event beforehead
 	 * Fired before a `HEAD` request. 
 	 */
@@ -173,7 +175,7 @@ var Class = Base.extend({
 		this.emit('beforehead',this)
 	},
 	
-<span id='NGN-util-HttpClient-event-send'>	/**
+<span id='NGN-core-HttpClient-event-send'>	/**
 </span>	 * @event send
 	 * Fired when a response is sent to the client.
 	 * @returns {Object} responseStream
@@ -182,7 +184,7 @@ var Class = Base.extend({
 		this.emit('receive',response||null);
 	},
 	
-<span id='NGN-util-HttpClient-event-GET'>	/**
+<span id='NGN-core-HttpClient-event-GET'>	/**
 </span>	 * @event GET
 	 * Fired when the client completes a GET request
 	 */
@@ -190,7 +192,7 @@ var Class = Base.extend({
 		thie.emit('GET',{req:req,res:res});
 	},
 	
-<span id='NGN-util-HttpClient-event-GET'>	/**
+<span id='NGN-core-HttpClient-event-GET'>	/**
 </span>	 * @event GET
 	 * Fired when the client completes a GET request
 	 */
@@ -198,7 +200,7 @@ var Class = Base.extend({
 		this.emit('POST',{req:req,res:res})
 	},
 	
-<span id='NGN-util-HttpClient-event-PUT'>	/**
+<span id='NGN-core-HttpClient-event-PUT'>	/**
 </span>	 * @event PUT
 	 * Fired when the client completes a PUT request
 	 */
@@ -206,7 +208,7 @@ var Class = Base.extend({
 		this.emit('PUT',{req:req,res:res})
 	},
 	
-<span id='NGN-util-HttpClient-event-DELETE'>	/**
+<span id='NGN-core-HttpClient-event-DELETE'>	/**
 </span>	 * @event DELETE
 	 * Fired when the client completes a DELETE request
 	 */
@@ -214,7 +216,7 @@ var Class = Base.extend({
 		this.emit('DELETE',{req:req,res:res})
 	},
 	
-<span id='NGN-util-HttpClient-event-HEAD'>	/**
+<span id='NGN-core-HttpClient-event-HEAD'>	/**
 </span>	 * @event HEAD
 	 * Fired when the client completes a HEAD request
 	 */
@@ -222,7 +224,7 @@ var Class = Base.extend({
 		this.emit('HEAD',{req:req,res:res})
 	},
 	
-<span id='NGN-util-HttpClient-event-TRACE'>	/**
+<span id='NGN-core-HttpClient-event-TRACE'>	/**
 </span>	 * @event TRACE
 	 * Fired when the client completes a TRACE request
 	 */
@@ -234,7 +236,7 @@ var Class = Base.extend({
 		this.emit('OPTIONS',{req:req,res:res})
 	},
 	
-<span id='NGN-util-HttpClient-event-1xx'>	/**
+<span id='NGN-core-HttpClient-event-1xx'>	/**
 </span>	 * @event 1xx
 	 * Fired on every HTTP 100-level response.
 	 */
@@ -243,7 +245,7 @@ var Class = Base.extend({
 		this.onXXX(code);
 	},
 	
-<span id='NGN-util-HttpClient-event-100'>	/**
+<span id='NGN-core-HttpClient-event-100'>	/**
 </span>	 * @event 100
 	 */
 	on100: function(response) {
@@ -251,7 +253,7 @@ var Class = Base.extend({
 		this.on1xx(100);
 	},
 	
-<span id='NGN-util-HttpClient-event-101'>	/**
+<span id='NGN-core-HttpClient-event-101'>	/**
 </span>	 * @event 101
 	 */
 	on101: function(response){
@@ -260,7 +262,7 @@ var Class = Base.extend({
 	},
 	
 	
-<span id='NGN-util-HttpClient-event-2xx'>	/**
+<span id='NGN-core-HttpClient-event-2xx'>	/**
 </span>	 * @event 2xx
 	 * Fired on every HTTP 200-level response.
 	 */
@@ -269,7 +271,7 @@ var Class = Base.extend({
 		this.onXXX(code);
 	},
 	
-<span id='NGN-util-HttpClient-event-200'>	/**
+<span id='NGN-core-HttpClient-event-200'>	/**
 </span>	 * @event 200
 	 */
 	on200: function(response){
@@ -277,7 +279,7 @@ var Class = Base.extend({
 		this.on2xx(200);
 	},
 	
-<span id='NGN-util-HttpClient-event-201'>	/**
+<span id='NGN-core-HttpClient-event-201'>	/**
 </span>	 * @event 201
 	 */
 	on201: function(response){
@@ -285,7 +287,7 @@ var Class = Base.extend({
 		this.on2xx(201);
 	},
 	
-<span id='NGN-util-HttpClient-event-202'>	/**
+<span id='NGN-core-HttpClient-event-202'>	/**
 </span>	 * @event 202
 	 */
 	on202: function(response){
@@ -293,7 +295,7 @@ var Class = Base.extend({
 		this.on2xx(202);
 	},
 	
-<span id='NGN-util-HttpClient-event-203'>	/**
+<span id='NGN-core-HttpClient-event-203'>	/**
 </span>	 * @event 203
 	 */
 	on203: function(response){
@@ -301,7 +303,7 @@ var Class = Base.extend({
 		this.on2xx(203);
 	},
 	
-<span id='NGN-util-HttpClient-event-204'>	/**
+<span id='NGN-core-HttpClient-event-204'>	/**
 </span>	 * @event 204
 	 */
 	on204: function(response){
@@ -309,7 +311,7 @@ var Class = Base.extend({
 		this.on2xx(204);
 	},
 	
-<span id='NGN-util-HttpClient-event-205'>	/**
+<span id='NGN-core-HttpClient-event-205'>	/**
 </span>	 * @event 205
 	 */
 	on205: function(response){
@@ -317,7 +319,7 @@ var Class = Base.extend({
 		this.on2xx(205);
 	},
 	
-<span id='NGN-util-HttpClient-event-206'>	/**
+<span id='NGN-core-HttpClient-event-206'>	/**
 </span>	 * @event 206
 	 */
 	on206: function(response){
@@ -325,7 +327,7 @@ var Class = Base.extend({
 		this.on2xx(206);
 	},
 	
-<span id='NGN-util-HttpClient-event-3xx'>	/**
+<span id='NGN-core-HttpClient-event-3xx'>	/**
 </span>	 * @event 3xx
 	 * Fired on every HTTP 300-level response.
 	 */
@@ -334,7 +336,7 @@ var Class = Base.extend({
 		this.onXXX(code);
 	},
 	
-<span id='NGN-util-HttpClient-event-300'>	/**
+<span id='NGN-core-HttpClient-event-300'>	/**
 </span>	 * @event 300
 	 */
 	on300: function(response){
@@ -342,7 +344,7 @@ var Class = Base.extend({
 		this.on3xx(300);
 	},
 	
-<span id='NGN-util-HttpClient-event-301'>	/**
+<span id='NGN-core-HttpClient-event-301'>	/**
 </span>	 * @event 301
 	 */
 	on301: function(response){
@@ -350,7 +352,7 @@ var Class = Base.extend({
 		this.on3xx(301);
 	},
 	
-<span id='NGN-util-HttpClient-event-302'>	/**
+<span id='NGN-core-HttpClient-event-302'>	/**
 </span>	 * @event 302
 	 */
 	on302: function(response){
@@ -358,7 +360,7 @@ var Class = Base.extend({
 		this.on3xx(302);
 	},
 	
-<span id='NGN-util-HttpClient-event-303'>	/**
+<span id='NGN-core-HttpClient-event-303'>	/**
 </span>	 * @event 303
 	 */
 	on303: function(response){
@@ -366,7 +368,7 @@ var Class = Base.extend({
 		this.on3xx(303);
 	},
 	
-<span id='NGN-util-HttpClient-event-304'>	/**
+<span id='NGN-core-HttpClient-event-304'>	/**
 </span>	 * @event 304
 	 */
 	on304: function(response){
@@ -374,7 +376,7 @@ var Class = Base.extend({
 		this.on3xx(304);
 	},
 	
-<span id='NGN-util-HttpClient-event-305'>	/**
+<span id='NGN-core-HttpClient-event-305'>	/**
 </span>	 * @event 305
 	 */
 	on305: function(response){
@@ -382,7 +384,7 @@ var Class = Base.extend({
 		this.on3xx();
 	},
 	
-<span id='NGN-util-HttpClient-event-306'>	/**
+<span id='NGN-core-HttpClient-event-306'>	/**
 </span>	 * @event 306
 	 */
 	on306: function(response){
@@ -390,7 +392,7 @@ var Class = Base.extend({
 		this.on3xx(306);
 	},
 	
-<span id='NGN-util-HttpClient-event-307'>	/**
+<span id='NGN-core-HttpClient-event-307'>	/**
 </span>	 * @event 307
 	 */
 	on307: function(response){
@@ -398,7 +400,7 @@ var Class = Base.extend({
 		this.on3xx(307);
 	},
 	
-<span id='NGN-util-HttpClient-event-4xx'>	/**
+<span id='NGN-core-HttpClient-event-4xx'>	/**
 </span>	 * @event 4xx
 	 * Fired on every HTTP 400-level response.
 	 */
@@ -407,7 +409,7 @@ var Class = Base.extend({
 		this.onXXX(code);
 	},
 	
-<span id='NGN-util-HttpClient-event-400'>	/**
+<span id='NGN-core-HttpClient-event-400'>	/**
 </span>	 * @event 400
 	 */
 	on400: function(response){
@@ -415,7 +417,7 @@ var Class = Base.extend({
 		this.on4xx(400);
 	},
 	
-<span id='NGN-util-HttpClient-event-401'>	/**
+<span id='NGN-core-HttpClient-event-401'>	/**
 </span>	 * @event 401
 	 */
 	on401: function(response){
@@ -423,7 +425,7 @@ var Class = Base.extend({
 		this.on4xx(401);
 	},
 	
-<span id='NGN-util-HttpClient-event-402'>	/**
+<span id='NGN-core-HttpClient-event-402'>	/**
 </span>	 * @event 402
 	 */
 	on402: function(response){
@@ -431,7 +433,7 @@ var Class = Base.extend({
 		this.on4xx(402);
 	},
 	
-<span id='NGN-util-HttpClient-event-403'>	/**
+<span id='NGN-core-HttpClient-event-403'>	/**
 </span>	 * @event 403
 	 */
 	on403: function(response){
@@ -439,7 +441,7 @@ var Class = Base.extend({
 		this.on4xx(403);
 	},
 	
-<span id='NGN-util-HttpClient-event-404'>	/**
+<span id='NGN-core-HttpClient-event-404'>	/**
 </span>	 * @event 404
 	 */
 	on404: function(response){
@@ -447,7 +449,7 @@ var Class = Base.extend({
 		this.on4xx(404);
 	},
 	
-<span id='NGN-util-HttpClient-event-405'>	/**
+<span id='NGN-core-HttpClient-event-405'>	/**
 </span>	 * @event 405
 	 */
 	on405: function(response){
@@ -455,7 +457,7 @@ var Class = Base.extend({
 		this.on4xx(405);
 	},
 	
-<span id='NGN-util-HttpClient-event-406'>	/**
+<span id='NGN-core-HttpClient-event-406'>	/**
 </span>	 * @event 406
 	 */
 	on406: function(response){
@@ -463,7 +465,7 @@ var Class = Base.extend({
 		this.on4xx(406);
 	},
 	
-<span id='NGN-util-HttpClient-event-407'>	/**
+<span id='NGN-core-HttpClient-event-407'>	/**
 </span>	 * @event 407
 	 */
 	on407: function(response){
@@ -471,7 +473,7 @@ var Class = Base.extend({
 		this.on4xx(407);
 	},
 	
-<span id='NGN-util-HttpClient-event-408'>	/**
+<span id='NGN-core-HttpClient-event-408'>	/**
 </span>	 * @event 408
 	 */
 	on408: function(response){
@@ -479,7 +481,7 @@ var Class = Base.extend({
 		this.on4xx(408);
 	},
 	
-<span id='NGN-util-HttpClient-event-409'>	/**
+<span id='NGN-core-HttpClient-event-409'>	/**
 </span>	 * @event 409
 	 */
 	on409: function(response){
@@ -487,7 +489,7 @@ var Class = Base.extend({
 		this.on4xx(409);
 	},
 	
-<span id='NGN-util-HttpClient-event-410'>	/**
+<span id='NGN-core-HttpClient-event-410'>	/**
 </span>	 * @event 410
 	 */
 	on410: function(response){
@@ -495,7 +497,7 @@ var Class = Base.extend({
 		this.on4xx(410);
 	},
 	
-<span id='NGN-util-HttpClient-event-411'>	/**
+<span id='NGN-core-HttpClient-event-411'>	/**
 </span>	 * @event 411
 	 */
 	on411: function(response){
@@ -503,7 +505,7 @@ var Class = Base.extend({
 		this.on4xx(411);
 	},
 	
-<span id='NGN-util-HttpClient-event-412'>	/**
+<span id='NGN-core-HttpClient-event-412'>	/**
 </span>	 * @event 412
 	 */
 	on412: function(response){
@@ -511,7 +513,7 @@ var Class = Base.extend({
 		this.on4xx(412);
 	},
 	
-<span id='NGN-util-HttpClient-event-413'>	/**
+<span id='NGN-core-HttpClient-event-413'>	/**
 </span>	 * @event 413
 	 */
 	on413: function(response){
@@ -519,7 +521,7 @@ var Class = Base.extend({
 		this.on4xx(413);
 	},
 	
-<span id='NGN-util-HttpClient-event-414'>	/**
+<span id='NGN-core-HttpClient-event-414'>	/**
 </span>	 * @event 414
 	 */
 	on414: function(response){
@@ -527,7 +529,7 @@ var Class = Base.extend({
 		this.on4xx(414);
 	},
 	
-<span id='NGN-util-HttpClient-event-415'>	/**
+<span id='NGN-core-HttpClient-event-415'>	/**
 </span>	 * @event 415
 	 */
 	on415: function(response){
@@ -535,7 +537,7 @@ var Class = Base.extend({
 		this.on4xx(415);
 	},
 	
-<span id='NGN-util-HttpClient-event-416'>	/**
+<span id='NGN-core-HttpClient-event-416'>	/**
 </span>	 * @event 416
 	 */
 	on416: function(response){
@@ -543,7 +545,7 @@ var Class = Base.extend({
 		this.on4xx(416);
 	},
 	
-<span id='NGN-util-HttpClient-event-417'>	/**
+<span id='NGN-core-HttpClient-event-417'>	/**
 </span>	 * @event 417
 	 */
 	on417: function(response){
@@ -551,7 +553,7 @@ var Class = Base.extend({
 		this.on4xx(417);
 	},
 	
-<span id='NGN-util-HttpClient-event-5xx'>	/**
+<span id='NGN-core-HttpClient-event-5xx'>	/**
 </span>	 * @event 5xx
 	 * Fired on every HTTP 500-level response.
 	 */
@@ -561,7 +563,7 @@ var Class = Base.extend({
 	
 	},
 	
-<span id='NGN-util-HttpClient-event-500'>	/**
+<span id='NGN-core-HttpClient-event-500'>	/**
 </span>	 * @event 500
 	 */
 	on500: function(response){
@@ -569,7 +571,7 @@ var Class = Base.extend({
 		this.on5xx(500);
 	},
 	
-<span id='NGN-util-HttpClient-event-501'>	/**
+<span id='NGN-core-HttpClient-event-501'>	/**
 </span>	 * @event 501
 	 */
 	on501: function(response){
@@ -577,7 +579,7 @@ var Class = Base.extend({
 		this.on5xx(501);
 	},
 	
-<span id='NGN-util-HttpClient-event-502'>	/**
+<span id='NGN-core-HttpClient-event-502'>	/**
 </span>	 * @event 502
 	 */
 	on502: function(response){
@@ -585,7 +587,7 @@ var Class = Base.extend({
 		this.on5xx(502);
 	},
 	
-<span id='NGN-util-HttpClient-event-503'>	/**
+<span id='NGN-core-HttpClient-event-503'>	/**
 </span>	 * @event 503
 	 */
 	on503: function(response){
@@ -593,7 +595,7 @@ var Class = Base.extend({
 		this.on5xx(503);
 	},
 	
-<span id='NGN-util-HttpClient-event-504'>	/**
+<span id='NGN-core-HttpClient-event-504'>	/**
 </span>	 * @event 504
 	 */
 	on504: function(response){
@@ -601,7 +603,7 @@ var Class = Base.extend({
 		this.on5xx(504);
 	},
 	
-<span id='NGN-util-HttpClient-event-505'>	/**
+<span id='NGN-core-HttpClient-event-505'>	/**
 </span>	 * @event 505
 	 */
 	on505: function(response){
@@ -609,7 +611,7 @@ var Class = Base.extend({
 		this.on5xx(505);
 	},
 	
-<span id='NGN-util-HttpClient-event-xxx'>	/**
+<span id='NGN-core-HttpClient-event-xxx'>	/**
 </span>	 * @event xxx
 	 * Fired on every HTTP response.
 	 */

@@ -39,10 +39,8 @@ var fs = require('fs');
 var namespace = {};
 require('wrench').readdirSyncRecursive(__dirname).forEach(function( file ){
     if (__dirname+'/'+file !== __filename 
-    	&amp;&amp; file !== 'NGN.Base.js' 
-    	&amp;&amp; file !== 'NGN.js' 
-    	&amp;&amp; file !== 'NGN.Application.js'
-    	&amp;&amp; file !== 'NGN.Session.js' 
+    	&amp;&amp; file !== 'NGN.core.js' 
+    	&amp;&amp; file !== 'NGN.js'
     	&amp;&amp; file !== 'BaseClass.js' 
     	&amp;&amp; file.indexOf('.js') &gt;= 0) {
         var path    = file.replace(/\\/gi,'/').replace(/\/\//gi,'/').replace(/\.js/gi,'').split('/'),
@@ -161,6 +159,92 @@ var NGN = require('./BaseClass').extend({
 						    }
             },
             
+<span id='NGN-static-property-fileSeparator'>            /**
+</span>             * @property {String}
+             * The platform-specific path separator. `\\` or `/`.
+             * @readonly
+             * @static
+             */
+            fileSeparator: {
+            	enumerable:	true,
+            	get:		function() { return require('path').sep; }
+            },
+            
+<span id='NGN-static-property-DNS'>            /**
+</span>             * @property {Object}
+             * A convenience reference to node's [dns](http://nodejs.org/api/dns.html) object.
+             * 
+             * This object contains several methods for DNS requests.
+             * 
+             * * **NGN.DNS.lookup(domain, [family], callback)**
+			 * * **NGN.DNS.resolve(domain, [rrtype], callback)**
+			 * * **NGN.DNS.resolve4(domain, callback)**
+			 * * **NGN.DNS.resolve6(domain, callback)**
+			 * * **NGN.DNS.resolveMx(domain, callback)**
+			 * * **NGN.DNS.resolveTxt(domain, callback)**
+			 * * **NGN.DNS.resolveSrv(domain, callback)**
+			 * * **NGN.DNS.resolveNs(domain, callback)**
+			 * * **NGN.DNS.resolveCname(domain, callback)**
+			 * * **NGN.DNS.reverse(ip, callback)**
+             * 
+             * @static
+             * @readonly
+             */
+            DNS: {
+            	enumerable:	true,
+            	get:		function() { return require('dns'); }
+            },
+            
+<span id='NGN-static-property-OS'>            /**
+</span>             * @property
+             * A convenience reference to node's [os](http://nodejs.org/api/os.html) object.
+             * 
+             * This object contains several methods to reveal OS-level information:
+             * 
+             * * **NGN.OS.tmpDir()**
+			 * * **NGN.OS.hostname()**
+			 * * **NGN.OS.type()**
+			 * * **NGN.OS.platform()**
+			 * * **NGN.OS.arch()**
+			 * * **NGN.OS.release()**
+			 * * **NGN.OS.uptime()**
+			 * * **NGN.OS.loadavg()**
+			 * * **NGN.OS.totalmem()**
+			 * * **NGN.OS.freemem()**
+			 * * **NGN.OS.cpus()**
+			 * * **NGN.OS.networkInterfaces()**
+			 * * **NGN.OS.EOL**
+			 * * **NGN.OS.fileSeparator**
+			 * @readonly
+			 * @static
+             */
+            OS: {
+            	eumerable:	true,
+            	get: 		function() { return require('os')}
+            },
+            
+<span id='NGN-static-property-path'>            /**
+</span>		 	 * @property {Object}
+		 	 * A convenience reference to node's [path](http://nodejs.org/api/path.html) object.
+		 	 * 
+		 	 * This object contains several methods for string manipulation of filepaths.
+		 	 * 
+		 	 * * **NGN.path.normalize('/foo/bar//baz/asdf/quux/..')** returns `'/foo/bar/baz/asdf'`
+		 	 * * **NGN.path.join([path1], [path2], [...])** returns `'path1/path2'
+			 * * **path.resolve([from ...], to)** resolves to an absolute path.
+			 * * **path.relative(from, to)** resolves to a relative directory path. This is used when traversing from one directory to another.
+			 * * **path.dirname(p)** if p = '/my/path', returns `/my/path`
+			 * * **path.basename(p, [ext])** returns the filename portion of the path.
+			 * * **path.extname(p)** returns the extension of the filename portion of the path.
+			 * 
+			 * @static
+			 * @readonly
+		 	 */
+		 	path: {
+		 		enumerable:	true,
+		 		get:		function(){ return require('path'); },
+		 	},
+            
 <span id='NGN-property-_xtn'>            /**
 </span>             * @property {Array}
              * Stores the extension names. Primarily used for #getExtensions
@@ -171,9 +255,41 @@ var NGN = require('./BaseClass').extend({
             	value:		[],
             	enumerable:	false,
             	writable:	true
+            },
+            
+<span id='NGN-property-emptyFn'>            /**
+</span>             * @property {Function}
+             * An empty function, which doesn't do anything.
+             * @protected
+             */
+            emptyFn: {
+            	value: 		function(){},
+            	enumerable: false,
+            	configurable: true
+            },
+            
+            _cmd: {
+            	value:		null,
+            	enumerable:	false,
+            	writable:	true
+            },
+            
+<span id='NGN-property-command'>            /**
+</span>             * @property {NGN.core.Command}
+             * A reference to the command line interface.
+             */
+            command: {
+            	enumerable:	true,
+            	get:		function() {
+			            		if (this._cmd == null)
+			            			this._cmd = new __NGN.core.Command();
+			            		return this._cmd;
+			            	}
             }
             
         });
+        
+        this.OS.fileSeparator = this.fileSeparator;
         
         // Add each framework element to the NGN namespace  
         for (var ns in namespace) {
@@ -187,18 +303,20 @@ var NGN = require('./BaseClass').extend({
         
         // Initialize common events
         var _events = [
-        				'Error',
-        				'ApplicationStart',
-        				'ApplicationEnd',
-        				'SessionStart',
-        				'SessionEnd',
-        				'RequestStart',
-        				'RequestEnd'
+        				'Error'
         			];
         
         // Add event listeners for override.
         for (var i=0;i&lt;_events.length;i++)
         	this.addEventListener(_events[i].toLowerCase(),this['on'+_events[i]]);
+    },
+    
+<span id='NGN-method-exec'>    /**
+</span>     * @method
+     * A convenience method for using NGN.core.Command#exec.
+     */
+    exec: function() {
+    	this.command.exec(arguments);
     },
     
 <span id='NGN-method-addEventListener'>    /**
@@ -227,7 +345,7 @@ var NGN = require('./BaseClass').extend({
 </span>	 * @method
 	 * A shortcut method for creating new classes.
 	 * 		NGN.define('ORG.team.Member',{
-	 * 			extend: 'NGN.user.Person',
+	 * 			extend: 'NGN.app.Person',
 	 * 			boss: 'CEO',
 	 * 			division: 'Executive',
 	 * 			paygrade: 2,
@@ -236,7 +354,7 @@ var NGN = require('./BaseClass').extend({
 	 * 				return role+', Office of the CEO'
 	 * 			}
 	 * 		});
-	 * The example above would extend `NGN.user.Person` to create `ORG.team.Person`.
+	 * The example above would extend `NGN.app.Person` to create `ORG.team.Person`.
 	 * If the `ORG.team` namespace does not exist, it will be created
 	 * dynamically before creating the new class.
  	 * @param {String} target
@@ -263,7 +381,7 @@ var NGN = require('./BaseClass').extend({
 			pkg = pkg[ns[i].trim()];
 		}
 		
-		var target = config.extend || 'NGN.Base';
+		var target = config.extend || 'NGN.core';
 		var _cls = target.split('.'),
 			_use = __NGN;
 		for(var i=1;i&lt;target.length;i++){
@@ -512,7 +630,7 @@ var NGN = require('./BaseClass').extend({
 <span id='NGN-method-registerServer'>    /**
 </span>      * @method
       * Register a server 
-	  * @param {NGN.util.Server}
+	  * @param {NGN.core.Server}
 	  * The server instance
       */     	
      registerServer: function(server){
@@ -622,6 +740,26 @@ var NGN = require('./BaseClass').extend({
         this.BUS.emit(eventName, metadata || null);
     },
     
+<span id='NGN-method-app'>    /**
+</span>     * @method
+     * A shortcut for creating a new application. This can only be done once per node process (i.e. `node myapp.js`).
+     * 
+     * **Example: myapp.js**
+     * 		NGN.createApp({
+     * 			name: 'myApp'
+     * 		});
+     * 		
+     * 		console.log(application.name); // --&gt; myApp
+     * 
+     * @param {Object} config
+     * For a list of configuration options, please see NGN.app.Application.
+     */
+    app: function(config) {
+    	if (global.application == undefined){
+	    	var app = new __NGN.app.Application(config);
+    	}
+    },
+    
 <span id='NGN-method-on'>    /**
 </span>     * @method
      * Listens for an event on the #BUS and runs the callback when it is recognized.
@@ -630,54 +768,6 @@ var NGN = require('./BaseClass').extend({
      */
     on: function( eventName, callback ) {
         this.BUS.addListener(eventName, callback || function(){});
-    },
-    
-<span id='NGN-event-applicationstart'>    /**
-</span>     * @event applicationstart
-     * Fired when the NGN application starts.
-     */
-    onApplicationStart: function(){
-    	this.fireEvent('applicationstart');
-    },
-    
-<span id='NGN-event-applicationend'>    /**
-</span>     * @event applicationend
-     * Fired when the application ends.
-     */
-    onApplicationEnd: function(){
-    	this.fireEvent('applictionend');
-    },
-    
-<span id='NGN-event-sessionstart'>    /**
-</span>     * @event sessionstart
-     * Fired when a user session starts. 
-     */
-    onSessionStart: function(){
-    	this.fireEvent('sessionstart');
-    },
-    
-<span id='NGN-event-sessionend'>    /**
-</span>     * @event sessionend
-     * Fired when a session ends.
-     */
-    onSessionEnd: function(){
-    	this.fireEvent('sessionend');
-    },
-    
-<span id='NGN-event-requeststart'>    /**
-</span>     * @event requeststart
-     * Fired when a request starts.
-     */
-    onRequestStart: function(){
-    	this.fireEvent('requeststart');
-    },
-    
-<span id='NGN-event-requestend'>    /**
-</span>     * @event requestend
-     * Fired just before the request ends
-     */
-    onRequestEnd: function(){
-    	this.fireEvent('requestend');
     },
     
 <span id='NGN-event-error'>    /**
@@ -691,7 +781,7 @@ var NGN = require('./BaseClass').extend({
 <span id='NGN-event-registerserver'>    /**
 </span>     * @event registerserver
      * Fired when a server is registered
-     * @returns {NGN.util.Server/null}
+     * @returns {NGN.core.Server/null}
      */
     onRegisterServer: function(server){
     	this.fireEvent('serverunregistered',server||null);
@@ -700,7 +790,7 @@ var NGN = require('./BaseClass').extend({
 <span id='NGN-event-unregisterserver'>    /**
 </span>     * @event unregisterserver
      * Fired when a server is unregistered/removed
-     * @returns {NGN.util.Server/null}
+     * @returns {NGN.core.Server/null}
      */
     onRegisterServer: function(server){
     	this.fireEvent('unregisterserver',server||null);
@@ -711,8 +801,31 @@ var NGN = require('./BaseClass').extend({
 // Export the module as a global variable
 global.__NGN = global.NGN = new NGN();
 
-// Include the application scope
-require('./NGN.Application');
+// Create a global namespace for NGNX
+<span id='NGNX'>/**
+</span> * @class NGNX
+ * A library of common extensions.
+ * 
+ * NGNX extends {@link #NGN} with classes to support common application logic. They're intentionally
+ * separated because each class represents is considered opinionated. By abstracting this
+ * library from NGN, developers are given a choice about how they define the objects and API's
+ * in their application. 
+ * 
+ * NGNX strives to cover common ground, but will still likely require additional expansion
+ * to meet specific application needs. This library is supported in that the classes will function,
+ * but it does not warrant that the library will be suitable for every use case. In other words,
+ * developers can rely on the existence of these objects, but should remember that the classes in
+ * this library are a _best effort_ from NGN developers and contributors to reduce as much boilerplate 
+ * code as possible. The goal of NGN &amp; this extension library is to reduce developer's work, not do it
+ * for them.
+ * @singleton
+ * 
+ */
+global.__NGNX = global.NGNX = __NGN.ngnx || {};
+
+// Remove redundant namespace for NGNX
+if (__NGN.ngnx !== undefined)
+	delete __NGN.ngnx;
 
 // Include any API extensions (../api)
 var ng          = {};
@@ -760,12 +873,12 @@ function extendAPI(dir) {
 var root = process.mainModule.filename.replace(/\\/gi,'/');
 root = root.replace('/'+root.split('/')[root.split('/').length-1],'');
 if (fs.existsSync(root+'/ngn.config.json')) {
-	var _cfg = require(__dirname+'/../ngn.config.json');
+	var _cfg = require(root+'/ngn.config.json');
 	for (var item in _cfg){
 		if (_cfg.hasOwnProperty(item)){
 			switch (item.trim().toLowerCase()) {
 				case 'extensions':
-					if (this.isArray(_cfg[item])) {
+					if (Array.isArray(_cfg[item])) {
 						for (var i=0;i&lt;_cfg[item].length;i++){
 							if (!fs.existsSync(_cfg[item][i]))
 								throw Error('Unable to instantiate API at '+_cfg['configuration'][i]);
@@ -774,13 +887,13 @@ if (fs.existsSync(root+'/ngn.config.json')) {
 						}
 					}
 					break;
-				case 'application':
+				/*case 'application':
 					for(var appItem in _cfg['application']){
 						if(_cfg['application'].hasOwnProperty(appItem)){
 							global.application[appItem] = _cfg['application'][appItem]; 
 						}
 					}
-					break;
+					break;*/
 				default:
 					currentEnv = (process.env.NODE_ENV||'default').toString().trim().toLowerCase();
 					if (currentEnv == item.trim().toLowerCase()){

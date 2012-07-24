@@ -17,10 +17,10 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var events      = require('events'),
     request     = require('request'),
-    NGN			= require('../NGN.Base');
+    NGN			= require('../NGN.core');
 
-<span id='NGN-user-Login'>/**
-</span> * @class NGN.user.Login
+<span id='NGN-app-Login'>/**
+</span> * @class NGN.app.Login
  * Represents an OAuth or other third party login such as Facebook, Twitter, LinkedIn, etc.
  * 
  * This object makes interacting with user logins simple and abstracted from the OAuth process.
@@ -29,10 +29,10 @@
  * **Examples**
  * 
  * In this example, a configuration object is passed providing a person ID and login type. This approach would 
- * instantiate a {@link NGN.user.Person} for the specified account (i.e. user lookup).
+ * instantiate a {@link NGN.app.Person} for the specified account (i.e. user lookup).
  * 
  *     @example
- * 	   var Login = new NGN.user.Login({
+ * 	   var Login = new NGN.app.Login({
  * 			person: 	'12345',
  * 			logintype:	'fb'		// Facebook shortcut
  * 	   });
@@ -41,7 +41,7 @@
  * 
  *     @example
  * 	   app.get('/',function(req,res){
- * 			var Login = new NGN.user.Login(req);
+ * 			var Login = new NGN.app.Login(req);
  * 
  * 			Login.authorize(function( success ){
  * 				res.send(success == true ? 200 : 401 );
@@ -52,7 +52,7 @@
  * 
  *     @example
  * 	   app.get('/:person',function(req,res){
- * 			var Login = new NGN.user.Login({
+ * 			var Login = new NGN.app.Login({
  * 				person: req.params.person,
  * 				request: req
  * 	   		});
@@ -63,11 +63,11 @@
  * @requires events
  * @requires request
  * @docauthor Corey Butler
- * @extends NGN.Base
+ * @extends NGN.core
  */
 var Login = NGN.extend({
 	
-<span id='NGN-user-Login-method-constructor'>	/**
+<span id='NGN-app-Login-method-constructor'>	/**
 </span>	 * @constructor
 	 */
 	constructor: function( config ){
@@ -79,11 +79,11 @@ var Login = NGN.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-user-Login-cfg-request'>			/**
+<span id='NGN-app-Login-cfg-request'>			/**
 </span>			 * @cfg {Object} [request]
 			 * The HTTP request stream returned from an OAuth authentication.
 			 *     app.get('/',function(req,res){
-			 * 			var Login = new NGN.user.Login(req);
+			 * 			var Login = new NGN.app.Login(req);
 			 * 
 			 * 			Login.authorize(function( success ){
 			 * 				res.send(success == true ? 200 : 401 );
@@ -97,7 +97,7 @@ var Login = NGN.extend({
 				writable:	false
 			},
 			
-<span id='NGN-user-Login-property-_data'>			/**
+<span id='NGN-app-Login-property-_data'>			/**
 </span>			 * @property {Object}
 			 * @private
 			 * Holds the data returned from an OAuth response
@@ -114,7 +114,7 @@ var Login = NGN.extend({
 				writable:	true
 			},
 			
-<span id='NGN-user-Login-property-ID'>			/**
+<span id='NGN-app-Login-property-ID'>			/**
 </span>			 * @property {String}
 			 * The login ID of the OAuth/third party provider.
 			 */
@@ -129,7 +129,7 @@ var Login = NGN.extend({
 	            enumerable:     false
 	        },
 			
-<span id='NGN-user-Login-property-accesstoken'>			/**
+<span id='NGN-app-Login-property-accesstoken'>			/**
 </span>			 * @property {String}
 			 * The active access token
 			 */
@@ -153,7 +153,7 @@ var Login = NGN.extend({
 	                            }
 			},
 			
-<span id='NGN-user-Login-property-oauthprovider'>			/**
+<span id='NGN-app-Login-property-oauthprovider'>			/**
 </span>			 * @property {String} [oauthprovider=null]
 			 * A lowercase string representing the OAuth service provider. Examples include `facebook`, `twitter`, and `linkedin`.
 			 * This property is only available when a valid #request is provided. However, it can also be set manually.
@@ -163,11 +163,11 @@ var Login = NGN.extend({
 				enumerable:	true,
 				get:		function() {
 								//TODO: Return the
-								return this.request.user.type.trim().toLowerCase();
+								return this.request.app.type.trim().toLowerCase();
 							}
 			},
 			
-<span id='NGN-user-Login-property-oauth'>			/**
+<span id='NGN-app-Login-property-oauth'>			/**
 </span>			 * @property {String} [oauth=null]
 			 * The lowercase abbreviation of the #oauthprovider. Example: `fb` for Facebook.
 			 */
@@ -207,7 +207,7 @@ var Login = NGN.extend({
 	            enumerable:     false
 			},
 			
-<span id='NGN-user-Login-property-modified'>			/**
+<span id='NGN-app-Login-property-modified'>			/**
 </span>			 * @property [modified=false]
 			 * @readonly
 			 * When the object is modified, this will be true.
@@ -228,26 +228,26 @@ var Login = NGN.extend({
 	
 });
 
-<span id='NGN-user-Login-method-processHttpRequest'>/**
+<span id='NGN-app-Login-method-processHttpRequest'>/**
 </span> * @method processHttpRequest
  * @private
  * This method extracts information from the #request or any other HTTP request stream.
  * The #ID, #oauthprovider, #oauth, #data, and #accesstoken (if applicable) are extracted using `everyauth` (node).
- * `everyauth` appends a `user` attribute to `req` as `req.user`.  
+ * `everyauth` appends a `user` attribute to `req` as `req.app`.  
  */
 Login.prototype.processHttpRequest = function( req ) {
 	
-	this.ID 			= req.user.id;
-	this._data			= req.user;
-	this._accesstoken	= req.user.accessToken;
+	this.ID 			= req.app.id;
+	this._data			= req.app;
+	this._accesstoken	= req.app.accessToken;
 	this._oauthprovider = function (){
-							for (var obj in req.user) {
+							for (var obj in req.app) {
 								return obj.trim().toLowerCase();
 							}
 						}
 }
 
-<span id='NGN-user-Login-method-authenticate'>/**
+<span id='NGN-app-Login-method-authenticate'>/**
 </span> * @method
  * @param {Object} [req=request]
  * Authenticate the request stream. By default, this uses the #request object.  

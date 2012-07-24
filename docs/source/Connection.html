@@ -16,12 +16,12 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var events      = require('events'),
-    Base        = require('../NGN.Base');
+    Base        = require('../NGN.core');
 
 <span id='NGN-datasource-Connection'>/**
 </span> * @class NGN.datasource.Connection
  * Represents a connection to a database instance.
- * @extends NGN.Base
+ * @extends NGN.core
  * @requires NGN
  * @docauthor Corey Butler
  */
@@ -92,7 +92,7 @@ var Class = Base.extend({
              * An optional username passed to the database instance.
              */
             username: {
-                value:          config.username || null,
+                value:          config.appname || null,
                 enumerable:     true,
                 writable:		true
             },

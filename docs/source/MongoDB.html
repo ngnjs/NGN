@@ -173,9 +173,9 @@ var Class = Connection.extend({
 				if (err)
 					this.fireError(err);
 				else {
-					if (me.username !== null &amp;&amp; me.password !== null) {
+					if (me.appname !== null &amp;&amp; me.password !== null) {
 						me.onAuthorization();
-						conn.authenticate(me.username,me.password,function(e,accepted){
+						conn.authenticate(me.appname,me.password,function(e,accepted){
 							if (e)
 								me.fireError(e);
 							else if (!accepted)

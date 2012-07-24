@@ -15,17 +15,19 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Base = require('../NGN.Base');
+  <pre class="prettyprint lang-js">var Core = require('../NGN.core');
 
-<span id='NGN-util-Server'>/**
-</span> * @class NGN.util.Server
+<span id='NGN-core-Server'>/**
+</span> * @class NGN.core.Server
  * A generic utility class representing a server in the application.
  * This class typically isn't invoked directly. It is designed as a base class
  * for different server types like NGN.web.Server, NGN.web.ApiServer, etc.
+ * @extends NGN.core
+ * @private
  */
-var Class = Base.extend({
+var Class = Core.extend({
 	
-<span id='NGN-util-Server-method-constructor'>	/**
+<span id='NGN-core-Server-method-constructor'>	/**
 </span>	 * @constructor
 	 * Create a new server.
 	 * @params {Object} config
@@ -36,7 +38,7 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-util-Server-cfg-type'>			/**
+<span id='NGN-core-Server-cfg-type'>			/**
 </span>			 * @cfg {String}
 			 * The type of server. For example, `HTTP`, `DNS`, `FTP`, etc.
 			 */
@@ -46,7 +48,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-util-Server-cfg-purpose'>			/**
+<span id='NGN-core-Server-cfg-purpose'>			/**
 </span>			 * @cfg {String}
 			 * The purpose of the server. Typical values include:
 			 * 
@@ -64,9 +66,9 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-util-Server-cfg-name'>			/**
+<span id='NGN-core-Server-cfg-name'>			/**
 </span>			 * @cfg {String}
-			 * The accessor name of the server. This is registered in the #Application variable.
+			 * The name of the server. This can be referenced via NGN.app.Application (if used) or NGN#getServer.
 			 */
 			name: {
 				value:		config.name || null,
@@ -74,7 +76,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-util-Server-property-running'>			/**
+<span id='NGN-core-Server-property-running'>			/**
 </span>			 * @property {Boolean} [running=false]
 			 * Indicates the server is currently running.
 			 * @readonly
@@ -85,34 +87,45 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-util-Server-cfg-logger'>			/**
-</span>			 * @cfg {NGN.util.Logger} [logger={NGN.util.Logger}]
-			 * The logging utility to use with the server.
-			 */
-			logger: {
-				value:		config.logger || new __NGN.util.Logger(),
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-util-Server-cfg-autoRegister'>			/**
+<span id='NGN-core-Server-cfg-autoRegister'>			/**
 </span>			 * @cfg {Boolean}
-			 * Automatically register a helper reference to the server (available via NGN#getServer or Application#getServer). 
+			 * Automatically register a helper reference to the server (available via NGN#getServer or NGN#getServers). 
 			 */
 			autoRegister: {
 				value:		config.autoRegister || true,
 				enumerable:	true,
 				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-syslog'>			/**
+</span>			 * @cfg {NGN.util.Logger}
+			 * Specify a logging utility to log server activity.
+			 */
+			syslog: {
+				value:		config.logger || null,
+				enumerable:	false,
+				configurable:true
 			}
 			
 		});
+		
+		// Create a generic empty logger to prevent code from breaking.
+		if (this.syslog == null){
+			this.syslog == {
+				disabled: true,
+				info: __NGN.emptyFn,
+				warn: __NGN.emptyFn,
+				debug: __NGN.emptyFn,
+				error: __NGN.emptyFn
+			};
+		}
 		
 		if (this.autoRegister)
 			this.register();
 		
 	},
 	
-<span id='NGN-util-Server-method-register'>	/**
+<span id='NGN-core-Server-method-register'>	/**
 </span>	 * @method
 	 * Registers the server within the application scope by creating a pointer to it.
 	 */
@@ -128,7 +141,7 @@ var Class = Base.extend({
 		this.onStop();
 	},
 	
-<span id='NGN-util-Server-event-start'>	/**
+<span id='NGN-core-Server-event-start'>	/**
 </span>	 * @event start
 	 * Fired when the web server starts.
 	 */
@@ -138,7 +151,7 @@ var Class = Base.extend({
 		this.fireEvent('start',this);
 	},
 	
-<span id='NGN-util-Server-event-stop'>	/**
+<span id='NGN-core-Server-event-stop'>	/**
 </span>	 * @event stop
 	 * Fired when the server stops.
 	 */

@@ -17,7 +17,7 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var fs			= require('fs'),
 	restify		= require('restify'),
-	Base		= require('../util/HttpServer');
+	Base		= require('../core/HttpServer');
 
 <span id='NGN-web-API'>/**
 </span> * @class NGN.web.API
@@ -26,7 +26,7 @@
  * performance. This is designed to be used for creating data API's.
  * 
  * @docauthor Corey Butler
- * @extends NGN.util.HttpServer
+ * @extends NGN.core.HttpServer
  */
 var Class = Base.extend({
 	
@@ -35,6 +35,9 @@ var Class = Base.extend({
 	 * Create a REST Server.
 	 */
 	constructor: function(config){
+		
+		config = config || {};
+		config.purpose = 'API';
 		
 		Class.super.constructor.call( this, config );
 		
@@ -50,59 +53,23 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-API-cfg-routes'>			/**
-</span>			 * @cfg {String/Array} routes (required)
+			/*
+			 * @cfg {String/Array} routes (required)
 			 * Path to directory where routes are stored. Also accepts an 
 			 * array of file paths. Routes are created by recursively
 			 * processing each specified directory and importing each `.js` file
 			 * it finds. 
 			 */
-			routes: {
+			/*routes: {
 				value:		config.routes || null,
 				enumerable:	true,
 				writable:	true
-			},
+			},*/
 			
-<span id='NGN-web-API-cfg-ssl'>			/**
-</span>			 * @cfg {Object} [ssl=null]
-			 * The certificate and key used for encrypting HTTP**S** traffic.
-			 * 
-			 * 		{
-			 * 			cert: 	'/path/to/cert.pem',
-			 * 			key:	'/path/to/key.pem'
-			 * 		}
-			 * For more information about generating SSL certificates, please see the [NGN Command Line Interface Guide](#!/guide/cli). 
-			 */
 			_ssl: {
 				value:		config.ssl || null,
 				enumerable:	false,
 				writable:	true
-			},
-			
-			ssl: {
-				enumerable:	false,
-				get:		function(){
-								if (this._ssl == null)
-									return null;
-									
-								var obj = this._ssl;
-								if (obj.certificate !== undefined){
-									obj.cert = obj.certificate;
-									delete obj.certificate; 
-								}
-								return obj;
-							},
-				set:		function(obj) {
-								if (obj == null){
-									this._ssl = null;
-									return;
-								}
-								if (obj.certificate == undefined){
-									obj.certificate = obj.cert;
-									delete obj.cert;
-								}
-								this._ssl = obj;
-							}
 			},
 			
 <span id='NGN-web-API-cfg-port'>			/**
@@ -192,10 +159,54 @@ var Class = Base.extend({
 			}
 		});
 		
+		// Redefine ssl since the attribute names vary slightly for restify.
+		delete this.ssl;
+		Object.defineProperty(this,'ssl',{
+				enumerable:	false,
+				get:		function(){
+								if (this._ssl == null)
+									return null;
+									
+								var obj = this._ssl;
+								if (obj.certificate !== undefined){
+									obj.cert = obj.certificate;
+									delete obj.certificate; 
+								}
+								return obj;
+							},
+				set:		function(obj) {
+								if (obj == null){
+									this._ssl = null;
+									return;
+								}
+								if (obj.certificate == undefined){
+									obj.certificate = obj.cert;
+									delete obj.cert;
+								}
+								this._ssl = obj;
+							}
+			});
+		
 		var me = this;
 		
 		if (this.autoStart)
 			this.start();
+	},
+	
+<span id='NGN-web-API-method-errorHandler'>	/**
+</span>	 * @method
+	 * @param {Error} err
+	 * The error thrown.
+	 * @param {Object} req
+	 * The request object.
+	 * @param {Object} res
+	 * The response object.
+	 * @param {Function} next
+	 * The next method indicating completion of function processing.
+	 */
+	errorHandler: function(err, req, res, next){
+		res.send(500, {message:err.message || 'Unknown Error'});
+		this.onError(err);
 	},
 	
 <span id='NGN-web-API-method-start'>	/**
@@ -264,7 +275,7 @@ var Class = Base.extend({
 			// Make sure routes are defined, otherwise generate a placeholder. 
 			// This is a fallback if no root route is defined.
 			if (!rootExists) {
-				this._server.get('/',function(req,res){
+				me._server.get('/',function(req,res){
 					if (me.routes == null) {
 						res.json({message:'The API server works, but no routes have been configured.'});
 					} else {

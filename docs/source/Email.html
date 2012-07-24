@@ -18,30 +18,30 @@
   <pre class="prettyprint lang-js">var events      = require('events'),
     request     = require('request'),
     uuid        = require('node-uuid'),
-    NGN			= require('./NGN.Base');
+    Core		= require('../NGN.core');
 
-<span id='NGN-Email'>/**
-</span> * @class NGN.Email
+<span id='NGN-app-Email'>/**
+</span> * @class NGN.app.Email
  * Represents an email address and provides helper methods for managing it, such as
  * validation.
- * @extends NGN.Base
+ * @extends NGN.core
  * @param {String} address Email address
  * @requires node-uuid
  * @docauthor Corey Butler
  * @uses NGN.datasource.Redis
  */
-var EmailAddress = NGN.extend({
+var Class = Core.extend({
 	
-<span id='NGN-Email-method-constructor'>	/**
+<span id='NGN-app-Email-method-constructor'>	/**
 </span>	 * @constructor
 	 */
 	constructor: function( config ){
 		
-		EmailAddress.super.constructor.call( this );
+		Class.super.constructor.call( this );
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-Email-property-_emailRegex'>			/**
+<span id='NGN-app-Email-property-_emailRegex'>			/**
 </span>             * @property
              * The {@see RegExp} pattern that complies with (RFC 2822)[http://www.faqs.org/rfcs/rfc2822.html].
              * @private
@@ -52,7 +52,7 @@ var EmailAddress = NGN.extend({
                 writable:    false
             },
 			
-<span id='NGN-Email-property-address'>			/**
+<span id='NGN-app-Email-property-address'>			/**
 </span>			 * @property {String} address
 			 * The email address (i.e. me@domain.com);
 			 */
@@ -62,7 +62,7 @@ var EmailAddress = NGN.extend({
 			    writable:   false
 			},
 			
-<span id='NGN-Email-property-isValidSyntax'>			/**
+<span id='NGN-app-Email-property-isValidSyntax'>			/**
 </span>			 * @property
 			 * @returns {Boolean}
 			 * @readonly
@@ -75,7 +75,7 @@ var EmailAddress = NGN.extend({
             			    }
 			},
 			
-<span id='NGN-Email-property-validationCode'>			/**
+<span id='NGN-app-Email-property-validationCode'>			/**
 </span>			 * @property {String} [validationCode=null]
 			 * The validation code assigned to this email address
 	         * @readonly  
@@ -89,7 +89,7 @@ var EmailAddress = NGN.extend({
 		
 	},
 	
-<span id='NGN-Email-method-createValidationCode'>	/**
+<span id='NGN-app-Email-method-createValidationCode'>	/**
 </span>	 * @method
 	 * Generates a validation code.
 	 * @returns {String} 
@@ -111,7 +111,7 @@ var EmailAddress = NGN.extend({
 
 
 // Create a module out of this.
-module.exports = EmailAddress;
+module.exports = Class;
 </pre>
 </body>
 </html>

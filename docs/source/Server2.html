@@ -18,7 +18,7 @@
   <pre class="prettyprint lang-js">var express		= require('express'),
 	tpl			= require('consolidate'),
 	uuid		= require('node-uuid'),
-	Base		= require('../util/HttpServer'),
+	Base		= require('../core/HttpServer'),
 	passport	= null;
 
 <span id='NGN-web-Server'>/**
@@ -47,7 +47,7 @@
  * 		});
  * 
  * @docauthor Corey Butler
- * @extends NGN.util.HttpServer
+ * @extends NGN.core.HttpServer
  */
 var Class = Base.extend({
 	
@@ -92,19 +92,6 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-Server-cfg-routes'>			/**
-</span>			 * @cfg {String/Array} routes (required)
-			 * Path to directory where routes are stored. Also accepts an 
-			 * array of file paths. Routes are created by recursively
-			 * processing each specified directory and importing each `.js` file
-			 * it finds. 
-			 */
-			routes: {
-				value:		config.routes || null,
-				enumerable:	true,
-				writable:	true
-			},
-			
 <span id='NGN-web-Server-cfg-views'>			/**
 </span>			 * @cfg {String}
 			 * Path to directory where view templates are stored.
@@ -115,45 +102,6 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-			
-<span id='NGN-web-Server-cfg-ssl'>			/**
-</span>			 * @cfg {Object} [ssl=null]
-			 * The certificate and key used for encrypting HTTP**S** traffic.
-			 * 
-			 * 		{
-			 * 			cert: 	'/path/to/cert.pem',
-			 * 			key:	'/path/to/key.pem'
-			 * 		}
-			 * For more information about generating SSL certificates, please see the [NGN Command Line Interface Guide](#!/guide/cli). 
-			 */
-			ssl: {
-				value:		config.ssl || null,
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-web-Server-cfg-port'>			/**
-</span>			 * @cfg {Number} [port=80|443]
-			 * The port on which the web server will listen. Each web server must
-			 * listen on a unique port. If no port is defined, the default port `80`
-			 * will be used. If #ssl is supplied, the port will be set to `443` by default. 
-			 */
-			port: {
-				value:		config.port || (this.ssl == null ? 80 : 443),
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-web-Server-cfg-autoStart'>			/**
-</span>			 * @cfg {Boolean} [autoStart=true]
-			 * Automatically start the server. If this is set to `false`, the
-			 * server will need to be running explicitly using the #start method.
-			 */
-			autoStart: {
-				value:		config.autoStart || true,
-				enumerable:	true,
-				writable:	true
-			},
 			
 <span id='NGN-web-Server-cfg-viewEngine'>			/**
 </span>			 * @cfg {String}
@@ -258,28 +206,6 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-Server-cfg-enableCompression'>			/**
-</span>			 * @cfg {Boolean} [enableCompression=false]
-			 * Compress output sent to the browser using gzip.
-			 */
-			enableCompression: {
-				value:		config.gzip || false,
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-web-Server-property-_httpServer'>			/**
-</span>			 * @property {Object}
-			 * The raw HTTP Server.
-			 * @readonly
-			 * @private
-			 */
-			_httpServer: {
-				value:		null,
-				enumerable:	false,
-				writable:	true
-			},
-			
 <span id='NGN-web-Server-cfg-preventCsrf'>			/**
 </span>			 * @cfg {Boolean} [preventCsrf=true]
 			 * Enable CSRF protection.
@@ -298,22 +224,106 @@ var Class = Base.extend({
 				value:		config.enableStaticCache || true,
 				enumerable:	true,
 				writable:	true
+			},
+			
+<span id='NGN-web-Server-cfg-disableBodyParsing'>			/**
+</span>			 * @cfg {Boolean} [disableBodyParsing=false]
+			 * When set to true, the request body will not be parsed.
+			 * If #preventCsrf is enabled, this option is automatically forced to
+			 * `true` since body parsing is required for Anti-CSRF protection.
+			 */
+			disableBodyParsing: {
+				value:		config.disableBodyParsing || false,
+				enumerable:	true,
+				writable:	true
 			}
 
 		});
 		
-		var me = this;
-		
 		this._server = express();
-		this._server.use(express.logger());
-		this._server.use(express.bodyParser());
+	
+	//	this._server.use(express.logger());
+	
+		if (!this.disableBodyParsing || this.preventCsrf)
+			this._server.use(express.bodyParser());
+	
 		this._server.use(express.methodOverride());
+		this._server.use(this.authenticate);
+		this._server.use(this.authorize);
 		
-		if (this.enableCompression)
-			this._server.use(express.compress());
-			
 		if (this.autoStart)
 			this.start();
+	},
+	
+<span id='NGN-web-Server-method-handleCrossOrigin'>	/**
+</span>	 * @method
+	 * The method for applying Cross Origin Policy across the entire server.
+	 * 
+	 * This method typically does not need to be overridden or used directly.
+	 * This method is enabled when #allowCrossOrigin is enabled.
+	 * @param {Object} req
+	 * Request stream.
+	 * @param {Object} res
+	 * Response stream.
+	 * @param {Function} next
+	 * Processing method.
+	 */
+	handleCrossOrigin: function(req, res, next) {
+	    res.header('Access-Control-Allow-Origin', this._ALLOWCORS);
+	    if ( req.method == 'OPTIONS')
+	      	res.send(200);
+	    else
+		   	next();
+	},
+	
+<span id='NGN-web-Server-method-handleMethods'>	/**
+</span>	 * @method
+	 * The method for restricting traffic to specific HTTP methods, such as `GET`, `POST`, `PUT`, `DELETE`, `HEAD`, and `OPTIONS`.
+	 * @param {Object} req
+	 * Request stream.
+	 * @param {Object} res
+	 * Response stream.
+	 * @param {Function} next
+	 * Processing method.
+	 */
+	handleMethods: function(req, res, next) {
+	    res.header('Access-Control-Allow-Methods', this._ALLOWMETHODS);
+	    if ( req.method == 'OPTIONS')
+	      	res.send(200);
+	    else
+		   	next();
+	},
+	
+<span id='NGN-web-Server-method-handleError'>	/**
+</span>	 * @method
+	 * @param {Error} err
+	 * The error thrown.
+	 * @param {Object} req
+	 * The request object.
+	 * @param {Object} res
+	 * The response object.
+	 * @param {Function} next
+	 * The next method indicating completion of function processing.
+	 */
+	handleError: function(err, req, res, next){
+		try {
+			// Respond with html page
+			var s = err.status || 500;
+			if (req.accepts('html')) {
+				res.status(s);
+			  	this.renderIfExists(res, s, s.toString(), { url: req.url });
+			  	return;
+			}
+			
+			// respond with json
+			if (req.accepts('json')) {
+			  res.send(s,{ error: 'Not found' });
+			  return;
+			}
+		} catch (e) {	
+			// default to plain-text. send()
+			res.type('txt').send('Not found');
+		}
 	},
 	
 <span id='NGN-web-Server-method-start'>	/**
@@ -322,6 +332,20 @@ var Class = Base.extend({
 	 */
 	start: function(){
 		if (!this.running) {
+			
+			var me 	= this;
+
+			// Handle Global Cross Origin			
+			if (this._ALLOWCORS !== null)
+				this._server.use(this.handleCrossOrigin);
+				
+			if (this._ALLOWMETHODS !== null)
+				this._server.use(this.handleMethods);
+		
+			this._server.use(this.handleError);
+			
+			if (this.enableCompression)
+				this._server.use(express.compress());
 			
 			this.enableSessionManagement();
 			this.enableTemplateRendering();
@@ -335,14 +359,11 @@ var Class = Base.extend({
 				this._server.use(express.static(this.assets,opts));
 			}
 			
-			var me 		= this,
-				options = {};
-			
-			if (this.ssl !== null)
-				this._httpServer = require('https').createServer(this.ssl,this._server);
+			if (this._serverOptions !== null) 
+				this._httpServer = require('https').createServer(this._serverOptions,this._server);
 			else
 				this._httpServer = require('http').createServer(this._server);
-	
+
 			this._server.listen(this.port,function(){
 				me.onStart();
 			});
@@ -355,7 +376,7 @@ var Class = Base.extend({
 	 */
 	stop: function(){
 		if (this.running) {
-			this._server.close();
+			this._httpServer.close();
 			this.onStop();
 		}
 	},
@@ -394,6 +415,7 @@ var Class = Base.extend({
 <span id='NGN-web-Server-method-enableTemplateRendering'>	/**
 </span>	 * @method
 	 * Enable templating (based on configured parameters)
+	 * @private
 	 */
 	enableTemplateRendering: function(){
 		// If views are specified, make sure the rendering engines are available.
@@ -413,8 +435,8 @@ var Class = Base.extend({
 				this._server.engine('html',tpl[this.viewEngine]);
 		}
 		
-		//this.enableStandardErrorHandling();
-		this._server.use(this._server.router);
+		this.enableStandardErrorHandling();
+		//this._server.use(this._server.router);
 	},
 	
 <span id='NGN-web-Server-method-renderIfExists'>	/**
@@ -444,32 +466,7 @@ var Class = Base.extend({
 	 */
 	enableStandardErrorHandling: function(){
 		var me = this;
-		this._server.use(function(req, res, next){
-
-			// Respond with html page
-			if (req.accepts('html')) {
-			  res.status(404);
-			  me.renderIfExists(res, 404, '404', { url: req.url });
-			  return;
-			}
-			
-			// respond with json
-			if (req.accepts('json')) {
-			  res.send({ error: 'Not found' });
-			  return;
-			}
-			
-			// default to plain-text. send()
-			res.type('txt').send('Not found');
-		});
-		
-		this._server.use(function(err, req, res, next){
-		  // we may use properties of the error object
-		  // here and next(err) appropriately, or if
-		  // we possibly recovered from the error, simply next().
-		  res.status(err.status || 500);
-		  me.renderIfExists(res, 500, '500', { error: err });
-		});
+		this._server.use(this.handleError);
 	},
 	
 <span id='NGN-web-Server-method-enableSessionManagement'>	/**
@@ -540,7 +537,7 @@ var Class = Base.extend({
 			// Make sure routes are defined, otherwise generate a placeholder. 
 			// This is a fallback if no root route is defined.
 			if (!rootExists) {
-				this._server.get('/',function(req,res){
+				me._server.get('/',function(req,res){
 					if (me.routes.length == 0) {
 						res.write('The web server works, but no routes have been configured.');
 						res.end();

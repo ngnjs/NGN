@@ -19,18 +19,13 @@
     stripe      = require('stripe'),
     crypto      = require('crypto'),
     request     = require('request'),
-    NGN 		= require('../NGN.Base');
+    NGN 		= require('../NGN.core');
 
-<span id='NGN-user-Person'>/**
-</span> * @class NGN.user.Person
+<span id='NGNX-Person'>/**
+</span> * @class NGNX.Person
  * Represents a person involved in the ecosystem. This includes customers, administrators, and any other
  * human user.
- * @extends NGN.Base
- * @param {Object} [config] Configuration Object
- * @requires NGN.Base
- * @requires events
- * @requires crypto
- * @requires request
+ * @extends NGNX
  * @docauthor Corey Butler
  */
 var Person = NGN.extend({
@@ -49,7 +44,7 @@ var Person = NGN.extend({
                 writable:       true
             },
             
-<span id='NGN-user-Person-property-id'>            /**
+<span id='NGNX-Person-property-id'>            /**
 </span>             * @property {String} id
              * The ID of the person (as defined by Application)
              */
@@ -59,7 +54,7 @@ var Person = NGN.extend({
                 enumerable:     false
             },
             
-<span id='NGN-user-Person-property-exists'>            /**
+<span id='NGNX-Person-property-exists'>            /**
 </span>             * @property {Boolean} exists @readonly
              * Identifies that the person has been looked up in the database and determined to either exist or not. 
              */
@@ -69,7 +64,7 @@ var Person = NGN.extend({
                 enumerable:     false
             },
             
-<span id='NGN-user-Person-property-dataProperties'>            /**
+<span id='NGNX-Person-property-dataProperties'>            /**
 </span>             * @property {Array} dataProperties
              * An array of property names populated by a &quot;get()&quot; 
              */
@@ -144,7 +139,7 @@ var Person = NGN.extend({
                                 }
             },
             
-<span id='NGN-user-Person-property-modified'>            /**
+<span id='NGNX-Person-property-modified'>            /**
 </span>             * @property {Boolean}
              * Indicates one or more data properties has changed.  
              */
@@ -158,7 +153,7 @@ var Person = NGN.extend({
                                 }                        
             },
             
-<span id='NGN-user-Person-property-primaryemail'>            /**
+<span id='NGNX-Person-property-primaryemail'>            /**
 </span>             * @property {String} 
              * The primary email account of the person.
              */
@@ -192,7 +187,7 @@ var Person = NGN.extend({
                                 }
             },
             
-<span id='NGN-user-Person-property-image'>            /**
+<span id='NGNX-Person-property-image'>            /**
 </span>             * @property {String}
              * Currently returns the FB pic or gravatar URL.
              */
@@ -214,7 +209,7 @@ var Person = NGN.extend({
                                 }
             },
             
-<span id='NGN-user-Person-property-profileurl'>            /**
+<span id='NGNX-Person-property-profileurl'>            /**
 </span>             * @property {String}
              * The individual profile URL of the my.perkpals.com account. 
              */
@@ -232,7 +227,7 @@ var Person = NGN.extend({
             
             
             //TODO: Figure out a better way to handle displayname
-<span id='NGN-user-Person-property-displayname'>            /**
+<span id='NGNX-Person-property-displayname'>            /**
 </span>             * @property {String}
              * The name by which the person prefers to be referred to as. 
              */
@@ -262,7 +257,7 @@ var Person = NGN.extend({
                                 }
             },
 			
-<span id='NGN-user-Person-property-firstname'>			/**
+<span id='NGNX-Person-property-firstname'>			/**
 </span>			 * @property {String}
 			 * Given name.
 			 */
@@ -272,7 +267,7 @@ var Person = NGN.extend({
 				writable:	true
 			},
 			
-<span id='NGN-user-Person-property-lastname'>			/**
+<span id='NGNX-Person-property-lastname'>			/**
 </span>			 * @property {String}
 			 * Surname
 			 */
@@ -288,8 +283,8 @@ var Person = NGN.extend({
 				writable:	false
 			},
 			
-<span id='NGN-user-Person-property-login'>			/**
-</span>			 * @property {NGN.user.Login} [login=null]
+<span id='NGNX-Person-property-login'>			/**
+</span>			 * @property {NGN.app.Login} [login=null]
 			 * @readonly
 			 * The login used to authenticate the user. This is `null`
 			 * until an authentication method is executed. 
