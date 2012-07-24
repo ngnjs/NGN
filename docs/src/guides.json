@@ -32,6 +32,10 @@
           "name": "webserver",
           "title": "Web Server Fundamentals",
           "description": "Quickly build robust web servers."
+      },{
+          "name": "roadmap",
+          "title": "Roadmap",
+          "description": "This is currently a wishlist of features to add."
       }
    ]
 }]
