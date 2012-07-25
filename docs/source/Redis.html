@@ -107,8 +107,9 @@ var Class = Connection.extend({
     	
     	// Authenticate/authorize if a password is provided. 
     	if ( this.password !== null ) {
+    		this.onAuthorization();
     		this.client.auth(this.password,function(a1,a2,a3){
-    			me.onAuthorize();
+    			me.onAuthorized();
     			me.securedConnection = true;
     			if (me.database !== 1)
 	    			me.client.select(me.database);

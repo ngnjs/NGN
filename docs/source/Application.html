@@ -46,6 +46,8 @@ var Class = Base.extend({
 	
 	constructor: function(config){
 		
+		config = config || {};
+		
 		Class.super.constructor.call(this,config);
 		
 		Object.defineProperties(this,{
@@ -83,7 +85,7 @@ var Class = Base.extend({
 		// Load elements
 		for (var el in this){
 			if (this.hasOwnProperty(el))
-				__elements.push(el);
+				this.__elements.push(el);
 		}
 		
 		// Enable the application scope
@@ -235,6 +237,7 @@ var Class = Base.extend({
     	this.fireEvent('applictionend');
     },
 });
-</pre>
+
+module.exports = Class;</pre>
 </body>
 </html>

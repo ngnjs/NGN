@@ -254,7 +254,8 @@ var Class = Base.extend({
      * Establish a connection.
      */
     connect: function(){
-    	this.onConnect();
+    	if(!this.connected)
+	    	this.onConnect();
     },
     
 <span id='NGN-datasource-Connection-method-getClient'>    /**

@@ -232,6 +232,12 @@ var Class = Base.extend({
 			
 			this._server = restify.createServer(options);
 			
+			this._server.use(restify.acceptParser(this._server.acceptable));
+			this._server.use(restify.authorizationParser());
+			this._server.use(restify.dateParser());
+			this._server.use(restify.queryParser());
+			this._server.use(restify.bodyParser());
+			
 			var _evt = [
 				'NotFound',
 				'MethodNotAllowed',

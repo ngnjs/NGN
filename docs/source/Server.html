@@ -66,14 +66,25 @@ var Class = Core.extend({
 				writable:	true
 			},
 			
-<span id='NGN-core-Server-cfg-name'>			/**
+<span id='NGN-core-Server-cfg-id'>			/**
 </span>			 * @cfg {String}
 			 * The name of the server. This can be referenced via NGN.app.Application (if used) or NGN#getServer.
 			 */
-			name: {
-				value:		config.name || null,
+			id: {
+				value:		config.id || null,
 				enumerable:	true,
 				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-port'>			/**
+</span>			 * @cfg {Number}
+			 * The port on which the server will listen/connect.
+			 */
+			port: {
+				value:		config.port || null,
+				enumerable:	true,
+				writable:	true,
+				configurable:true
 			},
 			
 <span id='NGN-core-Server-property-running'>			/**
