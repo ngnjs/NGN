@@ -14,6 +14,12 @@ describe('NGN global namespace', function(){
 	})
 });
 
+describe('NGNX global namespace', function(){
+	it('should exist', function(){
+	  should.exist(__NGNX);
+	})
+});
+
 
 /**
  * Make sure datasource connections can be created.

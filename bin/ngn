@@ -26,7 +26,7 @@ try {
 }
 
 // Create things
-if (CREATE !== null) {
+if (CREATE) {
 	switch(CREATE.toLowerCase()) {
 		case null:
 			break;
@@ -42,7 +42,7 @@ if (CREATE !== null) {
 }
 
 // Publish to an npm registry
-if (PUBLISH !== null){
+if (PUBLISH){
 	console.log('Publishing to npm Registry'.green);
 	console.log(' >> Packaging...'.grey);
 	
