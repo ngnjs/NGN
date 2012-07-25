@@ -1,34 +1,14 @@
 [
 	{
-		"name":	"Application Building Blocks",
+		"name":	"Application",
 		"groups": [{
 			"classes": [
+				"NGN",
 				"NGN.app.*"
 			]
 		}]
-	},/*{
-		"name":	"Templates",
-		"groups": [{
-			"name": "Email",
-			"classes": [
-				"NGN.template.email.*"
-			]
-		},{
-			"name": "Rendering Engines",
-			"classes": [
-				"NGN.template.renderer.*"
-			]
-		}]
 	},{
-		"name":	"Services",
-		"groups": [{
-			"name": "Sendgrid",
-			"classes": [
-				"NGN.service.sendgrid.*"
-			]
-		}]
-	},*/{
-		"name":	"System",
+		"name":	"Main Library",
 		"groups": [{
 			"name": "Data",
 			"classes": [
@@ -39,11 +19,20 @@
 			"classes": [
 				"NGN.web.*"
 			]
-		},{
-			"name": "Libraries",
+		}]
+	},{
+		"name": "Extended Library",
+		"groups": [{
 			"classes": [
-				"NGN",
-				"NGNX"
+				"NGNX.*"
+			]
+		}]
+	},{
+		"name": "Internals",
+		"groups": [{
+			"name": "Base",
+			"classes": [
+				"Class"
 			]
 		}]
 	}
