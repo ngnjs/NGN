@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var Base = require('../../core/MailTransport');
+
+<span id='NGNX-mail-Common'>/**
+</span> * @class NGNX.mail.Common
+ * Send messages using a specific server. This is a convenience wrapper around NGN.core.MailTransport
+ * @extends NGN.core.MailTransport
+ * @private
+ */
+var Class = Base.extend({
+	
+<span id='NGNX-mail-Common-method-constructor'>	/**
+</span>	 * @constructor
+	 * Create a new commonly used server connection.
+	 * @param {Object} config
+	 */
+	constructor: function(config){
+		
+		config = config || {};
+		
+		Class.super.constructor.call(this,config);
+		
+		Object.defineProperties(this,{
+			
+<span id='NGNX-mail-Common-cfg-username'>			/**
+</span>			 * @cfg {String}
+			 * The username of the account to connect with.
+			 */
+			username: {
+				value:		config.username || null,
+				enumerable:	false,
+				writable:	true
+			},
+			
+<span id='NGNX-mail-Common-cfg-password'>			/**
+</span>			 * @cfg {String}
+			 * The password of the account to connect with.
+			 */
+			password: {
+				value:		config.password || null,
+				enumerable:	false,
+				writable:	true
+			}
+			
+		});
+		
+		this.auth = {
+			user: this.username,
+			pass: this.password
+		}
+
+		this.init();
+		
+	}
+	
+});
+
+module.exports = Class;
+</pre>
+</body>
+</html>

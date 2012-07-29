@@ -67,9 +67,9 @@ var Class = require('./BaseClass').extend({
 	
 	constructor: 	function( config ) {
 		
-						Class.super.constructor.call(this, config);
-						
 						config = config || {};
+						
+						Class.super.constructor.call(this, config);
 						
 						Object.defineProperties(this,{
 						 	_emitter: {
@@ -129,11 +129,10 @@ var Class = require('./BaseClass').extend({
 <span id='NGN-core-method-fireError'>    /**
 </span>     * @method
      * Fires the specified error.
-     * @param {String} eventName
      * @param {Object} [metadata]
      */
-    fireError: 		function( metadata ) {
-				        __NGN.BUS.emit( 'error', metadata || null );
+    fireError: 		function( err ) {
+				        this.fireEvent( 'error', err || null );
 				    },
 	
 <span id='NGN-core-method-on'>	/**

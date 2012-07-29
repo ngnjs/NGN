@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var Base = require('../BaseClass');
+
+<span id='NGN-web-RequestProcessor'>/**
+</span> * @class NGN.web.RequestProcessor
+ * A middleware class for processing web requests with custom logic.
+ * @extends Class
+ * @private
+ * @author Corey Butler
+ */
+var Class = Base.extend({
+	
+	constructor: function(config){
+		
+		Class.super.constructor.call(this,config);
+		
+		Object.defineProperties(this,{
+			
+<span id='NGN-web-RequestProcessor-cfg-type'>			/**
+</span>			 * @cfg {String} [type=prerequest]
+			 * The type of processor. Acceptable values are listed in the order executed:
+			 * 
+			 * * preauthentication
+			 * * postauthentication
+			 * * preauthorization
+			 * * postauthorization
+			 * * prerequest
+			 * * postrequest
+			 * 
+			 * These are only processed if the NGN.core.HttpServers uses them. 
+			 */
+			type: {
+				value:		config.type || 'prerequest',
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-web-RequestProcessor-cfg-ignoreContinue'>			/**
+</span>			 * @cfg {Boolean} [ignoreContinue=false]
+			 * When set to `true`, the middleware #fn must explicity call the `continue()` method.
+			 */
+			ignoreContinue: {
+				value:		config.disableContinue || false,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-web-RequestProcessor-property-_used'>			/**
+</span>			 * @proeprty {Boolean}
+			 * Indicates the processor instance is currently in use by a NGN.core.HttpServer.
+			 * @private
+			 */
+			_used: {
+				value:		false,
+				enumerable:	false,
+				writable:	true
+			},
+			
+<span id='NGN-web-RequestProcessor-cfg-enabled'>			/**
+</span>			 * @cfg {Boolean} [enabled=true]
+			 * If this is set to `false`, the processor is ignored.
+			 */
+			enabled: {
+				value:		config.enabled || true,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-web-RequestProcessor-cfg-fn'>			/**
+</span>			 * @cfg {Function}
+			 * The function used for processing the request. This method receives three arguments: `request`, `response`, and `continue` (respectively).
+			 * `continue` is a method that should always be executed at the end of the processor, otherwise the request may hang. This is automatically 
+			 * done if #ignoreContinue is `false`. 
+			 * 
+			 * **Example**
+			 * 		function(req,res,cont){
+			 * 			if (request.)
+			 * }
+			 */
+			fn: {
+				value:		config.fn || __NGN.emptyFn,
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-web-RequestProcessor-property-_fn'>			/**
+</span>			 * @property {Function}
+			 * The wrapper function that is called by the NGN.core.HttpServer.
+			 * @private
+			 */
+			_fn: {
+				value:		null,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-web-RequestProcessor-property-processor'>			/**
+</span>			 * @property {Function}
+			 * The processor function.
+			 */
+			processor: {
+				enumerable:	true,
+				get:		function(){ return this._fn; }
+			}
+			
+		});
+		
+		var me = this;
+		
+		this._fn = function(req,res,next){
+			if (!me.enabled){
+				next();
+			} else {
+				me.fn(req,res,next);
+				if (!me.ignoreContinue)
+					next();
+			}
+		};
+		
+	},
+	
+<span id='NGN-web-RequestProcessor-method-disable'>	/**
+</span>	 * @method
+	 * Disable the middleware
+	 */
+	disable: function(){
+		this.enabled = false;
+	},
+	
+<span id='NGN-web-RequestProcessor-method-enable'>	/**
+</span>	 * @method
+	 * Enable the middleware
+	 */
+	enable: function(){
+		this.enabled = true;
+	},
+	
+<span id='NGN-web-RequestProcessor-method-disable'>	/**
+</span>	 * @method
+	 * Toggle the middleware on/off
+	 */
+	disable: function(){
+		this.enabled = !this.enabled;
+	}
+});
+
+module.exports = Class;</pre>
+</body>
+</html>

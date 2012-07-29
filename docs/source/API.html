@@ -233,10 +233,22 @@ var Class = Base.extend({
 			this._server = restify.createServer(options);
 			
 			this._server.use(restify.acceptParser(this._server.acceptable));
+			this.applyProcessor('preauthentication');
+			this.applyProcessor('postauthentication');
+			this.applyProcessor('preauthorization');
 			this._server.use(restify.authorizationParser());
+			this.applyProcessor('postauthorization');
 			this._server.use(restify.dateParser());
 			this._server.use(restify.queryParser());
 			this._server.use(restify.bodyParser());
+			
+			this._server.use(function(req,res,next){
+				if (req.body)
+					req.body = typeof req.body == &quot;string&quot; ? JSON.parse(req.body) : req.body;
+				next();
+			});
+			
+			this.applyProcessor('prerequest');
 			
 			var _evt = [
 				'NotFound',
@@ -248,8 +260,17 @@ var Class = Base.extend({
 			
 			for (var e=0;e&lt;_evt.length;e++)
 				this._server.on(_evt[e],this['on'+_evt[e]]);
-			
+				
 			this.generateRoutes();
+			
+			this.applyProcessor('postrequest');
+			
+			// End of request
+			this._server.server.on('request',function(req,res){
+				me.onRequestEnd(req,res);
+			});
+			
+			this._serverOptions = options;
 			
 			this._server.listen(this.port,function(){
 				me.onStart();
@@ -277,11 +298,13 @@ var Class = Base.extend({
 	generateRoutes: function() {
 
 		var me = this;
+		
+		// Catch All Route
 		this._generateRoutes(function(rootExists){
 			// Make sure routes are defined, otherwise generate a placeholder. 
 			// This is a fallback if no root route is defined.
 			if (!rootExists) {
-				me._server.get('/',function(req,res){
+				me._server.all('/',function(req,res){
 					if (me.routes == null) {
 						res.json({message:'The API server works, but no routes have been configured.'});
 					} else {
@@ -289,6 +312,29 @@ var Class = Base.extend({
 					}
 				});
 			}
+			
+			// Catch All Route
+			var all = /(.*)/;
+			me._server.get(all,function(req,res){
+				me.on404(res);
+				res.send(404);
+			});
+			me._server.post(all,function(req,res){
+				me.on404(res);
+				res.send(404);
+			});
+			me._server.put(all,function(req,res){
+				me.on404(res);
+				res.send(404);
+			});
+			me._server.del(all,function(req,res){
+				me.on404(res);
+				res.send(404);
+			});
+			me._server.head(all,function(req,res){
+				me.on404(res);
+				res.send(404);
+			});
 		});
 	
 	},
@@ -311,44 +357,44 @@ var Class = Base.extend({
 		this.onSend();
 	},
 	
-<span id='NGN-web-API-event-NotFound'>	/**
-</span>	 * @event NotFound
+<span id='NGN-web-API-event-apiNotFound'>	/**
+</span>	 * @event apiNotFound
 	 * Fired when a route is not found.
 	 * @param {Object} request
 	 * @param {Object} response
 	 */
 	onNotFound: function(request, response){
-		this.emit('NotFound',{request:request||null,response:response||null});
+		this.emit('apiNotFound',{request:request||null,response:response||null});
 	},
 	
-<span id='NGN-web-API-event-MethodNotAllowed'>	/**
-</span>	 * @event MethodNotAllowed
+<span id='NGN-web-API-event-apiMethodNotAllowed'>	/**
+</span>	 * @event apiMethodNotAllowed
 	 * Fired when a method is not allowed.
 	 * @param {Object} request
 	 * @param {Object} response 
 	 */
 	onMethodNotAllowed: function(request, response){
-		this.emit('MethodNotAllowed',{request:request||null,response:response||null})
+		this.emit('apiMethodNotAllowed',{request:request||null,response:response||null})
 	},
 	
-<span id='NGN-web-API-event-VersionNotAllowed'>	/**
-</span>	 * @event VersionNotAllowed
+<span id='NGN-web-API-event-apiVersionNotAllowed'>	/**
+</span>	 * @event apiVersionNotAllowed
 	 * Fired when a version is request is rejected.
 	 * @param {Object} request
 	 * @param {Object} response 
 	 */
 	onVersionNotAllowed: function(request, response){
-		this.emit('VersionNotAllowed',{request:request||null,response:response||null})
+		this.emit('apiVersionNotAllowed',{request:request||null,response:response||null})
 	},
 	
-<span id='NGN-web-API-event-after'>	/**
-</span>	 * @event after
+<span id='NGN-web-API-event-apiAfter'>	/**
+</span>	 * @event apiAfter
 	 * Fired after a request is complete.
 	 * @param {Object} request
 	 * @param {Object} response 
 	 */
 	onafter: function(request, response, route){
-		this.emit('after',{request:request||null,response:response||null,route:route||null});
+		this.emit('apiAfter',{request:request||null,response:response||null,route:route||null});
 	},
 	
 <span id='NGN-web-API-event-uncaughtException'>	/**
@@ -358,8 +404,10 @@ var Class = Base.extend({
 	 * @param {Object} response 
 	 */
 	onuncaughtException: function(request, response, route, error){
-		this.emit('after',{request:request||null,response:response||null,route:route||null,error:error||null});
-		this.fireError(error);
+		var eyes = require('eyes');
+		eyes.inspect(error);
+		//this.onafter(request||null,response||null,route||null);
+		//this.fireError(error);
 	}
 });
 

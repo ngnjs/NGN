@@ -1,7 +1,7 @@
 # Using NGN Global Features
 NGN provides several built-in features and is capable of being extended to support many more.
 
-By adding `require('NGN')` to the main node.js executable, all of the features found in this guide are made available
+By adding `require('ngn')` to the main node.js executable, all of the features found in this guide are made available
 to any file in the application, via a global reference called `NGN`. This guide provides explanations of the features
 exposed to applications in this reference. For more information about how this reference/namespace is created, please see
 the [NGN Namespace Guide](#!/guide/ngn_namespace). Additionally, NGN creates a second empty global called
@@ -22,7 +22,7 @@ When NGN is loaded, `BUS` is created as a basic EventEmitter. It is possible to 
 when NGN is required. For example:
 
 **main.js**
-	require('NGN');
+	require('ngn');
 	
 	NGN.BUS.on('myevent',function(data){
 		console.log('My Event Says: '+data);

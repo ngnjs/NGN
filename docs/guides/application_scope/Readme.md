@@ -16,11 +16,11 @@ Applications are the last leg of development before users start using them. In m
 developed, not treated as a module. If an application is going to be treated like a module, then the NGN framework isn't necessarily the best fit.
 
 ## Using the Application Scope
-Using the `application` scope is quite simple. As long as the main/executable node.js file includes NGN, i.e. `require('NGN')`, `applicaton` will be
+Using the `application` scope is quite simple. As long as the main/executable node.js file includes NGN, i.e. `require('ngn')`, `applicaton` will be
 available. The scope is intended to be used as a key/value structure.
 
 **Example**
-	require('NGN');
+	require('ngn');
 	
 	application.name 	= 'My Awesome App';
 	application.started = new Date();

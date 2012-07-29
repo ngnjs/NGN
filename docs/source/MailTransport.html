@@ -15,10 +15,10 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Base = require('../../core/RemoteServer'),
+  <pre class="prettyprint lang-js">var Base = require('./RemoteServer'),
 	nodemailer = require('nodemailer');
-<span id='NGNX-core-MailTransport'>/**
-</span> * @class NGNX.core.MailTransport
+<span id='NGN-core-MailTransport'>/**
+</span> * @class NGN.core.MailTransport
  * This is a wrapper around [nodemailer module](https://github.com/andris9/Nodemailer/) transports, 
  * which provide a wide set of features for interacting with different kinds of mail servers.
  * @extends NGN.core.RemoteServer
@@ -26,7 +26,7 @@
  */
 var Class = Base.extend({
 	
-<span id='NGNX-core-MailTransport-method-constructor'>	/**
+<span id='NGN-core-MailTransport-method-constructor'>	/**
 </span>	 * @constructor
 	 * Create a new mail server.
 	 * @param {Object} config
@@ -35,20 +35,21 @@ var Class = Base.extend({
 		
 		config = config || {};
 		
-<span id='NGNX-core-MailTransport-static-cfg-type'>		/**
+<span id='NGN-core-MailTransport-static-cfg-type'>		/**
 </span>		 * @cfg {String} type
 		 * Automatically set to MAIL.
 		 * @readonly
 		 * @static
 		 * @private
 		 */
-		config.type = 'MAIL';
+		config.type = 'SMTP';
+		config.purpose = 'Transport';
 		
 		Class.super.constructor.call(this,config);
 		
 		Object.defineProperties(this,{
 			
-<span id='NGNX-core-MailTransport-cfg-service'>			/**
+<span id='NGN-core-MailTransport-cfg-service'>			/**
 </span>			 * @cfg {String} [service=null]
 			 * The type of transport/server to create. Using this will ignore
 			 * the #host and #port configuration properties.
@@ -65,13 +66,18 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
+			service: {
+				enumerable:	true,
+				get:		function(){return this._service;}
+			},
+			
 			_mailtype: {
-				value:		config.type || 'SMTP',
+				value:		config.serverType || 'SMTP',
 				enumerable:	false,
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-serverType'>			/**
+<span id='NGN-core-MailTransport-cfg-serverType'>			/**
 </span>			 * @cfg {String} [serverType=SMTP]
 			 * The type of mail server to use. Valid types include:
 			 * 
@@ -99,13 +105,13 @@ var Class = Base.extend({
 							}
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-host'>			/**
+<span id='NGN-core-MailTransport-cfg-host'>			/**
 </span>			 * @cfg {String} [host=localhost]
 			 * Hostname or IP address of the server. This can be an SMTP server or a URL (ex: Amazon SES endpoint).
 			 * Unnecessary if #_service is defined.
 			 */
 			
-<span id='NGNX-core-MailTransport-cfg-port'>			/**
+<span id='NGN-core-MailTransport-cfg-port'>			/**
 </span>			 * @cfg {Number} [port=25]
 			 * The port of the host server.
 			 * Unnecessary if #service is defined.
@@ -116,7 +122,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-secureConnection'>			/**
+<span id='NGN-core-MailTransport-cfg-secureConnection'>			/**
 </span>			 * @cfg {Boolean} [secureConnection=false]
 			 * Use SSL. If #port is configured to `587`, this is ignored and forced to `false`.
 			 * SMTP connections established on port 587 start in insecure plain text mode and 
@@ -128,7 +134,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-name'>			/**
+<span id='NGN-core-MailTransport-cfg-name'>			/**
 </span>			 * @cfg {String} [name=&lt;machine_name&gt;]
 			 * The name of the client server.
 			 */
@@ -138,7 +144,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-auth'>			/**
+<span id='NGN-core-MailTransport-cfg-auth'>			/**
 </span>			 * @cfg {Object} [auth=null]
 			 * An object like:
 			 * 
@@ -160,15 +166,19 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-			XOAuth: {
+<span id='NGN-core-MailTransport-cfg-xOAuth'>			/**
+</span>			 * @cfg {String/Object}
+			 * The XOAuth token string or a configuration oject for #generateXOAuthToken.
+			 */
+			xOAuth: {
 				enumerable:	true,
-				get:		function(){return this._xoauth.XOAuthToken;},
+				//get:		function(){return this._xoauth.XOAuthToken;},
 				set:		function(value){
-								this._xoauth.XOAuthToken = value;
+								this._xoauth.XOAuthToken = (typeof value === 'object' ? this.generateXOAuthToken(value) : value);
 							}
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-ignoreTLS'>			/**
+<span id='NGN-core-MailTransport-cfg-ignoreTLS'>			/**
 </span>			 * @cfg {Boolean} [ignoreTLS=false]
 			 * Ignore server support for STARTTLS.
 			 */
@@ -178,7 +188,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-debug'>			/**
+<span id='NGN-core-MailTransport-cfg-debug'>			/**
 </span>			 * @cfg {Boolean} [debug=false]
 			 * Output client and server messages to the console.
 			 */
@@ -188,7 +198,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-maxConnections'>			/**
+<span id='NGN-core-MailTransport-cfg-maxConnections'>			/**
 </span>			 * @cfg {Number} [maxConnections=5]
 			 * The number of connections to keep in the pool.
 			 */
@@ -198,7 +208,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-awsAccessKey'>			/**
+<span id='NGN-core-MailTransport-cfg-awsAccessKey'>			/**
 </span>			 * @cfg {String}
 			 * AWS Access Key.
 			 * Required when #type is `SES`.
@@ -210,7 +220,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-awsSecret'>			/**
+<span id='NGN-core-MailTransport-cfg-awsSecret'>			/**
 </span>			 * @cfg {String}
 			 * AWS Secret Key.
 			 * Required when #type is `SES`.
@@ -222,7 +232,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-path'>			/**
+<span id='NGN-core-MailTransport-cfg-path'>			/**
 </span>			 * @cfg {String} [path=sendmail]
 			 * Path to the `sendmail` command. Only used when #type is `Sendmail`.
 			 */
@@ -233,7 +243,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-args'>			/**
+<span id='NGN-core-MailTransport-cfg-args'>			/**
 </span>			 * @cfg {Array} [args=[]]
 			 * An optional array of extra command line options to pass the #path. Only used when #type is `Sendmail`.
 			 * 
@@ -246,7 +256,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-dkimDomainName'>			/**
+<span id='NGN-core-MailTransport-cfg-dkimDomainName'>			/**
 </span>			 * @cfg {String}
 			 * The domain name used for signing.
 			 * Required when using DKIM.
@@ -258,7 +268,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-dkimKeySelector'>			/**
+<span id='NGN-core-MailTransport-cfg-dkimKeySelector'>			/**
 </span>			 * @cfg {String}
 			 * If you have set up a TXT record with DKIM public key at **zzz**._domainkey.example.com then `zzz` is the selector.
 			 * If this is left blank, NGN will attempt to lookup the record using #dkimDomainName.
@@ -271,7 +281,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-dkimPrivateKey'>			/**
+<span id='NGN-core-MailTransport-cfg-dkimPrivateKey'>			/**
 </span>			 * @cfg {String}
 			 * The path to the private key.
 			 * 
@@ -286,7 +296,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-dkimHeaderFieldNames'>			/**
+<span id='NGN-core-MailTransport-cfg-dkimHeaderFieldNames'>			/**
 </span>			 * @cfg {String}
 			 * Optional colon separated list of header fields to sign.
 			 * By default all fields suggested by RFC4871 #5.5 are used.
@@ -298,7 +308,7 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-mailerName'>			/**
+<span id='NGN-core-MailTransport-cfg-mailerName'>			/**
 </span>			 * @cfg {String} 
 			 * The X_MAILER_NAME attribute.
 			 * Defaults to the nodemailer author.
@@ -309,7 +319,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-cfg-mailerUrl'>			/**
+<span id='NGN-core-MailTransport-cfg-mailerUrl'>			/**
 </span>			 * @cfg {String}
 			 * The X_MAILER_HOMEPAGE attribute.
 			 * Defaults to the nodemailer author's website.
@@ -320,7 +330,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGNX-core-MailTransport-property-_transport'>			/**
+<span id='NGN-core-MailTransport-property-_transport'>			/**
 </span>			 * @property {Object}
 			 * The raw transport object that is created when the object is constructed.
 			 * @private
@@ -333,9 +343,17 @@ var Class = Base.extend({
 			
 		});
 		
+	},
+	
+<span id='NGN-core-MailTransport-method-init'>	/**
+</span>	 * @method
+	 * Create the transport object &amp; connect to the appropriate mail server.
+	 * @private
+	 */
+	init: function(){
 		var options = {};
 		
-		switch (this.mailType.toUpperCase()){
+		switch (this.serverType.toUpperCase()){
 			case 'SMTP':
 				// Configure Service-based Transport Options
 				if (this._service !== null){
@@ -375,7 +393,7 @@ var Class = Base.extend({
 				break;
 		}
 		
-		this._transport = nodemailer.createTransport(this.mailType,options);
+		this._transport = nodemailer.createTransport(this.serverType,options);
 		
 		// Support DKIM
 		if (this.dkimDomainName !== null){
@@ -395,10 +413,9 @@ var Class = Base.extend({
 		}
 		
 		this.running = true;
-		
 	},
 	
-<span id='NGNX-core-MailTransport-method-useDKIM'>	/**
+<span id='NGN-core-MailTransport-method-useDKIM'>	/**
 </span>	 * @method
 	 * Enable DKIM signing.
 	 * @private
@@ -416,7 +433,7 @@ var Class = Base.extend({
 		this._transport.useDKIM(opt);
 	},
 	
-<span id='NGNX-core-MailTransport-method-generateXOAuthToken'>	/**
+<span id='NGN-core-MailTransport-method-generateXOAuthToken'>	/**
 </span>	 * @method
 	 * Generate an XOAuth token.
 	 * 
@@ -438,14 +455,48 @@ var Class = Base.extend({
 		return nodemailer.createXOAuthGenerator(config);
 	},
 	
-<span id='NGNX-core-MailTransport-method-close'>	/**
+<span id='NGN-core-MailTransport-method-close'>	/**
 </span>	 * @method
 	 * Terminate pooled connections. Only used when #mailtype is `SMTP`.
 	 */
 	close: function(){
-		if (this.running &amp;&amp; this.mailType == 'SMTP') {
+		if (this.running &amp;&amp; this.serverType == 'SMTP') {
 			this._transport.close();
 		}
+	},
+	
+<span id='NGN-core-MailTransport-method-send'>	/**
+</span>	 * @method
+	 * Send an email message
+	 * @param {NGN.mail.Message/Object} message
+	 * This can be a valid NGN.mail.Message or a direct JSON object.
+	 * @param {Function} [callback]
+	 */
+	send: function(message,callback){
+		message = message || {};
+		
+		var me = this;
+		
+		//TODO: extract the attributes from a message object if that's what is passed in.
+		
+		this._transport.sendMail(message,function(error, response){
+			//TODO: Wrap this in a proper logger.
+		    if(error){
+		        me.emit('error',error);
+		    }else{
+		        me.onSent(response.message);
+		        callback(response.message);
+		    }
+		});
+	},
+	
+<span id='NGN-core-MailTransport-event-sent'>	/**
+</span>	 * @event sent
+	 * Fired when a message has been sent.
+	 * @param {Object} id
+	 */
+	onSent: function(id){
+		this.emit('sent',id);
 	}
 });
 
