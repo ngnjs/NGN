@@ -23,8 +23,14 @@
 	},{
 		"name": "Extended Library",
 		"groups": [{
+			"name": "Web",
 			"classes": [
-				"NGNX.*"
+				"NGNX.web.*"
+			]
+		},{
+			"name": "Mail",
+			"classes": [
+				"NGNX.mail.*"
 			]
 		}]
 	},{

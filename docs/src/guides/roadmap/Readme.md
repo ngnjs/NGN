@@ -16,7 +16,9 @@ Add the following base classes:
 * NGN.core.Cluster (mixin?)
 
 **Core Data Libraries**
+
 * NGN.date.Date, NGN.date.Month, NGN.date.Year, NGN.date.Day, NGN.date.Week
+
 _perhaps include datejs?_
 _Add commonly used funcitonality like DateAdd(), DateDiff(), etc._
 
@@ -40,12 +42,12 @@ _Add commonly used funcitonality like DateAdd(), DateDiff(), etc._
 
 * NGN.web.auth.Strategy
 * NGN.web.auth.OAuth
-* NGN.web.auth.Facebook
-* NGN.web.auth.Twitter
-* NGN.web.auth.LinkedIn
-* NGN.web.auth.Github
-* NGN.web.auth.Foursquare
-* NGN.web.auth.Dwolla
+* NGNX.web.auth.Facebook
+* NGNX.web.auth.Twitter
+* NGNX.web.auth.LinkedIn
+* NGNX.web.auth.Github
+* NGNX.web.auth.Foursquare
+* NGNX.web.auth.Dwolla
 * NGN.web.auth.Group
 * NGN.web.auth.Role
 * NGN.web.auth.Permission

@@ -14,11 +14,11 @@ NGN is **not** meant to be a foundation for building independent node modules, t
 
 ## Usage 
 
-Using NGN is a one-line (`require('NGN');`) include in your main executable.
+Using NGN is a one-line (`require('ngn');`) include in your main executable.
 
 **app.js**
 
-     require('NGN'); // <-- That's it!
+     require('ngn'); // <-- That's it!
 
      var userDB = new NGN.datasource.MongoDB();
 
@@ -50,7 +50,7 @@ The framework is then available in any other file. For example, the code of `myW
 If you're concerned about naming/dependency conflicts in the node.js `global` scope, or simply want to customize how the framework is reference, 
 it can be configured to use an alternative name.
 
-     require('NGN')('app');
+     require('ngn')('app');
      
      // Create a DSN with the new reference.
      app.createDatasource('users',userDB);
