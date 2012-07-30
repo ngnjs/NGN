@@ -1,6 +1,5 @@
 {
 	"extensions": 	["./examples/customapi"],
 	"application":	{"test":"test"},
-	"docsource":	"./docs/src",
 	"default":		{}
 }
