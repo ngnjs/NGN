@@ -171,3 +171,9 @@ used by other libraries like JQuery and Underscore. Perhaps `&` or `@`? Somethin
 * NGN.isArray(), NGN.isString(), NGN.isNumber(), NGN.isDate, NGN.isBoolean(), NGN.isSimple(), etc.
 * NGN.dump() --> For generating JSON screen dumps (otherwise use eyes/inspect)
 * NGN.dateDiff(), NGN.dateCompare(), etc.
+
+
+# To-Do
+
+* Guide on creating your own custom extensions & how to generate documentation for it.
+* Clas System guide.
