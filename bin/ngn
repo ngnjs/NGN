@@ -7,17 +7,19 @@ var argv = require('optimist')
 	fs	 = require('fs'),
 	eyes = require('eyes'),
 	dir	 = require('wrench');
-	exec = require('child_process').exec;
+	exec = require('child_process').exec,
+	p 	 = require('path'),
+	root = p.dirname(process.mainModule.filename);
 
 require('colors');
-
+console.log(__dirname.red,root.cyan);
 /**
  * Statics 
  */
 var CREATE 			= argv['create'] || null,
 	PUBLISH			= argv['publish'] || null,
 	CFG				= argv['configuration'] || 'ngn.config.json',
-	OUT_DIR			= argv['output'] || __dirname+'/../docs/manual';
+	OUT_DIR			= argv['output'] || p.join(root,'./docs/manual');
 	
 try {
 	var cfg			= require('./config.json');
@@ -68,16 +70,12 @@ if (PUBLISH){
 
 // Generate docs
 function generateDocumentation() {
-	
-	var p = require('path');
-	
+console.log(root.red)	
 	console.log(' >> Cleaning up existing docs...'.grey);
 	dir.rmdirSyncRecursive(OUT_DIR.toString().trim(), true);
 	
 	console.log(' >> Checking configuration...'.grey);
 	
-	var root = p.dirname(process.mainModule.filename);
-
 	if(p.basename(process.mainModule.filename == 'ngn'))
 		root = p.join(root,'../');
 
@@ -91,7 +89,9 @@ function generateDocumentation() {
 			if (jsdcfg['--'] == undefined)
 				jsdcfg['--'] = [];
 			jsdcfg['--'] = jsdcfg['--'].concat(ngncfg.extensions);
+			
 			for (var i=0;i<jsdcfg['--'].length;i++){
+				
 				if (fs.existsSync(p.join(root,jsdcfg['--'][i])))
 					jsdcfg['--'][i] = p.join(root,jsdcfg['--'][i]);
 				else if (fs.existsSync(p.join(__dirname,jsdcfg['--'][i])))
