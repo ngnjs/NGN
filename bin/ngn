@@ -81,9 +81,10 @@ function generateDocumentation() {
 	if (fs.existsSync(CFG)){
 		var ngncfg = require(CFG);
 		
-		if (fs.existsSync(p.join(ngncfg.docsource,'config.json')))
+		/*if (fs.existsSync(p.join(ngncfg.docsource,'config.json')))
 			var jsdcfg = require(p.join(ngncfg.docsource,'config.json'));
-		else if (fs.existsSync(p.join(cwd,ngncfg.docsource,'config.json')))
+		else*/ 
+		if (fs.existsSync(p.join(cwd,ngncfg.docsource,'config.json')))
 			var jsdcfg = require(p.join(cwd,ngncfg.docsource,'config.json'));
 		else if (fs.existsSync(p.join(cwd,'docs','src','config.json')))
 			var jsdcfg = require(p.join(cwd,'docs','src','config.json'));
