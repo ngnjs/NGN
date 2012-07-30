@@ -9,23 +9,19 @@ var argv = require('optimist')
 	dir	 = require('wrench');
 	exec = require('child_process').exec,
 	p 	 = require('path'),
+	cwd	 = process.cwd(),
 	root = p.dirname(process.mainModule.filename);
 
 require('colors');
-console.log(__dirname.red,root.cyan);
+
 /**
  * Statics 
  */
 var CREATE 			= argv['create'] || null,
 	PUBLISH			= argv['publish'] || null,
-	CFG				= argv['configuration'] || 'ngn.config.json',
-	OUT_DIR			= argv['output'] || p.join(root,'./docs/manual');
+	CFG				= argv['configuration'] || p.join(process.cwd(),'ngn.config.json'),
+	OUT_DIR			= argv['output'] || p.join(cwd,'docs','manual');
 	
-try {
-	var cfg			= require('./config.json');
-} catch(e) {
-	var cfg 		= {};
-}
 
 // Create things
 if (CREATE) {
@@ -35,7 +31,7 @@ if (CREATE) {
 		case 'docs':
 		case 'doc':
 		case 'documentation':
-			console.log('Generating documentation '.cyan+' at '.cyan+OUT_DIR.toString().trim().cyan.bold+':'.cyan);
+			console.log('Generating documentation:'.cyan);
 			generateDocumentation();
 			break;
 		default:
@@ -45,6 +41,12 @@ if (CREATE) {
 
 // Publish to an npm registry
 if (PUBLISH){
+
+	try {
+		var cfg			= require('./config.json');
+	} catch(e) {
+		var cfg 		= {};
+	}
 	console.log('Publishing to npm Registry'.green);
 	console.log(' >> Packaging...'.grey);
 	
@@ -70,20 +72,23 @@ if (PUBLISH){
 
 // Generate docs
 function generateDocumentation() {
-console.log(root.red)	
+
 	console.log(' >> Cleaning up existing docs...'.grey);
 	dir.rmdirSyncRecursive(OUT_DIR.toString().trim(), true);
 	
 	console.log(' >> Checking configuration...'.grey);
 	
-	if(p.basename(process.mainModule.filename == 'ngn'))
-		root = p.join(root,'../');
-
-	CFG = CFG == 'ngn.config.json' ? p.join(root,CFG) : CFG;
-	
 	if (fs.existsSync(CFG)){
 		var ngncfg = require(CFG);
-		var jsdcfg = require(p.join(root,ngncfg.docsource,'config.json'));
+		
+		if (fs.existsSync(p.join(ngncfg.docsource,'config.json')))
+			var jsdcfg = require(p.join(ngncfg.docsource,'config.json'));
+		else if (fs.existsSync(p.join(cwd,ngncfg.docsource,'config.json')))
+			var jsdcfg = require(p.join(cwd,ngncfg.docsource,'config.json'));
+		else if (fs.existsSync(p.join(cwd,'docs','src','config.json')))
+			var jsdcfg = require(p.join(cwd,'docs','src','config.json'));
+		else
+			var jsdcfg = require(p.join(root,'..','docs','src','config.json'));
 			
 		if (ngncfg.extensions !== undefined){
 			if (jsdcfg['--'] == undefined)
@@ -91,22 +96,31 @@ console.log(root.red)
 			jsdcfg['--'] = jsdcfg['--'].concat(ngncfg.extensions);
 			
 			for (var i=0;i<jsdcfg['--'].length;i++){
-				
-				if (fs.existsSync(p.join(root,jsdcfg['--'][i])))
+				if (fs.existsSync(p.join(cwd,jsdcfg['--'][i])))
+					jsdcfg['--'][i] = p.join(cwd,jsdcfg['--'][i]);
+				else if (fs.existsSync(p.join(root,jsdcfg['--'][i])))
 					jsdcfg['--'][i] = p.join(root,jsdcfg['--'][i]);
-				else if (fs.existsSync(p.join(__dirname,jsdcfg['--'][i])))
-					jsdcfg['--'][i] = p.join(__dirname,jsdcfg['--'][i]);
-				
-				console.log(jsdcfg['--'][i],fs.existsSync(jsdcfg['--'][i]));
 			}
 		}
+		
+		jsdcfg['--'].push(p.resolve(p.join(root,'..','lib')));
+		
+		if (argv['examples'])
+			jsdcfg['--'].push(p.resolve(p.join(root,'..','examples')))
 	} else {
 		console.log('Missing Configuration!'.red.bold);
 		console.log(CFG.red.underline+' could not be found.'.red);
 		return;
 	}
 	
-	var docs = p.join(root,ngncfg.docsource||'./docs/src');
+	var docs = p.join(cwd,ngncfg.docsource||'./docs/src');
+	
+	if (!fs.existsSync(docs))
+		docs = p.join(root,'..','docs','src');
+	if (!fs.existsSync(docs)){
+		console.log(docs.red);
+		throw Error('Could not find doc source.');
+	}
 	
 	// Create a temp config file for processing the request
 	if (ngncfg.extensions !== undefined){
@@ -122,6 +136,10 @@ console.log(root.red)
 	
 	if (argv['showcmd']){
 		console.log('-----------------------------------------------------'.grey.bold);
+		console.log('CONFIG'.blue);
+		console.log(JSON.stringify(jsdcfg,null,4).grey);
+		console.log('-----------------------------------------------------'.grey.bold);
+		console.log('COMMAND'.blue);
 		console.log(cmd.grey);
 		console.log('-----------------------------------------------------'.grey.bold);
 	}
@@ -141,14 +159,18 @@ console.log(root.red)
 							if (error) {
 									console.log('ERROR'.bold.red);
 									eyes.inspect(error);
-							 	} else
+							 	} else {
 									console.log('DONE'.bold.green);
+									console.log('Docs are available at: '.yellow+'file:///'.magenta+p.resolve(p.join(OUT_DIR,'index.html')).magenta);
+								}
 						} else {
 							if (error) {
 								console.log('ERROR'.bold.red);
 								eyes.inspect(error);
-						 	} else
+						 	} else {
 								console.log('DONE'.bold.green);
+								console.log('Docs are available at: '.yellow+'file:///'.magenta+p.resolve(p.join(OUT_DIR,'index.html')).magenta);
+							}
 						}
 						
 					});
