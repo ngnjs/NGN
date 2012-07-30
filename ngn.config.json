@@ -1,5 +1,6 @@
 {
-	"extensions": 	["/Users/Corey/Documents/workspace_experiments/NGN/_sandbox"],
+	"extensions": 	["./examples/customapi"],
 	"application":	{"test":"test"},
+	"docsource":	"./docs/src",
 	"default":		{}
 }
