@@ -16,7 +16,7 @@ require('colors');
  */
 var CREATE 			= argv['create'] || null,
 	PUBLISH			= argv['publish'] || null,
-	CFG				= argv['configuration'] || 'config.json',
+	CFG				= argv['configuration'] || 'ngn.config.json',
 	OUT_DIR			= argv['output'] || __dirname+'/../docs/manual';
 	
 try {
@@ -69,56 +69,88 @@ if (PUBLISH){
 // Generate docs
 function generateDocumentation() {
 	
+	var p = require('path');
+	
 	console.log(' >> Cleaning up existing docs...'.grey);
 	dir.rmdirSyncRecursive(OUT_DIR.toString().trim(), true);
 	
 	console.log(' >> Checking configuration...'.grey);
 	
-	var root = process.mainModule.filename.replace(/\\/gi,'/');
-	root = root.replace('/'+root.split('/')[root.split('/').length-1],'');
+	var root = p.dirname(process.mainModule.filename);
 
-	/*
-	CFG = CFG == 'config.json' ? root+'/'+CFG : CFG;
-	console.log(root+'/ngn.config.json',CFG);	
-		
-		if (fs.existsSync(process.cwd()+'/ngn.config.json') && fs.existsSync(CFG)) {
-			var ngncfg = require(process.cwd()+'/ngn.config.json'),
-				jsdcfg = require(CFG);
-	console.log(ngncfg,jsdcfg)		
-			// Make sure there are extensions to add
-			if (ngncfg.extensions !== undefined){
-				if (ngn.extensions.length > 0) {
-					if (jsdcfg['--'] == undefined) {
-						console.log(' >> Updating configuration...'.grey);
-						jsdcfg['--'] = ngncfg.extensions
-					} else {
-						var edit = false;
-						for(var i=0;i<ngncfg.extensions.length;i++){
-							if (jsdcfg['--'].indexOf(ngncfg.extensions[i]) >= 0){
-								jsdcfg['--'].push(ngncfg.extensions[i]);
-								edit = true;
-							}
-						}
-						if (edit) {
-							console.log(' >> Updating configuration...'.grey);
-							fs.writeFileSync(CFG,JSON.stringify(jsdcfg));
-						}
-					}
-				}
+	if(p.basename(process.mainModule.filename == 'ngn'))
+		root = p.join(root,'../');
+
+	CFG = CFG == 'ngn.config.json' ? p.join(root,CFG) : CFG;
+	
+	if (fs.existsSync(CFG)){
+		var ngncfg = require(CFG);
+		var jsdcfg = require(p.join(root,ngncfg.docsource,'config.json'));
+			
+		if (ngncfg.extensions !== undefined){
+			if (jsdcfg['--'] == undefined)
+				jsdcfg['--'] = [];
+			jsdcfg['--'] = jsdcfg['--'].concat(ngncfg.extensions);
+			for (var i=0;i<jsdcfg['--'].length;i++){
+				if (fs.existsSync(p.join(root,jsdcfg['--'][i])))
+					jsdcfg['--'][i] = p.join(root,jsdcfg['--'][i]);
+				else if (fs.existsSync(p.join(__dirname,jsdcfg['--'][i])))
+					jsdcfg['--'][i] = p.join(__dirname,jsdcfg['--'][i]);
+				
+				console.log(jsdcfg['--'][i],fs.existsSync(jsdcfg['--'][i]));
 			}
-		}*/
+		}
+	} else {
+		console.log('Missing Configuration!'.red.bold);
+		console.log(CFG.red.underline+' could not be found.'.red);
+		return;
+	}
 	
+	var docs = p.join(root,ngncfg.docsource||'./docs/src');
 	
-	var cmd = 'jsduck --builtin-classes'+(CFG.trim().length>0?' --config '+CFG:'')+' --output "'+OUT_DIR+'"';
+	// Create a temp config file for processing the request
+	if (ngncfg.extensions !== undefined){
+		if (ngncfg.extensions.length > 0){
+			CFG = docs+'/.ngn.tmp.json';
+			fs.writeFileSync(CFG,JSON.stringify(jsdcfg,null,4));
+		}
+	}
+	
+	var cmd = 'jsduck --builtin-classes'+(CFG.trim().length>0?' --config '+CFG:'')+' --output "'+p.resolve(OUT_DIR)+'"';
 	
 	console.log(' >> Building docs...'.grey);
+	
+	if (argv['showcmd']){
+		console.log('-----------------------------------------------------'.grey.bold);
+		console.log(cmd.grey);
+		console.log('-----------------------------------------------------'.grey.bold);
+	}
+	
 	var child = exec(cmd,{
-				 	cwd: __dirname+'/../docs/src'
-				}, function(error,out,err){
-					if (error) {
-						console.log('ERROR'.bold.red);
-						eyes.inspect(error);
-				 	} else
-						console.log('DONE'.bold.green);
+				 	cwd: docs
+				}, function(error,sout,serr){
+					fs.exists(p.join(docs,'.ngn.tmp.json'),function(exists){
+						if (exists){
+							/*fs.unlink(__dirname+'/.ngn.tmp.json',function(err){
+								if (error) {
+									console.log('ERROR'.bold.red);
+									eyes.inspect(error);
+							 	} else
+									console.log('DONE'.bold.green);
+							});*/
+							if (error) {
+									console.log('ERROR'.bold.red);
+									eyes.inspect(error);
+							 	} else
+									console.log('DONE'.bold.green);
+						} else {
+							if (error) {
+								console.log('ERROR'.bold.red);
+								eyes.inspect(error);
+						 	} else
+								console.log('DONE'.bold.green);
+						}
+						
+					});
 				});
 }
