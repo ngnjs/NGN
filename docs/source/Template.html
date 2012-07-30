@@ -43,7 +43,7 @@ var Class = Base.extend({
 		config = config || {};
 		
 		Class.super.constructor.call(this,config);
-this.fireError('test');		
+		
 		Object.defineProperties(this,{
 			
 <span id='NGN-util-Template-property-tpl'>			/**
@@ -65,23 +65,21 @@ this.fireError('test');
 				enumerable:	true,
 				get:		function(){ return this.tpl; },
 				set:		function(value){
-								if (fs.existsSync(value)) {
-					console.log('1');
+								if (fs.existsSync(__NGN.path.resolve(value))) {
 									this.tpl = value;
-									if (this.renderer == null &amp;&amp; __NGN.path.extname(value) !== null)
-										this.renderer = __NGN.path.extname(value);
+									if (this.renderer == null &amp;&amp; __NGN.path.extname(__NGN.path.resolve(value)) !== null)
+										this.renderer = __NGN.path.extname(__NGN.path.resolve(value)).replace(/\./,'');
 								} else if (fs.existsSync(__NGN.path.join(__NGN.rootDir,value))) {
-					console.log('2');
 									this.tpl = __NGN.path.join(__NGN.rootDir,value);
 									if (this.renderer == null &amp;&amp; __NGN.path.extname(value) !== null)
-										this.renderer = __NGN.path.extname(value);
+										this.renderer = __NGN.path.extname(value).replace(/\./,'');
 								} else if (fs.existsSync(__NGN.path.join(__dirname,value))) {
-					console.log('3');
 									this.tpl = __NGN.path.join(__dirname,value);
 									if (this.renderer == null &amp;&amp; __NGN.path.extname(value) !== null)
-										this.renderer = __NGN.path.extname(value);
-								} else
+										this.renderer = __NGN.path.extname(value).replace(/\./,'');
+								} else {
 									this.onMissingFile();
+								}
 							}
 			},
 			
@@ -157,7 +155,7 @@ this.fireError('test');
 				enumerable:	true,
 				get:		function(){return this._renderer;},
 				set:		function(value){
-								if(this.engines.indexOf(value) &gt;= 0)
+								if (this.engines.indexOf(value) &gt;= 0 &amp;&amp; this.renderer !== null)
 									this.onUnrecognizedRenderer();
 								this._renderer = value;
 							}
@@ -206,15 +204,14 @@ this.fireError('test');
 	 * Executed on completion. Receives a single argument with the generated output.
 	 */
 	render: function(callback){
-		console.log(this.renderer);
 		var me = this;
 		cons[this.renderer](this.tpl,this.data,function(err,out){
 			if(err)
-				this.fireError(err);
+				me.fireError(err);
 			me.output = out;
-			this.onRendered();
+			me.onRendered();
 			if (callback)
-				callback(this.output);
+				callback(out);
 		});
 	},
 	
@@ -222,9 +219,13 @@ this.fireError('test');
 </span>	 * @event unrecognizedrenderer
 	 * Fired when the #renderer is not recognized.
 	 */
-	onUnrecorgnizedRenderer: function(){
+	onUnrecognizedRenderer: function(){
 		this.emit('unrecognizedrenderer');
-		console.log('WARNING:'.yellow+' '+this.renderer.yellow.bold+' is not a recognized template renderer.');
+		console.log(
+			'WARNING:'.yellow+' '
+			+this.renderer.toString().yellow.bold
+			+' is not a recognized template renderer.'
+		);
 	},
 	
 <span id='NGN-util-Template-event-missing'>	/**
@@ -234,8 +235,6 @@ this.fireError('test');
 	 */
 	onMissingFile: function(file){
 		this.emit('missing',file||this.tpl);
-		console.log(this)
-		this.fireError('missing',file||this.tpl);
 	},
 	
 <span id='NGN-util-Template-event-rendered'>	/**

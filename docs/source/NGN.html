@@ -436,50 +436,8 @@ var NGN = require('./BaseClass').extend({
 		
 		module.exports = Class;
 	},
-    
-<span id='NGN-method-fireEvent'>    /**
-</span>     * @method
-     * Fire an event on the #BUS
-     * @param {String} eventName (required)
-     * The name of the event
-     * @param {Mixed} [metadata]
-     * Optional metadata sent with the event.  
-     */
-    fireEvent: function( eventName, metadata ){
-        this.BUS.emit(eventName,metadata || null);
-    },
-    
-<span id='NGN-method-fireError'>    /**
-</span>     * @method
-     * Fires the specified error.
-     * @param {Object} [metadata]
-     */
-    fireError: function( err ) {
-        this.fireEvent( 'error', err || null );
-    },
 	
-<span id='NGN-method-on'>	/**
-</span>	 * @method
-	 * Listens for an event name and runs the callback when it is recognized.
-	 * @param {String} eventName
-	 * @param {Function} callback
-	 */
-	on: function( eventName, callback ) {
-		this._emitter.on(eventName, callback || function(){});
-		__NGN.BUS.addListener(eventName, callback || function(){});
-	},
-	
-<span id='NGN-method-addEventListeners'>	/**
-</span>	 * @method
-	 * Adds multiple event listeners
- 	 * @param {Array} evt
-	 */
-	addEventListeners: function(evt){
-		for(var i=0;i&lt;evt.length;i++)
-			this.on(evt[i].trim().toLowerCase(),this['on'+evt[i].trim()]);
-	},
-	
-<span id='NGN-method-createDatasource'>     /**
+<span id='NGN-method-createDatasource'>    /**
 </span>     * @method
      * Create and register a #DSN.
      * @param {String} name
@@ -843,22 +801,54 @@ var NGN = require('./BaseClass').extend({
     	callback();
     },
     
-<span id='NGN-method-on'>    /**
+<span id='NGN-method-fireEvent'>    /**
 </span>     * @method
-     * Listens for an event on the #BUS and runs the callback when it is recognized.
-     * @param {String} eventName
-     * @param {Function} callback
+     * Fire an event on the #BUS
+     * @param {String} eventName (required)
+     * The name of the event
+     * @param {Mixed} [metadata]
+     * Optional metadata sent with the event.  
      */
-    on: function( eventName, callback ) {
-        this.BUS.addListener(eventName, callback || function(){});
+    fireEvent: function( eventName, metadata ){
+        this.BUS.emit(eventName,metadata || null);
     },
+    
+<span id='NGN-method-fireError'>    /**
+</span>     * @method
+     * Fires the specified error.
+     * @param {Object} [metadata]
+     */
+    fireError: function( err ) {
+        this.fireEvent( 'error', err || null );
+    },
+	
+<span id='NGN-method-on'>	/**
+</span>	 * @method
+	 * Listens for an event name and runs the callback when it is recognized.
+	 * @param {String} eventName
+	 * @param {Function} callback
+	 */
+	on: function( eventName, callback ) {
+		this._emitter.on(eventName, callback || function(){});
+		__NGN.BUS.addListener(eventName, callback || function(){});
+	},
+	
+<span id='NGN-method-addEventListeners'>	/**
+</span>	 * @method
+	 * Adds multiple event listeners
+ 	 * @param {Array} evt
+	 */
+	addEventListeners: function(evt){
+		for(var i=0;i&lt;evt.length;i++)
+			this.on(evt[i].trim().toLowerCase(),this['on'+evt[i].trim()]);
+	},
     
 <span id='NGN-event-error'>    /**
 </span>     * @event error
      * Fired whenever an error is detected 
      */
     onError: function(e){
-    	this.BUS.emit('error',e);
+    	this.fireError(e);
     },
     
 <span id='NGN-event-registerserver'>    /**
@@ -888,6 +878,10 @@ Object.defineProperty(global,'NGN',{
 	enumerable:	true,
 	get:		function(){ return global.__NGN;}
 });
+Object.defineProperty(global,'ngn',{
+	enumerable:	true,
+	get:		function(){ return global.__NGN;}
+});
 
 // Create a global namespace for NGNX
 <span id='NGNX'>/**
@@ -913,7 +907,11 @@ global.__NGNX = __NGN.ngnx || {};
 Object.defineProperty(global,'NGNX',{
 	enumerable:	true,
 	get:		function(){ return global.__NGNX; }
-})
+});
+Object.defineProperty(global,'ngnx',{
+	enumerable:	true,
+	get:		function(){ return global.__NGNX; }
+});
 
 // Remove redundant namespace for NGNX
 if (global.__NGN.ngnx !== undefined)
