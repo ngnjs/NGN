@@ -456,7 +456,7 @@ var Class = Base.extend({
 		var me = this;
 		
 		// Remove mapper if it already exists
-		if (this._server.hasOwnProperty('map'))
+		if (this._server.hasOwnProperty('map') || this._server.map !== undefined)
 			delete this._server.map;
 			
 		// Create a mapper
@@ -485,7 +485,9 @@ var Class = Base.extend({
 								}
 							}
 						},
-			enumerable: false
+			enumerable: false,
+			configurable: true,
+			writable:	true
 		});
 		
 		// If the routes configuration provides an array of filepaths, loop
@@ -498,9 +500,14 @@ var Class = Base.extend({
 			// Loop through the directories and add each JS file, assuming each is a route.
 			var rt = this.routes[i].trim();
 			
-			if (!fs.existsSync(rt) &amp;&amp; fs.existsSync(__NGN.path.join(__NGN.rootDir,rt)))
-				rt = __NGN.path.join(__NGN.rootDir,rt);
-			rt = __NGN.path.resolve(__NGN.rootDir,rt);		
+			// Attempt to load absolute path first. Then local path.
+			if (fs.existsSync(__NGN.path.resolve(rt)))
+				rt = __NGN.path.resolve(rt);
+			else
+				rt = __NGN.path.resolve(__NGN.path.join(__NGN.cwd,rt));
+
+			if (!fs.existsSync(rt))
+				this.fireError('Cannot load route: '+rt);
 
 			// If a path is defined, make sure it exists.
 			if (!require('fs').existsSync(rt)){

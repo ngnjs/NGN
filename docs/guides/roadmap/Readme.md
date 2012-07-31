@@ -176,4 +176,19 @@ used by other libraries like JQuery and Underscore. Perhaps `&` or `@`? Somethin
 # To-Do
 
 * Guide on creating your own custom extensions & how to generate documentation for it.
-* Clas System guide.
+* Class System guide.
+
+
+# VERY Crazy Ideas
+
+One of the biggest challenges people have in using Node is getting used to the async nature and
+finding the appropriate method/attribute/etc. Those are the first of a few roadblocks. It might help
+garner adoption to have migration layers, or maps. For example, if I am a ColdFusion developer interested
+in using Node, I might better understand the syntax of `cf.output('hello world')` than `console.log('hello world')`.
+This is a very minor difference, but when there are so many of them, it could make a difference. This ould be especially
+useful in more complex differences.
+
+If something like this were done, it should definitely be done only for migration/learning purposes. Every function,
+method, attribute, etc. should log something indicating what the "real" syntax is. This could be done directly
+to the console, perhaps via Corey's pending WYS project, a log file, etc. Ultimately, it would be even better to have
+a tool that knows how to convert the code from one syntax to the "proper" syntax.

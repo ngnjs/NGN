@@ -162,30 +162,30 @@ var Class = Base.extend({
 		// Redefine ssl since the attribute names vary slightly for restify.
 		delete this.ssl;
 		Object.defineProperty(this,'ssl',{
-				enumerable:	false,
-				get:		function(){
-								if (this._ssl == null)
-									return null;
-									
-								var obj = this._ssl;
-								if (obj.certificate !== undefined){
-									obj.cert = obj.certificate;
-									delete obj.certificate; 
-								}
-								return obj;
-							},
-				set:		function(obj) {
-								if (obj == null){
-									this._ssl = null;
-									return;
-								}
-								if (obj.certificate == undefined){
-									obj.certificate = obj.cert;
-									delete obj.cert;
-								}
-								this._ssl = obj;
+			enumerable:	false,
+			get:		function(){
+							if (this._ssl == null)
+								return null;
+								
+							var obj = this._ssl;
+							if (obj.certificate !== undefined){
+								obj.cert = obj.certificate;
+								delete obj.certificate; 
 							}
-			});
+							return obj;
+						},
+			set:		function(obj) {
+							if (obj == null){
+								this._ssl = null;
+								return;
+							}
+							if (obj.certificate == undefined){
+								obj.certificate = obj.cert;
+								delete obj.cert;
+							}
+							this._ssl = obj;
+						}
+		});
 		
 		var me = this;
 		
@@ -231,6 +231,15 @@ var Class = Base.extend({
 			//TODO: Support logging with Bunyan/Loggers
 			
 			this._server = restify.createServer(options);
+			
+			// Add a makeshift &quot;all&quot; method to the server
+			this._server.all = function(route,method){
+				me._server.get(route,method);
+				me._server.put(route,method);
+				me._server.post(route,method);
+				me._server.del(route,method);
+				me._server.head(route,method);
+			};
 			
 			this._server.use(restify.acceptParser(this._server.acceptable));
 			this.applyProcessor('preauthentication');
@@ -315,23 +324,7 @@ var Class = Base.extend({
 			
 			// Catch All Route
 			var all = /(.*)/;
-			me._server.get(all,function(req,res){
-				me.on404(res);
-				res.send(404);
-			});
-			me._server.post(all,function(req,res){
-				me.on404(res);
-				res.send(404);
-			});
-			me._server.put(all,function(req,res){
-				me.on404(res);
-				res.send(404);
-			});
-			me._server.del(all,function(req,res){
-				me.on404(res);
-				res.send(404);
-			});
-			me._server.head(all,function(req,res){
+			me._server.all(all,function(req,res){
 				me.on404(res);
 				res.send(404);
 			});

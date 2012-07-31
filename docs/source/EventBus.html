@@ -15,36 +15,18 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">module.exports = {
-	'/test': {
-		'/more': {
-			get: function(){
-				res.write(url.toString());
-				res.write('Testing more nested routes');
-				res.end();
-			}
-		},
-		'/redirect':{
-			get: function(){
-				res.redirect('http://www.google.com');
-			}
-		},
-		get: function(req,res){
-			res.write('Basic Test');
-			res.end();
-		}
-	},
-	'/^\/([a-zA-Z0-9_\.~-]+)\/(.*)/': {
-		get: function(){
-			res.end('Yo!');
-		}
-	},
-	'/': {
-		get: function(){
-			res.end('Hello. I am root.');
-		}
+  <pre class="prettyprint lang-js">var Base = require('../NGN.core');
+
+var Class = Base.extend({
+	
+	constructor: function(config){
+		
+		Class.super.constructor.call(this,config)
+		
 	}
-}
-</pre>
+	
+});
+
+module.exports = Class;</pre>
 </body>
 </html>
