@@ -2,7 +2,7 @@
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
   "name": "ngn",
   "description": "The NGN Framework",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "./lib/bootstrap.js",
   "bin": {
     "ngn": "./bin/ngn"
@@ -38,7 +38,9 @@
     "socket.io": "~0.9.6",
     "passport-facebook": "~0.1.4",
     "passport-twitter": "~0.1.3",
-    "passport-linkedin": "~0.1.2"
+    "passport-linkedin": "~0.1.2",
+    "read": "~1.0.2",
+    "seq": "~0.3.5"
   },
   "engines": {
     "node": ">= 0.8.2"
