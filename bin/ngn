@@ -4,10 +4,6 @@ var argv = require('optimist')
 			.alias('config','configuration')
 			.alias('out','output')
 			.argv,
-	fs	 = require('fs'),
-	eyes = require('eyes'),
-	dir	 = require('wrench');
-	exec = require('child_process').exec,
 	p 	 = require('path'),
 	cwd	 = process.cwd(),
 	root = p.dirname(process.mainModule.filename);
