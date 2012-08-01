@@ -92,13 +92,13 @@ module.exports.build = function(argv) {
 				}, function(error,sout,serr){
 					fs.exists(p.join(docs,'.ngn.tmp.json'),function(exists){
 						if (exists){
-							/*fs.unlink(__dirname+'/.ngn.tmp.json',function(err){
+							fs.unlink(__dirname+'/.ngn.tmp.json',function(err){
 								if (error) {
 									console.log('ERROR'.bold.red);
 									eyes.inspect(error);
 							 	} else
 									console.log('DONE'.bold.green);
-							});*/
+							});
 							if (error) {
 									console.log('ERROR'.bold.red);
 									eyes.inspect(error);
