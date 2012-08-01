@@ -17,7 +17,6 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var express		= require('express'),
 	tpl			= require('consolidate'),
-	uuid		= require('node-uuid'),
 	Base		= require('../core/HttpServer'),
 	passport	= null;
 
@@ -201,7 +200,7 @@ var Class = Base.extend({
 			 * no value is specified, a random UUID is generated.
 			 */
 			sessionSecret: {
-				value:		config.sessionSecret || uuid.v1(),
+				value:		config.sessionSecret || __NGN.uuid(),
 				enumerable:	false,
 				writable:	true
 			},
@@ -397,6 +396,8 @@ var Class = Base.extend({
 			this._server.listen(this.port,function(){
 				me.onStart();
 			});
+			
+			this.running = true;
 		}
 	},
 	

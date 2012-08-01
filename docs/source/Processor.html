@@ -17,8 +17,8 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var Base = require('../BaseClass');
 
-<span id='NGN-web-RequestProcessor'>/**
-</span> * @class NGN.web.RequestProcessor
+<span id='NGN-web-Processor'>/**
+</span> * @class NGN.web.Processor
  * A middleware class for processing web requests with custom logic.
  * @extends Class
  * @private
@@ -32,7 +32,7 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-web-RequestProcessor-cfg-type'>			/**
+<span id='NGN-web-Processor-cfg-type'>			/**
 </span>			 * @cfg {String} [type=prerequest]
 			 * The type of processor. Acceptable values are listed in the order executed:
 			 * 
@@ -51,28 +51,18 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-RequestProcessor-cfg-ignoreContinue'>			/**
-</span>			 * @cfg {Boolean} [ignoreContinue=false]
-			 * When set to `true`, the middleware #fn must explicity call the `continue()` method.
-			 */
-			ignoreContinue: {
-				value:		config.disableContinue || false,
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-web-RequestProcessor-property-_used'>			/**
+<span id='NGN-web-Processor-property-used'>			/**
 </span>			 * @proeprty {Boolean}
 			 * Indicates the processor instance is currently in use by a NGN.core.HttpServer.
 			 * @private
 			 */
-			_used: {
+			used: {
 				value:		false,
 				enumerable:	false,
 				writable:	true
 			},
 			
-<span id='NGN-web-RequestProcessor-cfg-enabled'>			/**
+<span id='NGN-web-Processor-cfg-enabled'>			/**
 </span>			 * @cfg {Boolean} [enabled=true]
 			 * If this is set to `false`, the processor is ignored.
 			 */
@@ -82,7 +72,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-RequestProcessor-cfg-fn'>			/**
+<span id='NGN-web-Processor-cfg-fn'>			/**
 </span>			 * @cfg {Function}
 			 * The function used for processing the request. This method receives three arguments: `request`, `response`, and `continue` (respectively).
 			 * `continue` is a method that should always be executed at the end of the processor, otherwise the request may hang. This is automatically 
@@ -94,49 +84,33 @@ var Class = Base.extend({
 			 * }
 			 */
 			fn: {
-				value:		config.fn || __NGN.emptyFn,
+				value:		function(req,res,next){
+								if (this.used)
+									next();
+								if (config.fn)
+									config.fn(req,res,next);
+								else
+									next();
+							},
 				enumerable:	true,
 				writable:	true,
 				configurable:true
 			},
 			
-<span id='NGN-web-RequestProcessor-property-_fn'>			/**
-</span>			 * @property {Function}
-			 * The wrapper function that is called by the NGN.core.HttpServer.
-			 * @private
-			 */
-			_fn: {
-				value:		null,
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-web-RequestProcessor-property-processor'>			/**
+<span id='NGN-web-Processor-property-processor'>			/**
 </span>			 * @property {Function}
 			 * The processor function.
 			 */
 			processor: {
 				enumerable:	true,
-				get:		function(){ return this._fn; }
+				get:		function(){ return this.fn; }
 			}
 			
 		});
 		
-		var me = this;
-		
-		this._fn = function(req,res,next){
-			if (!me.enabled){
-				next();
-			} else {
-				me.fn(req,res,next);
-				if (!me.ignoreContinue)
-					next();
-			}
-		};
-		
 	},
 	
-<span id='NGN-web-RequestProcessor-method-disable'>	/**
+<span id='NGN-web-Processor-method-disable'>	/**
 </span>	 * @method
 	 * Disable the middleware
 	 */
@@ -144,7 +118,7 @@ var Class = Base.extend({
 		this.enabled = false;
 	},
 	
-<span id='NGN-web-RequestProcessor-method-enable'>	/**
+<span id='NGN-web-Processor-method-enable'>	/**
 </span>	 * @method
 	 * Enable the middleware
 	 */
@@ -152,11 +126,11 @@ var Class = Base.extend({
 		this.enabled = true;
 	},
 	
-<span id='NGN-web-RequestProcessor-method-disable'>	/**
+<span id='NGN-web-Processor-method-toggle'>	/**
 </span>	 * @method
 	 * Toggle the middleware on/off
 	 */
-	disable: function(){
+	toggle: function(){
 		this.enabled = !this.enabled;
 	}
 });

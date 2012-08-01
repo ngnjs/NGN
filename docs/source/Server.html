@@ -159,9 +159,10 @@ var Class = Core.extend({
 	 * Fired when the web server starts.
 	 */
 	onStart: function(){
-		this.running = true;
-		this.emit('ready');
-		this.fireEvent('start',this);
+		if (!this.running) {
+			this.running = true;
+			this.fireEvent('start',this);
+		}
 	},
 	
 <span id='NGN-core-Server-event-stop'>	/**
@@ -169,8 +170,10 @@ var Class = Core.extend({
 	 * Fired when the server stops.
 	 */
 	onStop: function(){
-		this.running = false;
-		this.fireEvent('stop',this);
+		if (this.running) {
+			this.running = false;
+			this.fireEvent('stop',this);
+		}
 	}
 	
 });

@@ -127,9 +127,13 @@ var Class = Base.extend({
 			 * The port on which the web server will listen. Each web server must
 			 * listen on a unique port. If no port is defined, the default port `80`
 			 * will be used. If #ssl is supplied, the port will be set to `443` by default. 
+			 * 
+			 * **IMPORTANT**
+			 * If an environment variable, i.e. `process.env.PORT` is provided, it will
+			 * overwrite this configuration value automatically.
 			 */
 			port: {
-				value:		config.port || (this.ssl == null ? 80 : 443),
+				value:		process.env.PORT || config.port || (this.ssl == null ? 80 : 443),
 				enumerable:	true,
 				writable:	true
 			},
@@ -226,7 +230,7 @@ var Class = Base.extend({
 			 * 
 			 */
 			authorize: {
-				value:		config.authorize || function(req,res,next){next()},
+				value:		config.authorize || function(req,res,next){next();},
 				enumerable:	true,
 				writable:	true,
 				configurable:true
@@ -336,22 +340,22 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGN-core-HttpServer-cfg-requestProcessor'>			/**
-</span>			 * @cfg {Function/Array/NGN.web.RequestProcessor} [requestProcessor=[]]
+<span id='NGN-core-HttpServer-cfg-processor'>			/**
+</span>			 * @cfg {Function/Array/NGN.web.Processor} [processor=[]]
 			 * Supply a middleware function, processor, or array of functions/processors.
 			 */
-			requestProcessor: {
-				value:		config.requestProcessor || [],
+			processor: {
+				value:		config.processors || [],
 				enumerable:	true,
 				writable:	true,
 				configurable:true
 			},
 			
-<span id='NGN-core-HttpServer-property-_hasRequestProcessors'>			/**
+<span id='NGN-core-HttpServer-property-_hasProcessors'>			/**
 </span>			 * @property {Boolean}
 			 * Indicates custom request processors have been configured.
 			 */
-			_hasRequestProcessors: {
+			_hasProcessors: {
 				value:		false,
 				enumerable:	false,
 				writable:	true
@@ -359,14 +363,13 @@ var Class = Base.extend({
 			
 		});
 		
-		if (!Array.isArray(this.requestProcessor)){
-			this.requestProcessor = [this.requestProcessor];
+		if (!Array.isArray(this.processor)){
+			this.processor = [this.processor];
 		}
-		for(var i=0;i&lt;this.requestProcessor.length;i++){
-			if (this.requestProcessor[i].type == undefined)
-				this.requestProcessor[i] = new __NGN.web.RequestProcessor({fn:this.requestProcessor[i]});
+		for(var i=0;i&lt;this.processor.length;i++){
+			if (this.processor[i].type == undefined)
+				this.processor[i] = new __NGN.web.Processor({fn:this.processor[i]});
 		}
-		
 		
 		if (this.requireClientCert || this.rejectUnauthorizedCert) {
 			this._serverOptions = this._serverOptions || {};
@@ -384,24 +387,24 @@ var Class = Base.extend({
 	 */
 	applyProcessor: function(type){
 		var me = this;
-		for(var i=0;i&lt;this.requestProcessor.length;i++){
-			if (this.requestProcessor[i].type == type &amp;&amp; !this.requestProcessor[i]._used){
-				this._server.use(this.requestProcessor[i].processor);
-				this.requestProcessor[i]._used = true;
+		for(var i=0;i&lt;this.processor.length;i++){
+			if (this.processor[i].type == type &amp;&amp; !this.processor[i]._used){
+				this._server.use(me.processor[i].processor);
+				this.processor[i].used = true;
 			}
 		}
 	},
 	
-<span id='NGN-core-HttpServer-method-addRequestProcessor'>	/**
+<span id='NGN-core-HttpServer-method-addprocessor'>	/**
 </span>	 * @method
 	 * Add a custom middleware function or request processor.
-	 * @param {Function/NGNX.web.RequestProcessor}
+	 * @param {Function/NGNX.web.processor}
 	 */
-	addRequestProcessor: function(rp){
+	addprocessor: function(rp){
 		if (rp.type == undefined)
-			this.requestProcessor.push(new __NGN.web.RequestProcessor({fn:rp}));
+			this.processor.push(new __NGN.web.Processor({fn:rp}));
 		else
-			this.requestProcessor.push(rp);
+			this.processor.push(rp);
 	},
 	
 <span id='NGN-core-HttpServer-method-testBasicAuth'>	/**
@@ -455,7 +458,6 @@ var Class = Base.extend({
 		
 		var me = this;
 		
-		// Remove mapper if it already exists
 		if (this._server.hasOwnProperty('map') || this._server.map !== undefined)
 			delete this._server.map;
 			
@@ -485,9 +487,8 @@ var Class = Base.extend({
 								}
 							}
 						},
-			enumerable: false,
-			configurable: true,
-			writable:	true
+			enumerable: true,
+			writable:	false
 		});
 		
 		// If the routes configuration provides an array of filepaths, loop
@@ -514,22 +515,6 @@ var Class = Base.extend({
 				throw Error('The route path does not exist or could not be found. '+rt);
 				return;
 			}
-			
-			/*
-			// Async Route Loader
-			require('wrench').readdirRecursive( rt, function(err, filepath){
-				if(filepath !== null) {
-					for(var n=0;n&lt;filepath.length;n++) {
-						if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js'){
-							var _rt = require(rt+'/'+filepath[n]);
-							if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
-								_hasRootRoute = true;
-							console.log('---&gt;',_hasRootRoute)
-							me._server.map(_rt);
-						}
-					}
-				}
-			});*/
 			
 			// Sync Route Loader
 			var filepath = require('wrench').readdirSyncRecursive(rt);

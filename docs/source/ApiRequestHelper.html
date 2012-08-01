@@ -15,7 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Base = require('../../web/RequestProcessor');
+  <pre class="prettyprint lang-js">var Base = require('../../web/Processor');
 
 <span id='NGNX-web-ApiRequestHelper'>/**
 </span> * @class NGNX.web.ApiRequestHelper
@@ -46,15 +46,15 @@
  * 			}
  * 		}
  * 
- * This should be implemented as a NGN.web.API#requestProcessor.
+ * This should be implemented as a NGN.web.API#processor.
  * 
  * **Example**
  * 		var web = new NGN.web.API({
  * 			port: 8182,
- * 			requestProcessor: new NGNX.web.ApiRequestHelper()
+ * 			processor: new NGNX.web.ApiRequestHelper()
  * 		});
  * @singleton
- * @extends NGN.web.RequestProcessor
+ * @extends NGN.web.Processor
  */
 
 var Class = Base.extend({

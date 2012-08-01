@@ -33,12 +33,16 @@ var Class = Base.extend({
         var emitter = require('events').EventEmitter;
         
         Object.defineProperties(this,{
-        	
+<span id='NGN-property-version'>        	/**
+</span>        	 * @property {String}
+        	 * The running version of NGN.
+        	 * @readonly
+        	 */
         	version: {
-            	value:		'0.0.5',
             	enumerable:	true,
-            	writable:	false,
-            	configurable:false
+            	get:		function() {
+			            		return require(__NGN.path.join(__dirname,'..','package.json')).version;
+			            	}
             },
         	
 <span id='NGN-property-DSN'>        	/**
