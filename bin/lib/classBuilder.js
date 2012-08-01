@@ -153,6 +153,7 @@ var Build = function(){
 	str += "module.exports = Class;";
 	
 	fs.writeFile(p.resolve(p.join(arg.output,arg.filename)),str,'utf8',function(){
+		fs.chmodSync(p.resolve(p.join(arg.output,arg.filename)),'662');
 		console.log('Class stub created at '.magenta+p.resolve(p.join(arg.output,arg.filename)).magenta.bold);
 	});
 }
