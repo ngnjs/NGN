@@ -20,13 +20,12 @@
 <span id='NGNX-web-WebRequestHelper'>/**
 </span> * @class NGNX.web.WebRequestHelper
  * A request processor that creates several additional attributes on a request object. This is designed for making
- * it easier to write routes.
+ * it easier to process routes.
  * 
  * Provides the following additions to the request scope:
  * 
  * * **form**: An form or pre-parsed JSON body found in a `POST`, `PUT`, or `DELETE` request.
  * * **qs**: Query string parameters passed in the URL.
- * * **route**: Any route variables available via route regex.
  * * **cgi**: On object containing `path_info`, `user_agent`, `method`, &amp; `http_accept`.
  * * **browser**: On object containing `name`, `version`, `family`, `major`, `minor`, `patch`, &amp; `mobile`.
  * 
@@ -38,7 +37,7 @@
  * 
  * 		'/:user': {
  * 			post: function(req,res){
- * 				var usr = getUser(req.route.userid);
+ * 				var usr = getUser(req.route.params.userid);
  * 				if (usr.email !== req.form.address)
  * 					throw Error();
  * 				else if (req.url.resend !== undefined){
@@ -80,7 +79,6 @@ var Class = Base.extend({
 							? (typeof req.body === 'string' ? JSON.parse(req.body) : req.body)
 							: {};
 				req.qs		= req.query || {};
-				req.route	= req.params || {};
 				req.cgi		= {
 								path_info: req.url,
 								user_agent: ua,
@@ -96,14 +94,6 @@ var Class = Base.extend({
 								patch: b.patch || null,
 								mobile: __NGN.pattern.isMobileDevice(ua)	
 							};
-
-				for(var el in req.route){
-					if (req.form.hasOwnProperty(el))
-						delete req.route[el];
-					if (req.qs.hasOwnProperty(el))
-						delete req.route[el];
-
-				}
 
 				// Specific to web server
 				if (res.locals) {
