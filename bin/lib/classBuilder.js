@@ -95,10 +95,9 @@ var Build = function(){
 	str += " */"+cr;
 	
 	// Stub Code
-	str += "var Class = "+arg.extend+".extend({"+cr+cr;
-	str += t+"constructor: function(config) {"+cr+cr;
-	str += t+t+"// Call the parent constructor"+cr;
-	str += t+t+"Class.super.constructor.call(this,config);";
+	str += "module.exports = NGN.define('"+arg['class']+"',{"+cr+cr;
+	str += t+"extend: '"+arg.extend+"',"+cr+cr;
+	str += t+"constructor: function(config) {";
 	
 	//Optionally support additional properties
 	if (arg.properties == 'y') {
@@ -130,7 +129,7 @@ var Build = function(){
 	}
 	str += cr+cr;
 	
-	str += t+t+'// Constructor code goes here....'+cr+cr;
+	str += t+t+'// Remaining constructor code goes here....'+cr+cr;
 	str += t+"}";
 	
 	// Add custom method stubb
@@ -149,8 +148,7 @@ var Build = function(){
 	}
 	str += cr+cr;
 	
-	str += "});"+cr+cr;
-	str += "module.exports = Class;";
+	str += "});";
 	
 	fs.writeFile(p.resolve(p.join(arg.output,arg.filename)),str,'utf8',function(){
 		fs.chmodSync(p.resolve(p.join(arg.output,arg.filename)),'662');

@@ -1,4 +1,4 @@
-require('ngn');
+require('../../../');
 
 /**
  * @class EXAMPLE.Person
@@ -18,7 +18,9 @@ require('ngn');
  * surprised by how little code there is. Most of it is documentation.
  * @extends NGNX.Person
  */
-var Class = NGNX.Person.extend({
+module.exports = NGN.define('EXAMPLE.Person',{
+	
+	extend: 'NGNX.Person',
 	
 	/**
 	 * @constructor
@@ -26,10 +28,6 @@ var Class = NGNX.Person.extend({
 	 * @param {Object} config
 	 */
 	constructor: function(config){
-		
-		config = config || {};
-		
-		Class.super.constructor.call(this,config);
 		
 		console.log('I am person 2.0'); // This, along with sayHello is the only "custom logic" in the class. The rest is boilerplate. 
 		
@@ -44,5 +42,3 @@ var Class = NGNX.Person.extend({
 	}
 	
 });
-
-module.exports = Class;
