@@ -44,12 +44,11 @@ The example above, which primarily uses the default values, generates `/path/to/
 	 * @singleton
 	 * @author Corey Butler
 	 */
-	var Class = NGN.core.extend({
+	module.exports = NGN.define('NGNX.xtn.Class',{
+	
+	    extend: 'NGN.core',
 	
 	    constructor: function(config) {
-	
-	        // Call the parent constructor
-	        Class.super.constructor.call(this,config);
 	
 	        //TODO: Create configuration/properties.
 	        Object.defineProperties(this,{
@@ -77,7 +76,7 @@ The example above, which primarily uses the default values, generates `/path/to/
 	
 	        });
 	
-	        // Constructor code goes here....
+	        // Remaining constructor code goes here....
 	
 	    },
 	
@@ -87,15 +86,13 @@ The example above, which primarily uses the default values, generates `/path/to/
 	     * @method
 	     * This is a custom function.
 	     * @param {String} [arg=null]
-	     * This argument is null by default.
+	     * This argument is `null` by default.
 	     */
 	    myFunction: function(arg) {
 	        // Code...
 	    }
 	
 	});
-	
-	module.exports = Class;
 
 This class will actually work in a custom library, but it is not designed to.
 It should go without saying that developers should replace things like 
