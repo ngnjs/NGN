@@ -361,8 +361,7 @@ var Class = Base.extend({
     	return this._xtn;
     },
     
-    
-<span id='NGN-method-define'>	/**
+<span id='NGN-method-define'>    /**
 </span>	 * @method
 	 * A shortcut method for creating new classes.
 	 * 		NGN.define('ORG.team.Member',{
@@ -385,39 +384,39 @@ var Class = Base.extend({
 	 */
 	define: function(cls, config) {
 		var ns = cls.split('.');
-		
+
 		if (ns[0].trim().toUpperCase() == 'NGN' || ns[0].trim().toUpperCase() == '__NGN')
 			throw Error('Cannot overwrite the NGN namespace.');
-		
+
 		var pkg = global[ns[0].trim()];
 		for (var i=1;i&lt;ns.length-1;i++) {
 			if (pkg[ns[i].trim()] = undefined)
 				pkg[ns[i].trim()] = {};
 			pkg = pkg[ns[i].trim()];
 		}
-		
+
 		var target = config.extend || 'NGN.core';
-		
+
 		if (target == 'NGN.core' || target == '__NGN.core')
 			var _base = require('./NGN.core');
 		else {
 			var _cls 	= target.split('.');
-			
+
 			global[_cls[0]] = global[cls[0]] || {};
-			
+
 			var _base 	= global[_cls[0]];
-			
+
 			for(var i=1;i&lt;_cls.length;i++){
 				_base = _base[_cls[i]];
 			}
-			
+
 		}
-		
+
 		if (config.extend !== undefined)
 			delete config.extend;
-		
+
 		return _base.extend({
-			
+
 			constructor: 	config.constructor == undefined 
 							? function(cfg){
 								cfg = cfg || config || {};
@@ -439,7 +438,7 @@ var Class = Base.extend({
 								Class.super.constructor.call(this,cfg);
 								_cons(cfg);
 							}
-			
+
 		});
 	},
 	
@@ -873,6 +872,35 @@ var Class = Base.extend({
      */
     onUnRegisterServer: function(server){
     	this.fireEvent('unregisterserver',server||null);
+    },
+    
+<span id='NGN-method-typeOf'>    /**
+</span>     * @method
+     * Get the type of a specific object.
+     * @returns {String}
+     */
+    typeOf: function(obj) {
+    	return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+    },
+    
+<span id='NGN-method-coalesce'>    /**
+</span>     * @method
+     * Finds the first non-null/defined value in a list of arguments.
+     * This can be used with {Boolean} values, since `true`/`false` is a 
+     * non-null/defined value.
+     * @param {Mixed} args
+     * Any number of arguments can be passed to this method.
+     */
+    coalesce: function() {
+    	for (var i=0;i&lt;arguments.length;i++){
+			if (arguments[i] !== undefined) {
+	    		if (this.typeOf(arguments[i]) !== 'null'){
+	    			return arguments[i];
+	    		}
+	    	}
+    	}
+    	// No values? Return null;
+    	return null;
     }
 });
 

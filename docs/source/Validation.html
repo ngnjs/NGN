@@ -74,7 +74,7 @@ var Class = Base.extend({
 			 * Append the code to the end of the URL.
 			 */
 			appendCode: {
-				value:		config.appendCode || false,
+				value:		__NGN.coalesce(config.appendCode,false),
 				enumerable:	true,
 				writable:	true
 			}

@@ -132,7 +132,7 @@ var Class = Base.extend({
 			 * Emit a #warn event if the attachment source is missing or not found.
 			 */
 			warnOnMissingFile: {
-				value:		config.warnOnMissingSource || true,
+				value:		__NGN.coalesce(config.warnOnMissingSource,true),
 				enumerable:	true,
 				writable:	true
 			},
@@ -142,7 +142,7 @@ var Class = Base.extend({
 			 * Fire an error if the attachment source is missing or not found.
 			 */
 			errorOnMissingFile: {
-				value:		config.errorOnMissingSource || true,
+				value:		__NGN.coalesce(config.errorOnMissingSource,true),
 				enumerable:	true,
 				writable:	true
 			}

@@ -35,7 +35,7 @@ var Class = Core.extend({
 	constructor: function(config){
 		
 		config = config || {};
-		
+	
 		Class.super.constructor.call(this, config);
 		
 		Object.defineProperties(this,{
@@ -105,7 +105,18 @@ var Class = Core.extend({
 			 * Automatically register a helper reference to the server (available via NGN#getServer or NGN#getServers). 
 			 */
 			autoRegister: {
-				value:		config.autoRegister || true,
+				value:		__NGN.coalesce(config.autoRegister,true),
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-autoStart'>			/**
+</span>			 * @cfg {Boolean} [autoStart=true]
+			 * Automatically start the server. If this is set to `false`, the
+			 * server will need to be running explicitly using the #start method.
+			 */
+			autoStart: {
+				value:		__NGN.coalesce(config.autoStart,true),
 				enumerable:	true,
 				writable:	true
 			},
@@ -117,6 +128,17 @@ var Class = Core.extend({
 			syslog: {
 				value:		config.logger || null,
 				enumerable:	false,
+				configurable:true
+			},
+			
+<span id='NGN-core-Server-property-starting'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates whether the server is in the process of starting.
+			 */
+			starting: {
+				value:		false,
+				enumerable:	true,
+				writable:	true,
 				configurable:true
 			}
 			
@@ -159,7 +181,7 @@ var Class = Core.extend({
 	 * Fired when the web server starts.
 	 */
 	onStart: function(){
-		if (!this.running) {
+		if (!this.running &amp;&amp; this.starting) {
 			this.running = true;
 			this.fireEvent('start',this);
 		}
@@ -172,13 +194,13 @@ var Class = Core.extend({
 	onStop: function(){
 		if (this.running) {
 			this.running = false;
+			this.starting= false;
 			this.fireEvent('stop',this);
 		}
 	}
 	
 });
 
-module.exports = Class;
-</pre>
+module.exports = Class;</pre>
 </body>
 </html>

@@ -93,7 +93,7 @@ var ng          = {};
 function extendAPI(dir) {
 	
 	dir = fs.existsSync(dir) == true ? p.resolve(dir) : p.join(process.cwd(),dir);
-	
+
 	var newglobals = fs.readdirSync(dir);
 
 	// Add custom extension libraries
@@ -107,9 +107,8 @@ function extendAPI(dir) {
 	        ng[newglobals[i]] = {};
 	        require('wrench').readdirSyncRecursive(p.join(dir,newglobals[i])).forEach(function( file ){
 	             if (p.join(dir,file) !== __filename &amp;&amp; file.indexOf('.js') &gt;= 0) {
-	                var path    = p.basename(file).split(p.sep),
+	                var path    = file.split(p.sep),
 	                    pkg     = ng[newglobals[i]];
-	              
 	                for (var position=0; position&lt;path.length; position++) {
 
 			            if (pkg[path[position].replace('.js','')] == undefined)

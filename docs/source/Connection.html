@@ -182,7 +182,7 @@ var Class = Base.extend({
              * Automatically connect to the database when this object is initialized.
              */
             autoConnect: {
-            	value:			config.autoConnect !== undefined ? config.autoConnect : true,
+            	value:			__NGN.coalesce(config.autoConnect,true),
             	enumerable:		true,
             	writable:		true
             },
@@ -198,22 +198,22 @@ var Class = Base.extend({
                 value:          {connected:false,placeholder:true}
             },
             
-<span id='NGN-datasource-Connection-cfg-dsnName'>            /**
-</span>             * @cfg {String} [dsnName]
+<span id='NGN-datasource-Connection-cfg-id'>            /**
+</span>             * @cfg {String} [id]
              * Optionally specify a datasource name. This will be automatically registered
              * using NGN#createDatasource.
              */
             _name:	{
-            	value:			config.name || null,
+            	value:			config.id || null,
             	enumerable:		false,
             	writable:		true
             },
             
-<span id='NGN-datasource-Connection-property-dsnName'>            /**
-</span>             * @property {String} [dsnName]
+<span id='NGN-datasource-Connection-property-id'>            /**
+</span>             * @property {String} [id]
              * The name of the NGN#DSN that will be registered for this connection.
              */
-            dsnName:	{
+            id:	{
             	enumerable:		true,
             	get:			function() {
 				            		return this._name;	

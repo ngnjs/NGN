@@ -90,7 +90,7 @@ var Class = Base.extend({
 			 * server will need to be running explicitly using the #start method.
 			 */
 			autoStart: {
-				value:		config.autoStart || true,
+				value:		__NGN.coalesce(config.autoStart,true),
 				enumerable:	true,
 				writable:	true
 			},

@@ -58,7 +58,8 @@ var Class = Base.extend({
 		
 		config = config || {};
 		config.purpose = 'WWW';
-		
+		require('colors')
+
 		Class.super.constructor.call( this, config );
 		
 		Object.defineProperties(this,{
@@ -210,7 +211,7 @@ var Class = Base.extend({
 			 * Enable CSRF protection.
 			 */
 			preventCsrf: {
-				value:		config.preventCsrf || true,
+				value:		__NGN.coalesce(config.preventCsrf,true),
 				enumerable:	true,
 				writable:	true
 			},
@@ -220,7 +221,7 @@ var Class = Base.extend({
 			 * This value is ignored if there is no static content.
 			 */
 			enableStaticCache: {
-				value:		config.enableStaticCache || true,
+				value:		__NGN.coalesce(config.enableStaticCache,true),
 				enumerable:	true,
 				writable:	true
 			},
@@ -232,7 +233,7 @@ var Class = Base.extend({
 			 * `true` since body parsing is required for Anti-CSRF protection.
 			 */
 			disableBodyParsing: {
-				value:		config.disableBodyParsing || false,
+				value:		__NGN.coalesce(config.disableBodyParsing,false),
 				enumerable:	true,
 				writable:	true
 			}
@@ -329,75 +330,81 @@ var Class = Base.extend({
 	 * @private
 	 */
 	start: function(){
+		this.starting = true;
+		console.log('Asking to startup'.red);
 		if (!this.running) {
-			
-			var me 	= this;
-			
-			// PreAuthenticate Middleware
-			this.applyProcessor('preauthentication');
-			
-			if (!this.disableBasicAuth &amp;&amp; this.basicAuthUsers !== null)
-				this._server.use(express.basicAuth(this.testBasicAuth))
-			
-			this._server.use(this.authenticate);
-			
-			// PostAuthenticate Middleware
-			this.applyProcessor('postauthentication');
-			
-			// PreAuthorize Middleware
-			this.applyProcessor('preauthorization');
-			this._server.use(this.authorize);
-			
-			// PostAuthorize Middleware
-			this.applyProcessor('postauthorization');
-			
-			// PreRequest Middleware
-			this.applyProcessor('prerequest');
-			
-			// PostRequest Middleware
-			express.request.on('end',function(req,res,next){
-				me.onRequestEnd(req,res);
-			});
-
-			// Handle Global Cross Origin			
-			if (this._ALLOWCORS !== null)
-				this._server.use(this.handleCrossOrigin);
+			console.log('Attempting to startup'.cyan);
+			try {
 				
-			if (this._ALLOWMETHODS !== null)
-				this._server.use(this.handleMethods);
-		
-			this._server.use(this.handleError);
+				var me 	= this;
+				
+				// PreAuthenticate Middleware
+				this.applyProcessor('preauthentication');
+				
+				if (!this.disableBasicAuth &amp;&amp; this.basicAuthUsers !== null)
+					this._server.use(express.basicAuth(this.testBasicAuth))
+				
+				this._server.use(this.authenticate);
+				
+				// PostAuthenticate Middleware
+				this.applyProcessor('postauthentication');
+				
+				// PreAuthorize Middleware
+				this.applyProcessor('preauthorization');
+				this._server.use(this.authorize);
+				
+				// PostAuthorize Middleware
+				this.applyProcessor('postauthorization');
+				
+				// PreRequest Middleware
+				this.applyProcessor('prerequest');
+				
+				// PostRequest Middleware
+				express.request.on('end',function(req,res,next){
+					me.onRequestEnd(req,res);
+				});
+	
+				// Handle Global Cross Origin			
+				if (this._ALLOWCORS !== null)
+					this._server.use(this.handleCrossOrigin);
+					
+				if (this._ALLOWMETHODS !== null)
+					this._server.use(this.handleMethods);
 			
-			
-			this.enableSessionManagement();
-			this.enableTemplateRendering();
-			
-			this.generateRoutes(this._server);
-			
-			if (this.assets !== null) {
-				if (!fs.existsSync(this.assets &amp;&amp; fs.existsSync(__NGN.path.join(__NGN.rootDir,this.assets))))
-					this.assets = __NGN.path.join(__NGN.rootDir,this.assets);
-				if (this.enableStaticCache)
-					this._server.use(express.staticCache());
-				var opts = this.maxAssetAge == null ? null : {maxAge:this.maxAssetAge};
-				this._server.use(express.static(this.assets,opts));
+				this._server.use(this.handleError);
+				
+				
+				this.enableSessionManagement();
+				this.enableTemplateRendering();
+				
+				this.generateRoutes(this._server);
+				
+				if (this.assets !== null) {
+					if (!fs.existsSync(this.assets &amp;&amp; fs.existsSync(__NGN.path.join(__NGN.rootDir,this.assets))))
+						this.assets = __NGN.path.join(__NGN.rootDir,this.assets);
+					if (this.enableStaticCache)
+						this._server.use(express.staticCache());
+					var opts = this.maxAssetAge == null ? null : {maxAge:this.maxAssetAge};
+					this._server.use(express.static(this.assets,opts));
+				}
+				
+				this.applyProcessor('postrequest');
+				
+				if (this.enableCompression)
+					this._server.use(express.compress());
+				
+				if (this._serverOptions !== null) 
+					this._httpServer = require('https').createServer(this._serverOptions,this._server);
+				else
+					this._httpServer = require('http').createServer(this._server);
+	
+				this._server.listen(this.port,function(){
+					me.onStart();
+				});
+			} catch (e) {
+				this.starting = false;
+				this.onError(e);
 			}
-			
-			this.applyProcessor('postrequest');
-			
-			if (this.enableCompression)
-				this._server.use(express.compress());
-			
-			if (this._serverOptions !== null) 
-				this._httpServer = require('https').createServer(this._serverOptions,this._server);
-			else
-				this._httpServer = require('http').createServer(this._server);
-
-			this._server.listen(this.port,function(){
-				me.onStart();
-			});
-			
-			this.running = true;
 		}
 	},
 	
@@ -631,7 +638,6 @@ var Class = Base.extend({
 
 
 // Create a module out of this.
-module.exports = Class;
-</pre>
+module.exports = Class;</pre>
 </body>
 </html>
