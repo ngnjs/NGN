@@ -178,12 +178,22 @@ var Class = Core.extend({
 	
 <span id='NGN-core-Server-event-start'>	/**
 </span>	 * @event start
-	 * Fired when the web server starts.
+	 * Fired when the web server begins the startup process.
 	 */
 	onStart: function(){
 		if (!this.running &amp;&amp; this.starting) {
 			this.running = true;
 			this.fireEvent('start',this);
+		}
+	},
+	
+<span id='NGN-core-Server-event-ready'>	/**
+</span>	 * @event ready
+	 * Fired when the web server is ready to process reuests.
+	 */
+	onReady: function(){
+		if (this.running) {
+			this.fireEvent('ready',this);
 		}
 	},
 	
