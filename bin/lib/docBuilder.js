@@ -96,16 +96,11 @@ module.exports.build = function(argv) {
 								if (error) {
 									console.log('ERROR'.bold.red);
 									eyes.inspect(error);
-							 	} else
-									console.log('DONE'.bold.green);
-							});
-							if (error) {
-									console.log('ERROR'.bold.red);
-									eyes.inspect(error);
-							 	} else {
+								 } else {
 									console.log('DONE'.bold.green);
 									console.log('Docs are available at: '.yellow+'file:///'.magenta+p.resolve(p.join(OUT_DIR,'index.html')).magenta);
 								}
+							});
 						} else {
 							if (error) {
 								console.log('ERROR'.bold.red);
