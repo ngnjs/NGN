@@ -51,20 +51,20 @@ var Wizard = function(root) {
 		})
 		.seq(function(){
 			read({
-				prompt: 'Will this class have custom methods/functions?:',
+				prompt: 'Generate example methods/functions?',
 				'default': 'y'
 			}, this.into('methods'))
 		})
 		.seq(function(){
 			read({
-				prompt: 'Will this class have custom properties/config attributes?:',
+				prompt: 'Generate example custom property/configuration attributes?:',
 				'default': 'y'
 			}, this.into('properties'))
 		})
 		.seq(function(){
 			read({
 				prompt: 'Save to Directory:',
-				'default': './'
+				'default': process.cwd()
 			}, this.into('output'))
 		})
 		.seq(function(){
@@ -95,9 +95,11 @@ var Build = function(){
 	str += " */"+cr;
 	
 	// Stub Code
-	str += "module.exports = NGN.define('"+arg['class']+"',{"+cr+cr;
+	str += "var Class = NGN.define('"+arg['class']+"',{"+cr+cr;
 	str += t+"extend: '"+arg.extend+"',"+cr+cr;
-	str += t+"constructor: function(config) {";
+	str += t+"constructor: function(config) {"+cr+cr;
+	str += t+t+"// Inherit from "+arg.extend+cr;
+	str += t+t+"Class.super.constructor(this,config);";
 	
 	//Optionally support additional properties
 	if (arg.properties == 'y') {
@@ -148,11 +150,13 @@ var Build = function(){
 	}
 	str += cr+cr;
 	
-	str += "});";
+	str += "});"+cr+cr;
+	
+	str += "module.exports = Class;";
 	
 	fs.writeFile(p.resolve(p.join(arg.output,arg.filename)),str,'utf8',function(){
 		fs.chmodSync(p.resolve(p.join(arg.output,arg.filename)),'662');
-		console.log('Class stub created at '.magenta+p.resolve(p.join(arg.output,arg.filename)).magenta.bold);
+		console.log('Class stub created:'.magenta+p.resolve(p.join(arg.output,arg.filename)).magenta.bold);
 	});
 }
 
