@@ -44,12 +44,15 @@ The example above, which primarily uses the default values, generates `/path/to/
 	 * @singleton
 	 * @author Corey Butler
 	 */
-	module.exports = NGN.define('NGNX.xtn.Class',{
+	var Class = NGN.define('NGNX.xtn.Class',{
 	
 	    extend: 'NGN.core',
 	
 	    constructor: function(config) {
-	
+			
+			// Inherit from NGN.core
+			Class.super.constructor.call(this,config);
+			
 	        //TODO: Create configuration/properties.
 	        Object.defineProperties(this,{
 	            /**
@@ -93,16 +96,17 @@ The example above, which primarily uses the default values, generates `/path/to/
 	    }
 	
 	});
+	
+	module.exports = Class;
 
-This class will actually work in a custom library, but it is not designed to.
+This class will actually work in a custom library, but it is not designed to. It is merely a starting point.
 It should go without saying that developers should replace things like 
-`myFunction` and `someConfigProperty` with real meaningful features.
+`myFunction` and `someConfigProperty` with meaningful features.
 
 Aside from being a starting point for a functional class, the stub is also designed
 to provide a starting point for meaningful documentation. NGN uses [JSDuck](https://github.com/senchalabs/jsduck)
 to generate documentation. The comments in a generated stub class are valid syntax
 for use with JSDuck.
-
 
 ## Generating Custom Documentation
 
