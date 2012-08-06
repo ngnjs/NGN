@@ -18,7 +18,7 @@ require('../../../');
  * surprised by how little code there is. Most of it is documentation.
  * @extends NGNX.Person
  */
-module.exports = NGN.define('EXAMPLE.Person',{
+var Class = NGN.define('EXAMPLE.Person',{
 	
 	extend: 'NGNX.Person',
 	
@@ -28,6 +28,8 @@ module.exports = NGN.define('EXAMPLE.Person',{
 	 * @param {Object} config
 	 */
 	constructor: function(config){
+		
+		Class.super.constructor.call(this,config);
 		
 		console.log('I am person 2.0'); // This, along with sayHello is the only "custom logic" in the class. The rest is boilerplate. 
 		
@@ -42,3 +44,5 @@ module.exports = NGN.define('EXAMPLE.Person',{
 	}
 	
 });
+
+module.exports = Class;
