@@ -86,36 +86,50 @@ var Class = Connection.extend({
 
 		this.onConnect();
 
-		this.client = !this.client.hasOwnProperty('stream') ? redis.createClient( this.port, this.host ) : this.client;
-    	this.client.on('ready',function(){
-    		if (me.password == null &amp;&amp; me.database !== 1)
-	    		me.client.select(me.database);
-    		me.onConnected();
-    	});
-    	this.client.on('error',function(e){
+		if (this.client.hasOwnProperty('placeholder')) {
+			this.client = redis.createClient(this.port,this.host);
+		}
+		
+		this.client.on('error',function(e){
     		me.fireError(e);
     	});
+    	
     	this.client.on('end',function(){
     		me.onDisconnect();
     	});
-
-		// Make sure the connection is active
-		this.client.get('__ngn_test_connect__',function(e,v){
-			if (!e)
-				me.onConnected();
-		});
     	
     	// Authenticate/authorize if a password is provided. 
     	if ( this.password !== null ) {
     		this.onAuthorization();
-    		this.client.auth(this.password,function(a1,a2,a3){
+    		this.client.auth(this.password,function(){
     			me.onAuthorized();
     			me.securedConnection = true;
     			if (me.database !== 1)
-	    			me.client.select(me.database);
+	    			me.changeDatabase(me.database);
+	    		me.testConnection();
             });
-        }
-        
+       	} else if (this.database !== 1) {
+    		this.changeDatabase(this.database);
+			this.testConnection();
+		} else
+			this.testConnection();
+		
+    },
+    
+<span id='NGN-datasource-Redis-method-testConnection'>    /**
+</span>     * @method
+     * Make sure the connection is active. This fires the #connected event on success.
+     * @private
+     */
+    testConnection: function(){
+    	var me = this;
+    	//TODO: Set a timeout and monitor it.
+    	this.client.get('__ngn_test_connect__',function(e,v){
+			if (!e) {
+				me.onConnected();
+				me.onReady();
+			}
+		});
     },
 	
 <span id='NGN-datasource-Redis-method-changeDatabase'>	/**
@@ -129,6 +143,14 @@ var Class = Connection.extend({
 	changeDatabase: function(index){
 		this.database = index;
 		this.client.select(index);
+	},
+	
+<span id='NGN-datasource-Redis-event-ready'>	/**
+</span>	 * @event ready
+	 * Fired when the connection is ready for interaction with a client.
+	 */
+	onReady: function(){
+		this.emit('ready');
 	}
     
 });

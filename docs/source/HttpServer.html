@@ -325,12 +325,12 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<span id='NGN-core-HttpServer-cfg-processor'>			/**
-</span>			 * @cfg {Function/Array/NGN.web.Processor} [processor=[]]
+<span id='NGN-core-HttpServer-cfg-processors'>			/**
+</span>			 * @cfg {Function/Array/NGN.web.Processor} [processors=[]]
 			 * Supply a middleware function, processor, or array of functions/processors.
 			 */
 			processor: {
-				value:		config.processors || [],
+				value:		config.processors || config.processor || [],
 				enumerable:	true,
 				writable:	true,
 				configurable:true

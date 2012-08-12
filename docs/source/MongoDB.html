@@ -18,7 +18,7 @@
   <pre class="prettyprint lang-js">var mongodb     = require('mongodb'),
 	Server		= mongodb.Server,
 	DB			= mongodb.Db, 
-    Connection  = require('./Connection');
+    Base	  	= require('./Connection');
 
 <span id='NGN-datasource-MongoDB'>/**
 </span> * @class NGN.datasource.MongoDB
@@ -26,13 +26,13 @@
  *  	require('colors');
  * 		
  * 	var ds = new NGN.datasource.MongoDB({
- *			dsnName: 'mongotest',
- *			autoConnect: false,
- *			host: 'ds00001.mongolab.com',
- *			port: 30007,
- *			database: 'my_db',
- *			username: 'user',
- *			password: 'password'
+ *			id: 		'mongotest',
+ *			autoConnect:false,
+ *			host: 		'ds00001.mongolab.com',
+ *			port: 		30007,
+ *			database: 	'my_db',
+ *			username: 	'user',
+ *			password: 	'password'
  *		});
  *		
  *		ds.on('connect',function(){
@@ -71,7 +71,7 @@
  * @requires mongodb
  * @docauthor Corey Butler
  */
-var Class = Connection.extend({
+var Class = Base.extend({
     
 <span id='NGN-datasource-MongoDB-method-constructor'>    /**
 </span>     * @constructor
@@ -102,14 +102,6 @@ var Class = Connection.extend({
          * The host port.
          */
         this.port    = config.port     || 27017;
-        
-<span id='NGN-datasource-MongoDB-property-client'>        /**
-</span>         * @property
-         * @readonly
-         * @protected
-         * The underlying [mongodb client](https://github.com/mongodb/node-mongodb-native) used to interact with the database instance. 
-         */
-        Class.super.client = {connected:false,placeholder:true};
         
         // Additional properties of MongoDB
         Object.defineProperties(this,{
@@ -170,15 +162,22 @@ var Class = Connection.extend({
 			var ds = new DB(this.database,this._server);
 			
 			ds.open(function(err,conn){
-				if (err)
+				if (err){
+					console.log(err);
 					this.fireError(err);
-				else {
+				} else {
 					if (me.appname !== null &amp;&amp; me.password !== null) {
 						me.onAuthorization();
 						conn.authenticate(me.appname,me.password,function(e,accepted){
-							if (e)
-								me.fireError(e);
-							else if (!accepted)
+							if (e) {
+								if (e.errmsg){
+									me.onAuthFailure(e.errmsg);
+									return;
+								} else {
+									console.log(e)
+									me.fireError(e);
+								}
+							} else if (!accepted)
 								me.emit('error','Login to MongoDB server failed.');
 							me.onAuthorized(accepted);
 							me.client = conn;

@@ -70,15 +70,22 @@ var Class = require('./BaseClass').extend({
 						config = config || {};
 						
 						Class.super.constructor.call(this, config);
+						
+						Object.defineProperties(this,{
+							
+<span id='NGN-core-property-_emitter'>							/**
+</span>							 * @property
+							 * An event emitter for the class. Used internally.
+							 * @protected
+							 */	
+							_emitter: {
+								value:		new events.EventEmitter(),
+								enumerable: false,
+								writable:	false
+							}
+						});
 						 
 					},
-
-<span id='NGN-core-property-_emitter'>	/**
-</span>	 * @property
-	 * An event emitter for the class. Used internally.
-	 * @protected
-	 */					
-	_emitter:		Object.create(events.EventEmitter.prototype),
 	
 <span id='NGN-core-method-emit'>	/**
 </span>	 * @method

@@ -92,7 +92,7 @@ var Class = Base.extend({
              * An optional username passed to the database instance.
              */
             username: {
-                value:          config.appname || null,
+                value:          config.username || null,
                 enumerable:     true,
                 writable:		true
             },
@@ -348,6 +348,16 @@ var Class = Base.extend({
     	this.emit('authorized',success);
     	this.isAuthorized = success;
     	this.securedConnection = success;
+    },
+    
+<span id='NGN-datasource-Connection-event-authfailure'>    /**
+</span>     * @event authfailure
+     * Fired when an authentication/authorization attempt fails.
+     */
+    onAuthFailure: function(message) {
+    	this.isAuthorized = false;
+    	this.securedConnection = false;
+    	this.emit('authfailure',message);
     }
     
 });
