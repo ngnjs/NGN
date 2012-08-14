@@ -491,12 +491,9 @@ var Class = Base.extend({
 			else
 				rt = __NGN.path.resolve(__NGN.path.join(__NGN.cwd,rt));
 
-			if (!fs.existsSync(rt))
-				this.fireError('Cannot load route: '+rt);
-
 			// If a path is defined, make sure it exists.
-			if (!require('fs').existsSync(rt)){
-				throw Error('The route path does not exist or could not be found. '+rt);
+			if (!fs.existsSync(rt)){
+				this.fireError('The route path does not exist or could not be found. '+rt);
 				return;
 			}
 			

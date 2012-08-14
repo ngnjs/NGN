@@ -165,7 +165,8 @@ var Class = Core.extend({
 	 * Registers the server within the application scope by creating a pointer to it.
 	 */
 	register: function(){
-		this.id = __NGN.registerServer(this);
+		if (global.application !== undefined)
+			this.id = application.registerServer(this);
 	},
 	
 	start: function(){

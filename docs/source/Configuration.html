@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js"><span id='NGN-app-Configuration'>/**
+</span> * @class NGN.app.Configuration
+ * An application configuration. Typically, there is only one configuration
+ * per application. This is typically treated as a singleton (especially
+ * when using #globalShortcut), but it is not restricted to this usage.
+ */
+var Base = require('../NGN.core');
+var Class = Base.extend({
+	
+	constructor: function(config){
+		
+		config = config || {};
+		
+		Class.super.constructor.call(this,config);
+		
+<span id='NGN-app-Configuration-cfg-globalShortcut'>		/**
+</span>		 * @cfg {String} [globalShortcut=null]
+		 * Assign a global shortcut. This creates a global variable that can be accessed
+		 * anywhere in the application, similar to `NGN` or `application`.
+		 * 
+		 * **Example**
+		 * 		new NGN.app.Configuration({globalShortcut:'cfg'});
+		 * 		
+		 * 		cfg.set('name','myApp');
+		 * 
+		 * This code will create a global convenience pointer called `cfg`.
+		 * In this example, writing `console.log(cfg.name);` would output 
+		 * `myApp`.
+		 * 
+		 * _If multiple configurations are defined_, the globalShortcut name
+		 * must be unique.
+		 */
+		if (config.globalShortcut){
+			if (['__ngn','application'].indexOf(config.globalShortut) &gt;= 0)
+				throw Error('Application configuration global shortcut cannot be a reserved word: application, __NGN');
+			if (global.hasOwnProperty(config.globalShortcut) !== undefined)
+				throw Error('Th application configuration global shortcut \''+config.globalShortcut+'\' is already in use. Please define an alternative shortcut name.');
+			var me = this;
+			Object.defineProperty(global,config.globalShortcut,{
+				enumerable:	true,
+				get:		function(){ return me; }
+			});
+		}
+		
+	},
+	
+<span id='NGN-app-Configuration-method-load'>    /**
+</span>     * @method 
+     * This method accepts a key/value object or an absolute path to a JSON file.
+     * **Object**
+     *      var obj = {
+     *          title:      'Awesome App',
+                author:     'Acme, Inc.',
+                keywords:   'Awesome, App'
+     *      }
+     *      
+     *      application.load(obj);
+     * 
+     * **Filepath**
+     *      application.load(__dirname + '/application.json');
+     * @param {Object/String} config 
+     * JSON Object or Filepath.
+     */
+    load:   function( config ) {
+        
+                // If the configuration is a filepath, read the file (expect JSON content)
+                if (typeof config === 'string'){
+                    config = require(config);
+                } else if (typeof config !== 'object'){
+                	throw Error('Could not load application values. Application configuration must be a JSON filepath or a JSON object.')
+                }
+                
+                // Apply the object to the application scope.
+                for (var key in config) {
+                     if (config.hasOwnProperty(key)) {
+                         Object.defineProperty(global.application,key,{
+                                value:      config[key],
+                                enumerable: true,
+                                writable:   true 
+                         });
+                     }
+                }
+            },
+    
+<span id='NGN-app-Configuration-method-clear'>    /**
+</span>     * @method
+     * Resets the application scope to it's original default (blank) .
+     */        
+    clear:  function() {
+    			for (var attr in this){
+                    if (this.hasOwnProperty(attr) &amp;&amp; __elements.indexOf(attr) &lt; 0)
+                        delete this[attr];
+                }
+            },
+    
+<span id='NGN-app-Configuration-method-get'>    /**
+</span>     * @method
+     * Get a single property. Supports nested properties, such as `get('my.nested.attribute')`.
+     * @param {String} property
+     * The name of the application element to return.
+     * @returns {Mixed}
+     */        
+    get:    function( property ) {
+                var path = property.split('.'),
+                    scope= this;
+                
+                for (var i=0; i&lt;path.length; i++)
+                    scope = scope[path[i]];
+                
+                return scope;
+            },
+     
+<span id='NGN-app-Configuration-method-set'>     /**
+</span>      * @method
+      * Set a property in the application scope. 
+      * @param {String} property
+      * @param {Any} value
+      * This may be a string, date, or any valid JavaScript object. 
+      */       
+     set:   function( property, value ){
+                if (this[property] !== undefined)
+                    this[property] = value;
+                else
+                    Object.defineProperty(global.application,property,{
+                        value:      value,
+                        enumerable: true,
+                        writable:   true
+                    });
+          	},
+     
+<span id='NGN-app-Configuration-method-toJson'>     /**
+</span>      * @method
+      * Return the application as a JSON object. This strips the functions and only returns simple data types. 
+      */
+     toJson: function(obj) {
+     			obj = obj || this;
+		     	var rtn = {}, me=this;
+		     	for (var attr in obj){
+		     		if (obj.hasOwnProperty(attr)) {
+			     		switch(typeof obj[attr]) {
+			     			case 'function':
+			     				break;
+			     			case 'object':
+			     				rtn[attr] = me.toJson(obj[attr]);
+			     				break;
+			     			default:
+			     				rtn[attr] = obj[attr];
+			     				break;
+			     		}
+			     	}
+		     	}
+		     	return rtn;
+		    },
+     
+<span id='NGN-app-Configuration-event-configurationchange'>     /**
+</span>     * @event configurationchange
+     * Fired when the configuration is changed using #set.
+     */
+    onChange: function(meta){
+    	this.fireEvent('configurationchange',meta);
+    }
+});
+
+module.exports = Class;</pre>
+</body>
+</html>

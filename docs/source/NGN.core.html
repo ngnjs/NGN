@@ -15,7 +15,9 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var events = require('events');
+  <pre class="prettyprint lang-js">var events  = require('events'),
+	util	= require('util');
+		
 <span id='NGN-core'>/**
 </span> * @class NGN.core
  * @singleton
@@ -104,16 +106,35 @@ var Class = require('./BaseClass').extend({
      * @param {Object} [metadata]
      */
     fireEvent: 		function( eventName, metadata ) {
-				        __NGN.BUS.emit( eventName, metadata || null );
+				        this.emit( eventName, metadata || null );
+				        if (global.hasOwnProperty('application')) {
+				        	application.fireEvent(eventName, metadata);
+				        }
 				    },
     
 <span id='NGN-core-method-fireError'>    /**
 </span>     * @method
      * Fires the specified error.
-     * @param {Object} [metadata]
+     * @param {String/Error} [error]
      */
-    fireError: 		function( err ) {
-				        this.fireEvent( 'error', err || null );
+    fireError: 		function( error ) {
+    					
+						error = typeof error === 'string' ? new Error(error) : error;
+
+						console.log(&quot;\n========================================&quot;.red);
+						util.error(error);
+						console.log(&quot;========================================&quot;.red);
+						
+						var st = require('stack-trace'),
+							trace = st.parse(error);
+						while (trace.length &gt; 0 &amp;&amp; trace[0].fileName.indexOf('/node_modules/ngn') &gt;= 0)
+							trace.shift();
+						for (var i=0;i&lt;trace.length;i++){
+							util.puts(('\nOn line #'+trace[i].lineNumber+', column #'+trace[i].columnNumber).underline.red+'\n'+trace[i].fileName.bold+(trace[i].functionName !== null ? '\nFunction: '.grey+trace[i].functionName.grey:''));
+						}
+						
+						this.fireEvent('error',error);
+						return true;
 				    },
 	
 <span id='NGN-core-method-on'>	/**
@@ -124,7 +145,6 @@ var Class = require('./BaseClass').extend({
 	 */
 	on: 			function( eventName, callback ) {
 						this._emitter.on(eventName, callback || function(){});
-						__NGN.BUS.addListener(eventName, callback || function(){});
 					},
 	
 <span id='NGN-core-method-addEventListeners'>	/**
@@ -135,22 +155,6 @@ var Class = require('./BaseClass').extend({
 	addEventListeners: function(evt){
 						for(var i=0;i&lt;evt.length;i++)
 							this.on(evt[i].trim().toLowerCase(),this['on'+evt[i].trim()]);
-					},
-					
-<span id='NGN-core-method-createRef'>	/**
-</span>	 * @method
-	 * Creates a global variable.
-	 * @param {String} name
-	 * The namespace to be created.
-	 * @param {Object} obj
-	 * The object which is being referenced.
-	 * @param {Booean} overwriteExisting
-	 * Recreate the namespace using the new object.
-	 */
-	createRef:		function(name,obj,overwriteExisting){
-						overwriteExisting = overwriteExisting || false;
-						if (global[name] == undefined || (global[name] !== undefined &amp;&amp; overwriteExisting))
-							global[name] = obj;
 					}
 });
 

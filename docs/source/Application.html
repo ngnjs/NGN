@@ -15,7 +15,8 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='NGN-app-Application'>/**
+  <pre class="prettyprint lang-js">var events = require('events');
+<span id='NGN-app-Application'>/**
 </span> * @class NGN.app.Application
  * @singleton
  * Creating an application enables the globally accessible `application` variable,
@@ -78,7 +79,49 @@ var Class = Base.extend({
 				value:		[],
 				enumerable:	false,
 				writable:	true
-			}
+			},
+			
+<span id='NGN-app-Application-property-DSN'>			/**
+</span>             * @property {Object} [DSN=Object]
+             * Store **data service names** associated with the application.
+             * Each DSN key represents a database connection.
+             * 
+             * 		var userDB = NGN.getDatasource('users');
+             * 
+             * *OR*
+             * 
+             * 		var userDB = NGN.DSN['users'];
+             * @protected
+             */
+            DSN: {
+                value:      {},
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-app-Application-property-SERVER'>            /**
+</span>             * @property {Object} [SERVER=Object]
+             * Stores servers used in the application.
+             * @protected
+             */
+            SERVER: {
+                value:      {},
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-app-Application-property-BUS'>            /**
+</span>             * @property {EventEmitter}
+             * The application event bus. This traffics all events
+             * of the application.
+             * @protected
+             * @readonly 
+             */
+            BUS: {
+            	value:		new events.EventEmitter(),
+            	enumerable:	true,
+            	writable:	false
+            }
 			
 		});
 		
@@ -93,90 +136,25 @@ var Class = Base.extend({
 		
 	},
 	
-<span id='NGN-app-Application-method-load'>    /**
-</span>     * @method 
-     * This method accepts a key/value object or an absolute path to a JSON file.
-     * **Object**
-     *      var obj = {
-     *          title:      'Awesome App',
-                author:     'Acme, Inc.',
-                keywords:   'Awesome, App'
-     *      }
-     *      
-     *      application.load(obj);
-     * 
-     * **Filepath**
-     *      application.load(__dirname + '/application.json');
-     * @param {Object/String} config 
-     * JSON Object or Filepath.
+<span id='NGN-app-Application-method-fireEvent'>	/**
+</span>     * @method
+     * Fires the specified event. Unlike #emit, this event is bubbled to the NGN#BUS.
+     * @param {String} eventName
+     * @param {Object} [metadata]
      */
-    load:   function( config ) {
-        
-                // If the configuration is a filepath, read the file (expect JSON content)
-                if (typeof config === 'string'){
-                    config = require(config);
-                } else if (typeof config !== 'object'){
-                	throw Error('Could not load application values. Application configuration must be a JSON filepath or a JSON object.')
-                }
-                
-                // Apply the object to the application scope.
-                for (var key in config) {
-                     if (config.hasOwnProperty(key)) {
-                         Object.defineProperty(global.application,key,{
-                                value:      config[key],
-                                enumerable: true,
-                                writable:   true 
-                         });
-                     }
-                }
-            },
+    fireEvent: 		function( eventName, metadata ) {
+				        this.BUS.emit( eventName, metadata || null );
+				    },
     
-<span id='NGN-app-Application-method-clear'>    /**
+<span id='NGN-app-Application-method-fireError'>    /**
 </span>     * @method
-     * Resets the application scope to it's original default (blank) .
-     */        
-    clear:  function() {
-    			for (var attr in this){
-                    if (this.hasOwnProperty(attr) &amp;&amp; __elements.indexOf(attr) &lt; 0)
-                        delete this[attr];
-                }
-            },
-    
-<span id='NGN-app-Application-method-get'>    /**
-</span>     * @method
-     * Get a single property. Supports nested properties, such as `get('my.nested.attribute')`.
-     * @param {String} property
-     * The name of the application element to return.
-     * @returns {Mixed}
-     */        
-    get:    function( property ) {
-                var path = property.split('.'),
-                    scope= this;
-                
-                for (var i=0; i&lt;path.length; i++)
-                    scope = scope[path[i]];
-                
-                return scope;
-            },
-     
-<span id='NGN-app-Application-method-set'>     /**
-</span>      * @method
-      * Set a property in the application scope. 
-      * @param {String} property
-      * @param {Any} value
-      * This may be a string, date, or any valid JavaScript object. 
-      */       
-     set:   function( property, value ){
-                if (this[property] !== undefined)
-                    this[property] = value;
-                else
-                    Object.defineProperty(global.application,property,{
-                        value:      value,
-                        enumerable: true,
-                        writable:   true
-                    });
-          	},
-     
+     * Fires the specified error.
+     * @param {Object} [metadata]
+     */
+    fireError: 		function( err ) {
+				        this.fireEvent( 'error', err || null );
+				    },
+	
 <span id='NGN-app-Application-method-toJson'>     /**
 </span>      * @method
       * Return the application as a JSON object. This strips the functions and only returns simple data types. 
@@ -220,8 +198,171 @@ var Class = Base.extend({
      getServersByType: 	function(type){
 					     	return __NGN.getServersByType(type);
 					     },
+    
+<span id='NGN-app-Application-method-createDatasource'>    /**
+</span>     * @method
+     * Create and register a #DSN.
+     * @param {String} name
+     * The name by which the #DSN is referenced.
+     * @param {NGN.datasource.Connection} connection
+     * A connection to a specific database or data store.
+     */
+    createDatasource: function( name, connection ){
+        this.onBeforeCreateDSN(name, connection);
+        this.DSN[name] = connection;
+        this.onCreateDSN(name, connection);
+        
+    },
+    
+<span id='NGN-app-Application-method-getDatasource'>    /**
+</span>     * @method
+     * Returns the specified datasource connection.
+     * @param {String} name
+     * The reference name of the #DSN to return.
+     * @returns NGN.datasource.Connection 
+     */
+    getDatasource: function( name ){
+        return this.DSN[name];
+    },
+    
+<span id='NGN-app-Application-method-getDSN'>    /**
+</span>     * @method
+     * Shortcut. Equivalent to #getDatasource.
+     * @param {String} name
+     * The reference name of the #DSN to return.
+     * @returns NGN.datasource.Connection 
+     */
+    getDSN: function( name ){
+        return this.getDatasource(name);
+    },
+    
+<span id='NGN-app-Application-method-removeDatasource'>    /**
+</span>     * @method
+     * Removes a datasource connection. 
+     * @param {String} name
+     * The reference name of the #DSN to remove.
+     */
+    removeDatasource: function( name ){
+        this.onBeforeremoveDatasurce(name, this.DSN[name]);
+        delete this.DSN[name];
+        this.onremoveDatasource(name);
+    },
+    
+<span id='NGN-app-Application-method-removeDSN'>    /**
+</span>     * @method
+     * Shortcut. Equivalent to #removeDatasource.
+     * @param {String} name
+     * The reference name of the #DSN to remove.
+     */
+    removeDSN: function( name ){
+    	this.removeDatasource(name);
+    },
+    
+<span id='NGN-app-Application-method-createService'>    /**
+</span>     * @method
+     * Create and register a #SSN.
+     * @param {String} name
+     * The name by which the #SSN is referenced.
+     * @param {NGN.service.Connection} connection
+     * A connection to a specific service or module.
+     */
+    createService: function( name, connection ){
+        this.SSN[name] = connection;
+    },
+    
+<span id='NGN-app-Application-method-getService'>    /**
+</span>     * @method
+     * Returns the specified service source connection.
+     * @param {String} name
+     * The reference name of the #SSN to return.
+     * @returns NGN.service.Connection 
+     */
+    getService: function( name ){
+        return this.SSN[name];
+    },
+    
+<span id='NGN-app-Application-method-getServices'>    /**
+</span>     * @method
+     * Returns the entire #SSN object. 
+     */
+    getServices: function() {
+        return this.SSN;
+    },
+    
+<span id='NGN-app-Application-method-removeService'>    /**
+</span>     * @method
+     * Removes a service or module connection. 
+     * @param {String} name
+     * The reference name of the #SSN to return.
+     */
+    removeService: function( name ){
+        delete this.SSN[name];
+    },
+    
+<span id='NGN-app-Application-method-registerServer'>    /**
+</span>      * @method
+      * Register a server 
+	  * @param {NGN.core.Server}
+	  * The server instance
+      */     	
+     registerServer: function(server){
+     	if (this.SERVER['__'+server.type] == undefined)
+     		this.SERVER['__'+server.type] = {};
+     	var ct = 0;
+     	while (this.SERVER['__'+server.type][server.id] !== undefined || this.SERVER[server.id] !== undefined){
+     		ct++;
+     		server.id = server.id + ct.toString();
+     	}
+     	this.SERVER['__'+server.type][server.id] = server;
+     	
+     	Object.defineProperty(this.SERVER,server.id,{
+     		enumerable:	true,
+     		get:		function(){ return __NGN.SERVER['__'+server.type][server.id]; }
+     	})
+     	
+     	this.onRegisterServer(server);
+     	return server.id;
+     },
      
-<span id='NGN-app-Application-event-applicationstart'>     /**
+<span id='NGN-app-Application-method-unregisterServer'>     /**
+</span>      * @method
+      * Unregister a server. This will remove the instance from the application.
+      */
+     unregisterServer: function(name) {
+     	this.onUnregisterServer(this.SERVER[name]);
+     	delete this.SERVER[name];
+     },
+     
+<span id='NGN-app-Application-method-getServer'>     /**
+</span>      * @method
+      * Get a specific server instance by name.
+      */
+     getServer: function(id){
+     	if (this.SERVER[id] !== undefined)
+     		return this.SERVER[id];
+     	for(var server in this.SERVER){
+     		for (var name in this.SERVER[server]){
+	     		if (name == id)
+    	 			return this.SERVER[server][name];
+    		}
+     	}
+     	return false;
+     },
+     
+<span id='NGN-app-Application-method-getServersByType'>     /**
+</span>      * @method
+      * Get servers by a specific type. This returns an object with each attribute of the
+      * object being the name of a server and each value being a reference to the server object. 
+	  * @param {String} type
+	  * @returns {Object}
+      */
+     getServersByType: function(type){
+     	if (type == '*')
+     		return this.SERVER;
+     	return this.SERVER[type] || {};
+     },
+    
+<span id='NGN-app-Application-event-applicationstart'>    /**
 </span>     * @event applicationstart
      * Fired when the NGN application starts.
      */
@@ -236,6 +377,70 @@ var Class = Base.extend({
     onApplicationEnd: function(){
     	this.fireEvent('applictionend');
     },
+    
+<span id='NGN-app-Application-event-beforecreatedatasource'>    /**
+</span>     * This event is fired just prior to the creation of a #DSN. 
+     * @event beforecreatedatasource
+     * @param {String} name
+     * The reference name of the new datasource.
+     * @param {NGN.datasource.Connection} connection
+     * The connection about to be created. 
+     */
+    onBeforeCreateDSN: function( name, connection ) {
+        this.fireEvent('beforecreatedatasource', name, connection || null);
+    },
+    
+<span id='NGN-app-Application-event-createdatasource'>    /**
+</span>     * This event is fired just after the creation of a #DSN.
+     * @event createdatasource
+     * @param {String} name
+     * The reference name of the new datasource.
+     * @param {NGN.datasource.Connection} connection 
+     * The connection object just created. 
+     */
+    onCreateDSN: function( connection ) {
+        this.fireEvent('createdatasource',connection);
+    },
+    
+<span id='NGN-app-Application-event-beforeremovedatasource'>    /**
+</span>     * This event is fired just prior to removeing a #DSN. 
+     * @event beforeremovedatasource
+     * @param {String} name
+     * The reference name of the datasource.
+     * @param {NGN.datasource.Connection} connection
+     * The connection object about to be removeed. 
+     */
+    onBeforeRemoveDatasource: function( name ) {
+        this.fireEvent('beforeremovedatasource', name, connection);
+    },
+    
+<span id='NGN-app-Application-event-removedatasource'>    /**
+</span>     * This event is fired just after the destruction of a #DSN.
+     * @event removedatasource
+     * @param {String} name
+     * The reference name of the new datasource.
+     */
+    onRemoveDatasource: function( name ) {
+        this.fireEvent('removedatasource',name);
+    },
+    
+<span id='NGN-app-Application-event-registerserver'>    /**
+</span>     * @event registerserver
+     * Fired when a server is registered
+     * @returns {NGN.core.Server/null}
+     */
+    onRegisterServer: function(server){
+    	this.emit('serverunregistered',server||null);
+    },
+    
+<span id='NGN-app-Application-event-unregisterserver'>    /**
+</span>     * @event unregisterserver
+     * Fired when a server is unregistered/removed
+     * @returns {NGN.core.Server/null}
+     */
+    onUnRegisterServer: function(server){
+    	this.fireEvent('unregisterserver',server||null);
+    }
 });
 
 module.exports = Class;</pre>

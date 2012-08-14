@@ -44,82 +44,6 @@ var Class = Base.extend({
 			            		return require(__NGN.path.join(__dirname,'..','package.json')).version;
 			            	}
             },
-        	
-<span id='NGN-property-DSN'>        	/**
-</span>             * @property {Object} [DSN=Object]
-             * Store **data service names** associated with the application.
-             * Each DSN key represents a database connection.
-             * 
-             * 		var userDB = NGN.getDatasource('users');
-             * 
-             * *OR*
-             * 
-             * 		var userDB = NGN.DSN['users'];
-             * @protected
-             */
-            DSN: {
-                value:      {},
-                enumerable: true,
-                writable:   true
-            },
-            
-<span id='NGN-property-BUS'>            /**
-</span>            * @property {EventEmitter}
-            * This is an [EventEmitter](http://nodejs.org/docs/latest/api/events.html) made available as a common 
-            * hook for bridging events bubbled up through the NGN API.
-            * @uses events
-            * @protected
-            */
-            BUS: {
-                value:      new emitter(),
-                enumerable: true,
-                writable:   true
-            },
-            
-<span id='NGN-property-SERVER'>            /**
-</span>             * @property {Object} [SERVER=Object]
-             * Stores servers used in the application.
-             * @protected
-             */
-            SERVER: {
-                value:      {},
-                enumerable: true,
-                writable:   true
-            },
-            
-<span id='NGN-property-CFG'>            /**
-</span>             * @property {Object} [CFG=Object]
-             * Default configuration parameters. This is a key/value store containing
-             * frequently or repetitively used values. 
-             * @protected
-             */
-            CFG: {
-                value:      {},
-                enumerable: true,
-                writable:   true
-            },
-            
-<span id='NGN-method-config'>            /**
-</span>             * @method
-             * This convenience method will get or set configuration values.
-             * @param {String} name
-             * The name of the configuration item to return.
-             * @param {Any} value
-             * The value to assign to the configuration item.
-             */
-            config: {
-            	enumerable:	true,
-            	get:		function(name){
-			            		return this.CFG[name];
-			            	},
-			            	
-			    set:		function(name,value){
-			    				value = value || null;
-						    	if (value == null)
-						    		return;
-						    	this.CFG[name] = value;
-						    }
-            },
             
 <span id='NGN-static-property-pathSeparator'>            /**
 </span>             * @property {String}
@@ -132,7 +56,7 @@ var Class = Base.extend({
             	get:		function() { return require('path').sep; }
             },
             
-<span id='NGN-static-property-DNS'>            /**
+<span id='NGN-static-property-dns'>            /**
 </span>             * @property {Object}
              * A convenience reference to node's [dns](http://nodejs.org/api/dns.html) object.
              * 
@@ -152,12 +76,12 @@ var Class = Base.extend({
              * @static
              * @readonly
              */
-            DNS: {
+            dns: {
             	enumerable:	true,
             	get:		function() { return require('dns'); }
             },
             
-<span id='NGN-static-property-OS'>            /**
+<span id='NGN-static-property-os'>            /**
 </span>             * @property
              * A convenience reference to node's [os](http://nodejs.org/api/os.html) object.
              * 
@@ -180,7 +104,7 @@ var Class = Base.extend({
 			 * @readonly
 			 * @static
              */
-            OS: {
+            os: {
             	eumerable:	true,
             	get: 		function() { return require('os')}
             },
@@ -257,13 +181,7 @@ var Class = Base.extend({
             	configurable: true
             },
             
-            _cmd: {
-            	value:		null,
-            	enumerable:	false,
-            	writable:	true
-            },
-            
-<span id='NGN-property-command'>            /**
+<span id='NGN-property-command'>           /**
 </span>             * @property {NGN.core.Command}
              * A reference to the command line interface.
              */
@@ -276,17 +194,23 @@ var Class = Base.extend({
 			            	}
             },
             
+             _cmd: {
+            	value:		null,
+            	enumerable:	false,
+            	writable:	true
+            },
+            
+<span id='NGN-property-_mask'>            /**
+</span>             * @property {NGN.PatternMatcher}
+             * A reference to common RegExp patterns.
+             * @readonly
+             */
             _mask: {
             	value:		null,
             	enumerable:	false,
             	writable:	true
             },
             
-<span id='NGN-property-pattern'>            /**
-</span>             * @property {NGN.PatternMatcher}
-             * A reference to common RegExp patterns.
-             * @readonly
-             */
             pattern: {
             	enumerable:	true,
             	get:		function(){
@@ -310,7 +234,7 @@ var Class = Base.extend({
             
         });
         
-        this.OS.fileSeparator = this.fileSeparator;
+        this.os.fileSeparator = this.fileSeparator;
         
         // Add each framework element to the NGN namespace
         for (var ns in this._namespace) {
@@ -322,14 +246,6 @@ var Class = Base.extend({
             });
         }
         
-        // Initialize common events
-        var _events = [
-        				'Error'
-        			];
-        
-        // Add event listeners for override.
-        for (var i=0;i&lt;_events.length;i++)
-        	this.addEventListener(_events[i].toLowerCase(),this['on'+_events[i]]);
     },
     
 <span id='NGN-method-exec'>    /**
@@ -338,18 +254,6 @@ var Class = Base.extend({
      */
     exec: function() {
     	this.command.exec(arguments);
-    },
-    
-<span id='NGN-method-addEventListener'>    /**
-</span>     * @method
-     * Add an application-wide event listener to the #BUS.
-     * @param {String} eventName
-     * The name of the event to listen for.
-     * @param {Function} callback
-     * The callback to execute when the event is fired.
-     */
-    addEventListener: function(eventName,callback) {
-    	this.BUS.on(eventName,callback);
     },
     
 <span id='NGN-method-getExtensions'>    /**
@@ -423,277 +327,7 @@ var Class = Base.extend({
 		return Class;
 	},
 	
-<span id='NGN-method-createDatasource'>    /**
-</span>     * @method
-     * Create and register a #DSN.
-     * @param {String} name
-     * The name by which the #DSN is referenced.
-     * @param {NGN.datasource.Connection} connection
-     * A connection to a specific database or data store.
-     */
-    createDatasource: function( name, connection ){
-        this.onBeforeCreateDSN(name, connection);
-        this.DSN[name] = connection;
-        this.onCreateDSN(name, connection);
-        
-    },
     
-<span id='NGN-event-beforecreatedatasource'>    /**
-</span>     * This event is fired just prior to the creation of a #DSN. 
-     * @event beforecreatedatasource
-     * @param {String} name
-     * The reference name of the new datasource.
-     * @param {NGN.datasource.Connection} connection
-     * The connection about to be created. 
-     */
-    onBeforeCreateDSN: function( name, connection ) {
-        this.fireEvent('beforecreatedatasource', name, connection || null);
-    },
-    
-<span id='NGN-event-createdatasource'>    /**
-</span>     * This event is fired just after the creation of a #DSN.
-     * @event createdatasource
-     * @param {String} name
-     * The reference name of the new datasource.
-     * @param {NGN.datasource.Connection} connection 
-     * The connection object just created. 
-     */
-    onCreateDSN: function( connection ) {
-        this.fireEvent('createdatasource',connection);
-    },
-    
-<span id='NGN-method-getDatasource'>    /**
-</span>     * @method
-     * Returns the specified datasource connection.
-     * @param {String} name
-     * The reference name of the #DSN to return.
-     * @returns NGN.datasource.Connection 
-     */
-    getDatasource: function( name ){
-        return this.DSN[name];
-    },
-    
-<span id='NGN-method-getDSN'>    /**
-</span>     * @method
-     * Shortcut. Equivalent to #getDatasource.
-     * @param {String} name
-     * The reference name of the #DSN to return.
-     * @returns NGN.datasource.Connection 
-     */
-    getDSN: function( name ){
-        return this.getDatasource(name);
-    },
-    
-<span id='NGN-method-removeDatasource'>    /**
-</span>     * @method
-     * Removes a datasource connection. 
-     * @param {String} name
-     * The reference name of the #DSN to remove.
-     */
-    removeDatasource: function( name ){
-        this.onBeforeremoveDatasurce(name, this.DSN[name]);
-        delete this.DSN[name];
-        this.onremoveDatasource(name);
-    },
-    
-<span id='NGN-method-removeDSN'>    /**
-</span>     * @method
-     * Shortcut. Equivalent to #removeDatasource.
-     * @param {String} name
-     * The reference name of the #DSN to remove.
-     */
-    removeDSN: function( name ){
-    	this.removeDatasource(name);
-    },
-    
-<span id='NGN-event-beforeremovedatasource'>    /**
-</span>     * This event is fired just prior to removeing a #DSN. 
-     * @event beforeremovedatasource
-     * @param {String} name
-     * The reference name of the datasource.
-     * @param {NGN.datasource.Connection} connection
-     * The connection object about to be removeed. 
-     */
-    onBeforeremoveDatasource: function( name ) {
-        this.fireEvent('beforeremovedatasource', name, connection);
-    },
-    
-<span id='NGN-event-removedatasource'>    /**
-</span>     * This event is fired just after the destruction of a #DSN.
-     * @event removedatasource
-     * @param {String} name
-     * The reference name of the new datasource.
-     */
-    onremoveDatasource: function( name ) {
-        this.fireEvent('removedatasource',name);
-    },
-    
-<span id='NGN-method-createService'>     /**
-</span>     * @method
-     * Create and register a #SSN.
-     * @param {String} name
-     * The name by which the #SSN is referenced.
-     * @param {NGN.service.Connection} connection
-     * A connection to a specific service or module.
-     */
-    createService: function( name, connection ){
-        this.SSN[name] = connection;
-    },
-    
-<span id='NGN-method-getService'>    /**
-</span>     * @method
-     * Returns the specified service source connection.
-     * @param {String} name
-     * The reference name of the #SSN to return.
-     * @returns NGN.service.Connection 
-     */
-    getService: function( name ){
-        return this.SSN[name];
-    },
-    
-<span id='NGN-method-getServices'>    /**
-</span>     * @method
-     * Returns the entire #SSN object. 
-     */
-    getServices: function() {
-        return this.SSN;
-    },
-    
-<span id='NGN-method-removeService'>    /**
-</span>     * @method
-     * Removes a service or module connection. 
-     * @param {String} name
-     * The reference name of the #SSN to return.
-     */
-    removeService: function( name ){
-        delete this.SSN[name];
-    },
-    
-<span id='NGN-method-createConfigurationProperty'>     /**
-</span>     * @method
-     * Create and register a configuration property (key/value).
-     * @param {String} name
-     * The name by which the #CFG property is referenced.
-     * @param {Mixed} value
-     * A #String or #Object.
-     */
-    createConfigurationProperty: function( name, value ){
-        this.CFG[name] = value;
-    },
-    
-<span id='NGN-method-getConfigurationProperty'>    /**
-</span>     * @method
-     * Returns the specified configuration property..
-     * @param {String} name
-     * The reference name of the #CFG to return.
-     * @returns {Mixed} 
-     */
-    getConfigurationProperty: function( name ){
-        return this.CFG[name];
-    },
-    
-<span id='NGN-method-removeConfigurationProperty'>    /**
-</span>     * @method
-     * Removes a configuration property. 
-     * @param {String} name
-     * The reference name of the #CFG.
-     */
-    removeConfigurationProperty: function( name ){
-        delete this.CFG[name];
-    },
-    
-<span id='NGN-method-getConfiguration'>    /**
-</span>     * @method
-     * Retrieves the entire configuration.
-     * @returns {Object} 
-     */
-    getConfiguration: function() {
-        return this.CFG;
-    },
-    
-<span id='NGN-method-clearConfiguration'>    /**
-</span>     * @method
-     * Clears the entire configuration. 
-     */
-    clearConfiguration: function() {
-        this.CFG = {};
-    },
-    
-<span id='NGN-method-setConfiguration'>    /**
-</span>     * @method
-     * Manually set the configuration (#CFG).
-     * @param {Object} value 
-     * A key/value object.
-     */
-    setConfiguration: function( value ) {
-        if (typeof value !== 'object')
-            throw Error('Configuration must be a key/value object.');
-        this.CFG = value;
-    },
-    
-<span id='NGN-method-registerServer'>    /**
-</span>      * @method
-      * Register a server 
-	  * @param {NGN.core.Server}
-	  * The server instance
-      */     	
-     registerServer: function(server){
-     	if (this.SERVER['__'+server.type] == undefined)
-     		this.SERVER['__'+server.type] = {};
-     	var ct = 0;
-     	while (this.SERVER['__'+server.type][server.id] !== undefined || this.SERVER[server.id] !== undefined){
-     		ct++;
-     		server.id = server.id + ct.toString();
-     	}
-     	this.SERVER['__'+server.type][server.id] = server;
-     	
-     	Object.defineProperty(this.SERVER,server.id,{
-     		enumerable:	true,
-     		get:		function(){ return __NGN.SERVER['__'+server.type][server.id]; }
-     	})
-     	
-     	this.onRegisterServer(server);
-     	return server.id;
-     },
-     
-<span id='NGN-method-unregisterServer'>     /**
-</span>      * @method
-      * Unregister a server. This will remove the instance from the application.
-      * 
-      */
-     unregisterServer: function(name) {
-     	this.onUnregisterServer(this.SERVER[name]);
-     	delete this.SERVER[name];
-     },
-     
-<span id='NGN-method-getServer'>     /**
-</span>      * @method
-      * Get a specific server instance by name.
-      */
-     getServer: function(id){
-     	if (this.SERVER[id] !== undefined)
-     		return this.SERVER[id];
-     	for(var server in this.SERVER){
-     		for (var name in this.SERVER[server]){
-	     		if (name == id)
-    	 			return this.SERVER[server][name];
-    		}
-     	}
-     	return false;
-     },
-     
-<span id='NGN-method-getServersByType'>     /**
-</span>      * @method
-      * Get servers by a specific type. This returns an object with each attribute of the
-      * object being the name of a server and each value being a reference to the server object. 
-	  * @param {String} type
-	  * @returns {Object}
-      */
-     getServersByType: function(type){
-     	if (type == '*')
-     		return this.SERVER;
-     	return this.SERVER[type] || {};
-     },
     
 <span id='NGN-method-traverse'>    /**
 </span>     * @method
@@ -749,16 +383,6 @@ var Class = Base.extend({
     	return random == true ? require('node-uuid').v4(options||null,buffer||null,offset||null) : require('node-uuid').v1(options||null,buffer||null,offset||null);
     },
     
-<span id='NGN-method-broadcast'>    /**
-</span>     * @method
-     * Broadcast an event on the #BUS.
-     * @param {String} eventName (required)
-     * @param {Object} [metadata]
-     */
-    broadcast: function( eventName, metadata ) {
-        this.BUS.emit(eventName, metadata || null);
-    },
-    
 <span id='NGN-method-application'>    /**
 </span>     * @method
      * Create or load an application.
@@ -785,74 +409,6 @@ var Class = Base.extend({
 	    	var app = new __NGN.app.Application(config);
     	}
     	callback();
-    },
-    
-<span id='NGN-method-fireEvent'>    /**
-</span>     * @method
-     * Fire an event on the #BUS
-     * @param {String} eventName (required)
-     * The name of the event
-     * @param {Mixed} [metadata]
-     * Optional metadata sent with the event.  
-     */
-    fireEvent: function( eventName, metadata ){
-        this.BUS.emit(eventName,metadata || null);
-    },
-    
-<span id='NGN-method-fireError'>    /**
-</span>     * @method
-     * Fires the specified error.
-     * @param {Object} [metadata]
-     */
-    fireError: function( err ) {
-        this.fireEvent( 'error', err || null );
-    },
-	
-<span id='NGN-method-on'>	/**
-</span>	 * @method
-	 * Listens for an event name and runs the callback when it is recognized.
-	 * @param {String} eventName
-	 * @param {Function} callback
-	 */
-	on: function( eventName, callback ) {
-		this._emitter.on(eventName, callback || function(){});
-		__NGN.BUS.addListener(eventName, callback || function(){});
-	},
-	
-<span id='NGN-method-addEventListeners'>	/**
-</span>	 * @method
-	 * Adds multiple event listeners
- 	 * @param {Array} evt
-	 */
-	addEventListeners: function(evt){
-		for(var i=0;i&lt;evt.length;i++)
-			this.on(evt[i].trim().toLowerCase(),this['on'+evt[i].trim()]);
-	},
-    
-<span id='NGN-event-error'>    /**
-</span>     * @event error
-     * Fired whenever an error is detected 
-     */
-    onError: function(e){
-    	this.fireError(e);
-    },
-    
-<span id='NGN-event-registerserver'>    /**
-</span>     * @event registerserver
-     * Fired when a server is registered
-     * @returns {NGN.core.Server/null}
-     */
-    onRegisterServer: function(server){
-    	this.fireEvent('serverunregistered',server||null);
-    },
-    
-<span id='NGN-event-unregisterserver'>    /**
-</span>     * @event unregisterserver
-     * Fired when a server is unregistered/removed
-     * @returns {NGN.core.Server/null}
-     */
-    onUnRegisterServer: function(server){
-    	this.fireEvent('unregisterserver',server||null);
     },
     
 <span id='NGN-method-typeOf'>    /**

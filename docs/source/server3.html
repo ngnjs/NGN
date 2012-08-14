@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">require('../../');
+require('colors');
+
+var eyes 	= require('eyes');
+var api 	= new NGN.web.API({
+				port: 8181,
+				routes: __dirname+'/routes'
+			});
+
+// Alert when the API stops
+api.on('stop',function(){
+	console.log('API Stopped'.red);
+});
+
+// Alert whenever a request is processed
+api.on('xxx',function(code){
+	console.log('Got a response: '.green.underline,code.code.toString().trim().green.bold.underline);
+});
+
+// When the server starts, get data from the root.
+api.on('start',function(){
+	console.log('API Started'.yellow);
+	
+	var c = new NGN.web.Client();
+
+	c.GET('http://localhost:'+api.port,function(err,res,body){
+		eyes.inspect(JSON.parse(body));
+	});
+
+});
+
+</pre>
+</body>
+</html>

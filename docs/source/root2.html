@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">module.exports = {
+	'/test': {
+		'/more': {
+			get: function(){
+				res.write(url.toString());
+				res.write('Testing more nested routes');
+				res.end();
+			}
+		},
+		'/redirect':{
+			get: function(){
+				res.redirect('http://www.google.com');
+			}
+		},
+		get: function(req,res){
+			res.write('Basic Test');
+			res.end();
+		}
+	},
+	'/^\/([a-zA-Z0-9_\.~-]+)\/(.*)/': {
+		get: function(){
+			res.end('Yo!');
+		}
+	},
+	'/': {
+		get: function(){
+			res.end('Hello. I am root.');
+		}
+	}
+}
+</pre>
+</body>
+</html>
