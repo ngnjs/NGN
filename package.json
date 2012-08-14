@@ -2,7 +2,7 @@
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
   "name": "ngn",
   "description": "The NGN Framework",
-  "version": "0.0.1-alpha.16",
+  "version": "0.0.1-alpha.17",
   "main": "./lib/bootstrap.js",
   "bin": {
     "ngn": "./bin/ngn"
@@ -15,7 +15,9 @@
     "colors": "~0.6.0-1",
     "nodemailer": "~0.3.21",
     "simplesmtp": "~0.1.18",
-    "jade": "~0.27.0"
+    "jade": "~0.27.0",
+    "http-proxy": "~0.8.2",
+    "stack-trace": "0.0.6"
   },
   "devDependencies": {
     "mocha": "~1.1.0",
