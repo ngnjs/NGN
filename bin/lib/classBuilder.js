@@ -99,7 +99,7 @@ var Build = function(){
 	str += t+"extend: '"+arg.extend+"',"+cr+cr;
 	str += t+"constructor: function(config) {"+cr+cr;
 	str += t+t+"// Inherit from "+arg.extend+cr;
-	str += t+t+"Class.super.constructor(this,config);";
+	str += t+t+"Class.super.constructor.call(this,config);";
 	
 	//Optionally support additional properties
 	if (arg.properties == 'y') {
