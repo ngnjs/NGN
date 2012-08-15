@@ -16,14 +16,14 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var Base = require('./NGN.core');
-<span id='NGN-PatternMatcher'>/**
-</span> * @class NGN.PatternMatcher
+<span id='NGN-Patterns'>/**
+</span> * @class NGN.Patterns
  * **EXPERIMENTAL**
  * 
  * A convenience collection of commonly used RegExp patterns. These can be used as validators, input masks, or any other pattern matching.
  * 
  * For example:
- * 		var pattern = new NGN.PatternMatcher();
+ * 		var pattern = new NGN.Patterns();
  * 		
  * 		if(pattern.isEmail('jdoe@doe.com'))
  * 			console.log('VALID email syntax');
@@ -39,7 +39,7 @@
  * For example, the username pattern requires the value be between 3-16 characters. If the app requires a minimum 6 characters, this 
  * can be accomplished by overriding the pattern.
  * 
- * 		var pattern = new NGN.PatternMatcher({
+ * 		var pattern = new NGN.Patterns({
  * 			username: /^[a-z0-9_-]{6,16}$/ // Originally /^[a-z0-9_-]{3,16}$/
  * 		});
  * 
@@ -56,7 +56,7 @@ var Class = Base.extend({
 		
 		var props = {
 			
-<span id='NGN-PatternMatcher-property-email'>			/**
+<span id='NGN-Patterns-property-email'>			/**
 </span>			 * @property {RexExp} [email=/(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|&quot;(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*&quot;)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/]
 			 * Uses [RFC 2822](http://www.faqs.org/rfcs/rfc2822.html).
 			 * @private
@@ -66,14 +66,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isEmail'>			/**
+<span id='NGN-Patterns-method-isEmail'>			/**
 </span>			 * @method isEmail
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-username'>			/**
+<span id='NGN-Patterns-property-username'>			/**
 </span>			 * @property {RegExp} [username=/^[a-z0-9_-]{3,16}$/]
 			 * No spaces, between 3-16 characters.
 			 * @private
@@ -83,14 +83,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isUsername'>			/**
+<span id='NGN-Patterns-method-isUsername'>			/**
 </span>			 * @method isUsername
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-passwordSimple'>			/**
+<span id='NGN-Patterns-property-passwordSimple'>			/**
 </span>			 * @property {RegExp} [passwordSimple=/^[a-z0-9_-]{6,18}$/]
 			 * Requires 6-18 characters.
 			 * @private
@@ -100,14 +100,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isPasswordSimple'>			/**
+<span id='NGN-Patterns-method-isPasswordSimple'>			/**
 </span>			 * @method isPasswordSimple
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-passwordStrong'>			/**
+<span id='NGN-Patterns-property-passwordStrong'>			/**
 </span>			 * @property {RegExp} [passwordStrong=/(?-i)(?=^.{7,}$)((?!.*\s)(?=.*[A-Z])(?=.*[a-z]))((?=(.*\d){1,})|(?=(.*\W){1,}))^.*$/]
 			 * Strong password with the following requirements.
 			 * 
@@ -124,32 +124,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isPasswordStrong'>			/**
+<span id='NGN-Patterns-method-isPasswordStrong'>			/**
 </span>			 * @method isPasswordStrong
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-passwordDotNET'>			/**
-</span>			 * @property {RegExp} [passwordDotNET=/(?=^[!@#$%\^&amp;*()_\-+=\[{\]};:&lt;&gt;|\./?a-zA-Z\d]{7,}$)(?=([!@#$%\^&amp;*()_\-+=\[{\]};:&lt;&gt;|\./?a-zA-Z\d]*\W+){1,})[!@#$%\^&amp;*()_\-+=\[{\]};:&lt;&gt;|\./?a-zA-Z\d]*$/]
-			 * Validate strong password for .NET MembershipProvider. Checks for minimum required password length and for minimum required non-alphanumeric characters. Change value '7' according to MinRequiredPasswordLength and '1' to MinRequiredNonAlphanumericCharacters.
-			 * [Source](http://www.regexlib.com/)
-			 * @private
-			 */
-			passwordDotNet: {
-				value:		config.passwordDotNET || /(?=^[!@#$%\^&amp;*()_\-+=\[{\]};:&lt;&gt;|\./?a-zA-Z\d]{7,}$)(?=([!@#$%\^&amp;*()_\-+=\[{\]};:&lt;&gt;|\./?a-zA-Z\d]*\W+){1,})[!@#$%\^&amp;*()_\-+=\[{\]};:&lt;&gt;|\./?a-zA-Z\d]*$/,
-				enumerable:	true,
-				writable:	false
-			},
-<span id='NGN-PatternMatcher-method-isPasswordDotNet'>			/**
-</span>			 * @method isPasswordDotNet
-			 * @param {String} text
-			 * The string to match.
-			 * @returns {Boolean}
-			 */
-			
-<span id='NGN-PatternMatcher-property-hex'>			/**
+<span id='NGN-Patterns-property-hex'>			/**
 </span>			 * @property {RegExp} [hex=/^#?([a-f0-9]{6}|[a-f0-9]{3})$/]
 			 * Match a hex value (like `#ffffff`)
 			 * @private
@@ -159,14 +141,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isHex'>			/**
+<span id='NGN-Patterns-method-isHex'>			/**
 </span>			 * @method isHex
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-slug'>			/**
+<span id='NGN-Patterns-property-slug'>			/**
 </span>			 * @property {RegExp} [slug=/^[a-z0-9-]+$/]
 			 * A common slug pattern.
 			 * 
@@ -186,14 +168,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isSlug'>			/**
+<span id='NGN-Patterns-method-isSlug'>			/**
 </span>			 * @method isSlug
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-domain'>			/**
+<span id='NGN-Patterns-property-domain'>			/**
 </span>			 * @property {RegExp} [domain=/^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/]
 			 * Checks domain names. 
 			 * This validates domains based on latest specifications (RFCs 952 and 1123 dealing with hostnames and RFC 1035 dealing with domain name system requirements) 
@@ -219,14 +201,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isDomain'>			/**
+<span id='NGN-Patterns-method-isDomain'>			/**
 </span>			 * @method isDomain
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-anyDomain'>			/**
+<span id='NGN-Patterns-property-anyDomain'>			/**
 </span>			 * @property {RegExp} [anyDomain=/^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?$/]
 			 * For a more particular matcher that uses RFC 952, 1123, &amp; 1035, see #domain.
 			 * [Source](http://www.regexlib.com)
@@ -237,14 +219,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isAnyDomain'>			/**
+<span id='NGN-Patterns-method-isAnyDomain'>			/**
 </span>			 * @method isAnyDomain
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-ip4'>			/**
+<span id='NGN-Patterns-property-ip4'>			/**
 </span>			 * @property {RegExp} [ip4=/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/]
 			 * Matches an IPv4 address like `127.0.0.1`.
 			 * @private
@@ -254,14 +236,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isIp4'>			/**
+<span id='NGN-Patterns-method-isIp4'>			/**
 </span>			 * @method isIp4
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-ip6'>			/**
+<span id='NGN-Patterns-property-ip6'>			/**
 </span>			 * @property {RegExp} [ip6=/^(^(([0-9A-Fa-f]{1,4}(((:[0-9A-Fa-f]{1,4}){5}::[0-9A-Fa-f]{1,4})|((:[0-9A-Fa-f]{1,4}){4}::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,1})|((:[0-9A-Fa-f]{1,4}){3}::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,2})|((:[0-9A-Fa-f]{1,4}){2}::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,3})|(:[0-9A-Fa-f]{1,4}::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,4})|(::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,5})|(:[0-9A-Fa-f]{1,4}){7}))$|^(::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,6})$)|^::$)|^((([0-9A-Fa-f]{1,4}(((:[0-9A-Fa-f]{1,4}){3}::([0-9A-Fa-f]{1,4}){1})|((:[0-9A-Fa-f]{1,4}){2}::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,1})|((:[0-9A-Fa-f]{1,4}){1}::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,2})|(::[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,3})|((:[0-9A-Fa-f]{1,4}){0,5})))|([:]{2}[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){0,4})):|::)((25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{0,2})\.){3}(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]{0,2})$$/]
 			 * Matches IPv6 addresses like `FEDC:BA98::3210:FEDC:BA98:7654:3210` or `::0:0:0:FFFF:129.144.52.38`.
 			 * 
@@ -277,14 +259,14 @@ var Class = Base.extend({
 				enumerable:	true,
 				writable:	false
 			},
-<span id='NGN-PatternMatcher-method-isIp6'>			/**
+<span id='NGN-Patterns-method-isIp6'>			/**
 </span>			 * @method isIp6
 			 * @param {String} text
 			 * The string to match.
 			 * @returns {Boolean}
 			 */
 			
-<span id='NGN-PatternMatcher-property-htmlTags'>			/**
+<span id='NGN-Patterns-property-htmlTags'>			/**
 </span>			 * @property {RegExp} [htmlTags=/^&lt;([a-z]+)([^&lt;]+)*(?:&gt;(.*)&lt;\/\1&gt;|\s+\/&gt;)$/]
 			 * Supports matching non-descript HTML tags.
 			 * 
@@ -300,17 +282,17 @@ var Class = Base.extend({
 			htmlTag: {
 				value:		config.htmlTag || /^&lt;([a-z]+)([^&lt;]+)*(?:&gt;(.*)&lt;\/\1&gt;|\s+\/&gt;)$/,
 				enumerable:	true,
-				writable:	false
-			},
-<span id='NGN-PatternMatcher-method-isHtmlTag'>			/**
-</span>			 * @method isHtmlTag
+<span id='NGN-Patterns-method-isHtmlTag'>				writable:	false
+</span>			},
+			/**
+			 * @method isHtmlTag
 			 * @param {String} text
 			 * The string to match.
-			 * @returns {Boolean}
-			 */
+<span id='NGN-Patterns-property-mobileDevice'>			 * @returns {Boolean}
+</span>			 */
 			
-<span id='NGN-PatternMatcher-property-mobileDevice'>			/**
-</span>			 * @property {RegExp} mobileDevice
+			/**
+			 * @property {RegExp} mobileDevice
 			 * A custom implementation detecting mobile devices with [detectmobilebrowser.com](http://detectmobilebrowser.com).
 			 */
 			_mobileDevice: {
@@ -332,20 +314,20 @@ var Class = Base.extend({
 					writable:	false,
 					value:		function(v){ if(me[el] !== null) return me[el].test(v); else return false; }
 				})
-			}
-		}
+<span id='NGN-Patterns-method-is'>			}
+</span>		}
 		
 	},
 	
-<span id='NGN-PatternMatcher-method-is'>	/**
-</span>	 * @method
+	/**
+	 * @method
 	 * Provides the similar functionality to RegExp#test. Given a RegExp, it will test a value or
 	 * array of values to see if they match a pattern. If an array is provided, it will loop through
 	 * the array, testing each element along the way. If _any_ element of the array does not match
 	 * the pattern, it will return `false`. If _all_ values match the pattern, it will return `true`. 
 	 * 
 	 * **Example**
-	 * 		var pattern = new NGN.PatternMatcher();
+	 * 		var pattern = new NGN.Patterns();
 	 * 		
 	 * 		console.log(pattern.is(/\&lt;b\&gt;(.*)\&lt;\/b\&gt;/,'&lt;b&gt;Hello&lt;/b&gt;')); // --&gt; Outputs true.
 	 * 		
@@ -358,11 +340,11 @@ var Class = Base.extend({
 	 * @returns {Boolean}
 	 */
 	is: function(regex,value){
-		return regex.test(value);
-	},
+<span id='NGN-Patterns-method-isMobileDevice'>		return regex.test(value);
+</span>	},
 	
-<span id='NGN-PatternMatcher-method-isMobileDevice'>	/**
-</span>	 * @method
+	/**
+	 * @method
 	 * @param {String} value
 	 * The user agent string.
 	 */

@@ -15,7 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Core = require('../NGN.core');
+  <pre class="prettyprint lang-js">var Base = require('../NGN.core');
 
 <span id='NGN-core-Server'>/**
 </span> * @class NGN.core.Server
@@ -25,7 +25,7 @@
  * @extends NGN.core
  * @private
  */
-var Class = Core.extend({
+var Class = Base.extend({
 	
 <span id='NGN-core-Server-method-constructor'>	/**
 </span>	 * @constructor
@@ -36,7 +36,7 @@ var Class = Core.extend({
 		
 		config = config || {};
 	
-		Class.super.constructor.call(this, config);
+		Class.super.constructor.call(this, config);		
 		
 		Object.defineProperties(this,{
 			
@@ -182,9 +182,9 @@ var Class = Core.extend({
 	 * Fired when the web server begins the startup process.
 	 */
 	onStart: function(){
-		if (!this.running &amp;&amp; this.starting) {
+		if (!this.running) {
 			this.running = true;
-			this.fireEvent('start',this);
+			this.fireEvent('start');
 		}
 	},
 	
@@ -193,7 +193,8 @@ var Class = Core.extend({
 	 * Fired when the web server is ready to process reuests.
 	 */
 	onReady: function(){
-		if (this.running) {
+		if (this.running &amp;&amp; !this.starting) {
+			this.starting = false;
 			this.fireEvent('ready',this);
 		}
 	},
@@ -208,6 +209,10 @@ var Class = Core.extend({
 			this.starting= false;
 			this.fireEvent('stop',this);
 		}
+	},
+	
+	onError: function(e){
+		this.fireError(e);
 	}
 	
 });

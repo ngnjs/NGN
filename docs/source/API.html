@@ -72,40 +72,6 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-API-cfg-port'>			/**
-</span>			 * @cfg {Number} [port=80|443]
-			 * The port on which the web server will listen. Each web server must
-			 * listen on a unique port. If no port is defined, the default port `80`
-			 * will be used. If #ssl is supplied, the port will be set to `443` by default. 
-			 */
-			port: {
-				value:		config.port || (this.ssl == null ? 80 : 443),
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-web-API-cfg-autoStart'>			/**
-</span>			 * @cfg {Boolean} [autoStart=true]
-			 * Automatically start the server. If this is set to `false`, the
-			 * server will need to be running explicitly using the #start method.
-			 */
-			autoStart: {
-				value:		__NGN.coalesce(config.autoStart,true),
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-web-API-property-running'>			/**
-</span>			 * @property {Boolean}
-			 * Indicates the server is running.
-			 * @readonly
-			 */
-			running: {
-				value:		false,
-				enumerable:	true,
-				writable:	true
-			},
-			
 <span id='NGN-web-API-cfg-defaultVersion'>			/**
 </span>			 * @cfg {String} [defaultVersion=1.0.0]
 			 * The version of the API to use when a request doesn't explicitly state which 
@@ -282,6 +248,11 @@ var Class = Base.extend({
 			this._serverOptions = options;
 			
 			this._server.listen(this.port,function(){
+				
+				me.on('start',function(){
+					me.onReady();
+				});
+
 				me.onStart();
 			});
 		}

@@ -113,6 +113,9 @@ var Class = Base.extend({
             }
 
         });
+        
+        if (!Array.isArray(this.target))
+        	this.target = [this.target];
 
     },
 
@@ -126,7 +129,8 @@ var Class = Base.extend({
 	 * 		vh.addAlias(['domain.com','www.domain.com']);
 	 */
 	addAlias: function(name){
-		var old = this.alias;
+		
+		var old = __NGN.clone(this.alias,true);
 		this.onBeforeChange({
 			type: 'alias::create',
 			was: old,
@@ -141,7 +145,7 @@ var Class = Base.extend({
 		this.onChange({
 			type: 'alias::create',
 			was: old,
-			now: this.alias
+			is: this.alias
 		});
 	},
 	
@@ -153,7 +157,7 @@ var Class = Base.extend({
 	 */
 	removeAlias: function(name){
 		
-		var old = this.alias;
+		var old = __NGN.clone(this.alias,true);
 		this.onBeforeChange({
 			type: 'alias::delete',
 			was: old,
@@ -172,7 +176,7 @@ var Class = Base.extend({
 		this.onChange({
 			type: 'alias::delete',
 			was: old,
-			now: this.alias
+			is: this.alias
 		});
 	},
 	
@@ -181,7 +185,6 @@ var Class = Base.extend({
 	 * Determine whether a host name is an alias of this virtual host.
 	 */
 	isAlias: function(alias) {
-		console.log(alias)
 		return this.alias.indexOf(alias) &gt;= 0;
 	},
     
@@ -193,7 +196,8 @@ var Class = Base.extend({
 	 * included in the round-robin load balancing queue.
 	 */
 	addTarget: function(dest){
-		var old = this.target;
+		
+		var old = __NGN.clone(this.target,true);
 		this.onBeforeChange({
 			type: 'target::create',
 			was: old,
@@ -208,7 +212,7 @@ var Class = Base.extend({
 		this.onChange({
 			type: 'target::create',
 			was: old,
-			now: this.target
+			is: this.target
 		});
 	},
 	
@@ -224,7 +228,7 @@ var Class = Base.extend({
 	 */
 	removeTarget: function(dest){
 		
-		var old = this.target;
+		var old = __NGN.clone(this.target,true);
 		this.onBeforeChange({
 			type: 'target::delete',
 			was: old,
@@ -245,7 +249,7 @@ var Class = Base.extend({
 		this.onChange({
 			type: 'target::delete',
 			was: old,
-			now: this.target
+			is: this.target
 		});
 		
 	},
@@ -285,7 +289,7 @@ var Class = Base.extend({
 		}
 		
 		// 2. Get Target Server
-		if (this.target.length &gt; 0) {
+		if (this.target.length &gt; 1) {		
 			var server = this.target.shift();
 			this.target.push(server);
 		} else {
@@ -314,7 +318,7 @@ var Class = Base.extend({
 	 */
 	addRewriteRule: function(method,pattern,substitute,last,position){
 		
-		var old = this.rules;
+		var old = __NGN.clone(this.rules,true);
 		this.onBeforeChange({
 			type: 'rule::create',
 			was: old,
@@ -363,7 +367,7 @@ var Class = Base.extend({
 			this.onChange({
 				type: 'rule::create',
 				was: old,
-				now: this.rules
+				is: this.rules
 			});
 		} else
 			this.onAbortChange('rule::create','already exists');
@@ -385,7 +389,7 @@ var Class = Base.extend({
 	 */
 	removeRewriteRule: function(method,pattern,substitute,last){
 		
-		var old = this.rules;
+		var old = __NGN.clone(this.rules,true);
 		this.onBeforeChange({
 			type: 'rule::delete',
 			was: old,
@@ -424,7 +428,7 @@ var Class = Base.extend({
 		this.onChange({
 			type: 'rule::delete',
 			was: old,
-			now: this.rules
+			is: this.rules
 		});
 		
 	},

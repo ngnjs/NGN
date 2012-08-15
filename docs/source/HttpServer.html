@@ -480,43 +480,49 @@ var Class = Base.extend({
 		this.routes = (typeof this.routes == 'string' ? this.routes.split(',') : this.routes);
 	
 		var _hasRootRoute = false;
-		for (var i=0; i&lt;this.routes.length; i++) {	
-
-			// Loop through the directories and add each JS file, assuming each is a route.
-			var rt = this.routes[i].trim();
-			
-			// Attempt to load absolute path first. Then local path.
-			if (fs.existsSync(__NGN.path.resolve(rt)))
-				rt = __NGN.path.resolve(rt);
-			else
-				rt = __NGN.path.resolve(__NGN.path.join(__NGN.cwd,rt));
-
-			// If a path is defined, make sure it exists.
-			if (!fs.existsSync(rt)){
-				this.fireError('The route path does not exist or could not be found. '+rt);
-				return;
-			}
-			
-			// Sync Route Loader
-			var filepath = require('wrench').readdirSyncRecursive(rt);
-			for (var n=0;n&lt;filepath.length;n++){
-				if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js' &amp;&amp; filepath[n].toString().trim().toLowerCase() !== 'root.js'){
-					var _rt = require(rt+'/'+filepath[n]);
+		if (Array.isArray(this.routes)) {
+			for (var i=0; i&lt;this.routes.length; i++) {	
+	
+				// Loop through the directories and add each JS file, assuming each is a route.
+				var rt = this.routes[i].trim();
+				
+				// Attempt to load absolute path first. Then local path.
+				if (fs.existsSync(__NGN.path.resolve(rt)))
+					rt = __NGN.path.resolve(rt);
+				else
+					rt = __NGN.path.resolve(__NGN.path.join(__NGN.cwd,rt));
+	
+				// If a path is defined, make sure it exists.
+				if (!fs.existsSync(rt)){
+					this.fireError('The route path does not exist or could not be found. '+rt);
+					return;
+				}
+				
+				// Sync Route Loader
+				var filepath = require('wrench').readdirSyncRecursive(rt);
+				for (var n=0;n&lt;filepath.length;n++){
+					if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js' &amp;&amp; filepath[n].toString().trim().toLowerCase() !== 'root.js'){
+						var _rt = require(rt+'/'+filepath[n]);
+						if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
+							_hasRootRoute = true;
+						this._server.map(_rt);
+					}
+				}
+				
+				if (!_hasRootRoute &amp;&amp; require('fs').existsSync(rt+'/root.js')) {
+					var _rt = require(rt+'/root.js');
 					if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
 						_hasRootRoute = true;
 					this._server.map(_rt);
 				}
+					
 			}
-			
-			if (!_hasRootRoute &amp;&amp; require('fs').existsSync(rt+'/root.js')) {
-				var _rt = require(rt+'/root.js');
-				if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
-					_hasRootRoute = true;
-				this._server.map(_rt);
-			}
-				
+		} else {
+			if (this.routes.hasOwnProperty('/'))
+				_hasRootRoute = true;
+			this._server.map(this.routes);
 		}
-	
+		
 		if (callback !== null)
 			callback(_hasRootRoute);
 		else

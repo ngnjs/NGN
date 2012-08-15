@@ -170,17 +170,6 @@ var Class = Base.extend({
             	writable:	true
             },
             
-<span id='NGN-property-emptyFn'>            /**
-</span>             * @property {Function}
-             * An empty function, which doesn't do anything.
-             * @protected
-             */
-            emptyFn: {
-            	value: 		function(){},
-            	enumerable: false,
-            	configurable: true
-            },
-            
 <span id='NGN-property-command'>           /**
 </span>             * @property {NGN.core.Command}
              * A reference to the command line interface.
@@ -200,8 +189,8 @@ var Class = Base.extend({
             	writable:	true
             },
             
-<span id='NGN-property-_mask'>            /**
-</span>             * @property {NGN.PatternMatcher}
+<span id='NGN-property-pattern'>            /**
+</span>             * @property {NGN.Patterns} pattern
              * A reference to common RegExp patterns.
              * @readonly
              */
@@ -216,7 +205,7 @@ var Class = Base.extend({
             	get:		function(){
 			            		if(this._mask)
 			            			return this._mask
-			            		this._mask = new __NGN.PatternMatcher();
+			            		this._mask = new __NGN.Patterns();
 			            		return this._mask;
 			            	}
             },
@@ -248,6 +237,39 @@ var Class = Base.extend({
         
     },
     
+<span id='NGN-method-clone'>    /**
+</span>     * @method
+     * Deep clones an object and returns it as a copy (not a reference).
+     * @param {Object} obj
+     * The object to clone.
+     * @param {Boolean} [noCircular=false]
+     * Set this to true if you are certain there are no circular references
+     * in the object (performance gain).
+     * @return {Object}
+     */
+    clone: function(obj, nocircular) {
+    	
+    	nocirculr = __NGN.coalesce(nocircular,false);
+    	
+    	var clone = require('clone');
+    	
+    	return clone(obj,nocircular)
+    	/*
+		var o = new Object, me = this;
+								 var keys = Object.getOwnPropertyNames(obj);
+								 for(var i=0; i&lt;keys.length; i++)
+					Object.defineProperty( o, keys[i], Object.getOwnPropertyDescriptor(obj,keys[i]) );
+						  return o;*/
+		
+    },
+    
+<span id='NGN-method-emptyFn'>     /**
+</span>     * @method {Function}
+     * An void function.
+     * @protected
+     */
+    emptyFn: function(){},
+            
 <span id='NGN-method-exec'>    /**
 </span>     * @method
      * A convenience method for using NGN.core.Command#exec.

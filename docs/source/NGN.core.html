@@ -67,6 +67,10 @@
  */
 var Class = require('./BaseClass').extend({
 	
+<span id='NGN-core-method-constructor'>	/**
+</span>	 * @constructor
+	 * Create an NGN core class.
+	 */
 	constructor: 	function( config ) {
 		
 						config = config || {};
@@ -83,10 +87,10 @@ var Class = require('./BaseClass').extend({
 							_emitter: {
 								value:		new events.EventEmitter(),
 								enumerable: false,
-								writable:	false
+								writable:	true
 							}
 						});
-						 
+
 					},
 	
 <span id='NGN-core-method-emit'>	/**
@@ -105,8 +109,8 @@ var Class = require('./BaseClass').extend({
      * @param {String} eventName
      * @param {Object} [metadata]
      */
-    fireEvent: 		function( eventName, metadata ) {
-				        this.emit( eventName, metadata || null );
+    fireEvent: 		function( eventName, metadata ) {   	
+				        this.emit( eventName, metadata );
 				        if (global.hasOwnProperty('application')) {
 				        	application.fireEvent(eventName, metadata);
 				        }
@@ -144,7 +148,7 @@ var Class = require('./BaseClass').extend({
 	 * @param {Function} callback
 	 */
 	on: 			function( eventName, callback ) {
-						this._emitter.on(eventName, callback || function(){});
+						this._emitter.on(eventName, callback || __NGN.emptyFn);
 					},
 	
 <span id='NGN-core-method-addEventListeners'>	/**
@@ -155,6 +159,15 @@ var Class = require('./BaseClass').extend({
 	addEventListeners: function(evt){
 						for(var i=0;i&lt;evt.length;i++)
 							this.on(evt[i].trim().toLowerCase(),this['on'+evt[i].trim()]);
+					},
+	
+<span id='NGN-core-event-error'>	/**
+</span>	 * @event error
+	 * Fired when an error occurs
+	 * @param {Object} e
+	 */			
+	onError:		function(e) {
+						this.fireError(e);
 					}
 });
 
