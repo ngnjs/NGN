@@ -1,7 +1,7 @@
 {
-	"--title": 		"NGN-JS (Engine) Platform 0.0.1",
+	"--title": 		"NGN",
 	"--welcome":	"assets/html/welcome.html",
-	"--warnings":	["-link", "-no-doc"],
+	"--warnings":	["-link"],
 	"--": 			[],
 	"--categories":	"categories.json",
 	"--guides":		"guides.json",
