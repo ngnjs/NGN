@@ -13,7 +13,8 @@ module.exports.build = function(argv) {
 		PUBLISH			= argv['publish'] || null,
 		CFG				= argv['configuration'] || p.join(process.cwd(),'ngn.config.json'),
 		OUT_DIR			= argv['output'] || p.join(cwd,'docs','manual'),
-		HELP			= argv['help'] || argv['h'] || null;
+		HELP			= argv['help'] || argv['h'] || null,
+		pkg				= require('../../package.json');
 
 	console.log(' >> Cleaning up existing docs...'.grey);
 	dir.rmdirSyncRecursive(OUT_DIR.toString().trim(), true);
@@ -47,6 +48,8 @@ module.exports.build = function(argv) {
 		}
 		
 		jsdcfg['--'].push(p.resolve(p.join(root,'..','lib')));
+		
+		jsdcfg['--title'] += ' v'+pkg.version;
 		
 		if (argv['examples'])
 			jsdcfg['--'].push(p.resolve(p.join(root,'..','examples')))
