@@ -192,6 +192,24 @@ var Class = Base.extend({
 		
     },
     
+<span id='NGN-web-proxy-RewriteRule-method-getConfiguration'>    /**
+</span>     * @method
+     * Get the configuration of the rule.
+     * @returns {Object}
+     */
+    getConfiguration: function(){
+    	var rl = {};
+					
+		// Get the pattern &amp; strip the RegExp forward slashes
+		var ptrn = this.pattern.toString().replace(/\/{1}/,'');
+		ptrn = ptrn.substr(0,ptrn.length-1);
+		
+		rl[ptrn] = 	this.substitute
+					+ (this.last == true ? '-last': '');
+		
+		return rl;
+    },
+    
 <span id='NGN-web-proxy-RewriteRule-event-rewrite'>    /**
 </span>     * @event rewrite
      * Fired when the path is rewritten.

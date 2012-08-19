@@ -193,7 +193,7 @@ var Class = Base.extend({
 	 * Fired when the web server is ready to process reuests.
 	 */
 	onReady: function(){
-		if (this.running &amp;&amp; !this.starting) {
+		if (this.running) {
 			this.starting = false;
 			this.fireEvent('ready',this);
 		}

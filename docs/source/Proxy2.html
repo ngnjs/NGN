@@ -152,7 +152,7 @@ var Class = Base.extend({
 		});	
 		
 		try {
-			delete this.vhost[port][host]
+			delete this.vhost[port][host.toLowerCase()]
 		
 			this.onChange({
 				type: 'virtualhost::delete',
@@ -257,41 +257,8 @@ var Class = Base.extend({
 			vhosts 	= this.getVirtualHosts();
 		
 		for (var i=0;i&lt;vhosts.length;i++){
-			for (var host in vhosts[i]) {
-				var vh	= vhosts[i][host],
-					obj = {
-							hostname: 	vh.hostname,
-							port:		vh.port,
-							alias:		vh.alias,
-							target:		vh.target
-						};
-			
-				// Get the rules
-				var r = {};
-				for (var method in vh.rules){
-					if (vh.rules.hasOwnProperty(method)){
-					
-						r[method] = r[method] || [];
-
-						for (var n=0;n&lt;vh.rules[method].length;n++) {
-							var rl = {};
-							
-							// Get the pattern &amp; strip the RegExp forward slashes
-							var ptrn = vh.rules[method][n].pattern.toString().replace(/\/{1}/,'');
-							ptrn = ptrn.substr(0,ptrn.length-1);
-							
-							rl[ptrn] = 	vh.rules[method][n].substitute
-										+ (vh.rules[method][n].last == true ? '-last': '');
-							
-							r[method].push(rl);
-						}
-					}
-				}
-				
-				obj.rules = r;
-				
-				cfg.push(obj);
-			}
+			for (var host in vhosts[i])
+				cfg.push(vhosts[i][host].getConfiguration());
 		}
 		
 		return cfg;

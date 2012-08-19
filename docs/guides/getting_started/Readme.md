@@ -1,7 +1,4 @@
-# Getting Started
+# Understanding NGN
 
-Thanks for choosing NGN. Go figure it out.
-
-TODO:
- 
-* Stop being a jerk and start tellig people how to use this.
+NGN is named so because it is similar to a stock vehicle engine. It provides
+the rudimentary components for an application.

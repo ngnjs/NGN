@@ -1,1 +1,1 @@
-Ext.data.JsonP.getting_started({"title":"Getting Started","guide":"<h1>Getting Started</h1>\n\n<p>Thanks for choosing NGN. Go figure it out.</p>\n\n<p>TODO:</p>\n\n<ul>\n<li>Stop being a jerk and start tellig people how to use this.</li>\n</ul>\n\n"});
+Ext.data.JsonP.getting_started({"title":"Getting Started","guide":"<h1>Understanding NGN</h1>\n\n<p>NGN is named so because it is similar to a stock vehicle engine. It provides\nthe rudimentary components for an application.</p>\n"});

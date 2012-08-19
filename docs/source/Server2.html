@@ -18,6 +18,7 @@
   <pre class="prettyprint lang-js">var express		= require('express'),
 	tpl			= require('consolidate'),
 	Base		= require('../core/HttpServer'),
+	fs			= require('fs'),
 	passport	= null;
 
 <span id='NGN-web-Server'>/**
@@ -56,9 +57,11 @@ var Class = Base.extend({
 	 */
 	constructor: function(config){
 		
+		var me = this;
+		
 		config = config || {};
 		config.purpose = 'WWW';
-		require('colors')
+		require('colors');
 
 		Class.super.constructor.call( this, config );
 		
@@ -133,6 +136,16 @@ var Class = Base.extend({
 			 */
 			viewEngines: {
 				value:		config.viewEngines || null,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-web-Server-cfg-poweredBy'>			/**
+</span>			 * @cfg {String} [poweredBy=NGN]
+			 * Sets the `x-powered-by` header value.
+			 */
+			poweredBy: {
+				value:		config.poweredBy || 'NGN v'+__NGN.version,
 				enumerable:	true,
 				writable:	true
 			},
@@ -236,12 +249,23 @@ var Class = Base.extend({
 				value:		__NGN.coalesce(config.disableBodyParsing,false),
 				enumerable:	true,
 				writable:	true
+			},
+			
+<span id='NGN-web-Server-property-_customHeaders'>			/**
+</span>			 * @property {Object}
+			 * Holds the custom headers to be sent on every request.
+			 * @private
+			 */
+			_customHeaders: {
+				value:		null,
+				enumerable:	false,
+				writable:	true
 			}
 
 		});
 		
 		this._server = express();
-		
+	
 	//	this._server.use(express.logger());
 	
 		if (!this.disableBodyParsing || this.preventCsrf)
@@ -249,8 +273,66 @@ var Class = Base.extend({
 		
 		this._server.use(express.methodOverride());
 		
+		this.on('start',function(){
+			me.onReady();
+		});
+		
 		if (this.autoStart)
 			this.start();
+	},
+	
+<span id='NGN-web-Server-method-addHeader'>	/**
+</span>	 * @method
+	 * Add a header to each request. This can also be used to overwrite an existing header.
+	 * 
+	 * **Example**
+	 * 		web.setHeader('x-custom-header','value');
+	 * @param {String} headerName
+	 * The name of the header
+	 * @param {String} headerValue
+	 * The value assigned to the header.
+	 */
+	addHeader: function(headerName,headerValue){
+		this._customHeaders[headerName] = headerValue;
+	},
+	
+<span id='NGN-web-Server-method-setHeader'>	/**
+</span>	 * @method
+	 * Edit an existing header.
+	 * @param {String} headerName
+	 * The name of the header
+	 * @param {String} headerValue
+	 * The value assigned to the header.
+	 */
+	setHeader: function(headerName,headerValue){
+		this.addHeader(headerName,headerValue);
+	},
+	
+<span id='NGN-web-Server-method-removeHeader'>	/**
+</span>	 * @method
+	 * Remove a header.
+	 * @param {String} headerName
+	 * The name of the header
+	 */
+	removeHeader: function(headerName){
+		delete this._customHeaders[headerName];
+	},
+	
+<span id='NGN-web-Server-method-setHeaders'>	/**
+</span>	 * @method
+	 * Set multiple headers by providing a key/value object. Applied to every request.
+	 * This overwrites any existing _custom_ headers.
+	 *  
+	 * **Example**
+	 * 		web.setHeaders({
+	 * 			'x-custom-header','value',
+	 * 			'x-custom-header2','value2'
+	 * 		});
+	 * @param {Object} headers
+	 * A key/value object with headers and their values.
+	 */
+	setHeaders: function(headers){
+		this._customHeaders = headers;
 	},
 	
 <span id='NGN-web-Server-method-handleCrossOrigin'>	/**
@@ -359,6 +441,21 @@ var Class = Base.extend({
 				// PreRequest Middleware
 				this.applyProcessor('prerequest');
 				
+				// Add custom headers
+				if (this.poweredBy || this._customHeaders) {
+					
+					var _hdrFn = function(req,res,next){
+									res.set('x-powered-by',me.poweredBy);
+									if (me._customHeaders) {
+										for(var hdr in me._customHeaders)
+											res.set(hdr,me._customHeaders[hdr]);
+									}
+									next();
+								};
+					
+					this._server.use(_hdrFn);
+				}
+				
 				// PostRequest Middleware
 				express.request.on('end',function(req,res,next){
 					me.onRequestEnd(req,res);
@@ -371,13 +468,10 @@ var Class = Base.extend({
 				if (this._ALLOWMETHODS !== null)
 					this._server.use(this.handleMethods);
 			
-				this._server.use(this.handleError);
-				
-				
 				this.enableSessionManagement();
 				this.enableTemplateRendering();
 				
-				this.generateRoutes(this._server);
+				this.generateRoutes();
 				
 				if (this.assets !== null) {
 					if (!fs.existsSync(this.assets &amp;&amp; fs.existsSync(__NGN.path.join(__NGN.rootDir,this.assets))))
@@ -392,12 +486,14 @@ var Class = Base.extend({
 				
 				if (this.enableCompression)
 					this._server.use(express.compress());
-				
+	
+				this._server.use(this.handleError);
+	
 				if (this._serverOptions !== null) 
 					this._httpServer = require('https').createServer(this._serverOptions,this._server);
 				else
 					this._httpServer = require('http').createServer(this._server);
-	
+				
 				this._server.listen(this.port,function(){
 					me.onStart();
 				});
@@ -460,7 +556,7 @@ var Class = Base.extend({
 		if (this.views !== null || this.customErrors !== null) {
 			
 			// Default view engine 
-			this._server.set('view engine','html');
+			this._server.set('view engine',this.viewEngine||'html');
 			
 			// Apply templating engines
 			if (this.viewEngines !== null) {
@@ -572,6 +668,7 @@ var Class = Base.extend({
 		
 		var me = this;
 		this._generateRoutes(function(rootExists){
+
 			// Make sure routes are defined, otherwise generate a placeholder. 
 			// This is a fallback if no root route is defined.
 			if (!rootExists) {
@@ -590,7 +687,7 @@ var Class = Base.extend({
 			me._server.all(/(.*)/,function(req,res){
 				me.on404(res);
 				res.send(404);
-			})
+			});
 			
 		});
 	

@@ -491,7 +491,7 @@ var Class = Base.extend({
 					rt = __NGN.path.resolve(rt);
 				else
 					rt = __NGN.path.resolve(__NGN.path.join(__NGN.cwd,rt));
-	
+
 				// If a path is defined, make sure it exists.
 				if (!fs.existsSync(rt)){
 					this.fireError('The route path does not exist or could not be found. '+rt);
@@ -500,22 +500,21 @@ var Class = Base.extend({
 				
 				// Sync Route Loader
 				var filepath = require('wrench').readdirSyncRecursive(rt);
-				for (var n=0;n&lt;filepath.length;n++){
+				for (var n=0;n&lt;filepath.length;n++){					
 					if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js' &amp;&amp; filepath[n].toString().trim().toLowerCase() !== 'root.js'){
-						var _rt = require(rt+'/'+filepath[n]);
+						var _rt = require(__NGN.path.join(rt,filepath[n]));
 						if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
 							_hasRootRoute = true;
 						this._server.map(_rt);
 					}
 				}
-				
-				if (!_hasRootRoute &amp;&amp; require('fs').existsSync(rt+'/root.js')) {
-					var _rt = require(rt+'/root.js');
-					if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
+
+				if (!_hasRootRoute &amp;&amp; require('fs').existsSync(__NGN.path.join(rt,'root.js'))) {
+					var _rt = require(__NGN.path.join(rt,'root.js'));
+					if (!_hasRootRoute &amp;&amp; _rt.hasOwnProperty('/'))
 						_hasRootRoute = true;
-					this._server.map(_rt);
+					this._server.map(_rt);			
 				}
-					
 			}
 		} else {
 			if (this.routes.hasOwnProperty('/'))
@@ -891,7 +890,7 @@ var Class = Base.extend({
 <span id='NGN-core-HttpServer-event-500'>	/**
 </span>	 * @event 500
 	 */
-	on500: function(response){
+	on500: function(response){		
 		this.emit('500',{code:500,response:(response||null)});
 		this.on5xx(500,response||null);
 	},
