@@ -130,10 +130,9 @@ var Class = Base.extend({
 			if (this.hasOwnProperty(el))
 				this.__elements.push(el);
 		}
-		
-		// Enable the application scope
-		global.application = this;
-		
+	
+		__NGN.app = this;
+	
 	},
 	
 <span id='NGN-app-Application-method-fireEvent'>	/**
@@ -306,22 +305,25 @@ var Class = Base.extend({
 	  * The server instance
       */     	
      registerServer: function(server){
-     	if (this.SERVER['__'+server.type] == undefined)
-     		this.SERVER['__'+server.type] = {};
+     	//if (this.SERVER['__'+server.type] == undefined)
+     	//	this.SERVER['__'+server.type] = {};
+     	
      	var ct = 0;
-     	while (this.SERVER['__'+server.type][server.id] !== undefined || this.SERVER[server.id] !== undefined){
+     	while (this.SERVER[server.id] !== undefined){
      		ct++;
      		server.id = server.id + ct.toString();
      	}
-     	this.SERVER['__'+server.type][server.id] = server;
      	
+     	//this.SERVER[server.id] = server;
+    
      	Object.defineProperty(this.SERVER,server.id,{
      		enumerable:	true,
-     		get:		function(){ return __NGN.SERVER['__'+server.type][server.id]; }
-     	})
-     	
-     	this.onRegisterServer(server);
-     	return server.id;
+     		get:		function(){ return server; }
+     	});
+     	//application.SERVER[server.id] = server;
+    
+	 	this.onRegisterServer(server);
+     	//return server.id;
      },
      
 <span id='NGN-app-Application-method-unregisterServer'>     /**
@@ -440,6 +442,14 @@ var Class = Base.extend({
      */
     onUnRegisterServer: function(server){
     	this.fireEvent('unregisterserver',server||null);
+    },
+    
+<span id='NGN-app-Application-event-ready'>    /**
+</span>     * @event ready
+     * Fired when the application is ready.
+     */
+    onReady: function(){
+    	this.fireEvent('emit');
     }
 });
 

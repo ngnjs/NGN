@@ -157,7 +157,7 @@ var Class = Base.extend({
 		
 		if (this.autoRegister)
 			this.register();
-		
+			
 	},
 	
 <span id='NGN-core-Server-method-register'>	/**
@@ -165,14 +165,20 @@ var Class = Base.extend({
 	 * Registers the server within the application scope by creating a pointer to it.
 	 */
 	register: function(){
-		if (global.application !== undefined)
-			this.id = application.registerServer(this);
+		if (__NGN.app.registerServer)
+			__NGN.app.registerServer(this);
 	},
 	
+<span id='NGN-core-Server-method-start'>	/**
+</span>	 * @method
+	 */
 	start: function(){
 		this.onStart();
 	},
 	
+<span id='NGN-core-Server-method-stop'>	/**
+</span>	 * @method
+	 */
 	stop: function(){
 		this.onStop();
 	},

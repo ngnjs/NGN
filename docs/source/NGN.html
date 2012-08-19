@@ -45,6 +45,18 @@ var Class = Base.extend({
 			            	}
             },
             
+<span id='NGN-property-app'>            /**
+</span>             * @property {Object} [app={}]
+             * The application scope. This scope is created when a new NGN.app.Application is created.
+             * Alternatively, NGN#application will automatically create the application an populate this
+             * scope. This is the more common approach to creating a globally accessible application variable. 
+             */
+            app: {
+            	value:		{},
+            	enumerable:	true,
+            	writable:	true
+            },
+            
 <span id='NGN-static-property-pathSeparator'>            /**
 </span>             * @property {String}
              * The platform-specific path separator. `\\` or `/`.
@@ -427,11 +439,9 @@ var Class = Base.extend({
     	callback = arguments[arguments.length-1];
     	config = callback == arguments[0] ? {} : arguments[0];
 
-    	if (!global.hasOwnProperty('application')){
-	    	var app = new __NGN.app.Application(config);
-    	}
-
-    	callback();
+    	new __NGN.app.Application(config);
+    	
+		callback();
     },
     
 <span id='NGN-method-typeOf'>    /**
