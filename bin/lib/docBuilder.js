@@ -100,6 +100,8 @@ module.exports.build = function(argv) {
 									console.log('ERROR'.bold.red);
 									eyes.inspect(error);
 								 } else {
+								 	console.log(' >> Updating Permissions...'.grey);
+								 	require('wrench').chmodSyncRecursive(OUT_DIR, 0777);
 									console.log('DONE'.bold.green);
 									console.log('Docs are available at: '.yellow+'file:///'.magenta+p.resolve(p.join(OUT_DIR,'index.html')).magenta);
 								}
@@ -109,6 +111,8 @@ module.exports.build = function(argv) {
 								console.log('ERROR'.bold.red);
 								eyes.inspect(error);
 						 	} else {
+						 		console.log(' >> Updating Permissions...'.grey);
+								 require('wrench').chmodSyncRecursive(OUT_DIR, 0777);
 								console.log('DONE'.bold.green);
 								console.log('Docs are available at: '.yellow+'file:///'.magenta+p.resolve(p.join(OUT_DIR,'index.html')).magenta);
 							}
