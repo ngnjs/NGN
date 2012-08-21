@@ -1,5 +1,5 @@
 [{
-  "title": "Guides",
+  "title": "Overview",
   "items": [{
           "name": "getting_started",
           "title": "Getting Started",
@@ -16,26 +16,37 @@
           "name": "application_scope",
           "title": "Application Scope",
           "description": "Use the application scope to encapsulate custom properties for an application."
-      }/*,{
-          "name": "session_scope",
-          "title": "Session Scope",
-          "description": "Use the application scope to encapsulate custom properties for an application."
-      }*/,{
+      },{
           "name": "class_system",
           "title": "The Class System",
           "description": "Creating custom classes through NGN inheritance."
-      },{
-          "name": "cli",
-          "title": "Command Line Tools",
-          "description": "Use NGN from the command line."
-      },{
-          "name": "webserver",
-          "title": "Web Server Fundamentals",
-          "description": "Quickly build robust web servers."
       },{
           "name": "roadmap",
           "title": "Roadmap",
           "description": "This is currently a wishlist of features to add."
       }
    ]
+},{
+  "title": "Command Line Utilities",
+  "items": [{
+	      "name": "cli",
+	      "title": "Basic CLI",
+	      "description": "Use NGN from the command line."
+   		}
+   ]
+},{
+	"title": "NGN Recipes",
+	"items": [{
+          "name": "webserver",
+          "title": "Web Server Fundamentals",
+          "description": "Quickly build robust web servers."
+      },{
+          "name": "proxycontroller",
+          "title": "Proxy Servers",
+          "description": "Create your own hot-load proxy servers without installing additional software."
+      },{
+          "name": "goose",
+          "title": "Goose ORM for MongoDB",
+          "description": "Use Goose ORM to simplify data object management."
+      }]
 }]
