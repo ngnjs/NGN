@@ -21,6 +21,7 @@
     "clone": "~0.1.0"
   },
   "devDependencies": {
+    "wrench": "~1.3.9",
     "mocha": "~1.1.0",
     "should": "~0.6.3"
   },
