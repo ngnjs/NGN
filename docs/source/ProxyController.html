@@ -96,8 +96,8 @@ var Class = Base.extend({
 						return;
 					}
 					
-					if (req.form.destination == undefined) {
-						res.send(400,'Missing attribute: destination');
+					if (req.form.target == undefined) {
+						res.send(400,'Missing attribute: target');
 						return;
 					}
 					
@@ -114,8 +114,23 @@ var Class = Base.extend({
 						p.createVirtualHost({
 							hostname: 	req.form.hostname,
 							port:		req.form.port,
-							target:		req.form.destination
+							target:		req.form.destination,
+							alias:		req.form.alias || []
 						});
+						
+						// Add rules
+						if (req.form.rules){
+							for (var method in req.form.rules){
+								if (req.form.rules.hasOwnProperty(method)){
+									var rl = req.form.rules[method];
+									for (var i=0;i&lt;rl.length;i++){
+										for (var pattern in rl[i]){
+											p.addRewriteRule(method,pattern,rl[i][pattern]);
+										}
+									}
+								}
+							}
+						}
 						
 						res.send(201);
 					} catch (e) {

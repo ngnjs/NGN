@@ -54,7 +54,6 @@
  * 			port: 8181,
  * 			processor: new NGNX.web.WebRequestHelper()
  * 		});
- * @singleton
  * @extends NGN.web.Processor
  */
 
@@ -102,8 +101,8 @@ var Class = Base.extend({
 						browser: 	req.browser
 					});
 
-					if (global.application !== undefined)
-						res.locals.application = global.application.toJson();
+					if (__NGN.app !== undefined)
+						res.locals.application = __NGN.app.toJson();
 
 					if (req.form !== {})
 						res.locals.form = req.form;

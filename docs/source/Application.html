@@ -16,6 +16,31 @@
 </head>
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var events = require('events');
+<span id='NGNA'>/**
+</span> * @class NGNA
+ * NGNA is a global convenience pointer to the application scope. It is only created when an
+ * application is created, either by manuall creating a new NGN.app.Application
+ * or invoking it with NGN#app.
+ * 
+ * **Example Use**
+ * 
+ * If the application is created in a file, say `app.js` as:
+ * 		NGN.application(function(){
+ * 			var ds = new NGN.datasource.Redis({id:'myredis'});
+ * 			...
+ * 		});
+ * Any other file (web server route, API call, etc) would normally be able to
+ * reference the the data source `NGN.app.getDSN('myredis')`. However; it is also accessible
+ * via shorthand using `NGNA` or `ngna`.
+ * 		NGNA.getDSN('myredis');
+ * This is purely syntactic sugar, designed to reduce the overall amount of typing required
+ * to access the application scope.
+ * 
+ * @singleton
+ * @uses NGN.app.Application
+ * @requires NGN.app.Application
+ */
+
 <span id='NGN-app-Application'>/**
 </span> * @class NGN.app.Application
  * @singleton
@@ -86,14 +111,32 @@ var Class = Base.extend({
              * Store **data service names** associated with the application.
              * Each DSN key represents a database connection.
              * 
-             * 		var userDB = NGN.getDatasource('users');
+             * 		var userDB = NGN.app.getDatasource('users');
              * 
              * *OR*
              * 
-             * 		var userDB = NGN.DSN['users'];
+             * 		var userDB = NGN.app.DSN['users'];
              * @protected
              */
             DSN: {
+                value:      {},
+                enumerable: true,
+                writable:   true
+            },
+            
+<span id='NGN-app-Application-property-ORM'>            /**
+</span>             * @property {Object}
+             * Store ORM service names associated with the application.
+             * Each ORM key represents an ORM service.
+             * 
+             * 		var myOrm = NGN.app.getORM('my_goose_orm');
+             * 
+             * *OR*
+             * 
+             * 		var userDB = NGN.app.ORM['my_goose_orm'];
+             * @protected
+             */
+            ORM: {
                 value:      {},
                 enumerable: true,
                 writable:   true
@@ -132,7 +175,11 @@ var Class = Base.extend({
 		}
 	
 		__NGN.app = this;
-	
+		
+		Object.defineProperty(global,'NGNA',{
+			enumerable:	true,
+			get:		function(){ return __NGN.app || {}; }
+		})	
 	},
 	
 <span id='NGN-app-Application-method-fireEvent'>	/**
@@ -255,6 +302,43 @@ var Class = Base.extend({
      */
     removeDSN: function( name ){
     	this.removeDatasource(name);
+    },
+    
+<span id='NGN-app-Application-method-createORM'>    /**
+</span>     * @method
+     * Create and register a #ORM service.
+     * @param {String} name
+     * The name by which the #ORM is referenced.
+     * @param {NGN.core.ORM} ORM
+     * A ORM object.
+     */
+    createORM: function( name, ORM ){
+        this.onBeforeCreateORM(name, ORM);
+        this.ORM[name] = ORM;
+        this.onCreateORM(name, ORM);
+        
+    },
+    
+<span id='NGN-app-Application-method-getORM'>    /**
+</span>     * @method
+     * Retrieve a registered #ORM service object.
+     * @param {String} name
+     * The name by which the #ORM is referenced.
+     */
+    getORM: function( name ){
+        return this.ORM[name];
+    },
+    
+<span id='NGN-app-Application-method-removeORM'>    /**
+</span>     * @method
+     * Removes an ORM service (unregister). 
+     * @param {String} name
+     * The reference name of the #ORM to remove.
+     */
+    removeORM: function( name ){
+        this.onBeforeremoveORM(name, this.ORM[name]);
+        delete this.ORM[name];
+        this.onRemoveORM(name);
     },
     
 <span id='NGN-app-Application-method-createService'>    /**
@@ -424,6 +508,40 @@ var Class = Base.extend({
      */
     onRemoveDatasource: function( name ) {
         this.fireEvent('removedatasource',name);
+    },
+    
+<span id='NGN-app-Application-event-createorm'>    /**
+</span>     * This event is fired just after the creation of a #ORM.
+     * @event createorm
+     * @param {String} name
+     * The reference name of the new ORM.
+     * @param {NGN.core.ORM} orm 
+     * The ORM object just created. 
+     */
+    onCreateORM: function( orm ) {
+        this.fireEvent('createorm',orm);
+    },
+    
+<span id='NGN-app-Application-event-beforeremoveorm'>    /**
+</span>     * This event is fired just prior to removing a #ORM. 
+     * @event beforeremoveorm
+     * @param {String} name
+     * The reference name of the ORM service.
+     * @param {NGN.core.ORM} orm
+     * The #ORM object about to be removeed. 
+     */
+    onBeforeRemoveORM: function( name, orm ) {
+        this.fireEvent('beforeremoveorm', name, orm);
+    },
+    
+<span id='NGN-app-Application-event-removeorm'>    /**
+</span>     * This event is fired just after the destruction of a #ORM.
+     * @event removeorm
+     * @param {String} name
+     * The reference name of the #ORM.
+     */
+    onRemoveORM: function( name ) {
+        this.fireEvent('removeorm',name);
     },
     
 <span id='NGN-app-Application-event-registerserver'>    /**

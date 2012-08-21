@@ -111,9 +111,19 @@ var Class = require('./BaseClass').extend({
      */
     fireEvent: 		function( eventName, metadata ) {   	
 				        this.emit( eventName, metadata );
-				        if (global.hasOwnProperty('application')) {
-				        	application.fireEvent(eventName, metadata);
+				        if (__NGN.app.hasOwnProperty('EventBus')) {
+				        	__NGN.app.EventBus.emit(eventName, metadata);
 				        }
+				    },
+    
+<span id='NGN-core-method-fireWarning'>    /**
+</span>     * @method
+     * Fires a warning event.
+     */
+    fireWarning:	function( warning ) {
+    					//TODO: Add to logger
+    					console.log('WARNING:'.yellow.underline+' '+warning.toString().yellow);
+				    	this.fireEvent('warn',warning);
 				    },
     
 <span id='NGN-core-method-fireError'>    /**

@@ -40,7 +40,7 @@ var Class = Base.extend({
 			 * The connection object or the NGN.datasource.Connection#dsnName string representing a datasource connection.
 			 */
 			_client: {
-				value:		(typeof config.connection === 'string' ? __NGN.DSN[config.connection] : config.connection).getClient(),
+				value:		(typeof config.connection === 'string' ? __NGN.app.DSN[config.connection] || new __NGN.datasource.Connection() : config.connection).getClient(),
 				enumerable:	false,
 				writable:	true,
 				configurable:true

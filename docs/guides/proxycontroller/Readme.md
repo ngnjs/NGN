@@ -149,6 +149,11 @@ state would be available at `http://localhost:3000/proxy`. A `GET`
 request made to `http://localhost:3000/proxy/hosts` provides the
 highest level call.
 
+<p style="padding:4px;border-radius:6px;background:#f7f7c6;color:#6e3204;border:1px solid #705502;">
+	<b>Remember:</b> Any POST or PUT with a JSON body requires the "Content-Type"
+	header to be set to "application/json". 
+</p>
+
 ## List All
 
 Retrieve all virtual hosts currently registered with the proxy.

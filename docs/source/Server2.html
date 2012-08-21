@@ -501,6 +501,8 @@ var Class = Base.extend({
 				this.starting = false;
 				this.onError(e);
 			}
+		} else {
+			console.log('WARNING: '.yellow.bold+'Server already started. Cannot start twice. Make sure autoStart=true and start() are not being executed sequentially.');
 		}
 	},
 	

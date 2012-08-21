@@ -131,8 +131,10 @@ var Class = Base.extend({
 									this._cachepath = __NGN.path.join(__dirname,'cache.json');
 									this._cache = require(this._cachepath);
 								} catch (eeee) {
+									this._cachepath = __NGN.cwd;
+									this._cache = {cache:[]};
 									// If all fails, then there is no cache available.
-									this.fireError(eeee);
+									this.fireWarning(eeee.message+'. Using '+__NGN.path.join(__NGN.cwd,'cache.json')+' instead.');
 								}
 							}
 						}
