@@ -1,4 +1,4 @@
 --require should
 --reporter list
 --growl
---globals __NGN,NGN,__NGNX,NGNX,application,form,url,route,cgi,browser,session,req,res,request,response,next,fn
+--globals __NGN,NGN,__NGNX,NGNX
