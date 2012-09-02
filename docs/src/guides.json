@@ -45,8 +45,8 @@
           "title": "Proxy Servers",
           "description": "Create your own hot-load proxy servers without installing additional software."
       },{
-          "name": "goose",
-          "title": "Goose ORM for MongoDB",
-          "description": "Use Goose ORM to simplify data object management."
+      	  "name": "models",
+      	  "title": "Using Models in Applications",
+      	  "description":"Models offer powerful object & data management. Combining this with the NGNA (application) scope simplifies this."
       }]
 }]
