@@ -61,9 +61,10 @@ var Class = Base.extend({
     	
     	this.onBeforeCache(this._cachepath,this._cache);
     	
-    	var me = this;
+    	var me = this,
+    		fp = this._cachepath.substr(this._cachepath.length-5).toLowerCase() == '.json' ? this._cachepath : __NGN.path.join(this._cachepath,'cache.json');
     	
-    	fs.writeFile(this._cachepath,JSON.stringify(this._cache,null,4),'utf8',function(err){
+    	fs.writeFileSync(fp,JSON.stringify(this._cache,null,4),'utf8',function(err){
     		if (err)
     			me.fireError(err);
     		me.onCache(this._cachepath);

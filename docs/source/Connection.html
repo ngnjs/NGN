@@ -219,10 +219,12 @@ var Class = Base.extend({
 				            		return this._name;	
 				            	},
 				set:			function(newName) {
-									if (__NGN.DSN[this._name] !== undefined)
-										__NGN.destroyDatasource(this._name);
-									this._name = newName.trim();
-									__NGN.createDatasource(this._name,this);
+									if (NGNA !== undefined) {
+										if (NGNA.DSN.hasOwnProperty(this._name))
+											NGNA.destroyDatasource(this._name);
+										this._name = newName.trim();
+										NGNA.createDatasource(this._name,this);
+									}
 								}
             }
         });
@@ -245,8 +247,11 @@ var Class = Base.extend({
      * @private
      */
     registerAsDatasource: function(){
-    	if (this._name !== null)
-    		__NGN.createDatasource(this._name,this);
+    	if (NGNA !== undefined){
+	    	if (this._name !== null)
+    			NGNA.createDatasource(this._name,this);
+    	} else 
+    		this.fireWarning('A datasource can only be tracked within an application.');
     },
     
 <span id='NGN-datasource-Connection-method-connect'>    /**
@@ -272,8 +277,10 @@ var Class = Base.extend({
      * @returns {NGN.datasource.Connection}
      */
     onDisconnect: function(){
-    	if (__NGN.DSN[this._name] !== undefined)
-    		__NGN.removeDatasource(this._name);
+    	if (NGNA !== undefined){
+	    	if (NGNA.DSN.hasOwnProperty(this._name))
+    			NGNA.removeDatasource(this._name);
+    	}
     	this.connected = false;
     	this.connecting = false;
     	this.emit('disconnect',this);
@@ -303,6 +310,7 @@ var Class = Base.extend({
 	        this.connected = true;
     	    this.connecting = false;
         	this.emit('connected', this);
+        	this.onReady();
        }
     },
     
@@ -358,6 +366,14 @@ var Class = Base.extend({
     	this.isAuthorized = false;
     	this.securedConnection = false;
     	this.emit('authfailure',message);
+    },
+    
+<span id='NGN-datasource-Connection-event-ready'>    /**
+</span>     * @event ready
+     * Fired when the datasource is ready for interaction.
+     */
+    onReady: function(){
+    	this.emit('ready');
     }
     
 });

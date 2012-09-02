@@ -92,7 +92,7 @@ var Class = require('./BaseClass').extend({
 						});
 
 					},
-	
+
 <span id='NGN-core-method-emit'>	/**
 </span>	 * @method
 	 * Emits an event respective of the object context (i.e. not bubbled to a global level event)
@@ -119,11 +119,19 @@ var Class = require('./BaseClass').extend({
 <span id='NGN-core-method-fireWarning'>    /**
 </span>     * @method
      * Fires a warning event.
+     * @param {String} warning
+	 * The warning message.
+	 * @param {Function} callback
+	 * If the callback returns false, the event is prevented.
+	 * @preventable
      */
-    fireWarning:	function( warning ) {
-    					//TODO: Add to logger
-    					console.log('WARNING:'.yellow.underline+' '+warning.toString().yellow);
-				    	this.fireEvent('warn',warning);
+    fireWarning:	function( warning, callback ) {
+    					callback = callback || function(){return true;};
+    					if (callback(warning)){
+   		 					//TODO: Add to logger
+       						console.log('WARNING:'.yellow.underline+' '+warning.toString().yellow);
+    						this._emitter.emit('warn',warning);
+    					}
 				    },
     
 <span id='NGN-core-method-fireError'>    /**

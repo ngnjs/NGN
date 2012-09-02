@@ -17,8 +17,8 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var Base		= require('../NGN.core');
 
-<span id='NGNX-Email'>/**
-</span> * @class NGNX.Email
+<span id='MODEL-Email'>/**
+</span> * @class MODEL.Email
  * Represents an email address and provides helper methods for managing it, such as
  * syntax validation.
  * @extends NGN.core
@@ -26,7 +26,7 @@
  */
 var Class = Base.extend({
 	
-<span id='NGNX-Email-method-constructor'>	/**
+<span id='MODEL-Email-method-constructor'>	/**
 </span>	 * @constructor
 	 */
 	constructor: function( config ){
@@ -35,7 +35,7 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='NGNX-Email-static-property-_emailRegex'>			/**
+<span id='MODEL-Email-static-property-_emailRegex'>			/**
 </span>             * @property [_emailRegex=/(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|&quot;(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*&quot;)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/]
              * The RegExp pattern that complies with [RFC 2822](http://www.faqs.org/rfcs/rfc2822.html).
              * @private
@@ -49,7 +49,7 @@ var Class = Base.extend({
                 configurable:true
             },
 			
-<span id='NGNX-Email-property-address'>			/**
+<span id='MODEL-Email-property-address'>			/**
 </span>			 * @property {String} address
 			 * The email address (i.e. me@domain.com);
 			 * @required
@@ -60,7 +60,7 @@ var Class = Base.extend({
 			    writable:   false
 			},
 			
-<span id='NGNX-Email-property-isValidSyntax'>			/**
+<span id='MODEL-Email-property-isValidSyntax'>			/**
 </span>			 * @property
 			 * @returns {Boolean}
 			 * @readonly
@@ -73,7 +73,7 @@ var Class = Base.extend({
             			    }
 			},
 			
-<span id='NGNX-Email-property-validationCode'>			/**
+<span id='MODEL-Email-property-validationCode'>			/**
 </span>			 * @property {String} [validationCode=null]
 			 * The validation code assigned to this email address
 	         * @readonly  
@@ -87,7 +87,7 @@ var Class = Base.extend({
 		
 	},
 	
-<span id='NGNX-Email-method-createValidationCode'>	/**
+<span id='MODEL-Email-method-createValidationCode'>	/**
 </span>	 * @method
 	 * Generates a validation code.
 	 * @returns {String} 

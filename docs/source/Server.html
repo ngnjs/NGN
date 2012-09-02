@@ -165,8 +165,17 @@ var Class = Base.extend({
 	 * Registers the server within the application scope by creating a pointer to it.
 	 */
 	register: function(){
-		if (__NGN.app.registerServer)
-			__NGN.app.registerServer(this);
+		if (NGNA)
+			NGNA.registerServer(this);
+	},
+	
+<span id='NGN-core-Server-method-unRegister'>	/**
+</span>	 * @method
+	 * Unregisters the server from the application.
+	 */
+	unRegister: function(){
+		if (NGNA)
+			NGNA.unRegisterServer(this);
 	},
 	
 <span id='NGN-core-Server-method-start'>	/**

@@ -33,28 +33,17 @@ var Class = Base.extend({
         var emitter = require('events').EventEmitter;
         
         Object.defineProperties(this,{
-<span id='NGN-property-version'>        	/**
+<span id='NGN-static-property-version'>        	/**
 </span>        	 * @property {String}
         	 * The running version of NGN.
         	 * @readonly
+        	 * @static
         	 */
         	version: {
             	enumerable:	true,
             	get:		function() {
 			            		return require(__NGN.path.join(__dirname,'..','package.json')).version;
 			            	}
-            },
-            
-<span id='NGN-property-app'>            /**
-</span>             * @property {Object} [app={}]
-             * The application scope. This scope is created when a new NGN.app.Application is created.
-             * Alternatively, NGN#application will automatically create the application an populate this
-             * scope. This is the more common approach to creating a globally accessible application variable. 
-             */
-            app: {
-            	value:		{},
-            	enumerable:	true,
-            	writable:	true
             },
             
 <span id='NGN-property-globals'>            /**
@@ -165,6 +154,7 @@ var Class = Base.extend({
              * `node /path/to/myapp.js` would be `/path/to`.
              * @static
              * @readonly
+             * @protected
              */
             _cwd: {
             	value:		null,
@@ -274,6 +264,7 @@ var Class = Base.extend({
      * Set this to true if you are certain there are no circular references
      * in the object (performance gain).
      * @return {Object}
+     * @protected
      */
     clone: function(obj, nocircular) {
     	
@@ -301,6 +292,7 @@ var Class = Base.extend({
 <span id='NGN-method-exec'>    /**
 </span>     * @method
      * A convenience method for using NGN.core.Command#exec.
+     * @protected
      */
     exec: function() {
     	this.command.exec(arguments);
@@ -308,7 +300,7 @@ var Class = Base.extend({
     
 <span id='NGN-method-getExtensions'>    /**
 </span>     * @accessor
-     * Get the custom extensions available to the application.
+     * Get the custom extensions recognized by NGN.
      * @returns {Array} 
      */
     getExtensions: function() {
@@ -317,7 +309,7 @@ var Class = Base.extend({
     
 <span id='NGN-method-define'>    /**
 </span>	 * @method
-	 * A shortcut method for creating new classes.
+	 * Define a new Class.
 	 * 		NGN.define('ORG.team.Member',{
 	 * 			extend: 'NGN.app.Person',
 	 * 			boss: 'CEO',
@@ -361,6 +353,8 @@ var Class = Base.extend({
 			for(var i=1;i&lt;_cls.length;i++){
 				if (i==1 &amp;&amp; _cls[0].toUpperCase() === 'NGNX')
 					_base = __NGN.path.join(_base,'ngnx');
+				else (i==1 &amp;&amp; _cls[0].toUpperCase() === 'MODEL')
+					_base = __NGN.path.join(_base,'model');
 				_base = __NGN.path.join(_base,_cls[i]);
 			}
 			
@@ -375,6 +369,38 @@ var Class = Base.extend({
 		// Create the class as a local variable and return it.
 		var Class = _base.extend(config);
 		return Class;
+	},
+	
+	
+<span id='NGN-method-getConstructor'>	/**
+</span>	 * @method
+	 * A convenience method for dynamically getting an object constructor by type.
+	 * This is commonly used in ORM situations where an object type defines metadata.
+	 * For example
+	 * 		var schemaType = NGN.getConstructor(typeof 'somstring');
+	 * is the same as
+	 * 		var schemaType = String;
+	 * @param {String} type (required)
+	 * The type of object.
+	 * @protected
+	 */
+	getConstructor: function(type){
+		type = type || '';
+		switch(type.trim().toLowerCase()) {
+			case 'string':
+				return String;
+			case 'regexp':
+				return RegExp;
+			case 'array':
+				return Array;
+			case 'number':
+				return Number;
+			case 'date':
+				return Date;
+			case 'boolean':
+				return Boolean;
+		}
+		this.fireError(type+' is not an understood constructor type.');
 	},
 	
     
@@ -427,6 +453,7 @@ var Class = Base.extend({
 	 * Array or buffer where UUID bytes are to be written.
 	 * @param {Number} Starting index in `buffer` at which to begin writing.
      * @returns {String}
+     * @protected
      */
     uuid: function(random, options, buffer, offset){
     	random = random || false;
@@ -465,6 +492,7 @@ var Class = Base.extend({
 </span>     * @method
      * Get the type of a specific object.
      * @returns {String}
+     * @protected
      */
     typeOf: function(obj) {
     	return ({}).toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
@@ -473,10 +501,11 @@ var Class = Base.extend({
 <span id='NGN-method-coalesce'>    /**
 </span>     * @method
      * Finds the first non-null/defined value in a list of arguments.
-     * This can be used with {Boolean} values, since `true`/`false` is a 
+     * This can be used with {@link Boolean Boolean} values, since `true`/`false` is a 
      * non-null/defined value.
      * @param {Mixed} args
      * Any number of arguments can be passed to this method.
+     * @protected
      */
     coalesce: function() {
     	for (var i=0;i&lt;arguments.length;i++){

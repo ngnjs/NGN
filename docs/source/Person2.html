@@ -17,287 +17,288 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var stripe      = require('stripe'),
     crypto      = require('crypto'),
-    NGN 		= require('../NGN.core');
+    Base 		= require('./Model');
 
-<span id='NGNX-Person'>/**
-</span> * @class NGNX.Person
+<span id='MODEL-Person'>/**
+</span> * @class MODEL.Person
  * Represents a human being/actor in the ecosystem. 
  * This could be a system user, customers, administrators, or any other type of person.
- * @extends NGN.core
+ * 
+ * **Simple Person**
+ * 	var person = new MODEL.Person({
+ * 		firstName: 	'John',
+ * 		lastName:	'Doe',
+ * 		gender:		'm'
+ * 	});
+ * 		
+ * 	console.log('Hi '+person.firstName+'!'); // --&gt; Hi John!
+ * 
+ * This trivial example doesn't do much, but it represents how a person can be modeled and used throughout
+ * application code. Of course, this becomes more powerful when using the built-in methods or combining with
+ * other MODEL objects. 
+ *  
+ * **Create A Person**
+ * 
+ * Most applications need to persist objects like Person to a data store. This is accomplished using a CRUD
+ * object, similar to the following:
+ * 	var person = new MODEL.Person({
+ *			CRUD: 		new NGNX.datasource.crud.MongoDB({
+ *							datasource: 'models',
+ *							map: 		{
+ *											Person: {
+ *												'firstName': 	'fn',
+ *												'middleName': 	'mn',
+ *												'lastName': 	'ln',
+ *												'gender': 		'sex',
+ *												'image': 		'img'
+ *											}
+ *										}
+ *						}),
+ * 		gender:		'm',
+ *			firstName:	'John',
+ *			lastName:	'Doe'
+ *		});
+ * 		
+ * 	person.save();
+ * This example assumes a MongoDB datasource with an id of `models` is registered with {@link NGNA NGNA}.
+ * By applying a MongoDB #CRUD object, the person will be persisted to MongoDB using `save()`. This example
+ * uses a CRUD#map to match the person's attributes to the appropriate fields in the MongoDB collection.
+ * 
+ * There are several powerful ways to shrink the amount of code required to manage model objects. For example, 
+ * default CRUD objects with default or custom maps can be defined at an application level.
+ * 
+ * For example, it is possible to get the same effect as the code snippet above using just:
+ * 	var person = new MODEL.Person({
+ *			gender:'m',
+ *			firstName:'John',
+ *			lastName:'Doe'
+ *		});
+ *		
+ *	person.save();
+ * 
+ * Please see the associated guide for more information.
+ * 
+ * **Load a Person by ID**
+ * 		var person = new MODEL.Person('id123');
+ * This simple example assumes an NGN.datasource.CRUD object is associated with all MODEL.Person objects. By passing a
+ * string argument, the model will attempt to convert that to an #id and run the #load method. This is the same as:
+ * 	var person = new MODEL.Person();
+ * 		
+ * 	person.id = 'id123';
+ * 		
+ * 	person.load(); 
+ * @aside guide models
+ * @extends MODEL.Model
  * @docauthor Corey Butler
  */
-var Class = NGN.extend({
+var Class = Base.extend({
 	
 	constructor: function( config ){
 	    
 	    var me = this;
 		
-		Class.super.constructor.call( this, config );
+		config = config || {};
+		
+		config.type = 'Person';
 		
 		Object.defineProperties(this,{
 			
-			_temp: {
-                value:          {},
-                enumerable:     false,
-                writable:       true
-            },
-            
-<span id='NGNX-Person-property-id'>            /**
-</span>             * @property {String} id
-             * The ID of the person (as defined by Application)
-             */
-            _id: {
-                value:          null,
-                writable:       true,
-                enumerable:     false
-            },
-            
-<span id='NGNX-Person-property-exists'>            /**
-</span>             * @property {Boolean} exists @readonly
-             * Identifies that the person has been looked up in the database and determined to either exist or not. 
-             */
-            _exists: {
-                value:          null,
-                writable:       true,
-                enumerable:     false
-            },
-            
-<span id='NGNX-Person-property-dataProperties'>            /**
-</span>             * @property {Array} dataProperties
-             * An array of property names populated by a &quot;get()&quot; 
-             */
-            _dataProperties: {
-                value:          [],
-                writable:       true,
-                enumerable:     false
-            },
-            _modified: {
-                value:          false,
-                writable:       true,
-                enumerable:     false
-            },
-            _modifiedAttributes: {
-                value:          {},
-                writable:       true,
-                enumerable:     true
-            },
+<span id='MODEL-Person-cfg-type'>			/**
+</span>			 * @cfg {String} [type=Person]
+			 * The model type.
+			 */
+			
             _primaryemail: {
                 value:          null,
                 writable:       true,
                 enumerable:     false
             },
-            _displayname: {
-                value:          null,
-                writable:       true,
-                enumerable:     false
-            },
             
-			id: {               // The ID of the person (as defined by service)
-                enumerable:     true,
-                get:            function() {
-                                    if (!this._exists)
-                                        this.emit('error',{type:'InvalidAttribute',message:'The attribute does not exist.',detail:'The ID attribute is only available after a get() or authenticate() or some other lookup method.'});
-                                    else
-                                        return this._id;
-                                },
-                set:            function(value){
-                                    this._id = value.toString().trim();
-                                    if (this._id.indexOf('@') !== -1){
-                                        this.loginMethod= 'email';
-                                        this.loginId    = this._id;
-                                    }
-                                }
-            },
-            
-            // See _dataProperties
-            dataProperties: {
-                enumerable:     false,
-                get:            function(){
-                                    return this._dataProperties;
-                                },
-                set:            function(value,doNotAppend){
-                                    if (value.trim().length == 0)
-                                        return;
-                                    if (doNotAppend || false) {
-                                        this._dataProperties = [];
-                                        this._dataProperties.push(value.trim());
-                                    } else
-                                        this._dataProperties.push(value.trim());
-                                }
-            },
-            
-            // See _exists
-            exists: {
-                enumerable:     true,
-                get:            function() {
-                                    if (this._exists == null)
-                                        this.emit('error',{type:'InvalidAttribute',message:'The attribute does not exist.',detail:'The exists attribute is only available after a get() or authenticate() or some other lookup method.'});
-                                    else
-                                        return this._exists;
-                                }
-            },
-            
-<span id='NGNX-Person-property-modified'>            /**
-</span>             * @property {Boolean}
-             * Indicates one or more data properties has changed.  
+<span id='MODEL-Person-cfg-id'>            /**
+</span>             * @cfg {String} id
+             * The unique ID of the person.
              */
-            modified: {
+<span id='MODEL-Person-property-id'>            /**
+</span>             * @property {String} [id=null]
+             * The unique ID of the person.
+             */
+			id: {
+                value:			config.id || null,
                 enumerable:     true,
-                get:            function(){
-                                    return this._modified;
-                                },
-                set:            function(){
-                                    this.emit('error',{type:'InvalidSet',message:'This attribute cannot be set.',detail:'The modified attribute cannot be set directly.'});
-                                }                        
+                writable:		true
             },
             
-<span id='NGNX-Person-property-primaryemail'>            /**
-</span>             * @property {String} 
+<span id='MODEL-Person-cfg-email'>            /**
+</span>             * @cfg {String[]/MODEL.Email[]} email
+             * The email account(s) associated with the person.
+             */
+<span id='MODEL-Person-property-email'>            /**
+</span>             * @property {Array} [email=[]]
              * The primary email account of the person.
              */
-            primaryemail: {
+            email: {
+                value:			config.email || [],
                 enumerable:     true,
-                get:            function(){
-                                    this.emit('step','Acquiring primary email address.');
-                                    if (this._exists == null)
-                                        this.emit('error',{type:'InvalidAttribute',message:'The attribute does not exist.',detail:'The exists attribute is only available after a get() or authenticate() or some other lookup method.'});
-                                    else {
-                                        if (this._primaryemail == null) {
-                                            this.emit('step','Checking for EMAIL object.');
-                                            if (this.EMAIL == undefined)
-                                                return null;
-                                            var firstValid = null;
-                                            this.emit('step','Parsing EMAIL object for address.');
-                                            for(var i=0;i&lt;this.EMAIL.length;i++){
-                                                if (this.EMAIL[i].PRIMARY == this.EMAIL[i].VALID == true){
-                                                    this._primaryemail = this.EMAIL[i].ADDRESS.trim();
-                                                     this.emit('step','Primary address found - '+this._primaryemail);
-                                                    return this._primaryemail;
-                                                } else if (this.EMAIL[i].VALID &amp;&amp; firstValid == null)
-                                                    firstValid = i;
-                                            }
-                                            if (firstValid == null)
-                                                return null;
-                                            return this.EMAIL[firstValid].ADDRESS.trim();
-                                        } else
-                                            return this._primaryemail;
-                                    }
-                                }
+                writable:		true
             },
             
-<span id='NGNX-Person-property-image'>            /**
-</span>             * @property {String}
-             * Currently returns the FB pic or gravatar URL.
+<span id='MODEL-Person-cfg-image'>            /**
+</span>             * @cfg {String} image
+             * Path, data representation, or URL.
+             */
+<span id='MODEL-Person-property-image'>             /**
+</span>             * @property {String} [image=null]
+             * Represents a profile picture. This can be a path or URL.
              */
             image: {
+            	value:			config.image || null,
                 enumerable:     true,
-                get:            function() {
-                                    this.emit('step','Acquiring primary image.');
-                                    if (this._exists == null)
-                                        this.emit('error',{type:'InvalidAttribute',message:'The attribute does not exist.',detail:'The exists attribute is only available after a get() or authenticate() or some other lookup method.'});
-                                    else {
-                                        for(var i=0;i&lt;this.LOGIN.length;i++){
-                                            if (this.LOGIN[i].NAME.toUpperCase() == 'FB'){
-                                                return 'https://graph.facebook.com/'+this.LOGIN[i].ID+'/picture';
-                                            }
-                                        }
-                                        var md5 = crypto.createHash('md5');
-                                        return 'http://www.gravatar.com/avatar/'+md5.update(this.primaryemail.trim().toLowerCase()).digest('hex')+'?d=404&amp;s=30';
-                                    }
-                                }
+                writable:		true
             },
             
-            //TODO: Figure out a better way to handle displayname
-<span id='NGNX-Person-property-displayname'>            /**
-</span>             * @property {String}
+<span id='MODEL-Person-cfg-displayName'>            /**
+</span>             * @cfg {String} displayName
              * The name by which the person prefers to be referred to as. 
              */
-            displayname: {
+<span id='MODEL-Person-property-displayName'>            /**
+</span>             * @property {String} [displayName=null]
+             * The name by which the person prefers to be referred to as. 
+             */
+            displayName: {
+                value:			config.displayname || null,
                 enumerable:     true,
-                get:            function(){
-                                    this.emit('step','Acquiring displayname.');
-                                    if (this._exists == null)
-                                        this.emit('error',{type:'InvalidAttribute',message:'The attribute does not exist.',detail:'The exists attribute is only available after a get() or authenticate() or some other lookup method.'});
-                                    else {
-                                        if (this._displayname == null) {
-                                            this.emit('step','Looking up name attributes');
-                                            try {
-                                                this._displayname = this.FIRSTNAME+' '+(this.LASTNAME||'').substr(0,1)+'.';
-                                            } catch (e) {
-                                                this.emit('step','Failing over to alias');
-                                                try {
-                                                    this._displayname = this.ALIAS || '';
-                                                } catch (_e) {
-                                                    this.emit('step','Failing over to blank');
-                                                    this._displayname = '';
-                                                }
-                                            }
-                                        }
-                                        return this._displayname;
-                                    }
-                                }
+                writable:		true
             },
 			
-<span id='NGNX-Person-property-firstname'>			/**
-</span>			 * @property {String}
+<span id='MODEL-Person-cfg-firstName'>			/**
+</span>			 * @cfg {String} firstName
 			 * Given name.
 			 */
-			firstname: {
-				value:		'Unknown',
-				enumerale:	true,
+<span id='MODEL-Person-property-firstName'>			/**
+</span>			 * @property {String} [firstName=Unknown]
+			 * Given name.
+			 */
+			firstName: {
+				value:		config.firstName || 'Unknown',
+				enumerable:	true,
 				writable:	true
 			},
 			
-<span id='NGNX-Person-property-lastname'>			/**
-</span>			 * @property {String}
+<span id='MODEL-Person-cfg-lastName'>			/**
+</span>			 * @cfg {String} lastName
 			 * Surname
 			 */
-			lastname: {
-				value:		'Unknown',
-				enumerale:	true,
+<span id='MODEL-Person-property-lastName'>			/**
+</span>			 * @property {String} [lastName=Unknown]
+			 * Surname
+			 */
+			lastName: {
+				value:		config.lastName || 'Unknown',
+				enumerable:	true,
 				writable:	true
 			},
 			
-			_login: {
-				value:		null,
-				enumerable:	false,
-				writable:	false
+<span id='MODEL-Person-cfg-middleName'>			/**
+</span>			 * @cfg {String} middleName
+			 * Middle name.
+			 */
+<span id='MODEL-Person-property-middleName'>			/**
+</span>			 * @property {String} [middleName=null]
+			 * Middle name.
+			 */
+			middleName: {
+				value:		config.middleName || null,
+				enumerable:	true,
+				writable:	true
 			},
 			
-<span id='NGNX-Person-property-login'>			/**
-</span>			 * @property {NGN.app.Login} [login=null]
+<span id='MODEL-Person-cfg-suffix'>			/**
+</span>			 * @cfg {String} suffix
+			 * Name suffix (i.e. III)
+			 */
+<span id='MODEL-Person-property-suffix'>			/**
+</span>			 * @property {String} suffix
+			 * Name suffix (i.e. III)
+			 */
+			suffix: {
+				value:		config.suffix || null,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='MODEL-Person-cfg-gender'>			/**
+</span>			 * @cfg {String} gender
+			 * Gender of the person.
+			 */
+<span id='MODEL-Person-property-gender'>			/**
+</span>			 * @property [gender=null]
+			 * Gender of the person
+			 */
+			gender: {
+				value:		config.gender || null,
+				enumerable:	true,
+				writable:	true,
+				validate: 	function(value){
+								console.log('testing gender');
+								if (value == 'm')
+									return true;
+								return false;
+							}
+			},
+			
+<span id='MODEL-Person-cfg-dob'>			/**
+</span>			 * @cfg {Date} dob
+			 * Date of Birth
+			 */
+<span id='MODEL-Person-property-dob'>			/**
+</span>			 * @property [dob=null]
+			 * Date of Birth
+			 */
+			dob: {
+				value:		config.dob || null,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='MODEL-Person-property-age'>			/**
+</span>			 * @property {Number} age
+			 * Generated using #dob
 			 * @readonly
-			 * The login used to authenticate the user. This is `null`
-			 * until an authentication method is executed. 
+			 */
+			age: {
+				enumerable:	true,
+				get:		function(){
+								if (!this.dob)
+									return null;
+								var today = new Date(),
+									age = today.getFullYear() - this.dob.getFullYear(),
+							    	m = today.getMonth() - this.dob.getMonth();
+							    if (m &lt; 0 || (m === 0 &amp;&amp; today.getDate() &lt; this.dob.getDate()))
+							        age--;
+							    return age;
+							}
+			},
+			
+<span id='MODEL-Person-cfg-login'>			/**
+</span>			 * @cfg {MODEL.Login[]} login
+			 * The login used to authenticate the user.
+			 */
+<span id='MODEL-Person-property-login'>			/**
+</span>			 * @property {MODEL.Login} [login=null]
+			 * The login used to authenticate the user.
 			 */
 			login: {
-				enumerable: true,
-				get:		function() {
-								return this._login;
-							}
+				value:		config.login || null,
+				enumerable:	false,
+				writable:	false
 			}
 			
 		});
 		
-		// Common Event Handlers
-        this.on('modified',function(attr){
-            var attribute = attr.name || attr;
-            me._modified = true;
-    
-            me._modifiedAttributes[attribute] = {
-                value: attr.newValue || null,
-                old:   attr.oldValue || null,
-                meta:  attr.meta !== undefined ? attr.meta : null 
-            };
-            switch (attribute.toString().trim().toLowerCase()){
-                case 'accesstoken':
-                    me.save();
-                    break;
-            }
-        });
-        this.on('saved',function(){
-            me._modified = false;
-        });
+		Class.super.constructor.call( this, config );
+		
+		// Data Validators
+		this.addValidator('gender',/m|f/);
 		
 	}
 	

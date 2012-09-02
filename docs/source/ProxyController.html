@@ -125,7 +125,7 @@ var Class = Base.extend({
 									var rl = req.form.rules[method];
 									for (var i=0;i&lt;rl.length;i++){
 										for (var pattern in rl[i]){
-											p.addRewriteRule(method,pattern,rl[i][pattern]);
+											p.getVirtualHost(req.form.hostname,req.form.port).addRewriteRule(method,pattern,rl[i][pattern]);
 										}
 									}
 								}
