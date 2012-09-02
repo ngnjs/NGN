@@ -20,7 +20,7 @@ require('../../../');
  */
 var Class = NGN.define('EXAMPLE.Person',{
 	
-	extend: 'NGNX.Person',
+	extend: 'MODEL.Person',
 	
 	/**
 	 * @constructor
