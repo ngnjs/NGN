@@ -176,15 +176,26 @@ var Class = Base.extend({
 				value:		[],
 				enumerable:	false,
 				writable:	true
+			},
+			
+			/*
+			 * References to other models. 
+			 */
+			_refs: {
+				value:		{},
+				enumerable:	false,
+				writable:	true
 			}
 			
 		});
 		
+		// Check for core attributes
 		for (var attr in this){
 			var dsc = Object.getOwnPropertyDescriptor(this,attr);
-			if (typeof this[attr] !== 'function' &amp;&amp; !dsc.get &amp;&amp; !dsc.set &amp;&amp; dsc.enumerable &amp;&amp; attr.substr(0,1) !== '_' &amp;&amp; this.nonDataProperties.indexOf(attr) == -1){
+
+			// Check for core attribute
+			if (typeof this[attr] !== 'function' &amp;&amp; !dsc.get &amp;&amp; !dsc.set &amp;&amp; dsc.enumerable &amp;&amp; attr.substr(0,1) !== '_' &amp;&amp; this.nonDataProperties.indexOf(attr) == -1)
 				this._coreAttributes.push(attr);
-			}
 		}
 
 		var me = this;
@@ -429,6 +440,8 @@ var Class = Base.extend({
 		var _obj = obj || this;
 		var me = this, struct = {}, rtn = {};
 		
+		this._ref = {};
+		
 		for (var key in _obj) {
 			
 			_obj.nonDataProperties = _obj.nonDataProperties || '';
@@ -446,7 +459,22 @@ var Class = Base.extend({
 								case 'function':
 									break;
 								case 'object':
-									if (_obj[key]){
+									var isModel = _obj[key] instanceof MODEL.Model;
+									
+									if (Array.isArray(_obj[key]) &amp;&amp; !isModel){
+										var ref = true;
+										for (var i=0;i&lt;_obj[key];i++){
+											if (!(_obj[key][i] instanceof MODEL.Model)){
+												ref = false;
+												me._ref[key+i] = _obj[key][i];
+											}
+										}
+										isModel = ref;
+									}
+
+									if (isModel){
+										me._ref[key] = _obj[key];
+									} else if (_obj[key]){
 										struct = _obj[key].hasOwnProperty('toData') == true ? _obj[key].toData() : _obj[key];	
 										if (Object.keys(struct).length &gt; 0)
 											rtn = me.merge(rtn,struct);
@@ -553,17 +581,25 @@ var Class = Base.extend({
 			var me = this, data = this.toData();
 			callback = callback || __NGN.emptyFn;
 
-			if (this.id)
-				this.CRUD.update(this,function(){
+			if (this.id){
+				var allSaves = [];
+				allSaves.push(this.CRUD.update(this));
+				for (var ref in this._refs){
+					if (this._refs.hasOwnProperty(ref)){
+						if (this._refs[ref].modified || !this._refs[ref].id)
+							allSaves.push(this._refs[ref].save);
+					}
+				}
+				require('async').parallel(allSaves,function(err,results){
 					callback(arguments);
 					me.onSave();
 				});
-			else
+			} else {
 				this.CRUD.create(this,function(){
 					callback(arguments);
 					me.onSave();
 				});
-
+			}
 		} else
 			this.fireWarning(this.type.toString().toUpperCase()+' cannot be saved because no persistence/CRUD object is associated with the model.');
 	},
@@ -585,13 +621,34 @@ var Class = Base.extend({
 	
 <span id='MODEL-Model-method-getData'>	/**
 </span>	 * @method
-	 * Returns the #_rawData communicated with a persistence store.
+	 * Returns the data that the persistence store uses.
+	 * @param {Boolean} [modified=false]
+	 * Retrieve only the modified data.
 	 * @returns {Object}
 	 */
 	getData: function(){
 		if (this.CRUD)
 			return this.CRUD.processDataMap(this.toData(),this.type);
-		return this.toData;
+		return this.toData();
+	},
+	
+<span id='MODEL-Model-method-getModifiedData'>	/**
+</span>	 * @method
+	 * Returns the #_rawData communicated with a persistence store.
+	 * @returns {Object}
+	 */
+	getModifiedData: function(){
+		if (!this.modified)
+			return {};
+			
+		var data = this.getData(), rtn = {};
+		
+		for (var attr in data){
+			if (data.hasOwnProperty(attr) &amp;&amp; this._modifiedAttributes.indexOf(attr))
+				rtn[attr] = data[attr];
+		}
+		
+		return rtn;
 	},
 	
 <span id='MODEL-Model-event-beforeChange'>	/**
@@ -625,6 +682,8 @@ var Class = Base.extend({
 	 * Fired when the model attempts to persist data to a datasource.
 	 */
 	onSave: function(){
+		this._modified = false;
+		this._modifiedAttributes = [];
 		this.emit('save',this);
 	},
 	

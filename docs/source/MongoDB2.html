@@ -62,6 +62,8 @@ var Class = Base.extend({
 			
 		this.client = this.datasource.getClient();
 		
+		this.addDataMapping('default','id','_id');
+		
 	},
 	
 <span id='NGNX-datasource-crud-MongoDB-method-create'>	/**
@@ -85,10 +87,6 @@ var Class = Base.extend({
 		this.onBeforeCreate();
 		
 		callback = callback || __NGN.emptyFn;
-	
-		// Add the id -&gt; _id mapping for MongoDB
-		if (!this.map[model.type].hasOwnProperty('id'))
-			this.addDataMapping(model.type,'id','_id');
 		
 		this.client.collection(model.type,{safe:true},function(err,collection){
 			collection.insert(model.getData(),function(){
@@ -118,11 +116,7 @@ var Class = Base.extend({
 		this.onBeforeRead();
 		
 		callback = callback || __NGN.emptyFn;
-	
-		// Add the id -&gt; _id mapping for MongoDB
-		if (!this.map[model.type].hasOwnProperty('id'))
-			this.addDataMapping(model.type,'id','_id');
-
+		
 		// Get the collection and run an update
 		this.client.collection(model.type,function(err,collection){
 			
@@ -173,15 +167,11 @@ var Class = Base.extend({
 		this.onBeforeUpdate();
 		
 		callback = callback || __NGN.emptyFn;
-	
-		// Add the id -&gt; _id mapping for MongoDB
-		if (!this.map[model.type].hasOwnProperty('id'))
-			this.addDataMapping(model.type,'id','_id');
 
 		// Get the collection and run an update
 		this.client.collection(model.type,function(err,collection){
 			
-			var data = model.getData();
+			var data = model.getModifiedData();
 			delete data._id;
 	
 			collection.update({ _id: new ObjectID(model.id) }, { $set: data }, { safe:true, multi:false, upsert:false },function(err){

@@ -15,7 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Base		= require('../NGN.core');
+  <pre class="prettyprint lang-js">var Base		= require('./Model');
 
 <span id='MODEL-Email'>/**
 </span> * @class MODEL.Email
@@ -30,6 +30,12 @@ var Class = Base.extend({
 </span>	 * @constructor
 	 */
 	constructor: function( config ){
+		
+		var me = this;
+		
+		config = config || {};
+		
+		config.type = 'Email';
 		
 		Class.super.constructor.call( this, config );
 		

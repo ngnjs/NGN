@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var Base = require('../NGN.core');
+
+<span id='MODEL-XReference'>/**
+</span> * @enum MODEL.XReference
+ * Represents a cross reference from one object to another.
+ */
+var Class = Base.extend({
+	
+<span id='MODEL-XReference-method-constructor'>	/**
+</span>	 * @constructor
+	 * @param {Object} config
+	 */
+	constructor: function(config){
+		
+		config = config || {};
+		
+		config.type = 'XReference';
+		
+		Class.super.constructor.call(this,config);
+		
+		Object.defineProperties(this,{
+			
+		});
+	}
+	
+});
+
+module.exports = Class;
+</pre>
+</body>
+</html>
