@@ -1,7 +1,7 @@
 [![Build Status](https://secure.travis-ci.org/coreybutler/NGN.png)](http://travis-ci.org/coreybutler/NGN)
 
 NGN is a framework for RAD development in a node.js environment. It provides a class structure & common 
-functions designed as a foundation for your own applications and API's. [http://coreybutler.github.com/NGN](Please look at the documetation).
+functions designed as a foundation for your own applications and API's. [Please look at the documetation](http://coreybutler.github.com/NGN).
 The [API documentation](http://coreybutler.github.com/NGN/docs) contains the root of the technical know-how.
 
 A lot of work has been put into NGN, but it is not production ready yet. Development is currently driven
