@@ -1,6 +1,3 @@
-NGN
-===
-
 [![Build Status](https://secure.travis-ci.org/coreybutler/NGN.png)](http://travis-ci.org/coreybutler/NGN)
 
 NGN is a framework for RAD development in a node.js environment. It provides a class structure & common 
@@ -17,7 +14,7 @@ aspects of the project.
 LICENSE
 =======
 
-GPL (for now).
+[GPL](http://www.gnu.org/copyleft/gpl.html) (for now).
 
 At the moment, I'm reserving a number of rights until the shape of the work becomes a little clearer.
 There will definitely be an open license. Which one I switch to is still in the air. There may be a second
