@@ -2,23 +2,23 @@
   "title": "Overview",
   "items": [{
           "name": "getting_started",
-          "title": "Getting Started",
+          "title": "TODO: Getting Started",
           "description": "Start using NGN to build your own API's and applications."
       },{
           "name": "global_features",
-          "title": "Global Features",
+          "title": "OUTDATED Global Features",
           "description": "Use NGN global features to simplify application configuration and promote DRY code."
       },{
           "name": "ngn_namespace",
-          "title": "NGN Namespace",
+          "title": "OUTDATED NGN Namespace",
           "description": "This introduction to the NGN namespace explains how the framework is created/loaded."
       },{
           "name": "application_scope",
-          "title": "Application Scope",
+          "title": "OUTDATED Application Scope",
           "description": "Use the application scope to encapsulate custom properties for an application."
       },{
           "name": "class_system",
-          "title": "The Class System",
+          "title": "TODO: The Class System",
           "description": "Creating custom classes through NGN inheritance."
       },{
           "name": "roadmap",
@@ -30,15 +30,15 @@
   "title": "Command Line Utilities",
   "items": [{
 	      "name": "cli",
-	      "title": "Basic CLI",
-	      "description": "Use NGN from the command line."
+	      "title": "Wizards",
+	      "description": "Use NGN from the command line wizards to simplify tasks like creating classes, custom APIs, and documentation."
    		}
    ]
 },{
 	"title": "NGN Recipes",
 	"items": [{
           "name": "webserver",
-          "title": "Web Server Fundamentals",
+          "title": "NEEDS UPDATE Web Server Fundamentals",
           "description": "Quickly build robust web servers."
       },{
           "name": "proxycontroller",
@@ -46,7 +46,7 @@
           "description": "Create your own hot-load proxy servers without installing additional software."
       },{
       	  "name": "models",
-      	  "title": "Using Models in Applications",
+      	  "title": "TODO: Using Models in Applications",
       	  "description":"Models offer powerful object & data management. Combining this with the NGNA (application) scope simplifies this."
       }]
 }]
