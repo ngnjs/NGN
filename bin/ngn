@@ -37,6 +37,11 @@ if (CREATE) {
 			var cls = require('./lib/classBuilder');
 			cls.wizard();
 			break;
+		case 'api':
+			console.log('Custom API Creation Wizard.'.cyan.underline);
+			var api = require('./lib/apiBuilder');
+			api.wizard();
+			break;
 		default:
 			console.log(CREATE+' not recognized.');
 	}
