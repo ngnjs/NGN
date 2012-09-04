@@ -98,6 +98,7 @@ var Build = function(){
 	str += "var Class = NGN.define('"+arg['class']+"',{"+cr+cr;
 	str += t+"extend: '"+arg.extend+"',"+cr+cr;
 	str += t+"constructor: function(config) {"+cr+cr;
+	str += t+t+'config = config || {};'+cr+cr;
 	str += t+t+"// Inherit from "+arg.extend+cr;
 	str += t+t+"Class.super.constructor.call(this,config);";
 	
