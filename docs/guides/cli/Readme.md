@@ -49,6 +49,8 @@ The example above, which primarily uses the default values, generates `/path/to/
 	    extend: 'NGN.core',
 	
 	    constructor: function(config) {
+	    
+	    	config = config || {};
 			
 			// Inherit from NGN.core
 			Class.super.constructor.call(this,config);
@@ -131,21 +133,55 @@ The output of the command looks something like:
 	DONE
 	Docs are available at: file:////path/to/projectroot/docs/manual/index.html
 
-### Customizing
+## Generate Custom API Scaffolding
 
 NGN is designed to be extended, i.e. a bootstrap for creating your own applications
-and API's. NGN can document a custom API through the use of the `ngn.config.json` file.
-This is a simple file located at the project root.
+and API's. A CLI option can help get you started.
+	ngn --create api
+This command launches a simple wizard to configure a location for a custom API
+capable of extending NGN. The wizard prompts for a location and namespace. The
+location is the physical directory path where the custom API(s) are found. The
+namespace is the actual value used in an application to identify the API.
+_Example:_
+	$ ngn --create api
+	Custom API Creation Wizard.
+	API Namespace: (MY) TEST
+	Directory: (/path/to/app/ngn_extensions) 
+	 >> Creating custom API directories...
+	 >> Creating/Updating NGN configuration...
+	 >> Building demo class...
+	Done
+	The custom API has been started in /path/to/app/ngn_extensions/TEST
+	Class stub created:/path/to/app/ngn_extensions/TEST/CustomClass.js
+In the example above, the API namespace provided was `TEST`. The namespace
+was created in `path/to/app/ngn_extensions`. Remember a namespace is just
+a directory, so the actual API can be found in `/path/to/app/ngn_extensions/TEST`.
 
+The wizard also generates a starter class called `CustomClass.js`. This is a working
+example that can be renamed, modified, etc. This class will technically work
+(though it doesn't really do anything) by calling it in a script like:
+	require('ngn');
+	
+	var myClass = new TEST.CustomClass();
+	
+	console.log(myClass);
+NGN recognizes custom API's through the use of the `ngn.config.json` file.
+This is a simple file located at the project root. The wizard will automatically
+create this if it doesn't exist, or it will update it with the new custom API.
+
+The `ngn.config.json` may look like:
 	{
-		"extensions": 	["/path/to/custom/api"],
+		"extensions": 	["/path/to/app/ngn_extensions"],
 		"application":	{"id":"MyApp"},
 		"default":		{}
 	}
-
 For documentation generation purposes, the most important part of this file is the `extensions`
-attribute. This is an array of filepaths pointed to one or more extensions. NGN uses this 
-attribute to detect and document custom API extensions.
+key. This is an array of filepaths pointed to one or more extensions. NGN uses this 
+attribute to detect and document custom API extensions. Any custom API found in this
+series of directories will be documented.
+
+The API wizard only needs to be run once per namespace. To add additional classes to the
+custom library, consider creating files by hand or by using the stub generation wizard.
 
 ### CLI Options
 

@@ -180,6 +180,9 @@ function extendAPI(dir) {
 	        // Add more?
 	    ) {
 	        // New global variables
+	        if (ng.hasOwnProperty(newglobals[i])){
+	        	console.warn(newglobals[i].yellow+' was found in duplicate. NGN may not operate as expected.');
+	        }
 	        ng[newglobals[i]] = {};
 	        require('wrench').readdirSyncRecursive(p.join(dir,newglobals[i])).forEach(function( file ){
 	             if (p.join(dir,file) !== __filename &amp;&amp; file.indexOf('.js') &gt;= 0) {

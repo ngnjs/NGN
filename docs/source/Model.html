@@ -47,6 +47,17 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
+<span id='MODEL-Model-property-isNew'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates the model is new or does not exist according to the persistence store.
+			 * @private
+			 */
+			isNew: {
+				value:		true,
+				enumerable:	false,
+				writable:	true
+			},
+			
 <span id='MODEL-Model-cfg-id'>			/**
 </span>			 * @cfg {String/Number/Date} [id=null]
 			 * The unique ID of the model object.
@@ -55,6 +66,18 @@ var Class = Base.extend({
 				value:		config.id || null,
 				enumerable:	true,
 				writable:	true
+			},
+			
+<span id='MODEL-Model-cfg-idAttribute'>			/**
+</span>			 * @cfg {String} [idAttribute=null]
+			 * Setting this allows an attribute of the object to be used as the ID.
+			 * For example, if an username is the ID of a user, this would be set to
+			 * `username`.
+			 */
+			idAttribute: {
+				value:		config.idAttribute || null,
+				enumerable:	false,
+				writable:	false
 			},
 			
 <span id='MODEL-Model-cfg-type'>			/**
@@ -76,6 +99,17 @@ var Class = Base.extend({
 			CRUD: {
 				value:		config.CRUD || null,
 				enumerable:	true,
+				writable:	true
+			},
+
+<span id='MODEL-Model-cfg-onDelete'>			/**
+</span>			 * @cfg {Boolean} [onDelete=true]
+			 * Delete this object using #CRUD when this model is a nested child
+			 * of a parent model.
+			 */
+			onParentDelete: {
+				value:		__NGN.coalesce(config.onParentDelete,true),
+				enumerable:	false,
 				writable:	true
 			},
 			
@@ -185,9 +219,22 @@ var Class = Base.extend({
 				value:		{},
 				enumerable:	false,
 				writable:	true
+			},
+			
+<span id='MODEL-Model-property-originalConfig'>			/**
+</span>			 * @property
+			 * Tracks the original data values. This is only used for non-create CRUD functionality. 
+			 * @private
+			 */
+			originalConfig: {
+				value:		{},
+				
 			}
 			
 		});
+		
+		if (this.idAttribute)
+			this.id = this[this.idAttribute];
 		
 		// Check for core attributes
 		for (var attr in this){
@@ -423,6 +470,18 @@ var Class = Base.extend({
 		this.disableDataValidation = true;
 	},
 	
+<span id='MODEL-Model-method-getReference'>	/**
+</span>	 * @method
+	 * Get a model from the cross references. Cross references are stored when the #toData method
+	 * encounters a nested model. #save and #load use #toData.
+	 * @param {Number/String}
+	 * The reference number or full xref string (i.e. `xref::1`)
+	 * @returns {MODEL.Model}
+	 */
+	getReference: function(ref) {
+		
+	},
+	
 <span id='MODEL-Model-method-toData'>	/**
 </span>	 * @method
 	 * Creates a JSON data object with no functions. Only uses enumerable attributes of the object by default.
@@ -430,13 +489,27 @@ var Class = Base.extend({
 	 * 
 	 * Any object property that begins with a special character will be ignored by default. Functions &amp; Setters are always
 	 * ignored. Getters are evaluated recursively until a simple object type is found or there are no further nested attributes.
+	 * 
+	 * If a value is an instance of MODEL.Model (i.e. a nested model or array of models), reference string is returned in the data.
+	 * The model itself can be returned using #getXRef.
 	 * @param {Object} [obj]
 	 * Defaults to this object.
+	 * @param {Boolean} [serializeXRefData=false]
+	 * When set to `true`, any cross referenced data in nested models will be retrieved
+	 * and the cross reference will be ignored. Use this when a complete JSON dump is
+	 * required.
 	 * @returns {Object}
 	 * @protected
 	 */
-	toData: function(obj){
+	toData: function(obj,serializeXRefData){
 	
+		if (obj instanceof Boolean){
+			serializeXRefData = obj;
+			obj = this;
+		}
+		
+		serializeXRefData = __NGN.coalesce(serializeXRefData,false);
+		
 		var _obj = obj || this;
 		var me = this, struct = {}, rtn = {};
 		
@@ -452,7 +525,7 @@ var Class = Base.extend({
 						
 						if (dsc.get){
 							try {
-								rtn[key] = typeof _obj[key] == 'object' ? _obj[key].toData() : _obj[key];
+								rtn[key] = typeof _obj[key] == 'object' ? _obj[key].toData(serializeXRefData) : _obj[key];
 							} catch(e) {}
 						} else if (!dsc.set) {
 							switch (typeof dsc.value) {
@@ -461,21 +534,26 @@ var Class = Base.extend({
 								case 'object':
 									var isModel = _obj[key] instanceof MODEL.Model;
 									
-									if (Array.isArray(_obj[key]) &amp;&amp; !isModel){
-										var ref = true;
-										for (var i=0;i&lt;_obj[key];i++){
-											if (!(_obj[key][i] instanceof MODEL.Model)){
-												ref = false;
-												me._ref[key+i] = _obj[key][i];
+									if (Array.isArray(_obj[key])){				
+										for (var i=0;i&lt;_obj[key].length;i++){
+											if (_obj[key][i] instanceof MODEL.Model){
+												if (!serializeXRefData){
+													me._ref[Object.keys(me._ref).length+1] = _obj[key][i];
+													_obj[key][i] = 'xref::'+Object.keys(me._ref).length;
+												} else
+													_obj[key][i] = _obj[key][i].toData(serializeXRefData);
 											}
 										}
-										isModel = ref;
 									}
 
 									if (isModel){
-										me._ref[key] = _obj[key];
+										if (!serializeXRefData){
+											me._ref[Object.keys(me._ref).length+1] = _obj[key];
+											rtn[key] = 'xref::'+Object.keys(me._ref).length;
+										} else
+											rtn[key] = _obj[key].toData(serializeXRefData);
 									} else if (_obj[key]){
-										struct = _obj[key].hasOwnProperty('toData') == true ? _obj[key].toData() : _obj[key];	
+										struct = _obj[key].hasOwnProperty('toData') == true ? _obj[key].toData(serializeXRefData) : _obj[key];	
 										if (Object.keys(struct).length &gt; 0)
 											rtn = me.merge(rtn,struct);
 									}
@@ -549,6 +627,7 @@ var Class = Base.extend({
 </span>	 * @method
 	 * Populate the model with data for an existing object.
 	 * @private
+	 * @uses toData
 	 */
 	load: function(id){
 		if (this.CRUD){
@@ -556,12 +635,17 @@ var Class = Base.extend({
 			
 			var me = this;
 			this.CRUD.read(this,function(result){
-				var data = me.CRUD.processReverseDataMap(result,me.type);
-				for (var attr in data){
-					if (me.nonDataProperties.indexOf(attr) &lt; 0)
-						me.set(attr,data[attr]);
-				}
-				me.onLoad();
+				if (result){
+					var data = me.CRUD.processReverseDataMap(result,me.type);
+					for (var attr in data){
+						if (me.nonDataProperties.indexOf(attr) &lt; 0)
+							me.set(attr,data[attr]);
+					}
+					if (me.idAttribute)
+						me[me.idAttribute] = me.id;
+					me.onLoad();
+				} else
+					me.onNoResult();
 			});
 		} else
 			this.fireWarning(this.type.toString().toUpperCase()+' cannot be loaded because no persistence/CRUD object is associated with the model.');	
@@ -571,6 +655,7 @@ var Class = Base.extend({
 </span>	 * @method
 	 * Persist the data. This only works when an #CRUD is specified.
 	 * @param {Function} callback
+	 * @uses toData
 	 */
 	save: function(callback) {
 		if (!this.validate()){
@@ -684,6 +769,7 @@ var Class = Base.extend({
 	onSave: function(){
 		this._modified = false;
 		this._modifiedAttributes = [];
+		this.isNew = false;
 		this.emit('save',this);
 	},
 	
@@ -700,6 +786,7 @@ var Class = Base.extend({
 	 * Fired when the model attempts to populate its data from a datasource.
 	 */
 	onLoad: function(){
+		this.isNew = (this.id == null);
 		this.emit('load',this);
 	},
 	
@@ -717,6 +804,15 @@ var Class = Base.extend({
 	 */
 	onRemove: function(){
 		this.emit('remove',this);
+		delete this;
+	},
+	
+<span id='MODEL-Model-event-noResult'>	/**
+</span>	 * @event noResult
+	 * Fired when a #load returns no records.
+	 */
+	onNoResult: function(){
+		this.emit('noResult')
 	}
 	
 });

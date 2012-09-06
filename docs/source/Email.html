@@ -41,42 +41,50 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='MODEL-Email-static-property-_emailRegex'>			/**
-</span>             * @property [_emailRegex=/(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|&quot;(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*&quot;)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/]
-             * The RegExp pattern that complies with [RFC 2822](http://www.faqs.org/rfcs/rfc2822.html).
-             * @private
-             * @static
-             * @readonly
-             */
-            _emailRegex: {
-                value:       /(?:[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&amp;'*+/=?^_`{|}~-]+)*|&quot;(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*&quot;)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
-                enumerable:  true,
-                writable:    false,
-                configurable:true
-            },
-			
-<span id='MODEL-Email-property-address'>			/**
-</span>			 * @property {String} address
-			 * The email address (i.e. me@domain.com);
+<span id='MODEL-Email-cfg-address'>			/**
+</span>			 * @cfg {String} address
+			 * The email address (i.e. me@domain.com).
 			 * @required
 			 */
+<span id='MODEL-Email-property-address'>			/**
+</span>			 * @property {String} address
+			 * The email address (i.e. me@domain.com).
+			 */
 			address: {
-			    value:      config.address || null,
 			    enumerable: true,
-			    writable:   false
+			    get:		function(){
+						    	return this.id;
+						    },
+				set:		function(value){
+								this.id = value;
+								this.validSyntax = __NGN.pattern.isEmail(this.id);
+							}
 			},
 			
-<span id='MODEL-Email-property-isValidSyntax'>			/**
-</span>			 * @property
-			 * @returns {Boolean}
+<span id='MODEL-Email-property-validSyntax'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates the address is valid syntax
 			 * @readonly
-			 * `true`/`false` indicator of whether #address is syntactically valid.
 			 */
-		    isValidSyntax: {
-			    enumerable: true,
-			    get:        function() {
-                                return this._emailRegex.test(this.address);
-            			    }
+			validSyntax: {
+				value:		false,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='MODEL-Email-cfg-valid'>			/**
+</span>			 * @cfg {Boolean} [valid=false]
+			 * Indicates the address is valid.
+			 */
+<span id='MODEL-Email-property-valid'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates the address is valid.
+			 * @readonly
+			 */
+			valid: {
+				value:		__NGN.coalesce(config.valid,false),
+				enumerable:	true,
+				writable:	true
 			},
 			
 <span id='MODEL-Email-property-validationCode'>			/**
@@ -85,11 +93,26 @@ var Class = Base.extend({
 	         * @readonly  
 			 */
 			validationCode: {
-                value:       null,
+                value:       config.validationCode || null,
 			    enumerable:  true,
 			    writable:    false
+			},
+			
+			lastValidated: {
+				value:		config.lastValidated || null,
+				enumerable:	true,
+				writable:	true
 			}
 		});
+		
+		this.id = config.address || config.id;
+		
+		this.nonDataProperties.push('validSyntax');
+		this.nonDataProperties.push('address');
+		
+		this.validSyntax = __NGN.pattern.isEmail(this.id);
+		
+		this.addValidator('id',__NGN.pattern.email);
 		
 	},
 	
@@ -99,16 +122,8 @@ var Class = Base.extend({
 	 * @returns {String} 
 	 */
 	createValidationCode: function() {
-	    this.validationCode = uuid.v1().replace(/-/gi,'');
-	    
-	    //TODO: Throw an error if the email address is syntactically invalid.
-	    //TODO: Add the code to redis for the email address.
-	    
+	    this.validationCode = __NGN.uuid.v1().replace(/-/gi,'');
 	    return this.validationCode;
-	},
-	
-	test: function(){
-	    console.log('Test');
 	}
 	
 });
