@@ -17,16 +17,16 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var Base		= require('./Model');
 
-<span id='MODEL-Email'>/**
-</span> * @class MODEL.Email
+<span id='NGN-model-Email'>/**
+</span> * @class NGN.model.Email
  * Represents an email address and provides helper methods for managing it, such as
  * syntax validation.
- * @extends NGN.core
+ * @extends NGN.model.Model
  * @docauthor Corey Butler
  */
 var Class = Base.extend({
 	
-<span id='MODEL-Email-method-constructor'>	/**
+<span id='NGN-model-Email-method-constructor'>	/**
 </span>	 * @constructor
 	 */
 	constructor: function( config ){
@@ -41,12 +41,12 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='MODEL-Email-cfg-address'>			/**
+<span id='NGN-model-Email-cfg-address'>			/**
 </span>			 * @cfg {String} address
 			 * The email address (i.e. me@domain.com).
 			 * @required
 			 */
-<span id='MODEL-Email-property-address'>			/**
+<span id='NGN-model-Email-property-address'>			/**
 </span>			 * @property {String} address
 			 * The email address (i.e. me@domain.com).
 			 */
@@ -61,7 +61,7 @@ var Class = Base.extend({
 							}
 			},
 			
-<span id='MODEL-Email-property-validSyntax'>			/**
+<span id='NGN-model-Email-property-validSyntax'>			/**
 </span>			 * @property {Boolean}
 			 * Indicates the address is valid syntax
 			 * @readonly
@@ -72,11 +72,11 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='MODEL-Email-cfg-valid'>			/**
+<span id='NGN-model-Email-cfg-valid'>			/**
 </span>			 * @cfg {Boolean} [valid=false]
 			 * Indicates the address is valid.
 			 */
-<span id='MODEL-Email-property-valid'>			/**
+<span id='NGN-model-Email-property-valid'>			/**
 </span>			 * @property {Boolean}
 			 * Indicates the address is valid.
 			 * @readonly
@@ -87,7 +87,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='MODEL-Email-property-validationCode'>			/**
+<span id='NGN-model-Email-property-validationCode'>			/**
 </span>			 * @property {String} [validationCode=null]
 			 * The validation code assigned to this email address
 	         * @readonly  
@@ -116,7 +116,7 @@ var Class = Base.extend({
 		
 	},
 	
-<span id='MODEL-Email-method-createValidationCode'>	/**
+<span id='NGN-model-Email-method-createValidationCode'>	/**
 </span>	 * @method
 	 * Generates a validation code.
 	 * @returns {String} 

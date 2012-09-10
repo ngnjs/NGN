@@ -18,19 +18,81 @@
   <pre class="prettyprint lang-js">var hooks= require('hooks'),
 	Base = require('../NGN.core');
 
-<span id='MODEL-Model'>/**
-</span> * @class MODEL.Model
+// The proxy handler prototype responsible for managing data. 
+var proxyHandler = {
+		get: function(rec, name) {
+			return this.target[name];
+		},
+		has: function(name) {
+			return this.target[name] !== undefined;
+		},
+		set: function(rec, name, value) {
+			var delta = {
+				type:	this.___originalValues[name] == undefined ? 'create' : 'update',
+				property: name,
+				value:	value
+			};
+			
+			if (delta.type === 'update')
+				delta.oldValue = this.target[name];
+			
+			this.target.onBeforeChange(delta);
+			
+			if (!this.___originalValues[name] &amp;&amp; delta.type === 'create')
+				this.___originalValues[name] = value;
+			
+			this.target[name] = value;
+			
+			this.target.onChange(delta);
+		},
+		&quot;delete&quot;: function(name) {
+			var delta = {
+				type:		'delete',
+				property: 	name,
+				oldValue:	this.target[name]
+			};
+			
+			this.target.onBeforeDelete(delta);
+			
+			delete this.target[name];
+			
+			this.target.onDelete(delta);
+			
+			return false;
+		},
+		enumerate: function() {
+			return Object.keys(this);
+		},
+		fix: function() {
+			console.log('Fix'.magenta);
+			return undefined;
+		},
+		getOwnPropertyNames: function(){
+			return Object.getOwnPropertyNames(this);
+		},
+		getOwnPropertyDescriptor: function(prop){
+			return Object.getOwnPropertyDescriptor(this,prop);
+		},
+		getOriginalValues: function(){
+			return this.___originalValues;
+		},
+		___originalValues: {}
+};
+	
+<span id='NGN-model-Model'>/**
+</span> * @class NGN.model.Model
  * A base model class for creating logical application classes, such as entities, actors, or business logic.
  * @private
+ * @extends NGN
  * @author Corey Butler
  */
 var Class = Base.extend({
 	
-<span id='MODEL-Model-method-constructor'>	/**
+<span id='NGN-model-Model-method-constructor'>	/**
 </span>	 * @constructor
-	 * Create a new model. This can be done by passing a configuration object. If using persistence, the object
+	 * Create a new __NGN.model. This can be done by passing a configuration object. If using persistence, the object
 	 * can be automatically loaded by ID reference. For example:
-	 * 		var person = new MODEL.Person('id123');
+	 * 		var person = new __NGN.model.Person('id123');
 	 * This will attempt to use the default persistence datasource to read data for the id `id123`.
 	 */
 	constructor: function(config){
@@ -42,12 +104,14 @@ var Class = Base.extend({
 				id: config
 			};
 		}
-		
+	
 		Class.super.constructor.call(this,config);
+		
+		var me = this;
 		
 		Object.defineProperties(this,{
 			
-<span id='MODEL-Model-property-isNew'>			/**
+<span id='NGN-model-Model-property-isNew'>			/**
 </span>			 * @property {Boolean}
 			 * Indicates the model is new or does not exist according to the persistence store.
 			 * @private
@@ -58,7 +122,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='MODEL-Model-cfg-id'>			/**
+<span id='NGN-model-Model-cfg-id'>			/**
 </span>			 * @cfg {String/Number/Date} [id=null]
 			 * The unique ID of the model object.
 			 */
@@ -68,7 +132,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='MODEL-Model-cfg-idAttribute'>			/**
+<span id='NGN-model-Model-cfg-idAttribute'>			/**
 </span>			 * @cfg {String} [idAttribute=null]
 			 * Setting this allows an attribute of the object to be used as the ID.
 			 * For example, if an username is the ID of a user, this would be set to
@@ -80,9 +144,9 @@ var Class = Base.extend({
 				writable:	false
 			},
 			
-<span id='MODEL-Model-cfg-type'>			/**
+<span id='NGN-model-Model-cfg-type'>			/**
 </span>			 * @cfg {String} [type=Model]
-			 * The type of model.
+			 * The type of __NGN.model.
 			 * @readonly
 			 * @protected
 			 */
@@ -92,23 +156,12 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='MODEL-Model-cfg-CRUD'>			/**
+<span id='NGN-model-Model-cfg-CRUD'>			/**
 </span>			 * @cfg {NGN.datasource.CRUD}
 			 * Facilitates CRUD functions for #save, #load, and #remove methods.
 			 */
 			CRUD: {
 				value:		config.CRUD || null,
-				enumerable:	true,
-				writable:	true
-			},
-
-<span id='MODEL-Model-cfg-onDelete'>			/**
-</span>			 * @cfg {Boolean} [onDelete=true]
-			 * Delete this object using #CRUD when this model is a nested child
-			 * of a parent model.
-			 */
-			onParentDelete: {
-				value:		__NGN.coalesce(config.onParentDelete,true),
 				enumerable:	false,
 				writable:	true
 			},
@@ -122,10 +175,10 @@ var Class = Base.extend({
             _modifiedAttributes: {
                 value:      [],
                 writable:   true,
-                enumerable: true
+                enumerable: false
             },
             
-<span id='MODEL-Model-property-modified'>            /**
+<span id='NGN-model-Model-property-modified'>            /**
 </span>             * @property {Boolean}
              * Indicates one or more data properties has changed.  
              */
@@ -136,32 +189,32 @@ var Class = Base.extend({
                             }
             },
 							
-<span id='MODEL-Model-property-nonDataProperties'>			/**
+<span id='NGN-model-Model-property-nonEnumerableProperties'>			/**
 </span>			 * @property {Array}
-			 * An array of enumerable properties that are explicitly **excluded** in the #toData results.
+			 * An array of enumerable properties that are explicitly **excluded** in the #serialize results.
 			 * @private
 			 */
-            nonDataProperties: {
-            	value:		['modified','dataProperties','nonDataProperties','strictData','explicitData','disableDataValidation','type','CRUD'],
-            	enumerable:	true,
+            nonEnumerableProperties: {
+            	value:		['modified','enumerableProperties','nonEnumerableProperties','strictData','explicitData','disableDataValidation','type','CRUD'],
+            	enumerable:	false,
             	writable:	false
             },
             
-<span id='MODEL-Model-property-dataProperties'>            /**
+<span id='NGN-model-Model-property-enumerableProperties'>            /**
 </span>             * @property {Array}
-			 * An array of enumerable properties that are explicitly **included** in the #toData results.
+			 * An array of enumerable properties that are explicitly **included** in the #serialize results.
              * This is useful when a non-enumerable property or special property name should be
              * included, or if default behavior needs to be overwritten.
              */
-            dataProperties: {
+            enumerableProperties: {
             	value:		[],
-            	enumerable:	true,
+            	enumerable:	false,
             	writable:	true
             },
             
-<span id='MODEL-Model-cfg-strictData'>            /**
+<span id='NGN-model-Model-cfg-strictData'>            /**
 </span>             * @cfg {Boolean} [strictData=false]
-             * When set to `true`, the #getData method will only return values for the attributes defined in #dataProperties and/or the object itself.
+             * When set to `true`, the #getData method will only return values for the attributes defined in #enumerableProperties and/or the object itself.
              */
             strictData: {
             	value:		__NGN.coalesce(config.strictData,false),
@@ -169,9 +222,9 @@ var Class = Base.extend({
             	writable:	true
             },
             
-<span id='MODEL-Model-cfg-strictData'>            /**
+<span id='NGN-model-Model-cfg-strictData'>            /**
 </span>             * @cfg {Boolean} [strictData=false]
-             * When set to `true`, the #getData method will only return values for the attributes defined in #dataProperties.
+             * When set to `true`, the #getData method will only return values for the attributes defined in #enumerableProperties.
              */
             explicitData: {
             	value:		__NGN.coalesce(config.explicitData,false),
@@ -179,7 +232,7 @@ var Class = Base.extend({
             	writable:	true
             },
             
-<span id='MODEL-Model-property-_validationMap'>            /**
+<span id='NGN-model-Model-property-_validationMap'>            /**
 </span>             * @property {Object}
              * The validation rules used to verify data integrity when persisting to a datasource.
              * @private
@@ -190,13 +243,13 @@ var Class = Base.extend({
 				writable:	false		
 			},
 			
-<span id='MODEL-Model-cfg-disableDataValidation'>			/**
+<span id='NGN-model-Model-cfg-disableDataValidation'>			/**
 </span>			 * @cfg {Boolean} [disableDataValidation=false]
 			 * Only used when #save is called. Setting this to `true` will bypass data validation.
 			 */
 			disableDataValidation: {
 				value:		__NGN.coalesce(config.disableDataValidation,false),
-				enumerable:	true,
+				enumerable:	false,
 				writable:	true
 			},
 			
@@ -206,44 +259,61 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-			_coreAttributes: {
-				value:		[],
-				enumerable:	false,
-				writable:	true
-			},
-			
-			/*
-			 * References to other models. 
-			 */
-			_refs: {
-				value:		{},
-				enumerable:	false,
-				writable:	true
-			},
-			
-<span id='MODEL-Model-property-originalConfig'>			/**
+<span id='NGN-model-Model-property-originalConfig'>			/**
 </span>			 * @property
-			 * Tracks the original data values. This is only used for non-create CRUD functionality. 
+			 * Tracks the original config values. This is only used for non-create CRUD functionality. 
 			 * @private
 			 */
 			originalConfig: {
-				value:		{},
-				
+				value:		__NGN.clone(config),
+				enumerable:	false,
+				writable:	true
+			},
+			
+<span id='NGN-model-Model-property-loaded'>			/**
+</span>			 * @property
+			 * Stores whether the object is considered loaded.
+			 * @private
+			 */
+			loaded: {
+				value:		false,
+				enumerable:	false,
+				writable:	true
+			},
+			
+			monitoring: {
+				value:		false,
+				enumerable:	false,
+				writable:	true
+			},
+			
+			_isXtn: {
+				value: 		config.hasOwnProperty('extend'),
+				enumerable:	true,
+				writable:	false
+			},
+			
+<span id='NGN-model-Model-property-EXTENDEDMODEL'>			/**
+</span>			 * @property {Object}
+			 * Automatically generates a model with a harmony proxy wrapper.
+			 */
+			EXTENDEDMODEL: {
+				enumerable:	false,
+				get:		function(){
+								return this.extension();
+							}
+			},
+			
+			_isConfigured: {
+				value: 		false,
+				enumerable:	false,
+				writable:	true
 			}
 			
 		});
 		
 		if (this.idAttribute)
 			this.id = this[this.idAttribute];
-		
-		// Check for core attributes
-		for (var attr in this){
-			var dsc = Object.getOwnPropertyDescriptor(this,attr);
-
-			// Check for core attribute
-			if (typeof this[attr] !== 'function' &amp;&amp; !dsc.get &amp;&amp; !dsc.set &amp;&amp; dsc.enumerable &amp;&amp; attr.substr(0,1) !== '_' &amp;&amp; this.nonDataProperties.indexOf(attr) == -1)
-				this._coreAttributes.push(attr);
-		}
 
 		var me = this;
 
@@ -260,14 +330,6 @@ var Class = Base.extend({
 			me.onSave();
 			next();
 		});
-		this.pre('load',function(next){
-			me.onBeforeLoad();
-			next();
-		});
-		this.post('load',function(next){
-			me.onLoad();
-			next();
-		});
 		this.pre('remove',function(next){
 			me.onBeforeRemove();
 			next();
@@ -275,6 +337,19 @@ var Class = Base.extend({
 		this.post('remove',function(next){
 			me.onRemove();
 			next();
+		});
+		
+		// Load the object if an ID is specified.
+		this.on('readyForProxy',function(){
+			if (me.id) {
+				me.load();
+			} else {
+				me.monitor();
+			}
+		});
+		
+		this.on('load',function(){
+			me.monitor();
 		});
 		
 		if (!this.CRUD){
@@ -291,17 +366,15 @@ var Class = Base.extend({
 				
 			})
 		}
-	
-		// Load the object if an ID is specified.		
-		if (this.id)
-			this.load();
+
+		return this.extension();
 	},
 	
-<span id='MODEL-Model-method-pre'>	/**
+<span id='NGN-model-Model-method-pre'>	/**
 </span>	 * @method pre
 	 * This method will execute **before** the specified method.
 	 * For example:
-	 * 		var person = new MODEL.Person();
+	 * 		var person = new __NGN.model.Person();
 	 * 		
 	 * 		person.pre('save',function(next){
 	 * 			...
@@ -309,7 +382,7 @@ var Class = Base.extend({
 	 * 		});
 	 * This method is chainable, so it is possible to add additional
 	 * hooks, like:
-	 * 		var person = new MODEL.Person();
+	 * 		var person = new __NGN.model.Person();
 	 * 		
 	 * 		person.pre('save',function(next){
 	 * 			...
@@ -321,11 +394,11 @@ var Class = Base.extend({
 	 * @chainable
 	 */
 	
-<span id='MODEL-Model-method-post'>	/**
+<span id='NGN-model-Model-method-post'>	/**
 </span>	 * @method post
 	 * This method will execute **after** the specified method.
 	 * For example:
-	 * 		var person = new MODEL.Person();
+	 * 		var person = new __NGN.model.Person();
 	 * 		
 	 * 		person.post('save',function(next){
 	 * 			...
@@ -333,7 +406,7 @@ var Class = Base.extend({
 	 * 		});
 	 * This method is chainable, so it is possible to add additional
 	 * hooks, like:
-	 * 		var person = new MODEL.Person();
+	 * 		var person = new __NGN.model.Person();
 	 * 		
 	 * 		person.post('save',function(next){
 	 * 			...
@@ -345,14 +418,38 @@ var Class = Base.extend({
 	 * @chainable
 	 */
 	
-<span id='MODEL-Model-method-hook'>	/**
+<span id='NGN-model-Model-method-hook'>	/**
 </span>	 * @method hook
 	 * The hook method can be used to provide an arbitrary handler for a specific method.
 	 * For example, custom error handling can be managed with `hook`.
 	 * 
 	 */
 	
-<span id='MODEL-Model-method-addValidator'>	/**
+<span id='NGN-model-Model-method-prepConfig'>	/**
+</span>	 * @method
+	 * A helper method to prepare configuration. This allows a non-object
+	 * to be passed as a single configuration argument, which is automatically
+	 * converted to the #id field. For example:
+	 * 		var myModel = new __NGN.model.Model('someID_123');
+	 * The model automatically converts this to an object like:
+	 * 		{
+	 * 			id: 'someID_123'
+	 * 		}
+	 * As a result, the expected configuration object is always passed as the only
+	 * argument to a constructor.
+	 * @protected
+	 */
+	prepConfig: function(config) {
+		if (typeof config !== 'object') {
+			config = {
+				id: config
+			};
+		}
+		
+		return config || {};
+	},
+	
+<span id='NGN-model-Model-method-addValidator'>	/**
 </span>	 * @method
 	 * Add or update a validation rule for a specific model property.
 	 * @param {String} property
@@ -403,7 +500,7 @@ var Class = Base.extend({
 		
 	},
 	
-<span id='MODEL-Model-method-removeValidator'>	/**
+<span id='NGN-model-Model-method-removeValidator'>	/**
 </span>	 * @method
 	 * Remove a data validator from the object.
 	 * @param {String} attribute
@@ -415,7 +512,7 @@ var Class = Base.extend({
 		}		
 	},
 	
-<span id='MODEL-Model-method-validate'>	/**
+<span id='NGN-model-Model-method-validate'>	/**
 </span>	 * @method
 	 * Validate one or all attributes of the data.
 	 * @param {String} [attribute=null]
@@ -454,7 +551,7 @@ var Class = Base.extend({
 		return _pass;
 	},
 	
-<span id='MODEL-Model-method-enableDataValidation'>	/**
+<span id='NGN-model-Model-method-enableDataValidation'>	/**
 </span>	 * @method
 	 * Enable data validation if #disableDataValidation is `true`.
 	 */
@@ -462,7 +559,7 @@ var Class = Base.extend({
 		this.disableDataValidation = false;
 	},
 	
-<span id='MODEL-Model-method-disableDataValidation'>	/**
+<span id='NGN-model-Model-method-disableDataValidation'>	/**
 </span>	 * @method
 	 * Disable data validation. Sets #disableDataValidation to `true`.
 	 */
@@ -470,46 +567,52 @@ var Class = Base.extend({
 		this.disableDataValidation = true;
 	},
 	
-<span id='MODEL-Model-method-getReference'>	/**
+<span id='NGN-model-Model-method-getCrossReference'>	/**
 </span>	 * @method
-	 * Get a model from the cross references. Cross references are stored when the #toData method
-	 * encounters a nested model. #save and #load use #toData.
+	 * Get a model from the cross references. Cross references are stored when the #serialize method
+	 * encounters a nested __NGN.model. #save and #load use #serialize.
 	 * @param {Number/String}
 	 * The reference number or full xref string (i.e. `xref::1`)
-	 * @returns {MODEL.Model}
+	 * @returns {__NGN.model.Model}
 	 */
-	getReference: function(ref) {
-		
+	getCrossReference: function(ref) {
+		if (typeof ref == 'string')
+			ref = parseInt(ref.split('::')[1]);
+		if (ref-1 &lt;= 0 || ref-1 &gt; this._ref.length){
+			this.onNoReference(ref);
+			return null;
+		}
+		return this._ref[ref-1];
 	},
 	
-<span id='MODEL-Model-method-toData'>	/**
+<span id='NGN-model-Model-method-serialize'>	/**
 </span>	 * @method
 	 * Creates a JSON data object with no functions. Only uses enumerable attributes of the object by default.
-	 * Specific data values can be included/excluded using #dataProperties &amp; #nonDataProperties.
+	 * Specific data values can be included/excluded using #enumerableProperties &amp; #nonEnumerableProperties.
 	 * 
 	 * Any object property that begins with a special character will be ignored by default. Functions &amp; Setters are always
 	 * ignored. Getters are evaluated recursively until a simple object type is found or there are no further nested attributes.
 	 * 
-	 * If a value is an instance of MODEL.Model (i.e. a nested model or array of models), reference string is returned in the data.
+	 * If a value is an instance of __NGN.model.Model (i.e. a nested model or array of models), reference string is returned in the data.
 	 * The model itself can be returned using #getXRef.
 	 * @param {Object} [obj]
 	 * Defaults to this object.
-	 * @param {Boolean} [serializeXRefData=false]
-	 * When set to `true`, any cross referenced data in nested models will be retrieved
-	 * and the cross reference will be ignored. Use this when a complete JSON dump is
+	 * @param {Boolean} [serializeAssociations=false]
+	 * When set to `true`, any cross referenced data (__NGN.model.Association) will be retrieved
+	 * and serialized into JSON objects. Use this when a complete JSON dump is
 	 * required.
 	 * @returns {Object}
 	 * @protected
 	 */
-	toData: function(obj,serializeXRefData){
+	serialize: function(obj,serializeAssociations){
 	
-		if (obj instanceof Boolean){
-			serializeXRefData = obj;
+		if (obj == true || obj == false){
+			serializeAssociations = obj;
 			obj = this;
 		}
 		
-		serializeXRefData = __NGN.coalesce(serializeXRefData,false);
-		
+		serializeAssociations = __NGN.coalesce(serializeAssociations,false);
+
 		var _obj = obj || this;
 		var me = this, struct = {}, rtn = {};
 		
@@ -517,45 +620,44 @@ var Class = Base.extend({
 		
 		for (var key in _obj) {
 			
-			_obj.nonDataProperties = _obj.nonDataProperties || '';
-			if ((_obj.hasOwnProperty(key) &amp;&amp; (_obj.nonDataProperties.indexOf(key) &lt; 0 &amp;&amp; /^[a-z0-9 ]$/.test(key.substr(0,1)))) || (_obj[key] !== undefined &amp;&amp; _obj.dataProperties.indexOf(key) &gt;= 0)) {
-				if ((this.explicitData &amp;&amp; this.dataProperties.indexOf(key) &gt;= 0) || !this.explicitData) {					
+			_obj.nonEnumerableProperties = _obj.nonEnumerableProperties || '';
+			if ((_obj.hasOwnProperty(key) &amp;&amp; (_obj.nonEnumerableProperties.indexOf(key) &lt; 0 &amp;&amp; /^[a-z0-9 ]$/.test(key.substr(0,1)))) || (_obj[key] !== undefined &amp;&amp; _obj.enumerableProperties.indexOf(key) &gt;= 0)) {
+				if ((this.explicitData &amp;&amp; this.enumerableProperties.indexOf(key) &gt;= 0) || !this.explicitData) {					
 					if ((this.strictData &amp;&amp; this._coreAttributes.indexOf(key) &gt;= 0) || !this.strictData){
 						var dsc = Object.getOwnPropertyDescriptor(_obj,key);
 						
 						if (dsc.get){
 							try {
-								rtn[key] = typeof _obj[key] == 'object' ? _obj[key].toData(serializeXRefData) : _obj[key];
+								rtn[key] = typeof _obj[key] == 'object' ? _obj[key].serialize(serializeAssociations) : _obj[key];
 							} catch(e) {}
 						} else if (!dsc.set) {
 							switch (typeof dsc.value) {
 								case 'function':
 									break;
 								case 'object':
-									var isModel = _obj[key] instanceof MODEL.Model;
-									
+									var isXRef = _obj[key] instanceof __NGN.model.data.Association;
+												
 									if (Array.isArray(_obj[key])){				
 										for (var i=0;i&lt;_obj[key].length;i++){
-											if (_obj[key][i] instanceof MODEL.Model){
-												if (!serializeXRefData){
-													me._ref[Object.keys(me._ref).length+1] = _obj[key][i];
-													_obj[key][i] = 'xref::'+Object.keys(me._ref).length;
-												} else
-													_obj[key][i] = _obj[key][i].toData(serializeXRefData);
+											if (_obj[key][i] instanceof __NGN.model.data.Association){
+												if (serializeAssociations)
+													_obj[key][i] = _obj[key][i].child.serialize(serializeAssociations);
 											}
 										}
+										rtn[key] = _obj[key];
+										break;
 									}
 
-									if (isModel){
-										if (!serializeXRefData){
-											me._ref[Object.keys(me._ref).length+1] = _obj[key];
-											rtn[key] = 'xref::'+Object.keys(me._ref).length;
-										} else
-											rtn[key] = _obj[key].toData(serializeXRefData);
+									if (isXRef){
+										if (serializeAssociations)
+											rtn[key] = _obj[key].serialize(serializeAssociations);
+										else
+											rtn[key] = _obj[key];
 									} else if (_obj[key]){
-										struct = _obj[key].hasOwnProperty('toData') == true ? _obj[key].toData(serializeXRefData) : _obj[key];	
-										if (Object.keys(struct).length &gt; 0)
+										struct = _obj[key].hasOwnProperty('serialize') == true ? _obj[key].serialize(serializeAssociations) : _obj[key];	
+										if (Object.keys(struct).length &gt; 0){
 											rtn = me.merge(rtn,struct);
+										}
 									}
 									break;
 								default:
@@ -571,75 +673,23 @@ var Class = Base.extend({
 		return rtn;
 	},
 	
-<span id='MODEL-Model-method-set'>	/**
-</span>	 * @method
-	 * Create or update a property of the object. This triggers the #change event.
-	 * @param {String} prop
-	 * The property name.
-	 * @param {Any} value
-	 * Value of the property.
-	 */
-	set: function(prop,value){
-		var oldVal = this[prop] || null;
-		
-		if (oldVal !== value) {
-			var obj = {
-				name:	prop,
-				type: 	this.hasOwnProperty(prop) == true ? 'update' : 'create',
-				value:	value	
-			};
-			
-			if (this.hasOwnProperty(prop))
-				obj.old = this[prop] || null;
-			
-			this.onBeforeChange(obj);
-			
-			if (!this._modifiedAttributes.indexOf(prop))
-				this._modifiedAttributes.push(prop);
-		
-			this[prop] = value;
-			
-			this.onChange(obj);
-		}
-	},
-	
-<span id='MODEL-Model-method-remove'>	/**
-</span>	 * @method
-	 * Remove a property of the object. This triggers the #change event.
-	 * @param {String} prop
-	 * The property name.
-	 */
-	remove: function(prop){
-		
-		if (this.hasOwnProperty(prop)) {
-			var obj = {
-				name:	prop,
-				type: 	'remove',
-				old: 	this[prop]
-			};
-			this.onBeforeChange(obj);
-			delete this[prop];
-			this.onChange(obj);
-		}
-	},
-	
-<span id='MODEL-Model-method-load'>	/**
+<span id='NGN-model-Model-method-load'>	/**
 </span>	 * @method
 	 * Populate the model with data for an existing object.
 	 * @private
-	 * @uses toData
+	 * @uses serialize
 	 */
 	load: function(id){
-		if (this.CRUD){
+		if (this.CRUD){		
 			this.onBeforeLoad();
 			
 			var me = this;
-			this.CRUD.read(this,function(result){
+			this.CRUD.read(this,function(result){	
 				if (result){
 					var data = me.CRUD.processReverseDataMap(result,me.type);
 					for (var attr in data){
-						if (me.nonDataProperties.indexOf(attr) &lt; 0)
-							me.set(attr,data[attr]);
+						if (me.nonEnumerableProperties.indexOf(attr) &lt; 0)
+							me[attr] = data[attr];
 					}
 					if (me.idAttribute)
 						me[me.idAttribute] = me.id;
@@ -648,14 +698,14 @@ var Class = Base.extend({
 					me.onNoResult();
 			});
 		} else
-			this.fireWarning(this.type.toString().toUpperCase()+' cannot be loaded because no persistence/CRUD object is associated with the model.');	
+			this.fireWarning(this.type.toString().toUpperCase()+' cannot be loaded because no persistence/CRUD object is associated with the __NGN.model.');	
 	},
 	
-<span id='MODEL-Model-method-save'>	/**
+<span id='NGN-model-Model-method-save'>	/**
 </span>	 * @method
 	 * Persist the data. This only works when an #CRUD is specified.
 	 * @param {Function} callback
-	 * @uses toData
+	 * @uses serialize
 	 */
 	save: function(callback) {
 		if (!this.validate()){
@@ -663,7 +713,7 @@ var Class = Base.extend({
 			return;
 		}
 		if (this.CRUD){
-			var me = this, data = this.toData();
+			var me = this, data = this.serialize();
 			callback = callback || __NGN.emptyFn;
 
 			if (this.id){
@@ -686,10 +736,10 @@ var Class = Base.extend({
 				});
 			}
 		} else
-			this.fireWarning(this.type.toString().toUpperCase()+' cannot be saved because no persistence/CRUD object is associated with the model.');
+			this.fireWarning(this.type.toString().toUpperCase()+' cannot be saved because no persistence/CRUD object is associated with the __NGN.model.');
 	},
 	
-<span id='MODEL-Model-method-remove'>	/**
+<span id='NGN-model-Model-method-remove'>	/**
 </span>	 * @method
 	 * Stop persisting the object (i.e. delete it from the datastore). This only works with #CRUD enabled and an #id specified.
 	 */
@@ -701,10 +751,10 @@ var Class = Base.extend({
 				me.onRemove();
 			});
 		} else
-			this.fireWarning(this.type.toString().toUpperCase()+' cannot be removed because no persistence/CRUD object is associated with the model.');	
+			this.fireWarning(this.type.toString().toUpperCase()+' cannot be removed because no persistence/CRUD object is associated with the __NGN.model.');	
 	},
 	
-<span id='MODEL-Model-method-getData'>	/**
+<span id='NGN-model-Model-method-getData'>	/**
 </span>	 * @method
 	 * Returns the data that the persistence store uses.
 	 * @param {Boolean} [modified=false]
@@ -713,11 +763,11 @@ var Class = Base.extend({
 	 */
 	getData: function(){
 		if (this.CRUD)
-			return this.CRUD.processDataMap(this.toData(),this.type);
-		return this.toData();
+			return this.CRUD.processDataMap(this.serialize(),this.type);
+		return this.serialize();
 	},
 	
-<span id='MODEL-Model-method-getModifiedData'>	/**
+<span id='NGN-model-Model-method-getModifiedData'>	/**
 </span>	 * @method
 	 * Returns the #_rawData communicated with a persistence store.
 	 * @returns {Object}
@@ -736,17 +786,56 @@ var Class = Base.extend({
 		return rtn;
 	},
 	
-<span id='MODEL-Model-event-beforeChange'>	/**
+<span id='NGN-model-Model-method-extension'>	/**
+</span>	 * @model
+	 * 
+	 * @private
+	 */
+	extension: function() {
+		this._isConfigured = true;
+		
+		if (!__NGN.OBJECT_PROXY_SUPPORT)
+			this.fireWarning('Model '+this.type+' does not have proxy support. To enable, launch the app as:\n'+('node '+'--harmony_proxies '.bold+process.mainModule.filename).yellow+'\n');
+		
+		if (this._xtn || !__NGN.OBJECT_PROXY_SUPPORT)
+			return this;
+		
+		var me = this;
+		var wrap = function(o){
+			this.target = o;
+		};
+		wrap.prototype = proxyHandler;
+		
+		Proxy = Proxy || {create: function(){ return me; }};
+		
+		return Proxy.create(new wrap(this),me);
+
+	},
+	
+<span id='NGN-model-Model-event-beforeChange'>	/**
 </span>	 * @event beforeChange
 	 * Fired before a change is completed.
+	 * Provides the following change object to the callback:
+	 * 	{
+	 * 		type: 'create|update|delete',
+	 * 		oldValue: Object, // Only exists for update and delete.
+	 * 		value: Object // Only exists for create and update
+	 * 	}
 	 */
 	onBeforeChange: function(change) {
 		change = change || null;
 		this.emit('beforeChange',change);
 	},
 	
-<span id='MODEL-Model-event-change'>	/**
+<span id='NGN-model-Model-event-change'>	/**
 </span>	 * @event change
+	 * Fired after the change is complete.
+	 * Provides the following change object to the callback:
+	 * 	{
+	 * 		type: 'create|update|delete',
+	 * 		oldValue: Object, // Only exists for update and delete.
+	 * 		value: Object // Only exists for create and update
+	 * 	}
 	 */
 	onChange: function(change) {
 		change = change || null;
@@ -754,7 +843,7 @@ var Class = Base.extend({
 		this.emit('change',change);
 	},
 	
-<span id='MODEL-Model-event-beforeSave'>	/**
+<span id='NGN-model-Model-event-beforeSave'>	/**
 </span>	 * @event beforeSave
 	 * Fired before the model attempts to persist data.
 	 */
@@ -762,7 +851,7 @@ var Class = Base.extend({
 		this.emit('beforeSave',this);
 	},
 	
-<span id='MODEL-Model-event-save'>	/**
+<span id='NGN-model-Model-event-save'>	/**
 </span>	 * @event save
 	 * Fired when the model attempts to persist data to a datasource.
 	 */
@@ -773,7 +862,7 @@ var Class = Base.extend({
 		this.emit('save',this);
 	},
 	
-<span id='MODEL-Model-event-beforeLoad'>	/**
+<span id='NGN-model-Model-event-beforeLoad'>	/**
 </span>	 * @event beforeLoad
 	 * Fired before the model attempts to populates its data from a datasource.
 	 */
@@ -781,16 +870,19 @@ var Class = Base.extend({
 		this.emit('beforeLoad',this);
 	},
 	
-<span id='MODEL-Model-event-load'>	/**
+<span id='NGN-model-Model-event-load'>	/**
 </span>	 * @event load
 	 * Fired when the model attempts to populate its data from a datasource.
 	 */
 	onLoad: function(){
-		this.isNew = (this.id == null);
-		this.emit('load',this);
+		if (!this.loaded){
+			this.isNew = (this.id == null);
+			this.loaded = true;
+			this.emit('load',this);
+		}
 	},
 	
-<span id='MODEL-Model-event-beforeRemove'>	/**
+<span id='NGN-model-Model-event-beforeRemove'>	/**
 </span>	 * @event beforeRemove
 	 * Fired before the model attempts to remove its data from a datasource.
 	 */
@@ -798,7 +890,7 @@ var Class = Base.extend({
 		this.emit('beforeRemove',this);
 	},
 	
-<span id='MODEL-Model-event-remove'>	/**
+<span id='NGN-model-Model-event-remove'>	/**
 </span>	 * @event remove
 	 * Fired when the model has removed its data from a datasource.
 	 */
@@ -807,16 +899,28 @@ var Class = Base.extend({
 		delete this;
 	},
 	
-<span id='MODEL-Model-event-noResult'>	/**
+<span id='NGN-model-Model-event-noResult'>	/**
 </span>	 * @event noResult
 	 * Fired when a #load returns no records.
 	 */
 	onNoResult: function(){
 		this.emit('noResult')
+	},
+	
+<span id='NGN-model-Model-event-xrefFailure'>	/**
+</span>	 * @event xrefFailure
+	 * Fired when a cross reference is requested that does not exist.
+	 * @param {Object} ref
+	 */
+	onNoReference: function(ref){
+		this.fireWarning('Cross reference '+ref+' does not exist or is invalid.');
+		this.emit('xrefFailure')
 	}
 	
 });
 
-module.exports = Class;</pre>
+module.exports = Class;
+
+</pre>
 </body>
 </html>

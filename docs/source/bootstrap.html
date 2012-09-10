@@ -18,6 +18,8 @@
   <pre class="prettyprint lang-js">require('colors');
 var fs  = require('fs'),
 	p	= require('path');
+	
+var INCLUDE_MODELS = process.execArgv.indexOf('--harmony_proxies') &gt; -1;
 
 // Array prototype additions
 Array.prototype.remove = function(from, to) {
@@ -43,7 +45,7 @@ require('wrench').readdirSyncRecursive(__dirname).forEach(function( file ){
     	&amp;&amp; file !== 'BaseClass.js' 
     	&amp;&amp; file !== 'bootstrap.js'
     	&amp;&amp; file.indexOf('.js') &gt;= 0) {
-    		
+    	
     	// Handle fn lib
     	if (file.split(p.sep)[0] === 'fn'){
     		var _fn = require(p.join(__dirname,file));
@@ -56,17 +58,19 @@ require('wrench').readdirSyncRecursive(__dirname).forEach(function( file ){
     			}
     		}
     	} else {
-	        var path    = p.normalize(file).split(p.sep),
-	            pkg     = namespace;
-	        
-	        for (var position=0; position&lt;path.length; position++) {
-	
-	            if (pkg[path[position].replace('.js','')] == undefined)
-	                pkg[path[position].replace('.js','')] = position == path.length-1 ? require(p.join(__dirname,file)) : {};
-	            
-	            if (position !== path.length-1)
-	                pkg = pkg[path[position]];
-	        }
+    		
+    		
+		        var path    = p.normalize(file).split(p.sep),
+		            pkg     = namespace;
+		        
+		        for (var position=0; position&lt;path.length; position++) {
+		
+		            if (pkg[path[position].replace('.js','')] == undefined)
+		                pkg[path[position].replace('.js','')] = position == path.length-1 ? require(p.join(__dirname,file)) : {};
+		            
+		            if (position !== path.length-1)
+		                pkg = pkg[path[position]];
+		        }
 		}
     }
 });
@@ -94,19 +98,7 @@ if (global.__NGN.ngnx !== undefined)
 	delete global.__NGN.ngnx;
 
 // Create Models
-global.__MODEL = __NGN.model || {};
-Object.defineProperty(global,'MODEL',{
-	enumerable:	true,
-	get:		function(){ return global.__MODEL; }
-});
-Object.defineProperty(global,'model',{
-	enumerable:	true,
-	get:		function(){ return global.__MODEL; }
-});
-
-// Remove redundant namespace for MODEL
-if (global.__NGN.model !== undefined)
-	delete global.__NGN.model;
+global.__NGN.OBJECT_PROXY_SUPPORT = INCLUDE_MODELS;
 
 // Create Primary Pointers
 Object.defineProperty(global,'NGN',{
@@ -291,7 +283,16 @@ module.exports = exports = function( config ) {
     });
 
 };
-
-console.info(('Running NGN v'+__NGN.version).grey);</pre>
+// Fire a warning if Proxies aren't supported.
+if (!INCLUDE_MODELS){
+	console.warn('The MODEL library requires object proxies.\nTo enable object proxies, launch the script with the following command:\n'.cyan.inverse,(('node '+'--harmony_proxies '.bold+process.mainModule.filename).yellow));
+}
+console.log('');
+console.info(('|      Running '.grey.inverse.underline+('NGN v'.bold+__NGN.version.bold).bold.grey.inverse.underline+' on '.grey.inverse.underline+(process.title+' '+process.version+'      |').grey.inverse.bold.underline));
+console.info(('Using:').grey.bold);
+for (var v in process.versions)
+	console.info((' - '+v+' v'+process.versions[v]).grey.bold);
+console.log('                                                        '.underline.grey)
+console.log('|                    Application                       |'.underline.grey.inverse)</pre>
 </body>
 </html>

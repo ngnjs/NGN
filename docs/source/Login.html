@@ -15,10 +15,10 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Base = require('../NGN.core');
+  <pre class="prettyprint lang-js">var Base = require('./Model');
 
-<span id='MODEL-Login'>/**
-</span> * @class MODEL.Login
+<span id='NGN-model-Login'>/**
+</span> * @class NGN.model.Login
  * Represents an OAuth or other third party login such as Facebook, Twitter, LinkedIn, etc.
  * 
  * This object makes interacting with user logins simple and abstracted from the OAuth process.
@@ -56,11 +56,11 @@
  * 	   		});
  * 	   });
  * @docauthor Corey Butler
- * @extends NGN.core
+ * @extends NGN.model.Model
  */
 var Class = Base.extend({
 	
-<span id='MODEL-Login-method-constructor'>	/**
+<span id='NGN-model-Login-method-constructor'>	/**
 </span>	 * @constructor
 	 */
 	constructor: function( config ){
@@ -72,7 +72,7 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='MODEL-Login-cfg-request'>			/**
+<span id='NGN-model-Login-cfg-request'>			/**
 </span>			 * @cfg {Object} [request]
 			 * The HTTP request stream returned from an OAuth authentication.
 			 *     app.get('/',function(req,res){
@@ -90,7 +90,7 @@ var Class = Base.extend({
 				writable:	false
 			},
 			
-<span id='MODEL-Login-property-_data'>			/**
+<span id='NGN-model-Login-property-_data'>			/**
 </span>			 * @property {Object}
 			 * @private
 			 * Holds the data returned from an OAuth response
@@ -107,7 +107,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='MODEL-Login-property-ID'>			/**
+<span id='NGN-model-Login-property-ID'>			/**
 </span>			 * @property {String}
 			 * The login ID of the OAuth/third party provider.
 			 */
@@ -122,7 +122,7 @@ var Class = Base.extend({
 	            enumerable:     false
 	        },
 			
-<span id='MODEL-Login-property-accesstoken'>			/**
+<span id='NGN-model-Login-property-accesstoken'>			/**
 </span>			 * @property {String}
 			 * The active access token
 			 */
@@ -146,7 +146,7 @@ var Class = Base.extend({
 	                            }
 			},
 			
-<span id='MODEL-Login-property-oauthprovider'>			/**
+<span id='NGN-model-Login-property-oauthprovider'>			/**
 </span>			 * @property {String} [oauthprovider=null]
 			 * A lowercase string representing the OAuth service provider. Examples include `facebook`, `twitter`, and `linkedin`.
 			 * This property is only available when a valid #request is provided. However, it can also be set manually.
@@ -160,7 +160,7 @@ var Class = Base.extend({
 							}
 			},
 			
-<span id='MODEL-Login-property-oauth'>			/**
+<span id='NGN-model-Login-property-oauth'>			/**
 </span>			 * @property {String} [oauth=null]
 			 * The lowercase abbreviation of the #oauthprovider. Example: `fb` for Facebook.
 			 */
@@ -200,7 +200,7 @@ var Class = Base.extend({
 	            enumerable:     false
 			},
 			
-<span id='MODEL-Login-property-modified'>			/**
+<span id='NGN-model-Login-property-modified'>			/**
 </span>			 * @property [modified=false]
 			 * @readonly
 			 * When the object is modified, this will be true.
@@ -219,7 +219,7 @@ var Class = Base.extend({
 		
 	},
 
-<span id='MODEL-Login-method-processHttpRequest'>	/**
+<span id='NGN-model-Login-method-processHttpRequest'>	/**
 </span>	 * @method 
 	 * This method extracts information from the #request or any other HTTP request stream.
 	 * The #ID, #oauthprovider, #oauth, #data, and #accesstoken (if applicable) are extracted using `everyauth` (node).
@@ -238,7 +238,7 @@ var Class = Base.extend({
 							}
 	},
 	
-<span id='MODEL-Login-method-authenticate'>	/**
+<span id='NGN-model-Login-method-authenticate'>	/**
 </span>	 * @method
 	 * @param {Object} [req=request]
 	 * Authenticate the request stream. By default, this uses the #request object.  

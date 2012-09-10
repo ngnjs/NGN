@@ -15,17 +15,15 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var Base = require('./Model');
+  <pre class="prettyprint lang-js">var Base = require('../../BaseClass');
 
-<span id='MODEL-XRef'>/**
-</span> * @enum MODEL.XRef
- * Represents a cross reference from one model to another. For example, a person may have multiple orders. If a
- * person and order are defined in their own MODEL definitions, then a cross reference is used to link them
- * together. 
+<span id='NGN-model-data-Manager'>/**
+</span> * @class NGN.model.data.Manager
+ * @extends Class
  */
 var Class = Base.extend({
 	
-<span id='MODEL-XRef-method-constructor'>	/**
+<span id='NGN-model-data-Manager-method-constructor'>	/**
 </span>	 * @constructor
 	 * @param {Object} config
 	 */
@@ -33,12 +31,10 @@ var Class = Base.extend({
 		
 		config = config || {};
 		
-		config.type = 'XRef';
-		
 		Class.super.constructor.call(this,config);
 		
 		Object.defineProperties(this,{
-			
+					
 		});
 	}
 	

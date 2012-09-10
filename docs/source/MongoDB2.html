@@ -89,10 +89,26 @@ var Class = Base.extend({
 		callback = callback || __NGN.emptyFn;
 		
 		this.client.collection(model.type,{safe:true},function(err,collection){
-			collection.insert(model.getData(),function(){
-				callback();
-				me.onCreate();
-			});
+			if (err) {
+				// Create the collection if it does not yet exist
+				me.client.createCollection(model.type,function(_err,_collection){
+					if (_err)
+						me.fireError(_err);
+					_collection.insert(model.getData(),function(err){
+						if (err)
+							me.fireError(err);
+						callback();
+						me.onCreate();
+					});
+				});
+			} else {
+				collection.insert(model.getData(),function(err){
+					if (err)
+						me.fireError(err);
+					callback();
+					me.onCreate();
+				});
+			}
 		});
 		
 	},
@@ -116,7 +132,7 @@ var Class = Base.extend({
 		this.onBeforeRead();
 		
 		callback = callback || __NGN.emptyFn;
-		
+
 		// Get the collection and run an update
 		this.client.collection(model.type,function(err,collection){
 			
