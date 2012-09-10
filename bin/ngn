@@ -17,11 +17,12 @@ var CREATE 			= argv['create'] || null,
 	PUBLISH			= argv['publish'] || null,
 	CFG				= argv['configuration'] || p.join(process.cwd(),'ngn.config.json'),
 	OUT_DIR			= argv['output'] || p.join(cwd,'docs','manual'),
-	HELP			= argv['help'] || argv['h'] || null;
-	
+	HELP			= argv['help'] || argv['h'] || null,
+	RUN				= argv._[0] || null;
 
 // Create things
 if (CREATE) {
+	RUN = null;
 	switch(CREATE.toLowerCase()) {
 		case null:
 			break;
@@ -49,6 +50,8 @@ if (CREATE) {
 
 // Publish to an npm registry
 if (PUBLISH){
+	
+	RUN = null;
 
 	try {
 		var cfg			= require('./config.json');
@@ -78,3 +81,17 @@ if (PUBLISH){
 	});
 }
 
+if (RUN) {
+	var exec = require('child_process').spawn;
+	console.log(('Launching '+RUN+' with limited ES6 support...').grey);
+	var shell = exec("node",['--harmony_proxies',RUN],{ 
+			cwd: process.cwd,
+			stdio: ['pipe', 'pipe', process.stdout]
+		});
+	
+	/*shell.stderr.on('data',function(data){
+		console.log(data);
+	});*/
+	
+	//shell.stdout.on('')
+}
