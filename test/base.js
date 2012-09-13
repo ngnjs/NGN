@@ -1,29 +1,25 @@
 // Include NGN (locally)
-require('../'); 
-
-// Utilize Should.js
 var should = require('should');
-
 
 /**
  * Make sure the NGN global namespace is available.
  */
-describe('NGN global namespace', function(){
-	it('should exist', function(){
+describe('Namespaces', function(){
+	it('NGN Core Library Exists', function(){
 	  should.exist(__NGN);
-	})
-});
-
-describe('NGNX global namespace', function(){
-	it('should exist', function(){
+	});
+	it('NGNX Extended Library Exists', function(){
 	  should.exist(__NGNX);
-	})
+	});
+	it('$ Function Library Exists', function(){
+	  should.exist(__$);
+	});
 });
-
 
 /**
  * Make sure datasource connections can be created.
  */
+/*
 describe('NGN.datasource.Connection',function(){
 	var conn = new __NGN.datasource.Connection();
 		
@@ -47,3 +43,4 @@ describe('NGN.datasource.Connection',function(){
 		conn.connected.should.equal(false);
 	});
 });
+*/
