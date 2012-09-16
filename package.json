@@ -7,15 +7,15 @@
   "bin": {
     "ngn": "./bin/ngn"
   },
-  "directories":{
-  	"lib":"./lib",
-  	"example":"examples",
-  	"test":"test"
+  "directories": {
+    "lib": "./lib",
+    "example": "examples",
+    "test": "test"
   },
-  "keywords":[
-  	"framework",
-  	"application",
-  	"RAD"
+  "keywords": [
+    "framework",
+    "application",
+    "RAD"
   ],
   "dependencies": {
     "crypto": "0.0.3",
@@ -29,7 +29,8 @@
     "http-proxy": "~0.8.2",
     "stack-trace": "0.0.6",
     "clone": "~0.1.0",
-    "hooks": "~0.3.0"
+    "hooks": "~0.3.0",
+    "harmony-reflect": "0.0.2"
   },
   "devDependencies": {
     "wrench": "~1.3.9",
