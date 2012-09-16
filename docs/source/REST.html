@@ -19,8 +19,8 @@
 	restify		= require('restify'),
 	Base		= require('../core/HttpServer');
 
-<span id='NGN-web-API'>/**
-</span> * @class NGN.web.API
+<span id='NGN-web-REST'>/**
+</span> * @class NGN.web.REST
  * Provides a HTTP server **without** support for views and templating. This is based on
  * [restify](http://mcavage.github.com/node-restify/), which ignores templating in favor of
  * performance. This is designed to be used for creating data API's.
@@ -30,7 +30,7 @@
  */
 var Class = Base.extend({
 	
-<span id='NGN-web-API-method-constructor'>	/**
+<span id='NGN-web-REST-method-constructor'>	/**
 </span>	 * @constructor
 	 * Create a REST Server.
 	 */
@@ -43,7 +43,7 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<span id='NGN-web-API-cfg-name'>			/**
+<span id='NGN-web-REST-cfg-name'>			/**
 </span>			 * @cfg {String} [name=NGN]
 			 * The name of the API.
 			 */
@@ -72,7 +72,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-API-cfg-defaultVersion'>			/**
+<span id='NGN-web-REST-cfg-defaultVersion'>			/**
 </span>			 * @cfg {String} [defaultVersion=1.0.0]
 			 * The version of the API to use when a request doesn't explicitly state which 
 			 * version of the API it needs to use.
@@ -85,7 +85,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-API-cfg-responseTimeHeader'>			/**
+<span id='NGN-web-REST-cfg-responseTimeHeader'>			/**
 </span>			 * @cfg {String} [responseTimeHeader=X-Response-Time]
 			 * The header used to indicate response time.
 			 * 
@@ -97,12 +97,12 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-API-cfg-responseTimeFormatter'>			/**
+<span id='NGN-web-REST-cfg-responseTimeFormatter'>			/**
 </span>			 * @cfg {Function} [responseTimeFormatter=null]
 			 * Allows you to apply formatting to the value of the header. The duration is passed as an argument in number of milliseconds to execute.
 			 * 
 			 * For example:
-			 * 		var API = new NGN.web.Api({
+			 * 		var API = new NGN.web.REST({
 			 * 			responseTimeFormatter: function(durationInMilliseconds) {
 			 * 		    	return durationInMilliseconds / 1000;
 			 * 			}
@@ -114,7 +114,7 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<span id='NGN-web-API-cfg-formatters'>			/**
+<span id='NGN-web-REST-cfg-formatters'>			/**
 </span>			 * @cfg {Object} [formatters=null]
 			 * Custom response formatters for `res.send()`.
 			 */
@@ -159,7 +159,7 @@ var Class = Base.extend({
 			this.start();
 	},
 	
-<span id='NGN-web-API-method-errorHandler'>	/**
+<span id='NGN-web-REST-method-errorHandler'>	/**
 </span>	 * @method
 	 * @param {Error} err
 	 * The error thrown.
@@ -175,7 +175,7 @@ var Class = Base.extend({
 		this.onError(err);
 	},
 	
-<span id='NGN-web-API-method-start'>	/**
+<span id='NGN-web-REST-method-start'>	/**
 </span>	 * @method
 	 * Start listening for requests.
 	 */
@@ -260,7 +260,7 @@ var Class = Base.extend({
 		}
 	},
 	
-<span id='NGN-web-API-method-stop'>	/**
+<span id='NGN-web-REST-method-stop'>	/**
 </span>	 * @method
 	 * Stop the server.
 	 */
@@ -271,7 +271,7 @@ var Class = Base.extend({
 		}
 	},	
 	
-<span id='NGN-web-API-method-generateRoutes'>	/**
+<span id='NGN-web-REST-method-generateRoutes'>	/**
 </span>	 * @method
 	 * Generates server routes. If no #routes are configured, a generic
 	 * route will be created.
@@ -305,7 +305,7 @@ var Class = Base.extend({
 	
 	},
 	
-<span id='NGN-web-API-event-send'>	/**
+<span id='NGN-web-REST-event-send'>	/**
 </span>	 * @event send
 	 * Fired when a response is sent to the client.
 	 * @returns {Object} responseStream
@@ -314,7 +314,7 @@ var Class = Base.extend({
 		this.emit('send',this._server.response);
 	},
 	
-<span id='NGN-web-API-event-xxx'>	/**
+<span id='NGN-web-REST-event-xxx'>	/**
 </span>	 * @event xxx
 	 * Fired on every HTTP response.
 	 */
@@ -323,7 +323,7 @@ var Class = Base.extend({
 		this.onSend();
 	},
 	
-<span id='NGN-web-API-event-apiNotFound'>	/**
+<span id='NGN-web-REST-event-apiNotFound'>	/**
 </span>	 * @event apiNotFound
 	 * Fired when a route is not found.
 	 * @param {Object} request
@@ -333,7 +333,7 @@ var Class = Base.extend({
 		this.emit('apiNotFound',{request:request||null,response:response||null});
 	},
 	
-<span id='NGN-web-API-event-apiMethodNotAllowed'>	/**
+<span id='NGN-web-REST-event-apiMethodNotAllowed'>	/**
 </span>	 * @event apiMethodNotAllowed
 	 * Fired when a method is not allowed.
 	 * @param {Object} request
@@ -343,7 +343,7 @@ var Class = Base.extend({
 		this.emit('apiMethodNotAllowed',{request:request||null,response:response||null})
 	},
 	
-<span id='NGN-web-API-event-apiVersionNotAllowed'>	/**
+<span id='NGN-web-REST-event-apiVersionNotAllowed'>	/**
 </span>	 * @event apiVersionNotAllowed
 	 * Fired when a version is request is rejected.
 	 * @param {Object} request
@@ -353,7 +353,7 @@ var Class = Base.extend({
 		this.emit('apiVersionNotAllowed',{request:request||null,response:response||null})
 	},
 	
-<span id='NGN-web-API-event-apiAfter'>	/**
+<span id='NGN-web-REST-event-apiAfter'>	/**
 </span>	 * @event apiAfter
 	 * Fired after a request is complete.
 	 * @param {Object} request
@@ -363,7 +363,7 @@ var Class = Base.extend({
 		this.emit('apiAfter',{request:request||null,response:response||null,route:route||null});
 	},
 	
-<span id='NGN-web-API-event-uncaughtException'>	/**
+<span id='NGN-web-REST-event-uncaughtException'>	/**
 </span>	 * @event uncaughtException
 	 * Fired when a version is request is rejected.
 	 * @param {Object} request

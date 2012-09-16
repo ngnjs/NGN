@@ -17,67 +17,6 @@
 <body onload="prettyPrint(); highlight();">
   <pre class="prettyprint lang-js">var hooks= require('hooks'),
 	Base = require('../NGN.core');
-
-// The proxy handler prototype responsible for managing data. 
-var proxyHandler = {
-		get: function(rec, name) {
-			return this.target[name];
-		},
-		has: function(name) {
-			return this.target[name] !== undefined;
-		},
-		set: function(rec, name, value) {
-			var delta = {
-				type:	this.___originalValues[name] == undefined ? 'create' : 'update',
-				property: name,
-				value:	value
-			};
-			
-			if (delta.type === 'update')
-				delta.oldValue = this.target[name];
-			
-			this.target.onBeforeChange(delta);
-			
-			if (!this.___originalValues[name] &amp;&amp; delta.type === 'create')
-				this.___originalValues[name] = value;
-			
-			this.target[name] = value;
-			
-			this.target.onChange(delta);
-		},
-		&quot;delete&quot;: function(name) {
-			var delta = {
-				type:		'delete',
-				property: 	name,
-				oldValue:	this.target[name]
-			};
-			
-			this.target.onBeforeDelete(delta);
-			
-			delete this.target[name];
-			
-			this.target.onDelete(delta);
-			
-			return false;
-		},
-		enumerate: function() {
-			return Object.keys(this);
-		},
-		fix: function() {
-			console.log('Fix'.magenta);
-			return undefined;
-		},
-		getOwnPropertyNames: function(){
-			return Object.getOwnPropertyNames(this);
-		},
-		getOwnPropertyDescriptor: function(prop){
-			return Object.getOwnPropertyDescriptor(this,prop);
-		},
-		getOriginalValues: function(){
-			return this.___originalValues;
-		},
-		___originalValues: {}
-};
 	
 <span id='NGN-model-Model'>/**
 </span> * @class NGN.model.Model
@@ -152,7 +91,7 @@ var Class = Base.extend({
 			 */
 			type: {
 				value:		config.type || 'Model',
-				enumerable:	true,
+				enumerable:	false,
 				writable:	true
 			},
 			
@@ -224,7 +163,8 @@ var Class = Base.extend({
             
 <span id='NGN-model-Model-cfg-strictData'>            /**
 </span>             * @cfg {Boolean} [strictData=false]
-             * When set to `true`, the #getData method will only return values for the attributes defined in #enumerableProperties.
+             * When set to `true`, the #getData method will only return values for the attributes defined in #enumerableProperties, regardless of 
+             * an other properties of the model.
              */
             explicitData: {
             	value:		__NGN.coalesce(config.explicitData,false),
@@ -260,28 +200,22 @@ var Class = Base.extend({
 			},
 			
 <span id='NGN-model-Model-property-originalConfig'>			/**
-</span>			 * @property
-			 * Tracks the original config values. This is only used for non-create CRUD functionality. 
-			 * @private
+</span>			 * @property {Object}
+			 * The original config values passed to the constructor.
+			 * @readonly
 			 */
 			originalConfig: {
 				value:		__NGN.clone(config),
 				enumerable:	false,
-				writable:	true
+				writable:	false
 			},
 			
 <span id='NGN-model-Model-property-loaded'>			/**
-</span>			 * @property
+</span>			 * @property {Boolean}
 			 * Stores whether the object is considered loaded.
 			 * @private
 			 */
 			loaded: {
-				value:		false,
-				enumerable:	false,
-				writable:	true
-			},
-			
-			monitoring: {
 				value:		false,
 				enumerable:	false,
 				writable:	true
@@ -295,7 +229,9 @@ var Class = Base.extend({
 			
 <span id='NGN-model-Model-property-EXTENDEDMODEL'>			/**
 </span>			 * @property {Object}
-			 * Automatically generates a model with a harmony proxy wrapper.
+			 * Automatically generates a model with data management events.
+			 * This uses proxies (harmony proxies) to emit events on object
+			 * property changes such as get/set/create/delete/etc.
 			 */
 			EXTENDEDMODEL: {
 				enumerable:	false,
@@ -306,6 +242,36 @@ var Class = Base.extend({
 			
 			_isConfigured: {
 				value: 		false,
+				enumerable:	false,
+				writable:	true
+			},
+			
+<span id='NGN-model-Model-property-changelog'>			/**
+</span>			 * @property {Object[]}
+			 * An ordered array of changes made to the object data properties.
+			 * This should not be changed manually. Instead, use #getChangeLog
+			 * and #rollback to manage this list.
+			 * @private
+			 */
+			changelog: {
+				value:		[],
+				enumerable:	false,
+				writable:	true
+			},
+			
+<span id='NGN-model-Model-property-_xref'>			/**
+</span>			 * @property {Object}
+			 * Contains references to associations.
+			 * @private
+			 */
+			_xref: {
+				value:		{},
+				enumerable:	false,
+				writable:	true
+			},
+			
+			_proxy: {
+				value:		null,
 				enumerable:	false,
 				writable:	true
 			}
@@ -338,20 +304,7 @@ var Class = Base.extend({
 			me.onRemove();
 			next();
 		});
-		
-		// Load the object if an ID is specified.
-		this.on('readyForProxy',function(){
-			if (me.id) {
-				me.load();
-			} else {
-				me.monitor();
-			}
-		});
-		
-		this.on('load',function(){
-			me.monitor();
-		});
-		
+				
 		if (!this.CRUD){
 			if (NGNA){
 				if (NGNA.CRUD[this.type])
@@ -367,7 +320,13 @@ var Class = Base.extend({
 			})
 		}
 
-		return this.extension();
+		if (me.id)
+			me.load();
+
+		// DO NOT CHANGE THIS
+		// This is a smart object that returns a proxy if enabled,
+		// or a standard object if not enabled.
+		return this.EXTENDEDMODEL;
 	},
 	
 <span id='NGN-model-Model-method-pre'>	/**
@@ -567,22 +526,31 @@ var Class = Base.extend({
 		this.disableDataValidation = true;
 	},
 	
-<span id='NGN-model-Model-method-getCrossReference'>	/**
+<span id='NGN-model-Model-method-getAssociation'>	/**
 </span>	 * @method
-	 * Get a model from the cross references. Cross references are stored when the #serialize method
-	 * encounters a nested __NGN.model. #save and #load use #serialize.
+	 * Get a model from the known associations. Associations are stored when the #serialize method
+	 * encounters a nested NGN.model.Model. #save and #load use #serialize.
 	 * @param {Number/String}
 	 * The reference number or full xref string (i.e. `xref::1`)
 	 * @returns {__NGN.model.Model}
 	 */
-	getCrossReference: function(ref) {
+	getAssociation: function(ref) {
 		if (typeof ref == 'string')
-			ref = parseInt(ref.split('::')[1]);
-		if (ref-1 &lt;= 0 || ref-1 &gt; this._ref.length){
-			this.onNoReference(ref);
+			ref = parseInt(ref.split('::'));
+		if ((ref[1]-1 &lt;= 0 || ref[1]-1 &gt; this._ref.length) || ref[0].toString().toLowerCase() == 'xref'){
+			this.onNoAssociation(ref);
 			return null;
 		}
-		return this._ref[ref-1];
+		return this._xref[ref[1]-1];
+	},
+	
+<span id='NGN-model-Model-method-getAssociations'>	/**
+</span>	 * @method
+	 * Get the association map.
+	 * @returns {Object}
+	 */
+	getAssociations: function() {
+		return this._xref;
 	},
 	
 <span id='NGN-model-Model-method-serialize'>	/**
@@ -744,6 +712,10 @@ var Class = Base.extend({
 	 * Stop persisting the object (i.e. delete it from the datastore). This only works with #CRUD enabled and an #id specified.
 	 */
 	remove: function(){
+		if (this.isNew){
+			this.fireWarning(model.type+' cannot be removed because it is new (i.e. not saved yet).');
+			return;
+		}
 		if (this.CRUD){
 			var me = this;
 			this.onBeforeRemove();
@@ -765,6 +737,69 @@ var Class = Base.extend({
 		if (this.CRUD)
 			return this.CRUD.processDataMap(this.serialize(),this.type);
 		return this.serialize();
+	},
+	
+<span id='NGN-model-Model-method-getChangeLog'>	/**
+</span>	 * @method
+	 * Returns an array of changes made to the object.
+	 * Each element of the array is a change object, which is 
+	 * a simple JSON object. The syntax is:
+	 * 	{
+	 * 		type: 'create|update|delete',
+	 * 		oldValue: Object, // Only exists for update and delete.
+	 * 		value: Object // Only exists for create and update
+	 * 	}
+	 * @returns {Array}
+	 */
+	getChangeLog: function(){
+		if (!__NGN.OBJECT_PROXY_SUPPORT)
+			this.fireWarning('Model '+this.type+'#getChangeLog cannot run because change management is not enabled. To enable, launch the app as:\n'+('node '+'--harmony '.bold+process.mainModule.filename).yellow+'\n');
+		
+		return this.changelog;
+	},
+	
+<span id='NGN-model-Model-method-rollback'>	/**
+</span>	 * @method
+	 * Simple &quot;undo&quot;. It rolls back the changelog and
+	 * reverses the changes made in each log entry.
+	 * This method is only available when using proxies.
+	 * @param {Number} [changes=1]
+	 * The number of changes to rollback. A value of `-1` will rollback all changes.
+	 */
+	rollback: function(changes){
+		if (!__NGN.OBJECT_PROXY_SUPPORT){
+			this.fireWarning('Model '+this.type+'#rollback cannot execute because change management is not enabled. To enable, launch the app as:\n'+('node '+'--harmony '.bold+process.mainModule.filename).yellow+'\n');
+			return;
+		}
+		changes = changes || 1;
+		changes = changes &lt; 1 ? this.changelog.length : changes;
+
+		// Loop through the changelog and reverse each change sequentially.
+		for (var i=0; i&lt;changes; i++){
+			var delta = this.changelog[this.changelog.length-1];
+			switch(delta.type.trim().toLowerCase()){
+				case 'create':
+					delete this._proxy['___rollback::'+delta.property];
+					this.changelog.pop();
+					this.onRollback(delta);
+					break;
+				case 'update':		
+					this._proxy['___rollback::'+delta.property] = delta.oldValue;
+					this.changelog.pop();
+					this.onRollback(delta);
+					break;
+				case 'delete':
+					this._proxy['___rollback::'+delta.property] = delta.oldValue;
+					this.changelog.pop();
+					this.onRollback(delta);
+					break;
+				case 'start':
+					break;
+				default:
+					this.fireWarning('Rollback Failed: '+delta.type+' not a recognized change type.');
+					break;
+			}
+		}
 	},
 	
 <span id='NGN-model-Model-method-getModifiedData'>	/**
@@ -794,22 +829,29 @@ var Class = Base.extend({
 	extension: function() {
 		this._isConfigured = true;
 		
-		if (!__NGN.OBJECT_PROXY_SUPPORT)
-			this.fireWarning('Model '+this.type+' does not have proxy support. To enable, launch the app as:\n'+('node '+'--harmony_proxies '.bold+process.mainModule.filename).yellow+'\n');
+		if (!__NGN.OBJECT_PROXY_SUPPORT){
+			//this.fireWarning('Model '+this.type+' does not have change management support. To enable, launch the app as:\n'+('node '+'--harmony '.bold+process.mainModule.filename).yellow+'\n');
+			delete this.rollback;
+			delete this.changelog;
+			delete this.onBeforeChange;
+			delete this.onChange;
+			delete this.onRollback;
+		}
 		
-		if (this._xtn || !__NGN.OBJECT_PROXY_SUPPORT)
+		if (this._isXtn || !__NGN.OBJECT_PROXY_SUPPORT)
 			return this;
 		
 		var me = this;
-		var wrap = function(o){
-			this.target = o;
+		var wrap = function(){
+			this.target = me;
 		};
-		wrap.prototype = proxyHandler;
+		wrap.prototype = Object.prototype;//proxyHandler;
 		
-		Proxy = Proxy || {create: function(){ return me; }};
-		
-		return Proxy.create(new wrap(this),me);
+		Proxy = Proxy || function(){ return me; };
 
+		this._proxy = NGN.model.ModelObserver(this);
+		
+		return this._proxy;
 	},
 	
 <span id='NGN-model-Model-event-beforeChange'>	/**
@@ -840,6 +882,7 @@ var Class = Base.extend({
 	onChange: function(change) {
 		change = change || null;
 		this._modified = true;
+		this.changelog.push(change);
 		this.emit('change',change);
 	},
 	
@@ -915,6 +958,15 @@ var Class = Base.extend({
 	onNoReference: function(ref){
 		this.fireWarning('Cross reference '+ref+' does not exist or is invalid.');
 		this.emit('xrefFailure')
+	},
+	
+<span id='NGN-model-Model-event-rollback'>	/**
+</span>	 * @event rollback
+	 * Fired when a rollback occurs.
+	 * @param {Object} delta
+	 */
+	onRollback: function(delta){
+		this.emit('rollback',delta);
 	}
 	
 });
