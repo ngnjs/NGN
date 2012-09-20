@@ -45,13 +45,17 @@
 	      "title": "TODO: $ Functions",
 	      "description": "Commonly used methods that JavaScript doesn't natively offer."
    		},{
-	      "name": "namespace_model",
-	      "title": "NEEDS UPDATE: MODEL",
-	      "description": "Logical application components and data models. Often called 'Business Logic'."
-   		},{
 	      "name": "namespace_custom",
 	      "title": "TODO: Custom Libraries",
 	      "description": "Create your own custom libraries by extending NGN."
+   		}
+   ]
+},{
+  "title": "Models",
+  "items": [{
+	      "name": "model_overview",
+	      "title": "Model Overview",
+	      "description": "Logical application components and data models. Often called 'Business Logic' objects."
    		}
    ]
 },{
