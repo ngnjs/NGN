@@ -1,3 +1,7 @@
+# Submitting Issues
+
+Please remember to search the issues before posting a new on.
+
 # Contributing to NGN
 
 If you are interested in contributing to NGN, please
