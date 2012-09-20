@@ -31,14 +31,19 @@ require('harmony-reflect');
  * Wrap a model object with a harmony proxy.
  * @param {NGN.model.Model}
  */
-module.exports = function(modelObj){
+var createProxy = function(modelObj){
 	
 	return Proxy(modelObj,{
 		// GET trap
 		get: function(obj,prop){
-
 			// If the object property references a method, bind it.
 			if (typeof obj[prop] === 'function') {
+				if (this.refs[prop] !== undefined){
+					var val = this.refs[prop].t === Date 
+												? new Date(this.refs[prop].v)
+												: new RegExp(this.refs[prop].v);
+					return val;
+				}	
 				return obj[prop].bind(obj);
 			}
 			
@@ -50,20 +55,19 @@ module.exports = function(modelObj){
 			// Support the nodejs inspector
 			else if (prop == 'inspect')
 				return this.inspect(obj);
-	
+				
 			// Return the property for the object, proxy, or undefined.
 			return obj[prop];
 		},
 		
 		// SET trap
 		set: function(obj,prop,value){
-			
 			var me = this;
 			
 			// Create an array proxy for any array values
 			if (value instanceof Array) {
-				if (obj[prop] == undefined)
-					me.fireEvent({warn:'Observed model arrays are slightly different from normal arrays.'})
+				//if (obj[prop] == undefined)
+				//	me.fireEvent({warn:'Observed model arrays are slightly different from normal arrays.'})
 				var _array = value;
 				value = Proxy(value,{
 					get: function(_obj, name){
@@ -87,12 +91,12 @@ module.exports = function(modelObj){
 								case 'pop':
 									var tmp = _obj.slice(0)
 									var val = tmp[tmp.length-1];
-									delete _obj[_obj.length-1];
+									_obj.pop();
 									var delta = {
 										type: 'update',
 										property: prop,
 										array: {
-											index: 0,
+											index: tmp.length-1,
 											value: val,
 											action: 'delete'
 										}
@@ -145,7 +149,7 @@ module.exports = function(modelObj){
 						return _obj[name];
 					},
 					deleteProperty: function(target,name){
-						console.log('delete array'.blue)
+						//console.log('delete array'.blue)
 						var delta = {
 							type: 'update',
 							property: prop,
@@ -157,10 +161,10 @@ module.exports = function(modelObj){
 						me.fireEvent(delta);
 					},
 					enumerate: function(){
-						console.log('enumerate'.yellow);
+						//console.log('enumerate'.yellow);
 						return _obj;
 					},
-					set: function(_obj, name, val){
+					set: function(_obj, name, val){				
 						if (!isNaN(name)){
 							var tmp = _obj.slice(0);
 							tmp[name] = val;
@@ -168,14 +172,17 @@ module.exports = function(modelObj){
 								type: 'update',
 								property: prop,
 								array: {
-									value: val,
+									oldValue: null,
+									value: tmp[name],
 									index: parseInt(name),
 									action: _obj[name] == undefined ? 'add' : 'update'
 								}
 							}
+							if (delta.array.action == 'update')
+								delta.array.oldValue = _obj[name];
 							_obj[name] = val;
 							me.fireEvent(delta);
-						} else
+						} else 
 							_obj[name] = val;
 					},
 					inspect: function(_obj){
@@ -183,13 +190,85 @@ module.exports = function(modelObj){
 						return require('util').inspect(_obj);
 					}
 				});
+			} else if (value instanceof Date){
+				//console.log('set date'.magenta,prop,value);
+				
+				var me = this;
+				
+				var oldValue = this.refs[prop] == undefined ? undefined : new Date(this.refs[prop].v);
+			
+				this.refs[prop] = {
+					t: Date,
+					v: value.toJSON()
+				};
+				
+				var _array = value;
+				value = Proxy(Date,{
+					get: function(_obj, _prop){
+						//console.log('------------------&gt;&gt;&gt;&gt;'.green,prop.red,_prop);
+						var tmp = new Date(me.refs[prop].v);
+					
+						if (typeof tmp[_prop] === 'function'){
+							if (['constructor','valueOf','toString'].indexOf(_prop) &lt; 0){
+								//TODO: Need to capture parameters
+								/*
+								var x = tmp[_prop].bind(tmp,2015);
+																console.log(&quot;:::::::::::::&quot;.blue);
+																console.log(new Date(x()),_prop);
+																console.log(tmp);*/
+								modelObj.fireWarning('&quot;'+_prop+'&quot; is not directly supported with this version of change management. Please see the documentation for instructions.');
+								return tmp[_prop].bind(tmp);
+							} else
+								return _obj[_prop].bind(_obj);
+						}
+						if (_prop == 'name')
+							return Date[_prop];
+							
+						if (_prop == 'inspect')
+							return require('util').inspect(tmp);
+							
+						return tmp;
+					},
+					set: function(_obj, _prop, _value){
+						//console.log('+++++'.cyan,_prop,_value);
+						var tmp = new Date(me.refs[prop].v);
+						
+					},
+					has: function(target,name){
+						return Object.prototype.hasOwnProperty.call(target,name);
+					},
+					hasOwnProperty: function(target,name){
+						return Object.prototype.hasOwnProperty.call(target,name);
+					},
+					defineProperty: function(target,name,dsc){
+						return Object.defineProperty(target,name,dsc);
+					},
+					getOwnPropertyNames: function(target) {
+						console.log('TEST');
+						return Object.getOwnPropertyNames(target);
+					},
+					getOwnPropertyDescriptor: function(target,name){
+						switch(name){
+							case 'hasOwnProperty':
+								return {value: this.hasOwnProperty, configurable: true};
+							default:
+								return Reflect.getOwnPropertyDescriptor(target, name);
+						}
+					}
+				});
+			} else if (value instanceof RegExp){
+				value = value.source();
+				this.refs[prop] = {
+					t: RegExp,
+					v: value
+				};
 			}
 			
 			// Handle rollback variable requests
 			if (prop.split('::')[0] == '___rollback'){
 				prop = prop.replace('___rollback::','');
 				obj[prop] = value;
-				return;				
+				return;
 			}
 	
 			var delta = {
@@ -199,10 +278,12 @@ module.exports = function(modelObj){
 			};
 			
 			if (delta.type == 'update')
-				delta.oldValue = obj[prop];
+				delta.oldValue = oldValue || obj[prop];
 			
-			this.fireEvent(delta);
-			obj[prop] = value;
+			if (this.fireBeforeEvent(delta)){
+				this.fireEvent(delta);
+				obj[prop] = value;
+			}
 		},
 		deleteProperty: function(_obj, prop){
 			if (prop.split('::')[0] == '___rollback'){
@@ -211,10 +292,12 @@ module.exports = function(modelObj){
 				return;
 			}
 			if (prop !== 'changelog'){
+				if (this.refs[prop])
+					var	oldValue = this.refs[prop].t === Date ? new Date(this.refs[prop].v) : new RegExp(this.refs[prop].v);
 				var delta = {
 					type: 'delete',
 					property: prop,
-					oldValue: _obj[prop]
+					oldValue: oldValue || _obj[prop]
 				};
 				delete _obj[prop];
 				this.fireEvent(delta);
@@ -240,10 +323,22 @@ module.exports = function(modelObj){
 			return undefined;
 		},
 		
+		fireBeforeEvent: function(e) {
+			if (e.hasOwnProperty('warn'))
+				modelObj.fireWarning(e['warn']);
+			else {
+				return modelObj.onBeforeChange(e);
+			}
+			return true;
+		},
+		
 		// Save original model values
 		originalValues: {},
-		changelog: []
+		changelog: [],
+		refs: {}
 	});
-};</pre>
+};
+
+module.exports = createProxy;</pre>
 </body>
 </html>
