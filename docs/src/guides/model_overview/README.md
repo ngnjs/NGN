@@ -57,8 +57,8 @@ change management functionality.
 
 ## Change Management
 
-One of the powerful features NGN models provide are a capability to listen for and intercept change events.
-Listening for a change involves using the #on method of a model. For example,
+One of the powerful features NGN models provide is a capability to listen for and intercept change events.
+Listening for a change involves using the __#on__ method of a model. For example,
 	person.on('change',function(changeObject){
 		console.log(changeObject);
 	});
@@ -75,7 +75,7 @@ The code above will dump a JSON object to the console. A change object contains 
 						oldValue:	<any>				// The prior value of the array index. Only exists when action = edit/delete.
 					}
 	}
-Using th example, if the person's name is really Jane Doe, then setting `person.firstName = "Jane";`
+Using the example, if the person's name is really Jane Doe, then setting `person.firstName = "Jane";`
 would fire the change event, passing the following changeObject:
 	{
 		property: 	'firstName',
@@ -85,11 +85,11 @@ would fire the change event, passing the following changeObject:
 	}
 Additionally, models automatically create an event for each property. In other words, it is possible
 to listen for a specific event:
-	person.on('changeFirsName', function(changeObject){
+	person.on('changeFirstName', function(changeObject){
 		console.log('First name changed from '+changeObject.oldValue+' to '+changeValue.value);
 	});
 The generated events are created by appending the word `change` to the capitalized attribute name, i.e.
-`change`+`FirsName`.
+`change`+`FirstName`.
 
 Additionally, a `beforeChange` event exists. Like `change`, a unique `beforeChange` event is also created
 for each data attribute of the model. The `beforeChange` event works in the same manner. It can be overridden
@@ -101,7 +101,7 @@ the `getChangeLog()` method. This returns an ordered array of change objects, al
 of how the object has changed since it was saved.
 
 There is also a `rollback()` method, which is essentially a big _undo_ command. By default, this reverts the
-model to it's prior state by reversing the last change. The method accepts a number, allowing applications
+model to its prior state by reversing the last change. The method accepts a number, allowing applications
 to undo more than one change at a time. To clear changes, a `-1` should be passed, as defined in the documentation.
 
 There is no _redo_ method at this time, so all rollbacks should be done with caution.
@@ -128,7 +128,7 @@ NGN masks the complexities of managing change of an array by providing a wrapper
 
 **RegExp Gotchas:** No Known!
 
-Regular expressions do have som known problems with direct proxies, but NGN provides a wrapper function
+Regular expressions do have some known problems with direct proxies, but NGN provides a wrapper function
 around regular expressions, which makes them behave as expected.
 
 **Date Gotchas:** Update methods don't work.
@@ -162,17 +162,17 @@ when the date is set to 1/1/1979.
 
 ## Data Validation
 
-Models support dataÂ validation using the #addValidator method. There are several built in validation
+Models support data validation using the __#addValidator__ method. There are several built in validation
 utilities, including basic matching (i.e. String == String), Regular Expression pattern matching, enumeration,
 and custom validation functions.
 
 ## Associations: Related Models
 
-Sometimes a model needs to contain nested models as properties of it's own. For example, a `Group` may contain
+Sometimes a model needs to contain nested models as properties of its own. For example, a `Group` may contain
 multiple `Person` models. NGN identifies relationship between models through associations (NGN.model.data.Association).
 
-Assocations allow developers to provide relationship rules, such as cardinality and referential integrity. If these
-terms sound like relational database speak, that's because it is. Since many applications maintain relationships
+Assocations allow developers to provide relationship rules, such as cardinality and referential integrity. If this 
+sounds like relational database speak, that's because it is. Since many applications maintain relationships
 between different entities, NGN has employed a type of modeling capable of enforcing these associations. This does
 not mean an application must use a relational database. NGN natively supports several NoSQL data stores.
 
