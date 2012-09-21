@@ -53,29 +53,6 @@ describe('NGN.model.Model', function(){
 		
 	});
 	
-	it('NUMBER: Create, update, and delete data property',function(done){
-		
-		m3.on('change',function(d){
-			if (d.type == 'create'){
-				d.property.should.equal('test');
-				d.value.should.equal(1);
-			} else if (d.type == 'update') {
-				d.property.should.equal('test');
-				d.value.should.equal(2);
-				delete m3.test;
-			} else {
-				d.property.should.equal('test');
-				done();
-			}
-		});
-		
-		// Test String
-		m3.test = 1;
-		//yes.should.equal(m3.test instanceof Number);
-		m3.test += 1;
-		
-	});
-	
 	it('ARRAY: Create, update, and delete data property',function(done){
 		
 		m2.on('change',function(d){
@@ -105,22 +82,16 @@ describe('NGN.model.Model', function(){
 		
 	});
 	
-	it('DATE: Create, update, and delete data property',function(done){
+	it('NUMBER: Create, update, and delete data property',function(done){
 		
-		var tmp = new Date();
-		
-		m4.on('change',function(d){
-			console.log(d);
+		m3.on('change',function(d){
 			if (d.type == 'create'){
-	console.log('bp1'.red);			
 				d.property.should.equal('test');
-				d.value.should.equal(tmp);
+				d.value.should.equal(1);
 			} else if (d.type == 'update') {
-				console.log('bp2'.magenta);
 				d.property.should.equal('test');
-				d.value.should.equal(tmp.setFullYear(2014));
-				console.log('bp'.magenta);
-				delete m4.test;
+				d.value.should.equal(2);
+				delete m3.test;
 			} else {
 				d.property.should.equal('test');
 				done();
@@ -128,32 +99,78 @@ describe('NGN.model.Model', function(){
 		});
 		
 		// Test String
-		m4.test = tmp;
-		yes.should.equal(m4.test instanceof Date);
-		m4.test.setFullYear(2014);
+		m3.test = 1;
+		//yes.should.equal(m3.test instanceof Number);
+		m3.test += 1;
 		
 	});
 	
+	it('DATE: Create, update, and delete data property',function(done){
+		
+		var tmp = new Date(2000,1,1);
+		m4.test = tmp;
+		yes.should.equal(m4.test instanceof Date);
+		yes.should.equal(m4.test.toJSON() == tmp.toJSON());
+		
+		var x = m4.test;
+		x.setFullYear(1999);
+		m4.test = x;
+		
+		yes.should.equal(m4.test.toJSON() == new Date(1999,1,1).toJSON());
+		
+		delete m4.test;
+		
+		yes.should.equal(m4.test == undefined);
+		
+		var cl = m4.getChangeLog();
+		
+		cl.length.should.equal(3);
+		
+		cl[0].property.should.equal('test');
+		cl[1].property.should.equal('test');
+		cl[2].property.should.equal('test');
+		
+		cl[0].type.should.equal('create');
+		cl[1].type.should.equal('update');
+		cl[2].type.should.equal('delete');
+		
+		cl[0].value.toJSON().should.equal(tmp.toJSON());
+		cl[1].oldValue.toJSON().should.equal(tmp.toJSON());
+		cl[1].value.toJSON().should.equal(new Date(1999,1,1).toJSON());
+		cl[2].oldValue.toJSON().should.equal(new Date(1999,1,1).toJSON());
+		
+		m4.rollback();
+		
+		yes.should.equal(m4.test !== undefined);
+		
+		m4.getChangeLog().length.should.equal(2);
+		
+		done();
+	});
+	
+	/*
 	it('REGEX: Create, update, and delete data property',function(done){
 		
 		m5.on('change',function(d){
 			if (d.type == 'create'){
 				d.property.should.equal('test');
-				yes.should.equal(regexSame(d.value,/.*/gi));
+				yes.should.equal(regexSame(d.value,/ab/gi));
+				done();
 			} else if (d.type == 'update') {
 				d.property.should.equal('test');
-				yes.should.equal(regexSame(d.value,/(a|b)*/gi));
+				yes.should.equal(regexSame(d.value,/(a|b)/gi));
 				delete m5.test;
 			} else {
 				d.property.should.equal('test');
 				done();
 			}
 		});
-		
+	
 		// Test String
-		m5.test = /.*/gi;
+		m5.test = /ab/gi;
 		yes.should.equal(m5.test instanceof RegExp);
-		m5.test = /(a|b)*/gi;
+		m5.test = /(a|b)/gi;
 		
-	});
+	});	
+	*/
 });
