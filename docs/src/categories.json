@@ -19,6 +19,11 @@
 			"classes": [
 				"NGN.web.*"
 			]
+		},{
+			"name": "Models",
+			"classes": [
+				"NGN.model.*"
+			]
 		}]
 	},{
 		"name": "Extended Library",
