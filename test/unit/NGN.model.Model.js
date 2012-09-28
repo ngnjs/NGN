@@ -10,6 +10,7 @@ describe('NGN.model.Model', function(){
 	var m3 = new __NGN.model.Model();
 	var m4 = new __NGN.model.Model();
 	var m5 = new __NGN.model.Model();
+	var m6 = new __NGN.model.Model();
 	
 	function regexSame(r1, r2) {
 	    if (r1 instanceof RegExp && r2 instanceof RegExp) {
@@ -109,6 +110,7 @@ describe('NGN.model.Model', function(){
 		
 		var tmp = new Date(2000,1,1);
 		m4.test = tmp;
+		console.log('\nIgnore warning (expected behavior due to direct proxy implementation in V8).'.cyan)
 		yes.should.equal(m4.test instanceof Date);
 		yes.should.equal(m4.test.toJSON() == tmp.toJSON());
 		
@@ -148,18 +150,39 @@ describe('NGN.model.Model', function(){
 		done();
 	});
 	
-	/*
+	it('BOOLEAN: Create, update, and delete data property',function(done){
+		
+		m6.on('change',function(d){
+			if (d.type == 'create'){
+				d.property.should.equal('test');
+				d.value.should.equal(true);
+			} else if (d.type == 'update') {
+				d.property.should.equal('test');
+				d.value.should.equal(false);
+			} else {
+				d.property.should.equal('test');
+				done();
+			}
+		});
+		
+		// Test Boolean
+		m6.test = true;
+		true.should.equal(typeof m6.test === 'boolean');
+		true.should.equal(m6.test);
+		m6.test = false;
+		delete m6.test;
+		
+	});
+	
 	it('REGEX: Create, update, and delete data property',function(done){
 		
 		m5.on('change',function(d){
 			if (d.type == 'create'){
 				d.property.should.equal('test');
 				yes.should.equal(regexSame(d.value,/ab/gi));
-				done();
 			} else if (d.type == 'update') {
 				d.property.should.equal('test');
 				yes.should.equal(regexSame(d.value,/(a|b)/gi));
-				delete m5.test;
 			} else {
 				d.property.should.equal('test');
 				done();
@@ -169,8 +192,9 @@ describe('NGN.model.Model', function(){
 		// Test String
 		m5.test = /ab/gi;
 		yes.should.equal(m5.test instanceof RegExp);
-		m5.test = /(a|b)/gi;
-		
-	});	
-	*/
+		//m5.test = /(a|b)/gi;
+		//delete m5.test;
+		done();
+	});
+	
 });
