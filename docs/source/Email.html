@@ -34,12 +34,9 @@ var Class = Base.extend({
 		var me = this;
 		
 		config = config || {};
-		
 		config.type = 'Email';
-		
-		Class.super.constructor.call( this, config );
-		
-		Object.defineProperties(this,{
+		config.idAttribute = 'address';
+		config.fields = {
 			
 <span id='NGN-model-Email-cfg-address'>			/**
 </span>			 * @cfg {String} address
@@ -51,25 +48,9 @@ var Class = Base.extend({
 			 * The email address (i.e. me@domain.com).
 			 */
 			address: {
-			    enumerable: true,
-			    get:		function(){
-						    	return this.id;
-						    },
-				set:		function(value){
-								this.id = value;
-								this.validSyntax = __NGN.pattern.isEmail(this.id);
-							}
-			},
-			
-<span id='NGN-model-Email-property-validSyntax'>			/**
-</span>			 * @property {Boolean}
-			 * Indicates the address is valid syntax
-			 * @readonly
-			 */
-			validSyntax: {
-				value:		false,
-				enumerable:	true,
-				writable:	true
+			    'default': 	config.address || null,
+			    pattern:	__NGN.pattern.email,
+			    required:	true
 			},
 			
 <span id='NGN-model-Email-cfg-valid'>			/**
@@ -82,9 +63,7 @@ var Class = Base.extend({
 			 * @readonly
 			 */
 			valid: {
-				value:		__NGN.coalesce(config.valid,false),
-				enumerable:	true,
-				writable:	true
+				'default':	__NGN.coalesce(config.valid,false)
 			},
 			
 <span id='NGN-model-Email-property-validationCode'>			/**
@@ -93,26 +72,30 @@ var Class = Base.extend({
 	         * @readonly  
 			 */
 			validationCode: {
-                value:       config.validationCode || null,
-			    enumerable:  true,
-			    writable:    false
+                'default': 	config.validationCode || null
 			},
 			
 			lastValidated: {
-				value:		config.lastValidated || null,
-				enumerable:	true,
-				writable:	true
+				'default':	config.lastValidated || null,
+				type:		Date
 			}
-		});
+		}
 		
-		this.id = config.address || config.id;
+		config.virtuals = {
+<span id='NGN-model-Email-property-validSyntax'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates the address is valid syntax
+			 * @readonly
+			 */
+			validSyntax: {
+				enumerable:	true,
+				get:		function(){
+								return __NGN.pattern.isEmail(this.address);
+							}
+			},
+		};
 		
-		this.nonDataProperties.push('validSyntax');
-		this.nonDataProperties.push('address');
-		
-		this.validSyntax = __NGN.pattern.isEmail(this.id);
-		
-		this.addValidator('id',__NGN.pattern.email);
+		Class.super.constructor.call( this, config );
 		
 	},
 	

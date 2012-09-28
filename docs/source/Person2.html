@@ -15,8 +15,7 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js">var crypto      = require('crypto'),
-    Base 		= require('./Model');
+  <pre class="prettyprint lang-js">var Base 		= require('./Model');
 
 <span id='NGN-model-Person'>/**
 </span> * @class NGN.model.Person
@@ -100,34 +99,9 @@ var Class = Base.extend({
 		
 		config.type = 'Person';
 		
-		Object.defineProperties(this,{
+		config.fields = {
 			
-<span id='NGN-model-Person-cfg-type'>			/**
-</span>			 * @cfg {String} [type=Person]
-			 * The model type.
-			 */
-			
-            _primaryemail: {
-                value:          null,
-                writable:       true,
-                enumerable:     false
-            },
-            
-<span id='NGN-model-Person-cfg-id'>            /**
-</span>             * @cfg {String} id
-             * The unique ID of the person.
-             */
-<span id='NGN-model-Person-property-id'>            /**
-</span>             * @property {String} [id=null]
-             * The unique ID of the person.
-             */
-			id: {
-                value:			config.id || null,
-                enumerable:     true,
-                writable:		true
-            },
-            
-<span id='NGN-model-Person-cfg-email'>            /**
+<span id='NGN-model-Person-cfg-email'>			/**
 </span>             * @cfg {String[]/MODEL.Email[]} email
              * The email account(s) associated with the person.
              */
@@ -136,9 +110,7 @@ var Class = Base.extend({
              * The primary email account of the person.
              */
             email: {
-                value:			config.email || [],
-                enumerable:     true,
-                writable:		true
+                'default':		config.email || []
             },
             
 <span id='NGN-model-Person-cfg-image'>            /**
@@ -150,9 +122,7 @@ var Class = Base.extend({
              * Represents a profile picture. This can be a path or URL.
              */
             image: {
-            	value:			config.image || null,
-                enumerable:     true,
-                writable:		true
+            	'default':		config.image || null
             },
             
 <span id='NGN-model-Person-cfg-displayName'>            /**
@@ -164,9 +134,7 @@ var Class = Base.extend({
              * The name by which the person prefers to be referred to as. 
              */
             displayName: {
-                value:			config.displayname || null,
-                enumerable:     true,
-                writable:		true
+                'default':		config.displayname || null
             },
 			
 <span id='NGN-model-Person-cfg-firstName'>			/**
@@ -178,9 +146,7 @@ var Class = Base.extend({
 			 * Given name.
 			 */
 			firstName: {
-				value:		config.firstName || 'Unknown',
-				enumerable:	true,
-				writable:	true
+				'default':	config.firstName || 'Unknown'
 			},
 			
 <span id='NGN-model-Person-cfg-lastName'>			/**
@@ -192,9 +158,7 @@ var Class = Base.extend({
 			 * Surname
 			 */
 			lastName: {
-				value:		config.lastName || 'Unknown',
-				enumerable:	true,
-				writable:	true
+				'default':	config.lastName || 'Unknown'
 			},
 			
 <span id='NGN-model-Person-cfg-middleName'>			/**
@@ -206,9 +170,7 @@ var Class = Base.extend({
 			 * Middle name.
 			 */
 			middleName: {
-				value:		config.middleName || null,
-				enumerable:	true,
-				writable:	true
+				'default':	config.middleName || null
 			},
 			
 <span id='NGN-model-Person-cfg-suffix'>			/**
@@ -220,9 +182,7 @@ var Class = Base.extend({
 			 * Name suffix (i.e. III)
 			 */
 			suffix: {
-				value:		config.suffix || null,
-				enumerable:	true,
-				writable:	true
+				'default':	config.suffix || null
 			},
 			
 <span id='NGN-model-Person-cfg-gender'>			/**
@@ -234,9 +194,8 @@ var Class = Base.extend({
 			 * Gender of the person
 			 */
 			gender: {
-				value:		config.gender || null,
-				enumerable:	true,
-				writable:	true
+				'default':	config.gender || null,
+				pattern:	/m|f/
 			},
 			
 <span id='NGN-model-Person-cfg-dob'>			/**
@@ -248,28 +207,7 @@ var Class = Base.extend({
 			 * Date of Birth
 			 */
 			dob: {
-				value:		config.dob || null,
-				enumerable:	true,
-				writable:	true
-			},
-			
-<span id='NGN-model-Person-property-age'>			/**
-</span>			 * @property {Number} age
-			 * Generated using #dob
-			 * @readonly
-			 */
-			age: {
-				enumerable:	true,
-				get:		function(){
-								if (!this.dob)
-									return null;
-								var today = new Date(),
-									age = today.getFullYear() - this.dob.getFullYear(),
-							    	m = today.getMonth() - this.dob.getMonth();
-							    if (m &lt; 0 || (m === 0 &amp;&amp; today.getDate() &lt; this.dob.getDate()))
-							        age--;
-							    return age;
-							}
+				'default':	config.dob || null
 			},
 			
 <span id='NGN-model-Person-cfg-login'>			/**
@@ -281,17 +219,38 @@ var Class = Base.extend({
 			 * The login used to authenticate the user.
 			 */
 			login: {
-				value:		config.login || null,
-				enumerable:	false,
-				writable:	false
+				'default':	config.login || null
 			}
-			
-		});
+		}
+		
+<span id='NGN-model-Person-cfg-id'>		/**
+</span>         * @cfg {String} id
+         * The unique ID of the person.
+         */
+<span id='NGN-model-Person-property-id'>        /**
+</span>         * @property {String} [id=null]
+         * The unique ID of the person.
+         */
+		
+		config.virtuals = {
+<span id='NGN-model-Person-property-age'>			/**
+</span>			 * @property {Number} age
+			 * Generated using #dob
+			 * @readonly
+			 */
+			age: function(){
+				if (!this.dob)
+					return null;
+				var today = new Date(),
+					age = today.getFullYear() - this.dob.getFullYear(),
+			    	m = today.getMonth() - this.dob.getMonth();
+			    if (m &lt; 0 || (m === 0 &amp;&amp; today.getDate() &lt; this.dob.getDate()))
+			        age--;
+			    return age;
+			}
+		}
 		
 		Class.super.constructor.call( this, config );
-		
-		// Data Validators
-		this.addValidator('gender',/m|f/);
 		
 		return this.EXTENDEDMODEL;
 	}

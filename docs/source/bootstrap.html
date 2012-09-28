@@ -47,7 +47,7 @@ require('wrench').readdirSyncRecursive(__dirname).forEach(function( file ){
     	&amp;&amp; file.indexOf('.js') &gt;= 0) {
     	
     	// Handle fn lib
-    	if (file.split(p.sep)[0] === 'fn'){
+    	if (file.split(p.sep)[0] === '_fn'){
     		var _fn = require(p.join(__dirname,file));
     		for (var obj in _fn){
     			if (_fn.hasOwnProperty(obj)) {
@@ -82,7 +82,7 @@ var NGN = require('./NGN');
 global.__NGN = new NGN({namespace:namespace});
 
 // Create Extension &amp; Pointers
-global.__NGNX = __NGN.ngnx || {};
+global.__NGNX = __NGN._ngnx || {};
 Object.defineProperty(global,'NGNX',{
 	enumerable:	true,
 	get:		function(){ return global.__NGNX; }
@@ -95,7 +95,7 @@ Object.defineProperty(global,'ngnx',{
 
 // Remove redundant namespace for NGNX
 if (global.__NGN.ngnx !== undefined)
-	delete global.__NGN.ngnx;
+	delete global.__NGN._ngnx;
 
 // Create Models
 global.__NGN.OBJECT_PROXY_SUPPORT = INCLUDE_MODELS;
@@ -286,12 +286,17 @@ module.exports = exports = function( config ) {
 // Fire a warning if Proxies aren't supported.
 //if (!INCLUDE_MODELS)
 //	console.warn('The MODEL library requires object proxies.\nTo enable object proxies, launch the script with the following command:\n'.cyan.inverse,(('node '+'--harmony_proxies '.bold+process.mainModule.filename).yellow));
-console.log('');
-console.info(('|      Running '.grey.inverse.underline+('NGN v'.bold+__NGN.version.bold).bold.grey.inverse.underline+' on '.grey.inverse.underline+(process.title+' '+process.version+'      |').grey.inverse.bold.underline));
+var str = '|      Running '+'NGN v'.bold+__NGN.version.bold+' on '+(process.title+' '+process.version+'      |').bold;
+var str2 = '';
+var _l = '|      Running '+'NGN v'+__NGN.version+' on '+process.title+' '+process.version+'      |';
+for (var _i=0;_i&lt;_l.length;_i++)
+	str2 += ' ';
+console.log(str2.grey.underline);
+console.info(str.grey.inverse.underline);
 console.info(('Using:').grey.bold);
 for (var v in process.versions)
 	console.info((' - '+v+' v'+process.versions[v]).grey.bold);
-console.log('                                                        '.underline.grey)
-console.log('|                    Application                       |'.underline.grey.inverse)</pre>
+console.log('                                                        '.underline.cyan)
+console.log('|                    Application                       |'.underline.cyan.inverse)</pre>
 </body>
 </html>

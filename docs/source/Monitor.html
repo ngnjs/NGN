@@ -15,8 +15,9 @@
   </script>
 </head>
 <body onload="prettyPrint(); highlight();">
-  <pre class="prettyprint lang-js"><span id='NGN-model-ModelObserver'>/**
-</span> * @class NGN.model.ModelObserver
+  <pre class="prettyprint lang-js">require('harmony-reflect');
+<span id='NGN-model-data-Monitor'>/**
+</span> * @class NGN.model.data.Monitor
  * This is actually a method used to wrap a harmony proxy around a NGN.model.Model object.
  * This class **will change**. It is a polyfill for ECMAScript 6 Direct Proxies. At the
  * time of this writing, the ES6 standard has not been fully implemented by V8, though a
@@ -24,9 +25,10 @@
  * native direct proxy and weakmap support, this class will refelct those changes.
  * @abstract
  * @private
+ * @requires harmony-reflect
  */
-require('harmony-reflect');
-<span id='NGN-model-ModelObserver-method-constructor'>/**
+
+<span id='NGN-model-data-Monitor-method-constructor'>/**
 </span> * @constructor
  * Wrap a model object with a harmony proxy.
  * @param {NGN.model.Model}
@@ -63,7 +65,6 @@ var createProxy = function(modelObj){
 		// SET trap
 		set: function(obj,prop,value){
 			var me = this;
-			
 			// Create an array proxy for any array values
 			if (value instanceof Array) {
 				//if (obj[prop] == undefined)
@@ -257,7 +258,6 @@ var createProxy = function(modelObj){
 					}
 				});
 			} else if (value instanceof RegExp){
-				value = value.source();
 				this.refs[prop] = {
 					t: RegExp,
 					v: value
@@ -270,19 +270,27 @@ var createProxy = function(modelObj){
 				obj[prop] = value;
 				return;
 			}
-	
+			
 			var delta = {
 				type: obj[prop] == undefined ? 'create' : 'update',
 				property: prop,
 				value: _array || value
 			};
+	
+			if (delta.type == 'create' &amp;&amp; prop == 'id') {
+				if (modelObj.idAttribute !== undefined)
+					delta.property = modelObj.idAttribute;
+				delta.type = 'update';
+			}
 			
 			if (delta.type == 'update')
 				delta.oldValue = oldValue || obj[prop];
 			
-			if (this.fireBeforeEvent(delta)){
-				this.fireEvent(delta);
-				obj[prop] = value;
+			if (modelObj.beforeDataChange(delta)) {
+				if (this.fireBeforeEvent(delta)){
+					this.fireEvent(delta);
+					obj[prop] = value;
+				}
 			}
 		},
 		deleteProperty: function(_obj, prop){
@@ -317,6 +325,14 @@ var createProxy = function(modelObj){
 			if (e.hasOwnProperty('warn'))
 				modelObj.fireWarning(e['warn']);
 			else {
+				switch (e.type){
+					case 'create':
+						modelObj.fields[e.property] = modelObj.fields[e.property] || {};
+						break;
+					case 'delete':
+						delete modelObj.fields[e.property];
+						break;
+				}
 				this.changelog.push(e);
 				modelObj.onChange(e);
 			}

@@ -42,11 +42,11 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-			/*
-			 * @cfg {String} [cardinatility='1:N']
+<span id='NGN-model-data-Association-cfg-cardinatility'>			/**
+</span>			 * @cfg {String} [cardinatility='1:N']
 			 * The cardinatily of the relationship from parent to child.
 			 * 
-			 * The relationship is defined as a &lt;parent&gt;:&lt;child&gt; pair, 
+			 * The relationship is defined as a _&lt;parent&gt;_:_&lt;child&gt;_ pair, 
 			 * based on the parent --&gt; child relationship.
 			 * 
 			 * Valid values are:
@@ -55,30 +55,32 @@ var Class = Base.extend({
 			 * * **1:0,1**: One-to-One with optional child. Example: `person -&gt; deathDate`.
 			 * * **1:N**: One-to-Many, optional child. Example: `person -&gt; ownedVehicle`.
 			 * * **1:1,N**: One-to-Many, minimum one child. Example: `person -&gt; lung`.
+			 * * **1:min,max**: One-to-Arbitrary. `min` and `max` can be any non-negative integer.
+			 * For example, if a model must have at least 2 child models but no more than 4, the
+			 * cardinality would be 1:2,4
 			 */
-			/*cardinality: {
+			cardinality: {
 				value:		config.cardinality || '1:N',
 				enumerable: true,
 				writable:	true
-			},*/
+			},
 			
-			/*
-			 * @cfg {NGN.model.Model}
-			 * The parent model associated to children.
+<span id='NGN-model-data-Association-cfg-parents'>			/**
+</span>			 * @cfg {NGN.model.Model}
+			 * The parent model(s) associated to child(ren).
 			 */
-			/*parent: {
+			parents: {
 				value:		config.parent,
 				enumerable:	true,
 				writable:	true
-			},*/
+			},
 			
-<span id='NGN-model-data-Association-cfg-child'>			/**
-</span>			 * @cfg {NGN.model.Model}
-			 * The child model associated to the parent.
-			 * @required
+<span id='NGN-model-data-Association-cfg-children'>			/**
+</span>			 * @cfg {NGN.model.Model/NGN.model.Model[]}
+			 * The child model(s) associated to the parent(s).
 			 */
-			child: {
-				value:		config.child,
+			children: {
+				value:		config.children,
 				enumerable:	true,
 				writable:	true
 			},
@@ -89,9 +91,8 @@ var Class = Base.extend({
 			 * the following action is taken in accordance to #cardinality rules:
 			 * 
 			 * * **cascade**: Delete all parents referencing the child.
-			 * * **limit**: Delete only this parent.
 			 * * **restrict**: Do not allow removal of the parent.
-			 * * **none**: Ignore the parent.
+			 * * **setnull**: Set the parent foreign key/id to `null`.
 			 */
 			onChildDelete: {
 				value:		config.onChildDelete || 'none',
