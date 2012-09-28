@@ -4,7 +4,8 @@
  * and add each file it finds as a test.
  */
 var directories = [
-	'./test/core'
+	'./test/core',
+	'./test/unit'
 ]
 
 // Requirements
