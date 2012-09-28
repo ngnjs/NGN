@@ -8,13 +8,12 @@ var fs	 = require('fs'),
 	
 // Generate docs
 module.exports.build = function(argv) {
-
 	var CREATE 			= argv['create'] || null,
 		PUBLISH			= argv['publish'] || null,
 		CFG				= argv['configuration'] || p.join(process.cwd(),'ngn.config.json'),
 		OUT_DIR			= argv['output'] || p.join(cwd,'docs','manual'),
 		HELP			= argv['help'] || argv['h'] || null,
-		pkg				= require('../../package.json');
+		pkg				= require(require('path').resolve('./package.json'));
 
 	console.log(' >> Cleaning up existing docs...'.grey);
 	dir.rmdirSyncRecursive(OUT_DIR.toString().trim(), true);
