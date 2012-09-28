@@ -15,10 +15,17 @@ require('colors');
  */
 var CREATE 			= argv['create'] || null,
 	PUBLISH			= argv['publish'] || null,
+	VERSION			= argv['version'] || argv['v'] || null,
 	CFG				= argv['configuration'] || p.join(process.cwd(),'ngn.config.json'),
 	OUT_DIR			= argv['output'] || p.join(cwd,'docs','manual'),
 	HELP			= argv['help'] || argv['h'] || null,
 	RUN				= argv._[0] || null;
+
+// Version Request
+if (VERSION) {
+	pkg = require(require('path').resolve('./package.json'));
+	console.log('NGN v'.bold+pkg.version.bold);
+}
 
 // Create things
 if (CREATE) {
