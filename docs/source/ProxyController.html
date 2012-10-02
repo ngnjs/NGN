@@ -209,12 +209,15 @@ var Class = Base.extend({
 						
 						req.form.method = req.form.method || 'ALL';
 						
-						if (req.form.pattern == undefined || req.form.substitute == undefined) {
+						var pat = Object.keys(req.body);
+						var sub = req.body[pat];
+						
+						if (pat == undefined || sub == undefined) {
 							res.send(400,'Missing attribute: pattern and/or substitute');
 							return;
 						}
 						
-						vh.addRewriteRule(req.form.method.toUpperCase(),req.form.pattern,req.form.substitute,req.form.last,req.form.position||null);
+						vh.addRewriteRule(req.form.method.toUpperCase(),pat,sub,__NGN.coalesce(req.form.last,false),req.form.position||null);
 
 						res.send(201);
 					},
@@ -349,11 +352,13 @@ var Class = Base.extend({
 							get: proxy.host.rules.get
 						},
 						'/rule': {
-							'/:method/:index':{
-								del: proxy.host.rule.del,
-								get: proxy.host.rule.get
-							},
-							post: proxy.host.rule.post
+							'/:method': {
+								'/:index':{
+									del: proxy.host.rule.del,
+									get: proxy.host.rule.get
+								},
+								post: proxy.host.rule.post
+							}
 						}
 					},
 					post: proxy.host.post
