@@ -10,7 +10,10 @@
   <link rel="stylesheet" href="resources/css/app.css" type="text/css" />
   <link rel="stylesheet" href="resources/prettify/prettify.css" type="text/css" />
   <script type="text/javascript">
-  document.write("<link href='"+document.location.protocol+"//fonts.googleapis.com/css?family=Exo' rel='stylesheet' type='text/css' />");
+  (function(){
+    var protocol = (document.location.protocol === "https:") ? "https:" : "http:";
+    document.write("<link href='"+protocol+"//fonts.googleapis.com/css?family=Exo' rel='stylesheet' type='text/css' />");
+  })();
   </script>
 
   <script type="text/javascript" src="extjs/ext-all.js"></script>
@@ -55,11 +58,11 @@
 <h1>Application</h1>
 <div class='left-column'>
 <h3></h3>
-<div class='links'>
-<a href="#!/api/NGN" rel="NGN" class="docClass">NGN</a>
-<a href="#!/api/NGN.app.Application" rel="NGN.app.Application" class="docClass">NGN.app.Application</a>
-<a href="#!/api/NGN.app.Configuration" rel="NGN.app.Configuration" class="docClass">NGN.app.Configuration</a>
-</div>
+<ul class='links'>
+<li><a href="#!/api/NGN" rel="NGN" class="docClass">NGN</a></li>
+<li><a href="#!/api/NGN.app.Application" rel="NGN.app.Application" class="docClass">NGN.app.Application</a></li>
+<li><a href="#!/api/NGN.app.Configuration" rel="NGN.app.Configuration" class="docClass">NGN.app.Configuration</a></li>
+</ul>
 </div>
 <div class='middle-column'>
 </div>
@@ -71,34 +74,34 @@
 <h1>Main Library</h1>
 <div class='left-column'>
 <h3>Data</h3>
-<div class='links'>
-<a href="#!/api/NGN.datasource.Memory" rel="NGN.datasource.Memory" class="docClass">NGN.datasource.Memory</a>
-<a href="#!/api/NGN.datasource.MongoDB" rel="NGN.datasource.MongoDB" class="docClass">NGN.datasource.MongoDB</a>
-<a href="#!/api/NGN.datasource.Redis" rel="NGN.datasource.Redis" class="docClass">NGN.datasource.Redis</a>
-</div>
+<ul class='links'>
+<li><a href="#!/api/NGN.datasource.Memory" rel="NGN.datasource.Memory" class="docClass">NGN.datasource.Memory</a></li>
+<li><a href="#!/api/NGN.datasource.MongoDB" rel="NGN.datasource.MongoDB" class="docClass">NGN.datasource.MongoDB</a></li>
+<li><a href="#!/api/NGN.datasource.Redis" rel="NGN.datasource.Redis" class="docClass">NGN.datasource.Redis</a></li>
+</ul>
 </div>
 <div class='middle-column'>
 <h3>Web</h3>
-<div class='links'>
-<a href="#!/api/NGN.web.Client" rel="NGN.web.Client" class="docClass">NGN.web.Client</a>
-<a href="#!/api/NGN.web.Proxy" rel="NGN.web.Proxy" class="docClass">NGN.web.Proxy</a>
-<a href="#!/api/NGN.web.REST" rel="NGN.web.REST" class="docClass">NGN.web.REST</a>
-<a href="#!/api/NGN.web.Server" rel="NGN.web.Server" class="docClass">NGN.web.Server</a>
-<a href="#!/api/NGN.web.Static" rel="NGN.web.Static" class="docClass">NGN.web.Static</a>
-<a href="#!/api/NGN.web.auth.Strategy" rel="NGN.web.auth.Strategy" class="docClass">NGN.web.auth.Strategy</a>
-<a href="#!/api/NGN.web.proxy.RewriteRule" rel="NGN.web.proxy.RewriteRule" class="docClass">NGN.web.proxy.RewriteRule</a>
-<a href="#!/api/NGN.web.proxy.VirtualHost" rel="NGN.web.proxy.VirtualHost" class="docClass">NGN.web.proxy.VirtualHost</a>
-</div>
+<ul class='links'>
+<li><a href="#!/api/NGN.web.Client" rel="NGN.web.Client" class="docClass">NGN.web.Client</a></li>
+<li><a href="#!/api/NGN.web.Proxy" rel="NGN.web.Proxy" class="docClass">NGN.web.Proxy</a></li>
+<li><a href="#!/api/NGN.web.REST" rel="NGN.web.REST" class="docClass">NGN.web.REST</a></li>
+<li><a href="#!/api/NGN.web.Server" rel="NGN.web.Server" class="docClass">NGN.web.Server</a></li>
+<li><a href="#!/api/NGN.web.Static" rel="NGN.web.Static" class="docClass">NGN.web.Static</a></li>
+<li><a href="#!/api/NGN.web.auth.Strategy" rel="NGN.web.auth.Strategy" class="docClass">NGN.web.auth.Strategy</a></li>
+<li><a href="#!/api/NGN.web.proxy.RewriteRule" rel="NGN.web.proxy.RewriteRule" class="docClass">NGN.web.proxy.RewriteRule</a></li>
+<li><a href="#!/api/NGN.web.proxy.VirtualHost" rel="NGN.web.proxy.VirtualHost" class="docClass">NGN.web.proxy.VirtualHost</a></li>
+</ul>
 </div>
 <div class='right-column'>
 <h3>Models</h3>
-<div class='links'>
-<a href="#!/api/NGN.model.Email" rel="NGN.model.Email" class="docClass">NGN.model.Email</a>
-<a href="#!/api/NGN.model.Login" rel="NGN.model.Login" class="docClass">NGN.model.Login</a>
-<a href="#!/api/NGN.model.Person" rel="NGN.model.Person" class="docClass">NGN.model.Person</a>
-<a href="#!/api/NGN.model.data.Association" rel="NGN.model.data.Association" class="docClass">NGN.model.data.Association</a>
-<a href="#!/api/NGN.model.data.Manager" rel="NGN.model.data.Manager" class="docClass">NGN.model.data.Manager</a>
-</div>
+<ul class='links'>
+<li><a href="#!/api/NGN.model.Email" rel="NGN.model.Email" class="docClass">NGN.model.Email</a></li>
+<li><a href="#!/api/NGN.model.Login" rel="NGN.model.Login" class="docClass">NGN.model.Login</a></li>
+<li><a href="#!/api/NGN.model.Person" rel="NGN.model.Person" class="docClass">NGN.model.Person</a></li>
+<li><a href="#!/api/NGN.model.data.Association" rel="NGN.model.data.Association" class="docClass">NGN.model.data.Association</a></li>
+<li><a href="#!/api/NGN.model.data.Manager" rel="NGN.model.data.Manager" class="docClass">NGN.model.data.Manager</a></li>
+</ul>
 </div>
 <div style='clear:both'></div>
 </div>
@@ -106,25 +109,25 @@
 <h1>Extended Library</h1>
 <div class='left-column'>
 <h3>Web</h3>
-<div class='links'>
-<a href="#!/api/NGNX.web.ApiRequestHelper" rel="NGNX.web.ApiRequestHelper" class="docClass">NGNX.web.ApiRequestHelper</a>
-<a href="#!/api/NGNX.web.Proxy" rel="NGNX.web.Proxy" class="docClass">NGNX.web.Proxy</a>
-<a href="#!/api/NGNX.web.ProxyController" rel="NGNX.web.ProxyController" class="docClass">NGNX.web.ProxyController</a>
-<a href="#!/api/NGNX.web.WebRequestHelper" rel="NGNX.web.WebRequestHelper" class="docClass">NGNX.web.WebRequestHelper</a>
-</div>
+<ul class='links'>
+<li><a href="#!/api/NGNX.web.ApiRequestHelper" rel="NGNX.web.ApiRequestHelper" class="docClass">NGNX.web.ApiRequestHelper</a></li>
+<li><a href="#!/api/NGNX.web.Proxy" rel="NGNX.web.Proxy" class="docClass">NGNX.web.Proxy</a></li>
+<li><a href="#!/api/NGNX.web.ProxyController" rel="NGNX.web.ProxyController" class="docClass">NGNX.web.ProxyController</a></li>
+<li><a href="#!/api/NGNX.web.WebRequestHelper" rel="NGNX.web.WebRequestHelper" class="docClass">NGNX.web.WebRequestHelper</a></li>
+</ul>
 </div>
 <div class='middle-column'>
 <h3>Mail</h3>
-<div class='links'>
-<a href="#!/api/NGNX.mail.Gmail" rel="NGNX.mail.Gmail" class="docClass">NGNX.mail.Gmail</a>
-<a href="#!/api/NGNX.mail.Hotmail" rel="NGNX.mail.Hotmail" class="docClass">NGNX.mail.Hotmail</a>
-<a href="#!/api/NGNX.mail.Postmark" rel="NGNX.mail.Postmark" class="docClass">NGNX.mail.Postmark</a>
-<a href="#!/api/NGNX.mail.SES" rel="NGNX.mail.SES" class="docClass">NGNX.mail.SES</a>
-<a href="#!/api/NGNX.mail.Sendgrid" rel="NGNX.mail.Sendgrid" class="docClass">NGNX.mail.Sendgrid</a>
-<a href="#!/api/NGNX.mail.Yahoo" rel="NGNX.mail.Yahoo" class="docClass">NGNX.mail.Yahoo</a>
-<a href="#!/api/NGNX.mail.Zoho" rel="NGNX.mail.Zoho" class="docClass">NGNX.mail.Zoho</a>
-<a href="#!/api/NGNX.mail.iCloud" rel="NGNX.mail.iCloud" class="docClass">NGNX.mail.iCloud</a>
-</div>
+<ul class='links'>
+<li><a href="#!/api/NGNX.mail.Gmail" rel="NGNX.mail.Gmail" class="docClass">NGNX.mail.Gmail</a></li>
+<li><a href="#!/api/NGNX.mail.Hotmail" rel="NGNX.mail.Hotmail" class="docClass">NGNX.mail.Hotmail</a></li>
+<li><a href="#!/api/NGNX.mail.Postmark" rel="NGNX.mail.Postmark" class="docClass">NGNX.mail.Postmark</a></li>
+<li><a href="#!/api/NGNX.mail.SES" rel="NGNX.mail.SES" class="docClass">NGNX.mail.SES</a></li>
+<li><a href="#!/api/NGNX.mail.Sendgrid" rel="NGNX.mail.Sendgrid" class="docClass">NGNX.mail.Sendgrid</a></li>
+<li><a href="#!/api/NGNX.mail.Yahoo" rel="NGNX.mail.Yahoo" class="docClass">NGNX.mail.Yahoo</a></li>
+<li><a href="#!/api/NGNX.mail.Zoho" rel="NGNX.mail.Zoho" class="docClass">NGNX.mail.Zoho</a></li>
+<li><a href="#!/api/NGNX.mail.iCloud" rel="NGNX.mail.iCloud" class="docClass">NGNX.mail.iCloud</a></li>
+</ul>
 </div>
 <div class='right-column'>
 </div>
@@ -134,9 +137,9 @@
 <h1>Internals</h1>
 <div class='left-column'>
 <h3>Base</h3>
-<div class='links'>
-<a href="#!/api/Class" rel="Class" class="docClass">Class</a>
-</div>
+<ul class='links'>
+<li><a href="#!/api/Class" rel="Class" class="docClass">Class</a></li>
+</ul>
 </div>
 <div class='middle-column'>
 </div>
@@ -179,7 +182,7 @@
 </ul>
         </div>
 
-  <div id='footer-content' style='display: none'>Generated with <a href='https://github.com/senchalabs/jsduck'>JSDuck</a> 4.0.1.</div>
+  <div id='footer-content' style='display: none'>Generated with <a href='https://github.com/senchalabs/jsduck'>JSDuck</a> 4.2.0.</div>
 
   
 

@@ -1,9 +1,0 @@
-{
-	"--title": 		"NGN",
-	"--welcome":	"assets/html/welcome.html",
-	"--warnings":	["-link"],
-	"--": 			[],
-	"--categories":	"categories.json",
-	"--guides":		"guides.json",
-	"--output":		"../manual"
-}

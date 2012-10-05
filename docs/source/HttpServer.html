@@ -43,13 +43,8 @@ var Class = Base.extend({
 		
 		Object.defineProperties(this,{
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @property {Object}
-=======
 <span id='NGN-core-HttpServer-property-_server'>			/**
 </span>			 * @property {Object}
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * The core server object.
 			 * @private
 			 * @readonly
@@ -61,13 +56,8 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @property {Object}
-=======
 <span id='NGN-core-HttpServer-property-_serverOptions'>			/**
 </span>			 * @property {Object}
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * The core server options object.
 			 * @private
 			 * @readonly.
@@ -144,13 +134,8 @@ var Class = Base.extend({
 				writable:	true
 			},
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @property {Object}
-=======
 <span id='NGN-core-HttpServer-property-_httpServer'>			/**
 </span>			 * @property {Object}
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * The raw HTTP Server.
 			 * @readonly
 			 * @private
@@ -293,15 +278,9 @@ var Class = Base.extend({
 				configurable:true
 			}*/
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @cfg {Object}
-			 * A key/value object containing `<username>:<password>`.
-=======
 <span id='NGN-core-HttpServer-cfg-basicAuthUsers'>			/**
 </span>			 * @cfg {Object}
 			 * A key/value object containing `&lt;username&gt;:&lt;password&gt;`.
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * 
 			 * **Example**
 			 * 		{
@@ -321,13 +300,8 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @cfg {Boolean} [basicAuthCaseSensitive=true]
-=======
 <span id='NGN-core-HttpServer-cfg-basicAuthCaseSensitive'>			/**
 </span>			 * @cfg {Boolean} [basicAuthCaseSensitive=true]
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * When using #basicAuthUsers, all password matching will be done with respect to upper/lower case.
 			 */
 			basicAuthCaseSensitive: {
@@ -337,13 +311,8 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @cfg {Boolean} [enableBasicAuth=false]
-=======
 <span id='NGN-core-HttpServer-cfg-enableBasicAuth'>			/**
 </span>			 * @cfg {Boolean} [enableBasicAuth=false]
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * Setting this to true will require basic authentication before completing a request. This should be 
 			 * used in conjunction with #basicAuthUsers. If no users are specified, every request will fail!
 			 * 
@@ -356,13 +325,8 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @cfg {Function/Array/NGN.web.Processor} [processors=[]]
-=======
 <span id='NGN-core-HttpServer-cfg-processors'>			/**
 </span>			 * @cfg {Function/Array/NGN.web.Processor} [processors=[]]
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * Supply a middleware function, processor, or array of functions/processors.
 			 */
 			processor: {
@@ -372,13 +336,8 @@ var Class = Base.extend({
 				configurable:true
 			},
 			
-<<<<<<< HEAD:lib/core/HttpServer.js
-			/**
-			 * @property {Boolean}
-=======
 <span id='NGN-core-HttpServer-property-_hasProcessors'>			/**
 </span>			 * @property {Boolean}
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			 * Indicates custom request processors have been configured.
 			 */
 			_hasProcessors: {
@@ -392,11 +351,7 @@ var Class = Base.extend({
 		if (!Array.isArray(this.processor)){
 			this.processor = [this.processor];
 		}
-<<<<<<< HEAD:lib/core/HttpServer.js
-		for(var i=0;i<this.processor.length;i++){
-=======
 		for(var i=0;i&lt;this.processor.length;i++){
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 			if (this.processor[i].type == undefined)
 				this.processor[i] = new __NGN.web.Processor({fn:this.processor[i]});
 		}
@@ -411,37 +366,22 @@ var Class = Base.extend({
 		
 	},
 	
-<<<<<<< HEAD:lib/core/HttpServer.js
-	/**
-	 * @method
-=======
 <span id='NGN-core-HttpServer-method-applyProcessor'>	/**
 </span>	 * @method
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 	 * Apply a middleware processor to the server.
 	 */
 	applyProcessor: function(type){
 		var me = this;
-<<<<<<< HEAD:lib/core/HttpServer.js
-		for(var i=0;i<this.processor.length;i++){
-			if (this.processor[i].type == type && !this.processor[i]._used){
-=======
 		for(var i=0;i&lt;this.processor.length;i++){
 			if (this.processor[i].type == type &amp;&amp; !this.processor[i]._used){
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 				this._server.use(me.processor[i].processor);
 				this.processor[i].used = true;
 			}
 		}
 	},
 	
-<<<<<<< HEAD:lib/core/HttpServer.js
-	/**
-	 * @method
-=======
 <span id='NGN-core-HttpServer-method-addprocessor'>	/**
 </span>	 * @method
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 	 * Add a custom middleware function or request processor.
 	 * @param {Function/NGNX.web.processor}
 	 */
@@ -452,13 +392,8 @@ var Class = Base.extend({
 			this.processor.push(rp);
 	},
 	
-<<<<<<< HEAD:lib/core/HttpServer.js
-	/**
-	 * @method
-=======
 <span id='NGN-core-HttpServer-method-testBasicAuth'>	/**
 </span>	 * @method
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 	 * A basic authentication method for testing a user against the #basicAuthUsers mapping.
 	 * @param {String} username
 	 * @param {String} password
@@ -481,13 +416,8 @@ var Class = Base.extend({
 		return false;
 	},
 	
-<<<<<<< HEAD:lib/core/HttpServer.js
-	/**
-	 * @method
-=======
 <span id='NGN-core-HttpServer-method-generateRoutes'>	/**
 </span>	 * @method
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 	 * Generates server routes. If no #routes are configured, a generic
 	 * route will be created for the URL root.
 	 * @param {Function} [callback]
@@ -551,11 +481,7 @@ var Class = Base.extend({
 	
 		var _hasRootRoute = false;
 		if (Array.isArray(this.routes)) {
-<<<<<<< HEAD:lib/core/HttpServer.js
-			for (var i=0; i<this.routes.length; i++) {	
-=======
 			for (var i=0; i&lt;this.routes.length; i++) {	
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 	
 				// Loop through the directories and add each JS file, assuming each is a route.
 				var rt = this.routes[i].trim();
@@ -574,31 +500,18 @@ var Class = Base.extend({
 				
 				// Sync Route Loader
 				var filepath = require('wrench').readdirSyncRecursive(rt);
-<<<<<<< HEAD:lib/core/HttpServer.js
-				for (var n=0;n<filepath.length;n++){					
-					if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js' && filepath[n].toString().trim().toLowerCase() !== 'root.js'){
-						var _rt = require(__NGN.path.join(rt,filepath[n]));
-						if (!_hasRootRoute && _rt['/'] !== undefined)
-=======
 				for (var n=0;n&lt;filepath.length;n++){					
 					if (filepath[n].substr(filepath[n].length-3,3).toLowerCase() == '.js' &amp;&amp; filepath[n].toString().trim().toLowerCase() !== 'root.js'){
 						var _rt = require(__NGN.path.join(rt,filepath[n]));
 						if (!_hasRootRoute &amp;&amp; _rt['/'] !== undefined)
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 							_hasRootRoute = true;
 						this._server.map(_rt);
 					}
 				}
 
-<<<<<<< HEAD:lib/core/HttpServer.js
-				if (!_hasRootRoute && require('fs').existsSync(__NGN.path.join(rt,'root.js'))) {
-					var _rt = require(__NGN.path.join(rt,'root.js'));
-					if (!_hasRootRoute && _rt.hasOwnProperty('/'))
-=======
 				if (!_hasRootRoute &amp;&amp; require('fs').existsSync(__NGN.path.join(rt,'root.js'))) {
 					var _rt = require(__NGN.path.join(rt,'root.js'));
 					if (!_hasRootRoute &amp;&amp; _rt.hasOwnProperty('/'))
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 						_hasRootRoute = true;
 					this._server.map(_rt);			
 				}
@@ -1030,13 +943,8 @@ var Class = Base.extend({
 		this.emit('xxx',{code:code,response:(response||null)});
 	},
 	
-<<<<<<< HEAD:lib/core/HttpServer.js
-	/**
-	 * @event beforerequest
-=======
 <span id='NGN-core-HttpServer-event-beforerequest'>	/**
 </span>	 * @event beforerequest
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 	 * @param {Object} req
 	 * Request stream object.
 	 */
@@ -1044,13 +952,8 @@ var Class = Base.extend({
 		this.emit('beforerequest',req||null);
 	},
 	
-<<<<<<< HEAD:lib/core/HttpServer.js
-	/**
-	 * @event afterrequest
-=======
 <span id='NGN-core-HttpServer-event-afterrequest'>	/**
 </span>	 * @event afterrequest
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html
 	 * @param {Object} req
 	 * Request stream object.
 	 */
@@ -1060,10 +963,6 @@ var Class = Base.extend({
 	
 });
 
-<<<<<<< HEAD:lib/core/HttpServer.js
-module.exports = Class;
-=======
 module.exports = Class;</pre>
 </body>
 </html>
->>>>>>> dbb60c39115d969741e4191daf22b8f05e31b05a:docs/source/HttpServer.html

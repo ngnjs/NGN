@@ -282,17 +282,17 @@ var Class = Base.extend({
 			htmlTag: {
 				value:		config.htmlTag || /^&lt;([a-z]+)([^&lt;]+)*(?:&gt;(.*)&lt;\/\1&gt;|\s+\/&gt;)$/,
 				enumerable:	true,
-<span id='NGN-Patterns-method-isHtmlTag'>				writable:	false
-</span>			},
-			/**
-			 * @method isHtmlTag
+				writable:	false
+			},
+<span id='NGN-Patterns-method-isHtmlTag'>			/**
+</span>			 * @method isHtmlTag
 			 * @param {String} text
 			 * The string to match.
-<span id='NGN-Patterns-property-mobileDevice'>			 * @returns {Boolean}
-</span>			 */
+			 * @returns {Boolean}
+			 */
 			
-			/**
-			 * @property {RegExp} mobileDevice
+<span id='NGN-Patterns-property-mobileDevice'>			/**
+</span>			 * @property {RegExp} mobileDevice
 			 * A custom implementation detecting mobile devices with [detectmobilebrowser.com](http://detectmobilebrowser.com).
 			 */
 			_mobileDevice: {
@@ -314,13 +314,13 @@ var Class = Base.extend({
 					writable:	false,
 					value:		function(v){ if(me[el] !== null) return me[el].test(v); else return false; }
 				})
-<span id='NGN-Patterns-method-is'>			}
-</span>		}
+			}
+		}
 		
 	},
 	
-	/**
-	 * @method
+<span id='NGN-Patterns-method-is'>	/**
+</span>	 * @method
 	 * Provides the similar functionality to RegExp#test. Given a RegExp, it will test a value or
 	 * array of values to see if they match a pattern. If an array is provided, it will loop through
 	 * the array, testing each element along the way. If _any_ element of the array does not match
@@ -340,11 +340,11 @@ var Class = Base.extend({
 	 * @returns {Boolean}
 	 */
 	is: function(regex,value){
-<span id='NGN-Patterns-method-isMobileDevice'>		return regex.test(value);
-</span>	},
+		return regex.test(value);
+	},
 	
-	/**
-	 * @method
+<span id='NGN-Patterns-method-isMobileDevice'>	/**
+</span>	 * @method
 	 * @param {String} value
 	 * The user agent string.
 	 */
