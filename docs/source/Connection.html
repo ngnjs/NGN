@@ -314,19 +314,6 @@ var Class = Base.extend({
        }
     },
     
-<span id='NGN-datasource-Connection-event-disconnect'>    /**
-</span>     * @event disconnect
-     * Fired when the database connection is dropped.
-     * @returns {NGN.datasource.Connection}
-     */
-    onDisconnect: function(){
-    	if (!this.connected) {
-	    	this.connected = false;
-    		this.connecting = false;
-    		this.emit('disconnect', this);
-		}
-    },
-    
 <span id='NGN-datasource-Connection-event-timeout'>    /**
 </span>     * @event timeout
      * Fired when the connection times out.

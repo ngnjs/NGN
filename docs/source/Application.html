@@ -325,22 +325,6 @@ var Class = Base.extend({
      	delete this.SERVER[name];
      },
      
-<span id='NGN-app-Application-method-getServer'>     /**
-</span>      * @method
-      * Get a specific server instance by name.
-      */
-     getServer: function(id){
-     	if (this.SERVER[id] !== undefined)
-     		return this.SERVER[id];
-     	for(var server in this.SERVER){
-     		for (var name in this.SERVER[server]){
-	     		if (name == id)
-    	 			return this.SERVER[server][name];
-    		}
-     	}
-     	return false;
-     },
-     
 <span id='NGN-app-Application-method-getServersByType'>     /**
 </span>      * @method
       * Get servers by a specific type. This returns an object with each attribute of the
