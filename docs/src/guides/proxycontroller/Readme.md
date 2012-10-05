@@ -327,16 +327,8 @@ accordingly.
 ### Create Rule
 
 Create a rule for a specific virtual host.
-	POST /host/<domain.com>/<port>/rule
-	{
-		GET: [
-			{'/api/v1/(.*)$':'api.cfm?v=1&fn=$1'},
-			{'/api/v2/(.*)$':'api.cfm?v=2&fn=$1'}
-		],
-		ALL: [
-			{'/api/v3/(.*)$':'api.cfm?v=3&fn=$1'}
-		]
-	}
+	POST /host/<domain.com>/<port>/rule/<method>
+	{'/api/v1/(.*)$':'api.cfm?v=1&fn=$1'}
 **Response**
 
 * `HTTP 201` (Created): The rules were created/appended to the virtual host rule set.
