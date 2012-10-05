@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var fs			= require('fs'),
+	Base		= require('../NGN.core');
+
+<span id='NGN-core-HttpClient'>/**
+</span> * @class NGN.core.HttpClient
+ * A base class for HTTP operations. This provides common functionality to NGN.web.Client,
+ * NGN.web.JsonClient, etc.
+ * 
+ * This is a utility class not designed for direct use. It is meant to be extended by HTTP clients.
+ * @private
+ * @extends NGN.core
+ */
+var Class = Base.extend({
+	
+<span id='NGN-core-HttpClient-method-constructor'>	/**
+</span>	 * @constructor
+	 * Create a TCP client.
+	 */
+	constructor: function(config){
+		
+		config = config || {};
+		
+		Class.super.constructor.call( this, config );
+		
+		Object.defineProperties(this,{
+			
+<span id='NGN-core-HttpClient-cfg-userAgent'>			/**
+</span>			 * @cfg {String} [userAgent=node.js]
+			 * A custom user agent string to use when making requests.
+			 */
+			userAgent: {
+				value:		config.appAgent || 'node.js',
+				enumerable:	true,
+				writable:	true
+			}
+			
+		});
+
+	},
+	
+	// The following must be overridden
+<span id='NGN-core-HttpClient-method-get'>	/**
+</span>	 * @method
+	 */
+	get: function(){},
+<span id='NGN-core-HttpClient-method-put'>	/**
+</span>	 * @method
+	 */
+	put: function(){},
+<span id='NGN-core-HttpClient-method-post'>	/**
+</span>	 * @method
+	 */
+	post:function(){},
+<span id='NGN-core-HttpClient-method-del'>	/**
+</span>	 * @method
+	 */
+	del: function(){},
+<span id='NGN-core-HttpClient-method-head'>	/**
+</span>	 * @method
+	 */
+	head:function(){},
+<span id='NGN-core-HttpClient-method-trace'>	/**
+</span>	 * @method
+	 */
+	trace:function(){},
+	
+<span id='NGN-core-HttpClient-method-GET'>	/**
+</span>	 * @method GET
+	 * Fire the #beforeget event, then execute #get.
+	 */
+	GET: function() {
+		this.onBeforeGet();
+		this.get.apply(this,arguments);
+	},
+	
+<span id='NGN-core-HttpClient-method-PUT'>	/**
+</span>	 * @method
+	 * Fire the #beforeput event, then execute #put
+	 */
+	PUT: function() {
+		this.onBeforePut()
+		this.put.apply(this,arguments);
+	},
+	
+<span id='NGN-core-HttpClient-method-POST'>	/**
+</span>	 * @method
+	 * Fire the #beforepost event, then execute #post.
+	 */
+	POST: function() {
+		this.onBeforePost();
+		this.post.apply(this,arguments);
+	},
+	
+<span id='NGN-core-HttpClient-method-DEL'>	/**
+</span>	 * @method
+	 * Fire the #beforedelete event, then execute #del
+	 */
+	DEL: function() {
+		this.onBeforeDelete();
+		this.del.apply(this,arguments);
+	},
+	
+<span id='NGN-core-HttpClient-method-HEAD'>	/**
+</span>	 * @method
+	 * Fire the #beforehead event, then execute #head 
+	 */
+	HEAD: function() {
+		this.onBeforeHead();
+		this.head.apply(this,arguments);
+	},
+	
+<span id='NGN-core-HttpClient-method-TRACE'>	/**
+</span>	 * @method
+	 * Fire the #beforetrace event, then execute #trace 
+	 */
+	TRACE: function() {
+		this.onBeforeHead();
+		this.head.apply(this,arguments);
+	},
+	
+<span id='NGN-core-HttpClient-event-beforeget'>	/**
+</span>	 * @event beforeget
+	 * Fired before a `GET` request. 
+	 */
+	onBeforeGet: function() {
+		this.emit('beforeget',this);
+	},
+	
+<span id='NGN-core-HttpClient-event-beforeput'>	/**
+</span>	 * @event beforeput
+	 * Fired before a `PUT` request. 
+	 */
+	onBeforePut: function() {
+		this.emit('beforeput',this);
+	},
+	
+<span id='NGN-core-HttpClient-event-beforepost'>	/**
+</span>	 * @event beforepost
+	 * Fired before a `POST` request 
+	 */
+	onBeforePost: function() {
+		this.emit('beforepost',this);
+	},
+	
+<span id='NGN-core-HttpClient-event-beforedelete'>	/**
+</span>	 * @event beforedelete
+	 * Fired before a `DELETE` request. 
+	 */
+	onBeforeDelete: function() {
+		this.emit('beforedelete',this);
+	},
+	
+<span id='NGN-core-HttpClient-event-beforehead'>	/**
+</span>	 * @event beforehead
+	 * Fired before a `HEAD` request. 
+	 */
+	onBeforeHead: function() {
+		this.emit('beforehead',this)
+	},
+	
+<span id='NGN-core-HttpClient-event-send'>	/**
+</span>	 * @event send
+	 * Fired when a response is sent to the client.
+	 * @returns {Object} responseStream
+	 */
+	onReceive: function() {
+		this.emit('receive',response||null);
+	},
+	
+<span id='NGN-core-HttpClient-event-GET'>	/**
+</span>	 * @event GET
+	 * Fired when the client completes a GET request
+	 */
+	onGet: function(req,res) {
+		thie.emit('GET',{req:req,res:res});
+	},
+	
+<span id='NGN-core-HttpClient-event-GET'>	/**
+</span>	 * @event GET
+	 * Fired when the client completes a GET request
+	 */
+	onPost: function(obj) {
+		this.emit('POST',{req:req,res:res})
+	},
+	
+<span id='NGN-core-HttpClient-event-PUT'>	/**
+</span>	 * @event PUT
+	 * Fired when the client completes a PUT request
+	 */
+	onPut: function(obj) {
+		this.emit('PUT',{req:req,res:res})
+	},
+	
+<span id='NGN-core-HttpClient-event-DELETE'>	/**
+</span>	 * @event DELETE
+	 * Fired when the client completes a DELETE request
+	 */
+	onDelete: function(obj) {
+		this.emit('DELETE',{req:req,res:res})
+	},
+	
+<span id='NGN-core-HttpClient-event-HEAD'>	/**
+</span>	 * @event HEAD
+	 * Fired when the client completes a HEAD request
+	 */
+	onHead: function(obj) {
+		this.emit('HEAD',{req:req,res:res})
+	},
+	
+<span id='NGN-core-HttpClient-event-TRACE'>	/**
+</span>	 * @event TRACE
+	 * Fired when the client completes a TRACE request
+	 */
+	onTrace: function(obj) {
+		this.emit('TRACE',{req:req,res:res})
+	},
+	
+	onOptions: function(obj) {
+		this.emit('OPTIONS',{req:req,res:res})
+	},
+	
+<span id='NGN-core-HttpClient-event-1xx'>	/**
+</span>	 * @event 1xx
+	 * Fired on every HTTP 100-level response.
+	 */
+	on1xx: function(code,response){
+		this.emit('1xx',{code:code,response:(response||null)});
+		this.onXXX(code);
+	},
+	
+<span id='NGN-core-HttpClient-event-100'>	/**
+</span>	 * @event 100
+	 */
+	on100: function(response) {
+		this.emit('100',{code:100,response:(response||null)});
+		this.on1xx(100);
+	},
+	
+<span id='NGN-core-HttpClient-event-101'>	/**
+</span>	 * @event 101
+	 */
+	on101: function(response){
+		this.emit('101',{code:101,response:(response||null)});
+		this.on1xx(101);
+	},
+	
+	
+<span id='NGN-core-HttpClient-event-2xx'>	/**
+</span>	 * @event 2xx
+	 * Fired on every HTTP 200-level response.
+	 */
+	on2xx: function(code,response){
+		this.emit('2xx',{code:code,response:(response||null)});
+		this.onXXX(code);
+	},
+	
+<span id='NGN-core-HttpClient-event-200'>	/**
+</span>	 * @event 200
+	 */
+	on200: function(response){
+		this.emit('200',{code:200,response:(response||null)});
+		this.on2xx(200);
+	},
+	
+<span id='NGN-core-HttpClient-event-201'>	/**
+</span>	 * @event 201
+	 */
+	on201: function(response){
+		this.emit('201',{code:201,response:(response||null)});
+		this.on2xx(201);
+	},
+	
+<span id='NGN-core-HttpClient-event-202'>	/**
+</span>	 * @event 202
+	 */
+	on202: function(response){
+		this.emit('202',{code:202,response:(response||null)});
+		this.on2xx(202);
+	},
+	
+<span id='NGN-core-HttpClient-event-203'>	/**
+</span>	 * @event 203
+	 */
+	on203: function(response){
+		this.emit('203',{code:203,response:(response||null)});
+		this.on2xx(203);
+	},
+	
+<span id='NGN-core-HttpClient-event-204'>	/**
+</span>	 * @event 204
+	 */
+	on204: function(response){
+		this.emit('204',{code:204,response:(response||null)});
+		this.on2xx(204);
+	},
+	
+<span id='NGN-core-HttpClient-event-205'>	/**
+</span>	 * @event 205
+	 */
+	on205: function(response){
+		this.emit('205',{code:205,response:(response||null)});
+		this.on2xx(205);
+	},
+	
+<span id='NGN-core-HttpClient-event-206'>	/**
+</span>	 * @event 206
+	 */
+	on206: function(response){
+		this.emit('206',{code:206,response:(response||null)});
+		this.on2xx(206);
+	},
+	
+<span id='NGN-core-HttpClient-event-3xx'>	/**
+</span>	 * @event 3xx
+	 * Fired on every HTTP 300-level response.
+	 */
+	on3xx: function(code,response){
+		this.emit('3xx',{code:code,response:(response||null)});
+		this.onXXX(code);
+	},
+	
+<span id='NGN-core-HttpClient-event-300'>	/**
+</span>	 * @event 300
+	 */
+	on300: function(response){
+		this.emit('300',{code:300,response:(response||null)});
+		this.on3xx(300);
+	},
+	
+<span id='NGN-core-HttpClient-event-301'>	/**
+</span>	 * @event 301
+	 */
+	on301: function(response){
+		this.emit('301',{code:301,response:(response||null)});
+		this.on3xx(301);
+	},
+	
+<span id='NGN-core-HttpClient-event-302'>	/**
+</span>	 * @event 302
+	 */
+	on302: function(response){
+		this.emit('302',{code:302,response:(response||null)});
+		this.on3xx(302);
+	},
+	
+<span id='NGN-core-HttpClient-event-303'>	/**
+</span>	 * @event 303
+	 */
+	on303: function(response){
+		this.emit('303',{code:303,response:(response||null)});
+		this.on3xx(303);
+	},
+	
+<span id='NGN-core-HttpClient-event-304'>	/**
+</span>	 * @event 304
+	 */
+	on304: function(response){
+		this.emit('304',{code:304,response:(response||null)});
+		this.on3xx(304);
+	},
+	
+<span id='NGN-core-HttpClient-event-305'>	/**
+</span>	 * @event 305
+	 */
+	on305: function(response){
+		this.emit('305',{code:305,response:(response||null)});
+		this.on3xx();
+	},
+	
+<span id='NGN-core-HttpClient-event-306'>	/**
+</span>	 * @event 306
+	 */
+	on306: function(response){
+		this.emit('306',{code:306,response:(response||null)});
+		this.on3xx(306);
+	},
+	
+<span id='NGN-core-HttpClient-event-307'>	/**
+</span>	 * @event 307
+	 */
+	on307: function(response){
+		this.emit('307',{code:307,response:(response||null)});
+		this.on3xx(307);
+	},
+	
+<span id='NGN-core-HttpClient-event-4xx'>	/**
+</span>	 * @event 4xx
+	 * Fired on every HTTP 400-level response.
+	 */
+	on4xx: function(code,response){
+		this.emit('4xx',{code:code,response:(response||null)});
+		this.onXXX(code);
+	},
+	
+<span id='NGN-core-HttpClient-event-400'>	/**
+</span>	 * @event 400
+	 */
+	on400: function(response){
+		this.emit('400',{code:400,response:(response||null)});
+		this.on4xx(400);
+	},
+	
+<span id='NGN-core-HttpClient-event-401'>	/**
+</span>	 * @event 401
+	 */
+	on401: function(response){
+		this.emit('401',{code:401,response:(response||null)});
+		this.on4xx(401);
+	},
+	
+<span id='NGN-core-HttpClient-event-402'>	/**
+</span>	 * @event 402
+	 */
+	on402: function(response){
+		this.emit('402',{code:402,response:(response||null)});
+		this.on4xx(402);
+	},
+	
+<span id='NGN-core-HttpClient-event-403'>	/**
+</span>	 * @event 403
+	 */
+	on403: function(response){
+		this.emit('403',{code:403,response:(response||null)});
+		this.on4xx(403);
+	},
+	
+<span id='NGN-core-HttpClient-event-404'>	/**
+</span>	 * @event 404
+	 */
+	on404: function(response){
+		this.emit('404',{code:404,response:(response||null)});
+		this.on4xx(404);
+	},
+	
+<span id='NGN-core-HttpClient-event-405'>	/**
+</span>	 * @event 405
+	 */
+	on405: function(response){
+		this.emit('405',{code:405,response:(response||null)});
+		this.on4xx(405);
+	},
+	
+<span id='NGN-core-HttpClient-event-406'>	/**
+</span>	 * @event 406
+	 */
+	on406: function(response){
+		this.emit('406',{code:406,response:(response||null)});
+		this.on4xx(406);
+	},
+	
+<span id='NGN-core-HttpClient-event-407'>	/**
+</span>	 * @event 407
+	 */
+	on407: function(response){
+		this.emit('407',{code:407,response:(response||null)});
+		this.on4xx(407);
+	},
+	
+<span id='NGN-core-HttpClient-event-408'>	/**
+</span>	 * @event 408
+	 */
+	on408: function(response){
+		this.emit('408',{code:408,response:(response||null)});
+		this.on4xx(408);
+	},
+	
+<span id='NGN-core-HttpClient-event-409'>	/**
+</span>	 * @event 409
+	 */
+	on409: function(response){
+		this.emit('409',{code:409,response:(response||null)});
+		this.on4xx(409);
+	},
+	
+<span id='NGN-core-HttpClient-event-410'>	/**
+</span>	 * @event 410
+	 */
+	on410: function(response){
+		this.emit('410',{code:410,response:(response||null)});
+		this.on4xx(410);
+	},
+	
+<span id='NGN-core-HttpClient-event-411'>	/**
+</span>	 * @event 411
+	 */
+	on411: function(response){
+		this.emit('411',{code:411,response:(response||null)});
+		this.on4xx(411);
+	},
+	
+<span id='NGN-core-HttpClient-event-412'>	/**
+</span>	 * @event 412
+	 */
+	on412: function(response){
+		this.emit('412',{code:412,response:(response||null)});
+		this.on4xx(412);
+	},
+	
+<span id='NGN-core-HttpClient-event-413'>	/**
+</span>	 * @event 413
+	 */
+	on413: function(response){
+		this.emit('413',{code:413,response:(response||null)});
+		this.on4xx(413);
+	},
+	
+<span id='NGN-core-HttpClient-event-414'>	/**
+</span>	 * @event 414
+	 */
+	on414: function(response){
+		this.emit('414',{code:414,response:(response||null)});
+		this.on4xx(414);
+	},
+	
+<span id='NGN-core-HttpClient-event-415'>	/**
+</span>	 * @event 415
+	 */
+	on415: function(response){
+		this.emit('415',{code:415,response:(response||null)});
+		this.on4xx(415);
+	},
+	
+<span id='NGN-core-HttpClient-event-416'>	/**
+</span>	 * @event 416
+	 */
+	on416: function(response){
+		this.emit('416',{code:416,response:(response||null)});
+		this.on4xx(416);
+	},
+	
+<span id='NGN-core-HttpClient-event-417'>	/**
+</span>	 * @event 417
+	 */
+	on417: function(response){
+		this.emit('417',{code:417,response:(response||null)});
+		this.on4xx(417);
+	},
+	
+<span id='NGN-core-HttpClient-event-5xx'>	/**
+</span>	 * @event 5xx
+	 * Fired on every HTTP 500-level response.
+	 */
+	on5xx: function(code,response){
+		this.emit('5xx',{code:code,response:(response||null)});
+		this.onXXX(code);
+	
+	},
+	
+<span id='NGN-core-HttpClient-event-500'>	/**
+</span>	 * @event 500
+	 */
+	on500: function(response){
+		this.emit('500',{code:500,response:(response||null)});
+		this.on5xx(500);
+	},
+	
+<span id='NGN-core-HttpClient-event-501'>	/**
+</span>	 * @event 501
+	 */
+	on501: function(response){
+		this.emit('501',{code:501,response:(response||null)});
+		this.on5xx(501);
+	},
+	
+<span id='NGN-core-HttpClient-event-502'>	/**
+</span>	 * @event 502
+	 */
+	on502: function(response){
+		this.emit('502',{code:502,response:(response||null)});
+		this.on5xx(502);
+	},
+	
+<span id='NGN-core-HttpClient-event-503'>	/**
+</span>	 * @event 503
+	 */
+	on503: function(response){
+		this.emit('503',{code:503,response:(response||null)});
+		this.on5xx(503);
+	},
+	
+<span id='NGN-core-HttpClient-event-504'>	/**
+</span>	 * @event 504
+	 */
+	on504: function(response){
+		this.emit('504',{code:504,response:(response||null)});
+		this.on5xx(504);
+	},
+	
+<span id='NGN-core-HttpClient-event-505'>	/**
+</span>	 * @event 505
+	 */
+	on505: function(response){
+		this.emit('505',{code:505,response:(response||null)});
+		this.on5xx(505);
+	},
+	
+<span id='NGN-core-HttpClient-event-xxx'>	/**
+</span>	 * @event xxx
+	 * Fired on every HTTP response.
+	 */
+	onXXX: function(code,response){
+		this.emit('xxx',{code:code,response:(response||null)});
+		this.onReceive(response);
+	}
+
+});
+
+module.exports = Class;</pre>
+</body>
+</html>

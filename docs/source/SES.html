@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var Base = require('./Common');
+
+<span id='NGNX-mail-SES'>/**
+</span> * @class NGNX.mail.SES
+ * Send messages using a SES server. This is a convenience wrapper around NGNX.mail.Common
+ * @extends NGNX.mail.Common
+ */
+var Class = Base.extend({
+	
+<span id='NGNX-mail-SES-method-constructor'>	/**
+</span>	 * @constructor
+	 * Create a new SES server connection
+	 * @param {Object} config
+	 */
+	constructor: function(config){
+		
+		config = config || {};
+		config.service = 'SES ';
+
+		Class.super.constructor.call(this,config);
+		
+<span id='NGNX-mail-SES-cfg-username'>		/**
+</span>		 * @cfg {String} username
+		 * The username of the account to connect with.
+		 */
+		
+<span id='NGNX-mail-SES-cfg-password'>		/**
+</span>		 * @cfg {String} password
+		 * The password of the account to connect with.
+		 */
+	}
+	
+});
+
+module.exports = Class;
+</pre>
+</body>
+</html>

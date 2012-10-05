@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var Base        = require('../NGN.core');
+
+<span id='NGN-datasource-Client'>/**
+</span> * @class NGN.datasource.Client
+ * Represents a client used to interact with a NGN.datasource.Connection.
+ * This is a lightweight wrapper around the connection's native client. It is
+ * designed as a base for expanding common client actions.
+ * @extends NGN.core
+ * @private
+ * @requires NGN
+ * @author Corey Butler
+ */
+var Class = Base.extend({
+	
+	constructor: function(config){
+		
+		Class.super.constructor.call(this,config);
+		
+		Object.defineProperties(this,{
+			
+<span id='NGN-datasource-Client-cfg-connection'>			/**
+</span>			 * @cfg {NGN.datasource.Connection/String} connection (required)
+			 * The connection object or the NGN.datasource.Connection#dsnName string representing a datasource connection.
+			 */
+			_client: {
+				value:		(typeof config.connection === 'string' ? __NGN.app.DSN[config.connection] || new __NGN.datasource.Connection() : config.connection).getClient(),
+				enumerable:	false,
+				writable:	true,
+				configurable:true
+			}
+			
+		});
+		
+	}
+	
+});
+
+module.exports = Class;</pre>
+</body>
+</html>

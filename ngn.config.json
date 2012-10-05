@@ -1,5 +1,0 @@
-{
-	"extensions": 	["./examples/customapi"],
-	"application":	{"test":"test"},
-	"default":		{}
-}

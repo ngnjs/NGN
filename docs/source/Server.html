@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var Base = require('../NGN.core');
+
+<span id='NGN-core-Server'>/**
+</span> * @class NGN.core.Server
+ * A generic utility class representing a server in the application.
+ * This class typically isn't invoked directly. It is designed as a base class
+ * for different server types like NGN.web.Server, NGN.web.RESTServer, etc.
+ * @extends NGN.core
+ * @private
+ */
+var Class = Base.extend({
+	
+<span id='NGN-core-Server-method-constructor'>	/**
+</span>	 * @constructor
+	 * Create a new server.
+	 * @params {Object} config
+	 */
+	constructor: function(config){
+		
+		config = config || {};
+	
+		Class.super.constructor.call(this, config);		
+		
+		Object.defineProperties(this,{
+			
+<span id='NGN-core-Server-cfg-type'>			/**
+</span>			 * @cfg {String}
+			 * The type of server. For example, `HTTP`, `DNS`, `FTP`, etc.
+			 */
+			type: {
+				value:		config.type || 'UNKNOWN',
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-purpose'>			/**
+</span>			 * @cfg {String}
+			 * The purpose of the server. Typical values include:
+			 * 
+			 * * WWW
+			 * * REST
+			 * * API
+			 * * DATA
+			 * 
+			 * Any value will work for this. This attribute acts as a &quot;tag&quot;
+			 * to identify groups of servers that may serve similar purposes.
+			 */
+			purpose: {
+				value:		config.purpose || 'UNKNOWN',
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-id'>			/**
+</span>			 * @cfg {String}
+			 * The name of the server. This can be referenced via NGN.app.Application (if used) or NGN#getServer.
+			 */
+			id: {
+				value:		config.id || __NGN.uuid().replace(/\-/gi,''),
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-port'>			/**
+</span>			 * @cfg {Number}
+			 * The port on which the server will listen/connect.
+			 */
+			port: {
+				value:		config.port || null,
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			},
+			
+<span id='NGN-core-Server-property-running'>			/**
+</span>			 * @property {Boolean} [running=false]
+			 * Indicates the server is currently running.
+			 * @readonly
+			 */
+			running: {
+				value:		false,
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-autoRegister'>			/**
+</span>			 * @cfg {Boolean}
+			 * Automatically register a helper reference to the server (available via NGN#getServer or NGN#getServers). 
+			 */
+			autoRegister: {
+				value:		__NGN.coalesce(config.autoRegister,true),
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-autoStart'>			/**
+</span>			 * @cfg {Boolean} [autoStart=true]
+			 * Automatically start the server. If this is set to `false`, the
+			 * server will need to be running explicitly using the #start method.
+			 */
+			autoStart: {
+				value:		__NGN.coalesce(config.autoStart,true),
+				enumerable:	true,
+				writable:	true
+			},
+			
+<span id='NGN-core-Server-cfg-syslog'>			/**
+</span>			 * @cfg {NGN.util.Logger}
+			 * Specify a logging utility to log server activity.
+			 */
+			syslog: {
+				value:		config.logger || null,
+				enumerable:	false,
+				configurable:true
+			},
+			
+<span id='NGN-core-Server-property-starting'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates whether the server is in the process of starting.
+			 */
+			starting: {
+				value:		false,
+				enumerable:	true,
+				writable:	true,
+				configurable:true
+			}
+			
+		});
+		
+		// Create a generic empty logger to prevent code from breaking.
+		if (this.syslog == null){
+			this.syslog == {
+				disabled: true,
+				info: __NGN.emptyFn,
+				warn: __NGN.emptyFn,
+				debug: __NGN.emptyFn,
+				error: __NGN.emptyFn
+			};
+		}
+		
+		if (this.autoRegister)
+			this.register();
+			
+	},
+	
+<span id='NGN-core-Server-method-register'>	/**
+</span>	 * @method
+	 * Registers the server within the application scope by creating a pointer to it.
+	 */
+	register: function(){
+		if (NGNA)
+			NGNA.registerServer(this);
+	},
+	
+<span id='NGN-core-Server-method-unRegister'>	/**
+</span>	 * @method
+	 * Unregisters the server from the application.
+	 */
+	unRegister: function(){
+		if (NGNA)
+			NGNA.unRegisterServer(this);
+	},
+	
+<span id='NGN-core-Server-method-start'>	/**
+</span>	 * @method
+	 */
+	start: function(){
+		this.onStart();
+	},
+	
+<span id='NGN-core-Server-method-stop'>	/**
+</span>	 * @method
+	 */
+	stop: function(){
+		this.onStop();
+	},
+	
+<span id='NGN-core-Server-event-start'>	/**
+</span>	 * @event start
+	 * Fired when the web server begins the startup process.
+	 */
+	onStart: function(){
+		if (!this.running) {
+			this.running = true;
+			this.fireEvent('start');
+		}
+	},
+	
+<span id='NGN-core-Server-event-ready'>	/**
+</span>	 * @event ready
+	 * Fired when the web server is ready to process reuests.
+	 */
+	onReady: function(){
+		if (this.running) {
+			this.starting = false;
+			this.fireEvent('ready',this);
+		}
+	},
+	
+<span id='NGN-core-Server-event-stop'>	/**
+</span>	 * @event stop
+	 * Fired when the server stops.
+	 */
+	onStop: function(){
+		if (this.running) {
+			this.running = false;
+			this.starting= false;
+			this.fireEvent('stop',this);
+		}
+	},
+	
+	onError: function(e){
+		this.fireError(e);
+	}
+	
+});
+
+module.exports = Class;</pre>
+</body>
+</html>

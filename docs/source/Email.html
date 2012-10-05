@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>The source code</title>
+  <link href="../resources/prettify/prettify.css" type="text/css" rel="stylesheet" />
+  <script type="text/javascript" src="../resources/prettify/prettify.js"></script>
+  <style type="text/css">
+    .highlight { display: block; background-color: #ddd; }
+  </style>
+  <script type="text/javascript">
+    function highlight() {
+      document.getElementById(location.hash.replace(/#/, "")).className = "highlight";
+    }
+  </script>
+</head>
+<body onload="prettyPrint(); highlight();">
+  <pre class="prettyprint lang-js">var Base		= require('./Model');
+
+<span id='NGN-model-Email'>/**
+</span> * @class NGN.model.Email
+ * Represents an email address and provides helper methods for managing it, such as
+ * syntax validation.
+ * @extends NGN.model.Model
+ * @docauthor Corey Butler
+ */
+var Class = Base.extend({
+	
+<span id='NGN-model-Email-method-constructor'>	/**
+</span>	 * @constructor
+	 */
+	constructor: function( config ){
+		
+		var me = this;
+		
+		config = config || {};
+		config.type = 'Email';
+		config.idAttribute = 'address';
+		config.fields = {
+			
+<span id='NGN-model-Email-cfg-address'>			/**
+</span>			 * @cfg {String} address
+			 * The email address (i.e. me@domain.com).
+			 * @required
+			 */
+<span id='NGN-model-Email-property-address'>			/**
+</span>			 * @property {String} address
+			 * The email address (i.e. me@domain.com).
+			 */
+			address: {
+			    'default': 	config.address || null,
+			    pattern:	__NGN.pattern.email,
+			    required:	true
+			},
+			
+<span id='NGN-model-Email-cfg-valid'>			/**
+</span>			 * @cfg {Boolean} [valid=false]
+			 * Indicates the address is valid.
+			 */
+<span id='NGN-model-Email-property-valid'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates the address is valid.
+			 * @readonly
+			 */
+			valid: {
+				'default':	__NGN.coalesce(config.valid,false)
+			},
+			
+<span id='NGN-model-Email-property-validationCode'>			/**
+</span>			 * @property {String} [validationCode=null]
+			 * The validation code assigned to this email address
+	         * @readonly  
+			 */
+			validationCode: {
+                'default': 	config.validationCode || null
+			},
+			
+			lastValidated: {
+				'default':	config.lastValidated || null,
+				type:		Date
+			}
+		}
+		
+		config.virtuals = {
+<span id='NGN-model-Email-property-validSyntax'>			/**
+</span>			 * @property {Boolean}
+			 * Indicates the address is valid syntax
+			 * @readonly
+			 */
+			validSyntax: {
+				enumerable:	true,
+				get:		function(){
+								return __NGN.pattern.isEmail(this.address);
+							}
+			},
+		};
+		
+		Class.super.constructor.call( this, config );
+		
+	},
+	
+<span id='NGN-model-Email-method-createValidationCode'>	/**
+</span>	 * @method
+	 * Generates a validation code.
+	 * @returns {String} 
+	 */
+	createValidationCode: function() {
+	    this.validationCode = __NGN.uuid.v1().replace(/-/gi,'');
+	    return this.validationCode;
+	}
+	
+});
+
+
+// Create a module out of this.
+module.exports = Class;
+</pre>
+</body>
+</html>
