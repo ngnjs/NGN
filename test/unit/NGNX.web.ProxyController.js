@@ -1,4 +1,4 @@
-/**
+/** test
 * Make sure the NGN global namespace is available.
 */
 var should = require('should');
