@@ -71,7 +71,7 @@ describe('Proxy REST Endpoints',function(){
 	});
 	
 	// VIRTUALHOST: POST /host --- Should return 201
-	it('POST /host (create new virtual host)',function(done){
+	it('POST new virtual host)',function(done){
 		client.POST(
 			root+'/host',
 			{json: props},
@@ -98,7 +98,7 @@ describe('Proxy REST Endpoints',function(){
 	});
 	
 	// VIRTUALHOST: GET /host/<domain>/<port> --- Should return a specific host
-	it('GET /host/<domain>/<port> (get specific host)',function(done){
+	it('GET specific host',function(done){
 		client.GET(root+'/host/'+props.hostname+'/'+props.port,{json:true},function(err,res,body){
 			var domain = body;
 			true.should.equal(domain.hostname==props.hostname);
@@ -109,61 +109,116 @@ describe('Proxy REST Endpoints',function(){
 		});
 	});
 	
+	var smokin = 'www.smokin.com';
+	
 	// ALIAS: POST /alias/<alias.com>/of/<domain.com>/<port>
-	it('POST /alias/<alias.com>/of/<domain.com>/<port> (create an alias)',function(done){
-		done();
+	it('POST an alias',function(done){
+		client.POST(root+'/alias/'+smokin+'/of/'+props.hostname+'/'+props.port,{json:true},function(err,res,body){
+			parseInt(res.statusCode).should.equal(201);
+			done();
+		});
 	});
 	
 	// ALIAS: GET /host/<domain.com>/<port>/aliases
-	it('GET /host/<domain.com>/<port>/aliases (list aliases)',function(done){
-		done();
+	it('GET list of aliases',function(done){
+		client.GET(root+'/host/'+props.hostname+'/'+props.port+'/aliases',{json:true},function(err,res,body){
+			true.should.equal(props.alias[0]==body[0])
+			true.should.equal(smokin==body[1])
+			should.exist(body[1]);
+			should.not.exist(body[2]);
+			done();
+		})
 	});
 	
 	// ALIAS: DELETE /alias/<alias.com>/of/<domain.com>/<port>
-	it('DELETE /alias/<alias.com>/of/<domain.com>/<port> (delete an alias)',function(done){
+	it('DELETE an alias',function(done){
+		client.DEL(root+'/alias/'+smokin+'/of/'+props.hostname+'/'+props.port, {json:true}, function(err,res,body){
+			parseInt(res.statusCode).should.equal(200);
+		})
+		client.GET(root+'/host/'+props.hostname+'/'+props.port+'/aliases',{json:true},function(err,res,body){
+			should.not.exist(body[1]);
+		})
 		done();
 	});
 	
-	// TARGET: POST /from/<domain.com>/<port>/to/<server.com>/<port>
-	it('POST /from/<domain.com>/<port>/to/<server.com>/<port> (create a target)',function(done){
+var target = 'www.ecorbiz.com';
+var targetPort = '70';
+	it('POST a target',function(done){
+		client.POST(root+'/from/'+props.hostname+'/'+props.port+'/to/'+target+'/'+targetPort, {json:true}, function(err,res,body){
+			parseInt(res.statusCode).should.equal(201);
+		})
+		
 		done();
 	});
 	
 	// TARGET: GET /host/<domain.com>/<port>/targets
-	it('GET /host/<domain.com>/<port>/targets (list targets for a specific virtual host)',function(done){
+	it('GET targets for a specific virtual host',function(done){
+		client.GET(root+'/host/'+props.hostname+'/'+props.port+'/targets',{json:true}, function(err,res,body){
+			var domain = body;
+			true.should.equal(props.target[0]==domain[0]);
+			true.should.equal(props.target[1]==domain[1]);
+			should.exist(domain[2]);
+			true.should.equal(domain[2]==target+':'+targetPort);
+			should.not.exist(domain[3]);
+					
 		done();
+
+		});
 	});
-	
+
 	// TARGET: DELETE /from/<domain.com>/<port>/to/<server.com>/<port>
-	it('DELETE /from/<domain.com>/<port>/to/<server.com>/<port> (delete a target)',function(done){
+	it('DELETE a target',function(done){
+		client.DEL(root+'/from/'+props.hostname+'/'+props.port+'/to/'+target+'/'+targetPort, {json:true}, function(err,res,body){
+			parseInt(res.statusCode).should.equal(200);
+		})
+		client.GET(root+'/host/'+props.hostname+'/'+props.port+'/targets',{json:true}, function(err,res,body){
+			var domain = body;
+			should.not.exist(domain[2]);
+
+		});
+
 		done();
 	});
-	
+
 	// REWRITE RULES: POST /host/<domain.com>/<port>/rule
-	it('POST /host/<domain.com>/<port>/rule (create a rewrite)',function(done){
+	it('POST a URL rewrite',function(done){
+
 		done();
 	});
-	
+
 	// REWRITE RULES: GET /host/<domain.com>/<port>/rules
-	it('GET /host/<domain.com>/<port>/rules (list rewrites)',function(done){
+	it('GET list of URL rewrites',function(done){
+		client.GET(root+'/host/'+props.hostname+'/'+props.port+'/rules',{json:true},function(err,res,body){
+			parseInt(res.statusCode).should.equal(200);
+		})
 		done();
 	});
 	
 	// REWRITE RULES: DELETE /host/<domain.com>/<port>/rule/<method>/<index>
-	it('DELETE /host/<domain.com>/<port>/rule/<method>/<index> (delete a specific rewrite)',function(done){
+	it('DELETE a specific rewrite',function(done){
+		client.DEL(root+'/host/'+props.hostname+'/'+props.port+'/rule/GET/1'), {json:true}, function(err,res,body){
+			parseInt(res.statusCode).should.equal(200);
+		}
 		done();
 	});
 	
 	// REWRITE RULES: DELETE /host/<domain.com>/<port>/rules
-	it('DELETE /host/<domain.com>/<port>/rules (delete all rewrite rules - purge)',function(done){
+	it('DELETE all rewrite rules - purge',function(done){
+		client.DEL(root+'/host'+props.hostname+'/'+props.port+'/rules'), {json:true}, function(err,res,body){
+			parseInt(res.statusCode).should.equal(200);
+		}
+		
 		done();
 	});
 	
 	// VIRTUALHOST: DELETE /host/<domain.com>/<port>
-	it('DELETE /host/<domain.com>/<port> (delete a virtual host)',function(done){
+	it('DELETE virtual host',function(done){
+		client.DEL(root+'/host/'+props.hostname+'/'+props.port), {json:true}, function(err,res,body){
+			parseInt(res.statusCode).should.equal(200);
+		}
+		
 		done();
 	});
-	
 	
 });
 
