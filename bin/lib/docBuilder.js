@@ -15,6 +15,15 @@ module.exports.build = function(argv) {
 		HELP			= argv['help'] || argv['h'] || null,
 		pkg				= require(require('path').resolve('./package.json'));
 
+	if (!p.existsSync(OUT_DIR)) {
+		console.log(' >> ERROR: '.red+OUT_DIR.red+' does not exist or could not be found.'.red);
+		if (OUT_DIR == p.join(cwd,'docs','manual')){
+			fs.mkdirSync(OUT_DIR);
+			console.log(' >> REPAIRED: '.cyan+OUT_DIR.cyan+' created.'.cyan);
+		} else
+			return;
+	}
+
 	console.log(' >> Cleaning up existing docs...'.grey);
 	dir.rmdirSyncRecursive(OUT_DIR.toString().trim(), true);
 	
@@ -94,7 +103,7 @@ module.exports.build = function(argv) {
 				}, function(error,sout,serr){
 					fs.exists(p.join(docs,'.ngn.tmp.json'),function(exists){
 						if (exists){
-							fs.unlink(__dirname+'/.ngn.tmp.json',function(err){
+							fs.unlink(p.join(docs,'.ngn.tmp.json'),function(err){
 								if (error) {
 									console.log('ERROR'.bold.red);
 									eyes.inspect(error);
