@@ -16,11 +16,11 @@ require('../../../');
  * 
  * Make sure you view the source (hover over EXAMPLE.Person at the top of the page) to see how this extension is created. You may be
  * surprised by how little code there is. Most of it is documentation.
- * @extends NGNX.Person
+ * @extends NGN.model.Person
  */
 var Class = NGN.define('EXAMPLE.Person',{
 	
-	extend: 'MODEL.Person',
+	extend: 'NGN.model.Person',
 	
 	/**
 	 * @constructor
