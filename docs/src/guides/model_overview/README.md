@@ -162,7 +162,7 @@ when the date is set to 1/1/1979.
 
 ## Data Validation
 
-Models support data validation using the __#addValidator__ method. There are several built in validation
+Models support data validation using the __addValidator__ method. There are several built in validation
 utilities, including basic matching (i.e. String == String), Regular Expression pattern matching, enumeration,
 and custom validation functions.
 
@@ -184,4 +184,4 @@ Due to the nature of models and their capability to validate data, manage associ
 they act as a simplified variation of [ORM](http://en.wikipedia.org/wiki/Object-relational_mapping). Developers can choose
 to use associations or not, leaving the choice of "to ORM or not to ORM" up to the developer.
 
-//TODO: Complete this when the data manager class is complete and the extended class for mongo.
+TODO: Complete this when the data manager class is complete and the extended class for mongo.

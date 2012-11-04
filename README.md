@@ -7,7 +7,7 @@ The [API documentation](http://coreybutler.github.com/NGN/docs) contains the roo
 A lot of work has been put into NGN, but it is not production ready yet. Development is currently driven
 by my own personal needs for a web service I am working on. Community contributions would be appreciated. 
 There is currently a [Trello Board](https://trello.com/board/ngn/503b8fa4500fc2f734af867d) to track all
-aspects of the project. 
+aspects of the project.
 
   
 

@@ -161,8 +161,8 @@ describe('NGN Web Exists',function(){
 		should.exist(__NGN.web.Proxy);
 	});
 	
-	it('NGN.web.REST',function(){
-		should.exist(__NGN.web.REST);
+	it('NGN.web.API',function(){
+		should.exist(__NGN.web.API);
 	});
 	
 	it('NGN.web.Server',function(){

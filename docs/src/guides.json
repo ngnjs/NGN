@@ -9,7 +9,7 @@
           "title": "OUTDATED Global Features",
           "description": "Use NGN global features to simplify application configuration and promote DRY code."
       },{
-          "name": "ngn_namespace",
+          "name": "namespace_ngn",
           "title": "OUTDATED NGN Namespace",
           "description": "This introduction to the NGN namespace explains how the framework is created/loaded."
       },{
