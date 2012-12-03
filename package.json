@@ -1,0 +1,21 @@
+{
+  "name": "ngn",
+  "version": "0.0.1-alpha",
+  "description": "ERROR: No README.md file found!",
+  "main": "/lib",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/ecorventures/ngn.git"
+  },
+  "keywords": [
+    "NGN"
+  ],
+  "engines": {
+    "node": ">= 0.8.2"
+  },
+  "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
+  "license": "GPL"
+}
