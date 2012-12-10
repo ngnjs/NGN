@@ -1,14 +1,17 @@
 {
   "name": "ngn",
-  "version": "0.0.1-alpha",
-  "description": "ERROR: No README.md file found!",
-  "main": "/lib",
+  "version": "0.0.1-alpha.1",
+  "description": "The NGN Framework",
+  "bin": {
+    "ngn": "./bin/cli.js"
+  },
+  "main": "./lib",
   "scripts": {
     "test": "mocha"
   },
   "repository": {
     "type": "git",
-    "url": "https://bitbucket.org/ecorventures/ngn.git"
+    "url": "git+ssh://bitbucket.org/ecorventures/ngn.git"
   },
   "keywords": [
     "NGN"
@@ -17,5 +20,27 @@
     "node": ">= 0.8.2"
   },
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
-  "license": "GPL"
+  "license": "GPL",
+  "publishConfig": {
+    "tag": "latest",
+    "registry": "https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite"
+  },
+  "dependencies": {
+    "colors": "~0.6.0-1",
+    "optimist": "~0.3.5",
+    "npm": "~1.1.68",
+    "forever-monitor": "~1.1.0",
+    "read": "~1.0.4",
+    "seq": "~0.3.5",
+    "node-uuid": "~1.4.0",
+    "bcrypt": "~0.7.3",
+    "log4js": "~0.5.6"
+  },
+  "devDependencies": {
+    "grunt-contrib-concat": "~0.1.1",
+    "grunt-contrib-jshint": "~0.1.0",
+    "grunt-contrib-uglify": "~0.1.0",
+    "grunt": "~0.4.0rc1",
+    "grunt-bump": "0.0.1"
+  }
 }
