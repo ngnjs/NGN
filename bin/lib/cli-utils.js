@@ -24,13 +24,10 @@ var installer = function(config,successFn){
     } else {
       console.log('Complete.'.green);
       console.log(('Linking '+config.name+' to NGN...').cyan);
-      exec("npm link "+config.package,{cwd:__dirname},function(_error,_out,_err){
+      exec("npm --loglevel silent link "+config.package,{cwd:__dirname},function(_error,_out,_err){
         if (_error){
           console.log(('\nError linking '+config.name+' to NGN:').red.bold);
           console.log(('('+_error.code+') ').blue.bold+_error.message);
-        } else if (_err.trim().length > 0){
-          console.log(('\nError linking '+config.name+' to NGN:').red.bold);
-          console.log(_err);
         } else {
           console.log('Complete.'.green.bold);
           successFn(process.exit);
