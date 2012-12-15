@@ -75,12 +75,10 @@ module.exports = function(grunt) {
         "node": true,
         "nomen": false,
         "globalstrict": false,
-        "strict": false
+        "strict": false,
+        "globals": {}
       },
-      globals: {
-        "globalstrict": false,
-        "strict": false
-      }
+      globals: {}
     },
     uglify: {}
   });

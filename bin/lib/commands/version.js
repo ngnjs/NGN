@@ -1,2 +1,3 @@
-var pkg = require(require('path').resolve('./package.json'));
+var pkg = require(require('path').join(__dirname,'..','..','..','package.json'));
+require('colors');
 console.log('NGN v'.bold+pkg.version.bold);

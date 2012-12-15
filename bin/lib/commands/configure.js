@@ -1,9 +1,7 @@
 var read = require('read'),
     Seq = require('seq'),
     fs = require('fs'),
-    p = require('path'),
-    uuid = require('node-uuid'),
-    bcrypt = require('bcrypt');
+    p = require('path');
 	
 require('colors');
 
@@ -42,19 +40,39 @@ var wizard = function(){
 			}, this.into('port'));
 		})
 		.seq(function(){
-			read({
+      read({
 				prompt: 'Admin Email:',
 				'default': cfg.admin || 'admin@localhost'
 			}, this.into('admin'));
 		})
 		.seq(function(){
-			if (cfg.password){
-				console.log('An admin password already exists. A new password is not required, but can be reset now.'.cyan);
+			if (cfg.secret){
+        console.log('An admin password already exists. A new password is not required, but can be reset now.'.cyan);
 			}
+			
 			read({
 				prompt: 'Admin Secret:',
-				silent: true
+				silent: true,
+				replace: '*'
 			}, this.into('pwd'));
+		})
+		.seq(function(){
+      read({
+        prompt: 'Enable NGN Manager Process Protection? (Y/n):',
+          'default': "Y"
+      }, this.into('secure'));
+		})
+		.seq(function(){
+      if (['y','yes'].indexOf(this.vars.secure.trim().toLowerCase()) >= 0){
+        this.vars.secure = true;
+        read({
+          prompt: 'NGN Manager Process Secret:',
+          'default': cfg.process_key || 'auto'
+        }, this.into('key'));
+      } else {
+      this.vars.secure = false;
+        this.next();
+      }
 		})
 		.seq(function(){
 			Build(this.vars);
@@ -63,24 +81,54 @@ var wizard = function(){
 
 // The main build process
 var Build = function(arg){
-	
 	console.log('\n>> Creating Configuration Files'.cyan);
 	
 	cfg.name         = arg.name;
 	cfg.description  = arg.dsc;
 	cfg.port         = arg.port;
 	cfg.admin        = arg.admin;
+
+	if (arg.secure){
+    if (!cfg.hasOwnProperty('manager_key')){
+      cfg.process_key = null;
+    }
+
+    if (cfg.process_key !== arg.key || arg.key === 'auto'){
+      var uuid = require('node-uuid');
+      cfg.process_key = arg.key !== 'auto' ? arg.key : uuid.v1().replace(/-/gi,'');
+    }
+	} else if (cfg.hasOwnProperty('process_key')){
+    console.log('Attempt to remove'.yellow);
+    delete cfg.process_key;
+	}
+
+  if (arg.pwd.trim().length === 0){
+    arg.pwd = null;
+	} else {
+    arg.pwd = arg.pwd.trim();
+	}
 	
-	// If the password is defined, create it.
-	if (arg.pwd !== 'skip') {
+	// If the password is not defined, create it.
+	if (!cfg.hasOwnProperty('secret')){
+    cfg.secret = null;
+	}
+
+	// If a new password is provided, encrypt it
+	if (arg.pwd !== cfg.secret && arg.pwd !== null) {
+    var bcrypt = require('bcrypt');
+
 		console.log('   ... Encrypting'.magenta);
 		
-		var salt       = bcrypt.genSaltSync(12);
+		var salt = bcrypt.genSaltSync(12);
 
     cfg.secret = bcrypt.hashSync(arg.pwd,salt);
 	
 		console.log('   ... Complete.'.magenta);
 	}
+	
+	if (cfg.secret == null){
+    delete cfg.secret;
+  }
 	
 	console.log('>> Saving Configuration...'.cyan);
 	fs.writeFileSync(p.join(cfgPath,'manager.json'),JSON.stringify(cfg,true,4),'utf8');

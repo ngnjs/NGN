@@ -3,9 +3,9 @@
   "version": "0.0.1-alpha.1",
   "description": "The NGN Framework",
   "bin": {
-    "ngn": "./bin/cli.js"
+    "ngn": "./bin/ngn-cli.js"
   },
-  "main": "./lib",
+  "main": "./lib/bootstrap.js",
   "scripts": {
     "test": "mocha"
   },
@@ -34,7 +34,9 @@
     "seq": "~0.3.5",
     "node-uuid": "~1.4.0",
     "bcrypt": "~0.7.3",
-    "log4js": "~0.5.6"
+    "log4js": "~0.5.6",
+    "wordwrap": "0.0.2",
+    "easy-table": "~0.2.0"
   },
   "devDependencies": {
     "grunt-contrib-concat": "~0.1.1",

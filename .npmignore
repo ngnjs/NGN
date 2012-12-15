@@ -1,0 +1,5 @@
+Gruntfile.js
+!bin/.config.json
+logs
+.*
+_*
