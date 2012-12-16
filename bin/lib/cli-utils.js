@@ -1,6 +1,7 @@
 require('colors');
 var npm = require('npm'),
-    exec = require('child_process').exec;
+    exec = require('child_process').exec,
+    path = require('path');
         
 var installer = function(config,successFn){
   
@@ -12,7 +13,7 @@ var installer = function(config,successFn){
     config.global = false;
   }
   
-  console.log(('Installing '+config.name+'... ').cyan+'[Please wait - this may take a moment]'.blue.bold);
+  console.log(('\nInstalling '+config.name+'... ').cyan+'[Please wait - this may take a moment]'.blue.bold);
   
   /*try {
     require(config.package);
@@ -27,14 +28,21 @@ var installer = function(config,successFn){
         console.log(err);
       } else {
         console.log('Complete.'.green);
-        console.log(('Linking '+config.name+' to NGN...').cyan);
-        exec("npm --loglevel silent link "+config.package,{cwd:__dirname},function(_error,_out,_err){
+        console.log(('\nLinking '+config.name+' to NGN...').cyan);
+        exec("npm --loglevel silent link",{cwd:path.join(__dirname,'..','..','..',config.package)},function(_error,_out,_err){
           if (_error){
             console.log(('\nError linking '+config.name+' to NGN:').red.bold);
             console.log(('('+_error.code+') ').blue.bold+_error.message);
           } else {
-            console.log('Complete.'.green.bold);
-            successFn(process.exit);
+            exec("npm --loglevel silent link "+config.package,{cwd:path.join(__dirname,'..','..')},function(__error,__out,__err){
+              if (__error){
+                console.log(('\nError linking '+config.name+' to NGN:').red.bold);
+                console.log(('('+__error.code+') ').blue.bold+__error.message);
+              } else {
+                console.log('Link Created.\n'.green);
+                successFn(process.exit);
+              }
+            });
           }
         });
       }

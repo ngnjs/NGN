@@ -4,12 +4,13 @@ var read = require('read'),
     p = require('path');
 	
 require('colors');
-console.log(p.join(__dirname,'..','..','..','package.json'));
+
 var pkg = require(p.join(__dirname,'..','..','..','package.json'));
 
 // Make sure the config folder is available
-var cfgPath = p.join(__dirname,'..','..','..','.config');
-
+var cfgPath = p.resolve(p.join(p.dirname(require('ngn-mechanic').service.path),'..','.ngnconfig'));
+console.log(require('ngn-mechanic'),cfgPath);
+return;
 // If no .config directory exists, create one
 if (!fs.existsSync(cfgPath)){
   fs.mkdirSync(cfgPath);
@@ -22,6 +23,7 @@ try { var cfg = require(p.join(cfgPath,'manager.json'));} catch (e) {var cfg = {
 var wizard = function(){
 	Seq()
 		.seq(function(){
+		  console.log('\nConfigure NGN Mechanic:'.cyan.bold);
 			read({
 				prompt: 'Server Name:',
 				'default': cfg.name || 'Untitled'
@@ -130,12 +132,11 @@ var Build = function(arg){
     delete cfg.secret;
   }
 	
-	console.log('>> Saving Configuration...'.cyan);
+	console.log('>> Saving Configuration...\n'.cyan);
 	fs.writeFileSync(p.join(cfgPath,'manager.json'),JSON.stringify(cfg,true,4),'utf8');
 
   Seq()
     .seq(function(){
-      console.log('Ask to start here');
       read({
         prompt:'Launch or relaunch NGN Mechanic now?',
         'default': 'y'

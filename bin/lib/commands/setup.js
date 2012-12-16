@@ -1,13 +1,15 @@
 require('colors');
 var Seq = require('seq'),
     read = require('read'),
+    path = require('path'),
     OS = require('os'),
     isWin = OS.platform().toLowerCase().indexOf('win') !== -1,
     exists = false;
 
-console.log('setup'.green);
-
-exists = require('fs').existsSync('./node_modules/ngn-mechanic');
+try {
+  var m = require('ngn-mechanic');
+  exists = true;
+} catch (e) {}
 
 // Check for Mechanic & offer to install it if it isn't already.
 Seq()
@@ -35,12 +37,12 @@ Seq()
         this.vars.proceed = 'n';
       }
     }
-    if ((this.vars.proceed.trim().toLowerCase() !== 'y' || this.vars.proceed.trim().toLowerCase() !== 'yes') && !this.vars.hasOwnProperty('reinstall')){
+    if (this.vars.proceed.trim().toLowerCase() !== 'y' && this.vars.proceed.trim().toLowerCase() !== 'yes' && !this.vars.hasOwnProperty('reinstall')){
       process.exit();
     }
     if (this.vars.proceed == 'y'){
-      var npm = require('../cli-utils'),
-          cfg = require(require('path').join(__dirname,'..','..','.config.json'));
+      var npm = require(path.join(__dirname,'..','cli-utils')),
+          cfg = require(path.join(__dirname,'..','..','.config.json'));
       npm.installer({
         package: 'ngn-mechanic',
         name: 'Mechanic',
