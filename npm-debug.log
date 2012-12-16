@@ -1,0 +1,228 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'c:\\Program Files\\nodejs\\node.exe',
+1 verbose cli   'c:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   '--registry',
+1 verbose cli   'https://ngn.iriscouch.com:6984/registry/_scratch/design/_rewrite',
+1 verbose cli   'publish' ]
+2 info using npm@1.1.66
+3 info using node@v0.8.15
+4 verbose publish [ '.' ]
+5 verbose read json c:\Users\Corey\Documents\workspace\ngn\package.json
+6 verbose cache add [ '.', null ]
+7 silly cache add name=undefined spec="." args=[".",null]
+8 verbose parsed url { pathname: '.', path: '.', href: '.' }
+9 silly lockFile 3a52ce78- .
+10 verbose lock . C:\Users\Corey\AppData\Roaming\npm-cache\3a52ce78-.lock
+11 verbose read json package.json
+12 verbose tar pack [ 'C:\\Users\\Corey\\AppData\\Local\\Temp\\npm-528\\1355641973061-0.4854339109733701\\tmp.tgz',
+12 verbose tar pack   '.' ]
+13 verbose tarball C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\tmp.tgz
+14 verbose folder .
+15 info prepublish ngn@0.0.1-alpha.2
+16 silly lockFile 287516cd-73061-0-4854339109733701-tmp-tgz C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\tmp.tgz
+17 verbose lock C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\tmp.tgz C:\Users\Corey\AppData\Roaming\npm-cache\287516cd-73061-0-4854339109733701-tmp-tgz.lock
+18 silly lockFile 287516cd-73061-0-4854339109733701-tmp-tgz C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\tmp.tgz
+19 verbose tar unpack C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\tmp.tgz
+20 silly lockFile 3dfc044c-73061-0-4854339109733701-package C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\package
+21 verbose lock C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\package C:\Users\Corey\AppData\Roaming\npm-cache\3dfc044c-73061-0-4854339109733701-package.lock
+22 silly gunzTarPerm modes [ '755', '644' ]
+23 silly gunzTarPerm extractEntry package.json
+24 silly gunzTarPerm modified mode [ 'package.json', 438, 420 ]
+25 silly gunzTarPerm extractEntry README.md
+26 silly gunzTarPerm modified mode [ 'README.md', 438, 420 ]
+27 silly gunzTarPerm extractEntry LICENSE
+28 silly gunzTarPerm modified mode [ 'LICENSE', 438, 420 ]
+29 silly gunzTarPerm extractEntry bin/ngn-cli.js
+30 silly gunzTarPerm modified mode [ 'bin/ngn-cli.js', 438, 420 ]
+31 silly gunzTarPerm extractEntry bin/lib/bootstrap.js
+32 silly gunzTarPerm modified mode [ 'bin/lib/bootstrap.js', 438, 420 ]
+33 silly gunzTarPerm extractEntry bin/lib/cli-utils.js
+34 silly gunzTarPerm modified mode [ 'bin/lib/cli-utils.js', 438, 420 ]
+35 silly gunzTarPerm extractEntry bin/lib/builder/apiBuilder.js
+36 silly gunzTarPerm modified mode [ 'bin/lib/builder/apiBuilder.js', 438, 420 ]
+37 silly gunzTarPerm extractEntry bin/lib/builder/classBuilder.js
+38 silly gunzTarPerm modified mode [ 'bin/lib/builder/classBuilder.js', 438, 420 ]
+39 silly gunzTarPerm extractEntry bin/lib/builder/docBuilder.js
+40 silly gunzTarPerm modified mode [ 'bin/lib/builder/docBuilder.js', 438, 420 ]
+41 silly gunzTarPerm extractEntry bin/lib/commands/configure.js
+42 silly gunzTarPerm modified mode [ 'bin/lib/commands/configure.js', 438, 420 ]
+43 silly gunzTarPerm extractEntry bin/lib/commands/help.js
+44 silly gunzTarPerm modified mode [ 'bin/lib/commands/help.js', 438, 420 ]
+45 silly gunzTarPerm extractEntry bin/lib/commands/init.js
+46 silly gunzTarPerm modified mode [ 'bin/lib/commands/init.js', 438, 420 ]
+47 silly gunzTarPerm extractEntry bin/lib/commands/install.js
+48 silly gunzTarPerm modified mode [ 'bin/lib/commands/install.js', 438, 420 ]
+49 silly gunzTarPerm extractEntry bin/lib/commands/create.js
+50 silly gunzTarPerm modified mode [ 'bin/lib/commands/create.js', 438, 420 ]
+51 silly gunzTarPerm extractEntry bin/lib/commands/setup.js
+52 silly gunzTarPerm modified mode [ 'bin/lib/commands/setup.js', 438, 420 ]
+53 silly gunzTarPerm extractEntry bin/lib/commands/start.js
+54 silly gunzTarPerm modified mode [ 'bin/lib/commands/start.js', 438, 420 ]
+55 silly gunzTarPerm extractEntry bin/lib/commands/stop.js
+56 silly gunzTarPerm modified mode [ 'bin/lib/commands/stop.js', 438, 420 ]
+57 silly gunzTarPerm extractEntry bin/lib/commands/uninstall.js
+58 silly gunzTarPerm modified mode [ 'bin/lib/commands/uninstall.js', 438, 420 ]
+59 silly gunzTarPerm extractEntry bin/lib/commands/version.js
+60 silly gunzTarPerm modified mode [ 'bin/lib/commands/version.js', 438, 420 ]
+61 silly gunzTarPerm extractEntry bin/lib/commands/mechanic.js
+62 silly gunzTarPerm modified mode [ 'bin/lib/commands/mechanic.js', 438, 420 ]
+63 silly gunzTarPerm extractEntry bin/Readme.md
+64 silly gunzTarPerm modified mode [ 'bin/Readme.md', 438, 420 ]
+65 verbose read json C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\package\package.json
+66 silly lockFile 3dfc044c-73061-0-4854339109733701-package C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\package
+67 verbose from cache C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\package\package.json
+68 verbose tar pack [ 'C:\\Users\\Corey\\AppData\\Roaming\\npm-cache\\ngn\\0.0.1-alpha.2\\package.tgz',
+68 verbose tar pack   'C:\\Users\\Corey\\AppData\\Local\\Temp\\npm-528\\1355641973061-0.4854339109733701\\package' ]
+69 verbose tarball C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz
+70 verbose folder C:\Users\Corey\AppData\Local\Temp\npm-528\1355641973061-0.4854339109733701\package
+71 silly lockFile 7294b10d-he-ngn-0-0-1-alpha-2-package-tgz C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz
+72 verbose lock C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz C:\Users\Corey\AppData\Roaming\npm-cache\7294b10d-he-ngn-0-0-1-alpha-2-package-tgz.lock
+73 silly lockFile 7294b10d-he-ngn-0-0-1-alpha-2-package-tgz C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz
+74 silly lockFile 520060d3--cache-ngn-0-0-1-alpha-2-package C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package
+75 verbose lock C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package C:\Users\Corey\AppData\Roaming\npm-cache\520060d3--cache-ngn-0-0-1-alpha-2-package.lock
+76 silly lockFile 520060d3--cache-ngn-0-0-1-alpha-2-package C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package
+77 verbose tar unpack C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz
+78 silly lockFile 520060d3--cache-ngn-0-0-1-alpha-2-package C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package
+79 verbose lock C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package C:\Users\Corey\AppData\Roaming\npm-cache\520060d3--cache-ngn-0-0-1-alpha-2-package.lock
+80 silly gunzTarPerm modes [ '755', '644' ]
+81 silly gunzTarPerm extractEntry package.json
+82 silly gunzTarPerm modified mode [ 'package.json', 438, 420 ]
+83 silly gunzTarPerm extractEntry README.md
+84 silly gunzTarPerm modified mode [ 'README.md', 438, 420 ]
+85 silly gunzTarPerm extractEntry LICENSE
+86 silly gunzTarPerm modified mode [ 'LICENSE', 438, 420 ]
+87 silly gunzTarPerm extractEntry bin/ngn-cli.js
+88 silly gunzTarPerm modified mode [ 'bin/ngn-cli.js', 438, 420 ]
+89 silly gunzTarPerm extractEntry bin/lib/bootstrap.js
+90 silly gunzTarPerm modified mode [ 'bin/lib/bootstrap.js', 438, 420 ]
+91 silly gunzTarPerm extractEntry bin/lib/cli-utils.js
+92 silly gunzTarPerm modified mode [ 'bin/lib/cli-utils.js', 438, 420 ]
+93 silly gunzTarPerm extractEntry bin/lib/builder/apiBuilder.js
+94 silly gunzTarPerm modified mode [ 'bin/lib/builder/apiBuilder.js', 438, 420 ]
+95 silly gunzTarPerm extractEntry bin/lib/builder/classBuilder.js
+96 silly gunzTarPerm modified mode [ 'bin/lib/builder/classBuilder.js', 438, 420 ]
+97 silly gunzTarPerm extractEntry bin/lib/builder/docBuilder.js
+98 silly gunzTarPerm modified mode [ 'bin/lib/builder/docBuilder.js', 438, 420 ]
+99 silly gunzTarPerm extractEntry bin/lib/commands/configure.js
+100 silly gunzTarPerm modified mode [ 'bin/lib/commands/configure.js', 438, 420 ]
+101 silly gunzTarPerm extractEntry bin/lib/commands/help.js
+102 silly gunzTarPerm modified mode [ 'bin/lib/commands/help.js', 438, 420 ]
+103 silly gunzTarPerm extractEntry bin/lib/commands/init.js
+104 silly gunzTarPerm modified mode [ 'bin/lib/commands/init.js', 438, 420 ]
+105 silly gunzTarPerm extractEntry bin/lib/commands/install.js
+106 silly gunzTarPerm modified mode [ 'bin/lib/commands/install.js', 438, 420 ]
+107 silly gunzTarPerm extractEntry bin/lib/commands/create.js
+108 silly gunzTarPerm modified mode [ 'bin/lib/commands/create.js', 438, 420 ]
+109 silly gunzTarPerm extractEntry bin/lib/commands/setup.js
+110 silly gunzTarPerm modified mode [ 'bin/lib/commands/setup.js', 438, 420 ]
+111 silly gunzTarPerm extractEntry bin/lib/commands/start.js
+112 silly gunzTarPerm modified mode [ 'bin/lib/commands/start.js', 438, 420 ]
+113 silly gunzTarPerm extractEntry bin/lib/commands/stop.js
+114 silly gunzTarPerm modified mode [ 'bin/lib/commands/stop.js', 438, 420 ]
+115 silly gunzTarPerm extractEntry bin/lib/commands/uninstall.js
+116 silly gunzTarPerm modified mode [ 'bin/lib/commands/uninstall.js', 438, 420 ]
+117 silly gunzTarPerm extractEntry bin/lib/commands/version.js
+118 silly gunzTarPerm modified mode [ 'bin/lib/commands/version.js', 438, 420 ]
+119 silly gunzTarPerm extractEntry bin/lib/commands/mechanic.js
+120 silly gunzTarPerm modified mode [ 'bin/lib/commands/mechanic.js', 438, 420 ]
+121 silly gunzTarPerm extractEntry bin/Readme.md
+122 silly gunzTarPerm modified mode [ 'bin/Readme.md', 438, 420 ]
+123 verbose read json C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package\package.json
+124 silly lockFile 520060d3--cache-ngn-0-0-1-alpha-2-package C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package
+125 silly shasum updated bytes 21785
+126 info shasum d60ad0cda8e86645e905b1634a91ba6c5b583354
+126 info shasum C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz
+127 verbose from cache C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package\package.json
+128 verbose chmod C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz 644
+129 silly chown skipping for windows C:\Users\Corey\AppData\Roaming\npm-cache\ngn\0.0.1-alpha.2\package.tgz
+130 silly lockFile 3a52ce78- .
+131 silly publish { name: 'ngn',
+131 silly publish   version: '0.0.1-alpha.2',
+131 silly publish   description: 'The NGN Framework',
+131 silly publish   bin: { ngn: './bin/ngn-cli.js' },
+131 silly publish   main: './lib/bootstrap.js',
+131 silly publish   scripts: { test: 'mocha' },
+131 silly publish   repository:
+131 silly publish    { type: 'git',
+131 silly publish      url: 'git+ssh://bitbucket.org/ecorventures/ngn.git' },
+131 silly publish   keywords: [ 'NGN' ],
+131 silly publish   engines: { node: '>= 0.8.2' },
+131 silly publish   author:
+131 silly publish    { name: 'Corey Butler',
+131 silly publish      email: 'corey@coreybutler.com',
+131 silly publish      url: 'http://www.coreybutler.com' },
+131 silly publish   license: 'GPL',
+131 silly publish   publishConfig:
+131 silly publish    { tag: 'latest',
+131 silly publish      registry: 'https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite' },
+131 silly publish   dependencies:
+131 silly publish    { colors: '~0.6.0-1',
+131 silly publish      optimist: '~0.3.5',
+131 silly publish      npm: '~1.1.68',
+131 silly publish      'forever-monitor': '~1.1.0',
+131 silly publish      read: '~1.0.4',
+131 silly publish      seq: '~0.3.5',
+131 silly publish      'node-uuid': '~1.4.0',
+131 silly publish      bcrypt: '~0.7.3',
+131 silly publish      log4js: '~0.5.6',
+131 silly publish      wordwrap: '0.0.2',
+131 silly publish      'easy-table': '~0.2.0' },
+131 silly publish   devDependencies:
+131 silly publish    { 'grunt-contrib-concat': '~0.1.1',
+131 silly publish      'grunt-contrib-jshint': '~0.1.0',
+131 silly publish      'grunt-contrib-uglify': '~0.1.0',
+131 silly publish      grunt: '~0.4.0rc1',
+131 silly publish      'grunt-bump': '0.0.1' },
+131 silly publish   readme: '# NGN\r\n\r\nThis is the NGN installation and command line interface.',
+131 silly publish   readmeFilename: 'README.md',
+131 silly publish   _id: 'ngn@0.0.1-alpha.2',
+131 silly publish   dist: { shasum: 'd60ad0cda8e86645e905b1634a91ba6c5b583354' } }
+132 verbose url raw ngn
+133 verbose url resolving [ 'https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/',
+133 verbose url resolving   './ngn' ]
+134 verbose url resolved https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn
+135 info trying registry request attempt 1 at 01:12:53
+136 http PUT https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn
+137 http 409 https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn
+138 verbose url raw ngn
+139 verbose url resolving [ 'https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/',
+139 verbose url resolving   './ngn' ]
+140 verbose url resolved https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn
+141 info trying registry request attempt 1 at 01:12:59
+142 http GET https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn
+143 http 200 https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn
+144 verbose url raw ngn/0.0.1-alpha.2/-tag/latest
+145 verbose url resolving [ 'https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/',
+145 verbose url resolving   './ngn/0.0.1-alpha.2/-tag/latest' ]
+146 verbose url resolved https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn/0.0.1-alpha.2/-tag/latest
+147 info trying registry request attempt 1 at 01:12:59
+148 http PUT https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn/0.0.1-alpha.2/-tag/latest
+149 http 403 https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite/ngn/0.0.1-alpha.2/-tag/latest
+150 error publish Error sending version data
+151 error Error: forbidden user: coreybutler not authorized to modify ngn
+151 error Changed: description "ERROR: No README.md file found!" -> "The NGN Framework"
+151 error Changed: dist-tags.latest "0.0.1-alpha.1" -> "0.0.1-alpha.2"
+151 error Added: versions.0.0.1-alpha.2
+151 error Changed: time.modified "2012-12-03T22:22:43.385Z" -> "2012-12-16T07:12:58.346Z"
+151 error Added: time.0.0.1-alpha.2
+151 error Changed: repository.url "https://bitbucket.org/ecorventures/ngn.git" -> "git+ssh://bitbucket.org/ecorventures/ngn.git": registry/_design/scratch/_rewrite/ngn/0.0.1-alpha.2/-tag/latest
+151 error     at RegClient.<anonymous> (c:\Program Files\nodejs\node_modules\npm\node_modules\npm-registry-client\lib\request.js:259:14)
+151 error     at Request.init.self.callback (c:\Program Files\nodejs\node_modules\npm\node_modules\request\main.js:120:22)
+151 error     at Request.EventEmitter.emit (events.js:99:17)
+151 error     at Request.<anonymous> (c:\Program Files\nodejs\node_modules\npm\node_modules\request\main.js:648:16)
+151 error     at Request.EventEmitter.emit (events.js:126:20)
+151 error     at IncomingMessage.Request.start.self.req.self.httpModule.request.buffer (c:\Program Files\nodejs\node_modules\npm\node_modules\request\main.js:610:14)
+151 error     at IncomingMessage.EventEmitter.emit (events.js:126:20)
+151 error     at IncomingMessage._emitEnd (http.js:366:10)
+151 error     at HTTPParser.parserOnMessageComplete [as onMessageComplete] (http.js:149:23)
+151 error     at CleartextStream.socketOnData [as ondata] (http.js:1367:20)
+152 error If you need help, you may report this log at:
+152 error     <http://github.com/isaacs/npm/issues>
+152 error or email it to:
+152 error     <npm-@googlegroups.com>
+153 error System Windows_NT 6.2.9200
+154 error command "c:\\Program Files\\nodejs\\node.exe" "c:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "--registry" "https://ngn.iriscouch.com:6984/registry/_scratch/design/_rewrite" "publish"
+155 error cwd c:\Users\Corey\Documents\workspace\ngn
+156 error node -v v0.8.15
+157 error npm -v 1.1.66
+158 verbose exit [ 1, true ]
