@@ -5,7 +5,7 @@ require('colors');
 
 var argv = cli
 		.usage('Usage: ngn help <command>')
-		.describe('command'.bold,'Specify a command to view it\'s help. For example, '+'ngn help install'.blue+' or '+'ngn help init'.blue+'.')
+		.describe('command'.bold,'Specify a command to view it\'s help. For example,\n'+'ngn help install'.blue.bold+' or '+'ngn help init'.blue.bold+'.')
 		.check(function(argv){
 			if (argv.help === true){
 				throw('');

@@ -4,8 +4,8 @@ var read = require('read'),
     p = require('path');
 	
 require('colors');
-
-var pkg = require(require('path').resolve('./package.json'));
+console.log(p.join(__dirname,'..','..','..','package.json'));
+var pkg = require(p.join(__dirname,'..','..','..','package.json'));
 
 // Make sure the config folder is available
 var cfgPath = p.join(__dirname,'..','..','..','.config');
@@ -133,7 +133,38 @@ var Build = function(arg){
 	console.log('>> Saving Configuration...'.cyan);
 	fs.writeFileSync(p.join(cfgPath,'manager.json'),JSON.stringify(cfg,true,4),'utf8');
 
-	console.log('\nDONE!'.green.bold);
+  Seq()
+    .seq(function(){
+      console.log('Ask to start here');
+      read({
+        prompt:'Launch or relaunch NGN Mechanic now?',
+        'default': 'y'
+      },this.into('launch'));
+    })
+    .seq(function(){
+      if (this.vars.launch.trim().toLowerCase() == 'y' || this.vars.launch.trim().toLowerCase() == 'yes'){
+        var mechanic = require('ngn-mechanic');
+        mechanic.service.start();
+            /*forever = require('forever-monitor'),
+            maxRestarts = 25,
+            child = new forever.Monitor(mechanic.path, {
+              max: maxRestarts,
+              uid: 'ngn-mechanic',
+              silent: true,
+              //watch: true,
+              logFile: p.join(p.dirname(mechanic.path),'logs','general.log'),
+              outFile: p.join(p.dirname(mechanic.path),'logs','output.log'),
+              errFile: p.join(p.dirname(mechanic.path),'logs','error.log')
+            });
+      
+        child.on('exit', function () {
+          console.log('NGN Mechanic has exited after '+maxRestarts+' restarts');
+        });
+
+        child.start();*/
+      }
+      console.log('\nDONE!'.green.bold);
+    });
 };
 
 wizard();

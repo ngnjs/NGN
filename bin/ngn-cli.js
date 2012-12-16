@@ -114,5 +114,5 @@ var argv = optimist
 console.log(''); // Visual spacer
 
 // Include the appropriate command
-require(require('path').join(process.cwd(),'bin','lib','commands',cmd));
+require(require('path').join(__dirname,'lib','commands',cmd));
 return;
