@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.0.1-alpha.4",
+  "version": "0.0.1",
   "description": "The NGN Framework",
   "bin": {
     "ngn": "./bin/ngn-cli.js"
@@ -21,10 +21,6 @@
   },
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
   "license": "GPL",
-  "publishConfig": {
-    "tag": "latest",
-    "registry": "https://ngn.iriscouch.com:6984/registry/_design/scratch/_rewrite"
-  },
   "dependencies": {
     "colors": "~0.6.0-1",
     "optimist": "~0.3.5",
