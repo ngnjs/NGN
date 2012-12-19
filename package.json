@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://bitbucket.org/ecorventures/ngn.git"
+    "url": "git://bitbucket.org/ecorventures/ngn.git"
   },
   "keywords": [
     "NGN"
