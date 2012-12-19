@@ -1,6 +1,6 @@
 require('colors');
-var npm = require('npm'),
-    exec = require('child_process').exec,
+var exec = require('child_process').exec,
+    //npm = require('npm'),
     path = require('path');
         
 var installer = function(config,successFn){
