@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.0.1-alpha.3",
+  "version": "0.0.1-alpha.4",
   "description": "The NGN Framework",
   "bin": {
     "ngn": "./bin/ngn-cli.js"
@@ -28,7 +28,6 @@
   "dependencies": {
     "colors": "~0.6.0-1",
     "optimist": "~0.3.5",
-    "npm": "~1.1.68",
     "forever-monitor": "~1.1.0",
     "read": "~1.0.4",
     "seq": "~0.3.5",
