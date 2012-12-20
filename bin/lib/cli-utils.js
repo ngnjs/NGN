@@ -15,16 +15,14 @@ var installer = function(config,successFn){
   
   console.log(('\nInstalling '+config.name+'... ').cyan+'[Please wait - this may take a moment]'.blue.bold);
   
-  /*try {
-    require(config.package);
-    console.log('Already installed')
-  } catch(e) {*/
-    exec("npm --loglevel silent --registry "+config.registry+" install "+config.package+(config.global == true ? " -g" : ""),function(error,out,err){
+  exec("ngn config set strict-ssl false",function(___e,___o,___err){
+    exec("npm --loglevel silent "+(config.registry.trim().length > 0 ? "--registry "+config.registry+" " : "")+"install "+config.package+(config.global == true ? " -g" : ""),function(error,out,err){
       if (error){
-        console.log('\nError installing '+config.name+':'.red.bold);
+        console.log(('\nError installing '+config.name+':').red.bold);
         console.log(('('+error.code+') ').blue.bold+error.message);
+        console.log(error);
       } else if (err.trim().length > 0){
-        console.log('\nError installing '+config.name+':'.red.bold);
+        console.log(('\nError installing '+config.name+':').red.bold);
         console.log(err);
       } else {
         console.log('Complete.'.green);
@@ -47,7 +45,7 @@ var installer = function(config,successFn){
         });
       }
     });
-  //}
+  });
 };
 
 module.exports = {

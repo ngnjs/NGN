@@ -5,19 +5,18 @@ var read = require('read'),
 	
 require('colors');
 
-var pkg = require(p.join(__dirname,'..','..','..','package.json'));
+var pkg = require(p.join(process.env.APPDATA,'npm','node_modules','ngn','package.json'));
 
 // Make sure the config folder is available
-var cfgPath = p.resolve(p.join(p.dirname(require('ngn-mechanic').service.path),'..','.ngnconfig'));
-console.log(require('ngn-mechanic'),cfgPath);
-return;
-// If no .config directory exists, create one
+var cfgPath = p.resolve(p.join(process.env.APPDATA),'npm','.ngnconfig');
+
+// If no .ngnconfig directory exists, create one
 if (!fs.existsSync(cfgPath)){
   fs.mkdirSync(cfgPath);
 }
 
 // Get existing configurations
-try { var cfg = require(p.join(cfgPath,'manager.json'));} catch (e) {var cfg = {};}
+try { var cfg = require(p.join(cfgPath,'mechanic.json'));} catch (e) {var cfg = {};}
 
 // The main wizard
 var wizard = function(){
@@ -133,7 +132,7 @@ var Build = function(arg){
   }
 	
 	console.log('>> Saving Configuration...\n'.cyan);
-	fs.writeFileSync(p.join(cfgPath,'manager.json'),JSON.stringify(cfg,true,4),'utf8');
+	fs.writeFileSync(p.join(cfgPath,'mechanic.json'),JSON.stringify(cfg,true,2),'utf8');
 
   Seq()
     .seq(function(){
