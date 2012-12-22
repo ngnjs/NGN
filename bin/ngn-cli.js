@@ -4,7 +4,6 @@ Object.defineProperty(global,'NGN',{
   enumerable: false,
   value:      {
     optimist: require('optimist'),
-    logger: require('log4js'),
     npm: require('./lib/npm-utils')
   }
 });

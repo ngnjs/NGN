@@ -10,7 +10,6 @@ var Seq = require('seq'),
     npmg = path.join(NGN.npm.globalDirectory,'node_modules'),
     libs = {
       "bcrypt":"Native strong encryption.",
-      "log4js":"System logging (not apps).",
       "seq":"Flow control.",
       "colors":"CLI color coding.",
       "read":"CLI prompts.",
@@ -50,13 +49,19 @@ Seq()
         _libs.push(item.trim().toLowerCase());
         console.log(' > '+title.magenta.bold,libs[item]);
       } else {
-        linked = [].indexOf(item) < 0 
+        linked = ['optimist','node-uuid','wordwrap'].indexOf(item) < 0 
                   ? require('fs').existsSync(path.join(npmg,'ngn-mechanic','node_modules',item))
                   : require('fs').existsSync(path.join(npmg,'ngn','node_modules',item));
         if (!linked){
           unlinked.push(item);
         }
-        console.log(' > '+title.green,libs[item]+' -> '+(linked == true ? 'Installed'.green: 'Not Linked!'.red.bold));
+        console.log(' > '+title.green,(linked == true ? 'Installed'.green: 'Not Linked!'.red.bold)+' -> '+libs[item]);
+      }
+      if(!require('fs').existsSync(path.join(npmg,'ngn-mechanic','node_modules','ngn')) && exists){
+        NGN.npm.globalLink('ngn-mechanic','ngn');
+        console.log('\nSetup detected an invalid or missing link between'.bold.yellow);
+        console.log('NGN and Mechanic. There is nothing you need to do to'.bold.yellow);
+        console.log('fix this. Setup has automatically resolved the issue.\n'.bold.yellow);
       }
     };
     
@@ -88,7 +93,6 @@ Seq()
           console.log('\nPlease try a manual installation by typing:\n'+('npm install -g '+currLib).bold);
           console.log('\nOnce '+currLib+' is installed, run the setup again.');
           console.log('\n** Some packages may require elevated privileges. **');
-          //console.log(execErr.message);
           process.exit(1);
         }
       } else {
@@ -96,7 +100,7 @@ Seq()
       }
       if (unlinked.length > 0){
         unlinked.forEach(function(lib){
-          if (lib == 'forever' && exists){
+          if (['forever','ngn'].indexOf(lib) < 0 && exists){
             NGN.npm.globalLink('ngn-mechanic',lib);
           } else {
             NGN.npm.globalLink('ngn',lib);
