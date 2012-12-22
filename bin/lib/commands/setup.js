@@ -56,7 +56,7 @@ Seq()
         if (!linked){
           unlinked.push(item);
         }
-        console.log(' > '+title.green,libs[item]+' -> '+(linked == true ? 'Installed'.green: ' -> '+'Not Linked!'.red.bold));
+        console.log(' > '+title.green,libs[item]+' -> '+(linked == true ? 'Installed'.green: 'Not Linked!'.red.bold));
       }
     };
     
@@ -94,6 +94,17 @@ Seq()
       } else {
         console.log('\nAll global modules are installed.\n'.blue.bold);
       }
+      if (unlinked.length > 0){
+        unlinked.forEach(function(lib){
+          if (lib == 'forever' && exists){
+            NGN.npm.globalLink('ngn-mechanic',lib);
+          } else {
+            NGN.npm.globalLink('ngn',lib);
+          }
+        });
+        console.log('Setup found & fixed the following unlinked modules:'.yellow.bold);
+        console.log('  >> '+unlinked.join().replace(/,/gi,', ').bold,'\n');
+      }
       this();
     }
   })
@@ -106,17 +117,6 @@ Seq()
         'default':'y'
       },this.into('proceed'));
     } else {
-      if (unlinked.length > 0){
-        unlinked.forEach(function(lib){
-          if (lib == 'forever'){
-            NGN.npm.globalLink('ngn-mechanic',lib);
-          } else {
-            NGN.npm.globalLink('ngn',lib);
-          }
-        });
-        console.log('Setup found & fixed the following unlinked modules:'.yellow.bold);
-        console.log('  >> '+unlinked.join().replace(/,/gi,', ').bold,'\n');
-      }
       console.log('NGN Mechanic is already installed.'.cyan.bold);
       read({
         prompt: 'Reinstall?',

@@ -23,16 +23,7 @@
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
   "license": "GPL",
   "dependencies": {
-    "colors": "~0.6.0-1",
     "optimist": "~0.3.5",
-    "forever-monitor": "~1.1.0",
-    "read": "~1.0.4",
-    "seq": "~0.3.5",
-    "node-uuid": "~1.4.0",
-    "bcrypt": "~0.7.3",
-    "log4js": "~0.5.6",
-    "wordwrap": "0.0.2",
-    "easy-table": "~0.2.0",
     "exec-sync": "~0.1.5"
   },
   "devDependencies": {
