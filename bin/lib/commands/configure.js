@@ -1,14 +1,15 @@
 var read = require('read'),
     Seq = require('seq'),
     fs = require('fs'),
-    p = require('path');
+    p = require('path'),
+    npmg = NGN.npm.globalDirectory;
 	
 require('colors');
 
-var pkg = require(p.join(process.env.APPDATA,'npm','node_modules','ngn','package.json'));
+var ngnpkg = require(p.join(npmg,'node_modules','ngn','package.json'));
 
 // Make sure the config folder is available
-var cfgPath = p.resolve(p.join(process.env.APPDATA),'npm','.ngnconfig');
+var cfgPath = p.resolve(npmg,'.ngnconfig');
 
 // If no .ngnconfig directory exists, create one
 if (!fs.existsSync(cfgPath)){
@@ -31,7 +32,7 @@ var wizard = function(){
 		.seq(function(){
 			read({
 				prompt: 'Server Description:',
-				'default': cfg.description || 'NGN Server v'+pkg.version
+				'default': cfg.description || 'NGN Server v'+ngnpkg.version
 			}, this.into('dsc'));
 		})
 		.seq(function(){
@@ -71,8 +72,8 @@ var wizard = function(){
           'default': cfg.process_key || 'auto'
         }, this.into('key'));
       } else {
-      this.vars.secure = false;
-        this.next();
+        this.vars.secure = false;
+        this();
       }
 		})
 		.seq(function(){

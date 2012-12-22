@@ -1,12 +1,17 @@
+console.log('dgfdfsgdsfgsdfg')
+var path = require('path'),
+    npmg = path.join(NGN.npm.globalDirectory,'node_modules');
+    console.log('>>>>',npmg);
+    return;
 try {
-  var mechanic = require('ngn-mechanic');
+  var mechanic = require(path.join(npmg,'ngn-mechanic'));
   mechanic.shell();
 } catch (e){
+  console.log(e);
   require('colors');
   var Seq = require('seq'),
       read = require('read'),
-      npm = require(require('path').join(process.env.APPDATA,'npm','node_modules','ngn','lib','cli-utils')),
-      cfg = require(require('path').join(process.env.APPDATA,'npm','node_modules','ngn','bin','.config.json'));
+      cfg = require(path.join(npmg,'ngn','bin','.config.json'));
   Seq()
     .seq(function(){
       console.log('ERROR: Cannot launch the NGN shell.'.red.bold);

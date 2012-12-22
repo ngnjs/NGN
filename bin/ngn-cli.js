@@ -1,5 +1,13 @@
 #!/usr/bin/env node
-var optimist = require('optimist');
+
+Object.defineProperty(global,'NGN',{
+  enumerable: false,
+  value:      {
+    optimist: require('optimist'),
+    logger: require('log4js'),
+    npm: require('./lib/npm-utils')
+  }
+});
 
 // AVAILABLE CLI OPTIONS
 var opts = {
@@ -45,7 +53,7 @@ var minOptions = function(argv){
 			break;
 		}
 	}
-	optimist.describe(opts);
+	NGN.optimist.describe(opts);
 	if (cmd == null){
 		throw('');
 	}
@@ -64,21 +72,15 @@ var validOption = function(argv){
 			}
 			break;
 		
-		// Make sure something is identified which needs to start/stop.
-		case 'start':
-		case 'stop':
-			if (argv[cmd] === true){
-				throw('Must specify the manager or a specific process.');
-			}
-			break;
-			
 		// Make sure the CLI knows what it needs to create
 		case 'create':
 			if (argv[cmd] === true || ['class','docs','api'].indexOf(argv[cmd].trim().toLowerCase()) < 0){
 				throw('"'+(argv[cmd] === true ? 'Blank' : argv[cmd])+'" is not a valid "create" option. Valid options are:\n  - class\n  - api');
 			}
 			break;
-		
+
+    case 'start':
+    case 'stop':		
 		case 'setup':
 		  return true;
       	
@@ -93,14 +95,14 @@ var validOption = function(argv){
 
 			// If the command is not recognized, the list of valid commands
 			// is described and the usage/error is displayed.
-			optimist.describe(opts);
+			NGN.optimist.describe(opts);
 			throw('"'+cmd+'" is not a valid option.');
 	}
 	return true;
 };
 
 // ARGUMENTS
-var argv = optimist
+var argv = NGN.optimist
 			.alias('config','configuration')
 			.usage('Usage: ngn <option>')
 			.wrap(80)

@@ -32,7 +32,8 @@
     "bcrypt": "~0.7.3",
     "log4js": "~0.5.6",
     "wordwrap": "0.0.2",
-    "easy-table": "~0.2.0"
+    "easy-table": "~0.2.0",
+    "exec-sync": "~0.1.5"
   },
   "devDependencies": {
     "grunt-contrib-concat": "~0.1.1",

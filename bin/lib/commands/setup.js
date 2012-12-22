@@ -2,50 +2,61 @@ require('colors');
 var Seq = require('seq'),
     read = require('read'),
     path = require('path'),
+    exec = require("child_process").exec,
+    execSync = require('exec-sync'),
     OS = require('os'),
     isWin = OS.platform().toLowerCase().indexOf('win') !== -1,
     exists = false,
-    npmg = path.join(process.env.APPDATA,'npm','node_modules'),
+    npmg = path.join(NGN.npm.globalDirectory,'node_modules'),
     libs = {
       "bcrypt":"Native strong encryption.",
+      "log4js":"System logging (not apps).",
       "seq":"Flow control.",
       "colors":"CLI color coding.",
-      "optimist":"CLI utility.",
       "read":"CLI prompts.",
+      "optimist":"CLI utility.",
       "node-uuid":"UUID generation.",
       "wordwrap":"CLI text wrapping.",
-      "log4js":"System logging (not apps)."
+      "forever":"Daemon Utility."
     },
-    _libs = [];
+    _libs = [],
+    unlinked = [];
 
 try {
   var m = require(path.join(npmg,'ngn-mechanic'));
   exists = true;
-} catch (e) {console.log(e)}
+} catch (e) {}
 console.log(exists,path.join(npmg,'ngn-mechanic'));
 
 // Check for Mechanic & offer to install it if it isn't already.
 Seq()
   .seq(function(){
     
-    console.log("\n--------------------------------------------".magenta.bold);
-    console.log("|             Welcome to NGN               |".magenta.bold)
-    console.log("--------------------------------------------\n".magenta.bold);
+    console.log("\n--------------------------------------------".blue.bold);
+    console.log("|             Welcome to NGN               |".blue.bold)
+    console.log("--------------------------------------------\n".blue.bold);
 
     console.log("You are about to setup NGN. This will setup");
     console.log("several global node modules used repeatedly");
     console.log("throughout NGN:\n");
     
     for (var item in libs){
-      var title = item+':';
+      var title = item+':',
+          linked = false;
       for (var i=title.length;i<12;i++){
         title = title + ' ';
       }
       if(!require('fs').existsSync(path.join(npmg,item))){
         _libs.push(item.trim().toLowerCase());
-        console.log(title.magenta.bold,libs[item]);
+        console.log(' > '+title.magenta.bold,libs[item]);
       } else {
-        console.log(title.green,libs[item]+' (Installed)'.green);
+        linked = [].indexOf(item) < 0 
+                  ? require('fs').existsSync(path.join(npmg,'ngn-mechanic','node_modules',item))
+                  : require('fs').existsSync(path.join(npmg,'ngn','node_modules',item));
+        if (!linked){
+          unlinked.push(item);
+        }
+        console.log(' > '+title.green,libs[item]+' -> '+(linked == true ? 'Installed'.green: ' -> '+'Not Linked!'.red.bold));
       }
     };
     
@@ -54,33 +65,58 @@ Seq()
     console.log("for a specific project using the "+"npm link <package>".bold.blue+" command in the project directory.\n");
     
     read({
-      prompt:"Do you want to continue setting up NGN?",
+      prompt:"Do you want to continue setting up or updating NGN?",
       'default': "y"
-    },this.into('proceed'));
+    },this.into('proceedsetup'));
   })
   .seq(function(){
-    if (this.vars.proceed.trim().toLowerCase().substr(0,1) !== 'y'){
+    if (this.vars.proceedsetup.trim().toLowerCase().substr(0,1) !== 'y'){
       process.exit();
     } else {
       if (_libs.length > 0){
-        console.log('\nInstalling global modules...'.cyan);
-        var exec = require("child_process").exec('npm install -g '+_libs.join().replace(/,/gi,' '),function(){
-          console.log('Installation Complete.\n'.green.bold);
-        });
+        console.log('\nGlobal Module Setup'.cyan.underline);
+        var currLib = null;
+        try {
+          _libs.forEach(function(lib){
+            currLib = lib;
+            console.log((' >> Installing '+lib.bold).cyan);
+            execSync('npm --loglevel silent install -g '+lib);
+          });
+          console.log('\nModule Installation Complete.\n'.green.bold);
+        } catch (execErr){
+          console.log(('\nError: '.bold+'Could not build '+currLib.bold+'... ').red);
+          console.log('\nPlease try a manual installation by typing:\n'+('npm install -g '+currLib).bold);
+          console.log('\nOnce '+currLib+' is installed, run the setup again.');
+          console.log('\n** Some packages may require elevated privileges. **');
+          //console.log(execErr.message);
+          process.exit(1);
+        }
       } else {
-        console.log('\nGlobal modules already installed.\n'.blue);
+        console.log('\nAll global modules are installed.\n'.blue.bold);
       }
+      this();
     }
   })
   .seq(function(){
     if (!exists){
       console.log("You are about to setup NGN Mechanic, the NGN server agent.".cyan.bold);
-      console.log('This should only take a few minutes.'.cyan);
+      console.log('This should only take a few minutes.\n'.cyan);
       read({
         prompt:'Do you want to setup NGN Mechanic Now?',
         'default':'y'
       },this.into('proceed'));
     } else {
+      if (unlinked.length > 0){
+        unlinked.forEach(function(lib){
+          if (lib == 'forever'){
+            NGN.npm.globalLink('ngn-mechanic',lib);
+          } else {
+            NGN.npm.globalLink('ngn',lib);
+          }
+        });
+        console.log('Setup found & fixed the following unlinked modules:'.yellow.bold);
+        console.log('  >> '+unlinked.join().replace(/,/gi,', ').bold,'\n');
+      }
       console.log('NGN Mechanic is already installed.'.cyan.bold);
       read({
         prompt: 'Reinstall?',
@@ -100,15 +136,18 @@ Seq()
       process.exit();
     }
     if (this.vars.proceed == 'y'){
-      var npm = require(path.join(__dirname,'..','cli-utils')),
-          cfg = require(path.join(__dirname,'..','..','.config.json'));
-      npm.installer({
+      var cfg = require(path.join(__dirname,'..','..','.config.json'));
+      NGN.npm.installer({
         package: 'ngn-mechanic',
         name: 'Mechanic',
         global: true,
         registry: cfg.npmregistry
       },function(next){
-        require('./configure');
+        console.log("Mapping NGN Mechanic modules.".cyan);
+        exec('npm link bcrypt colors seq read forever ngn',{cwd:path.join(npmg,'ngn-mechanic')},function(){
+          console.log('Finished.'.green);
+          require('./configure');
+        });
       });
     } else {
       read({
