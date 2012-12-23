@@ -19,7 +19,8 @@ var opts = {
   'create': 'Create a custom class, API, process, or documentation.',
   'version':'List the version of NGN installed on the system.',
   'help':'View help for a specific command.',
-  'mechanic': 'Open the NGN Mechanic shell.'
+  'mechanic': 'Open the NGN Mechanic shell.',
+  'repair': 'Repair an existing NGN installation.'
 };
 
 // AVAILABLE NGN MODULES
@@ -81,6 +82,7 @@ var validOption = function(argv){
     case 'start':
     case 'stop':		
 		case 'setup':
+		case 'repair':
 		  return true;
       	
 		// All other options do not require additional parameters, or they

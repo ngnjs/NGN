@@ -32,13 +32,10 @@ Seq()
   .seq(function(){
     
     console.log("\n--------------------------------------------".blue.bold);
-    console.log("|             Welcome to NGN               |".blue.bold)
+    console.log("|        NGN is repairing iteself.         |".blue.bold)
     console.log("--------------------------------------------\n".blue.bold);
 
-    console.log("You are about to setup NGN. This will setup");
-    console.log("several global node modules used repeatedly");
-    console.log("throughout NGN:\n");
-    
+    console.log('Checking Global Modules...\n');    
     for (var item in libs){
       var title = item+':',
           linked = false;
@@ -61,38 +58,27 @@ Seq()
 
     if(!require('fs').existsSync(path.join(npmg,'ngn-mechanic','node_modules','ngn')) && exists){
       NGN.npm.globalLink('ngn-mechanic','ngn');
-      console.log('\nSetup detected an invalid or missing link between'.bold.yellow);
-      console.log('NGN and Mechanic. There is nothing you need to do to'.bold.yellow);
-      console.log('fix this. Setup has automatically resolved the issue.\n'.bold.yellow);
+      console.log('\nRepair detected an invalid or missing link between'.bold.yellow);
+      console.log('NGN and Mechanic.'.bold.yellow);
+      console.log('Link Auto-corrected!\n'.bold.green);
     }
-    
-    console.log("\nOnly the modules that are not already installed will be installed.");
-    console.log("If you wish to use any of these in your projects, they can be installed");
-    console.log("for a specific project using the "+"npm link <package>".bold.blue+" command in the project directory.\n");
-    
-    read({
-      prompt:"Do you want to continue setting up or updating NGN?",
-      'default': "y"
-    },this.into('proceedsetup'));
+    this();
   })
   .seq(function(){
-    if (this.vars.proceedsetup.trim().toLowerCase().substr(0,1) !== 'y'){
-      process.exit();
-    } else {
       if (_libs.length > 0){
-        console.log('\nGlobal Module Setup'.cyan.underline);
+        console.log('\nAdding missing global modules...'.cyan.underline);
         var currLib = null;
         try {
           _libs.forEach(function(lib){
             currLib = lib;
-            console.log((' >> Installing '+lib.bold).cyan);
+            console.log((' >> Installing '+lib.bold).yellow);
             execSync('npm --loglevel silent install -g '+lib);
           });
           console.log('\nModule Installation Complete.\n'.green.bold);
         } catch (execErr){
           console.log(('\nError: '.bold+'Could not build '+currLib.bold+'... ').red);
           console.log('\nPlease try a manual installation by typing:\n'+('npm install -g '+currLib).bold);
-          console.log('\nOnce '+currLib+' is installed, run the setup again.');
+          console.log('\nOnce '+currLib+' is installed, run the repair again.');
           console.log('\n** Some packages may require elevated privileges. **');
           process.exit(1);
         }
@@ -111,66 +97,34 @@ Seq()
         console.log('  >> '+unlinked.join().replace(/,/gi,', ').bold,'\n');
       }
       this();
-    }
   })
   .seq(function(){
+    console.log('NGN was successfully repaired.'.green.bold);
     if (!exists){
-      console.log("You are about to setup NGN Mechanic, the NGN server agent.".cyan.bold);
-      console.log('This should only take a few minutes.\n'.cyan);
+      console.log(("\nNGN Mechanic is not installed.".bold+' This is recommended, but not required.\n').cyan);
       read({
         prompt:'Do you want to setup NGN Mechanic Now?',
         'default':'y'
       },this.into('proceed'));
     } else {
-      console.log('NGN Mechanic is already installed.'.cyan.bold);
-      read({
-        prompt: 'Reinstall?',
-        'default': 'n'
-      },this.into('reinstall'));
-    }
-  })
-  .seq(function(){
-    if (this.vars.hasOwnProperty('reinstall')){
-      if (this.vars.reinstall.trim().toLowerCase() == 'y'){
-        this.vars.proceed = 'y';
-      } else {
-        this.vars.proceed = 'n';
-      }
-    }
-    if (this.vars.proceed.trim().toLowerCase() !== 'y' && this.vars.proceed.trim().toLowerCase() !== 'yes' && !this.vars.hasOwnProperty('reinstall')){
       process.exit();
     }
-    if (this.vars.proceed == 'y'){
-      var cfg = require(path.join(__dirname,'..','..','.config.json'));
-      NGN.npm.installer({
-        package: 'ngn-mechanic',
-        name: 'Mechanic',
-        global: true,
-        registry: cfg.npmregistry
-      },function(next){
-        console.log("Mapping NGN Mechanic modules.".cyan);
-        exec('npm link bcrypt colors seq read forever ngn',{cwd:path.join(npmg,'ngn-mechanic')},function(){
-          console.log('Finished.'.green);
-          require('./configure');
-        });
-      });
-    } else {
-      read({
-        prompt: 'Do you want to reconfigure NGN Mechanic?',
-        'default': 'y'
-      },this.into('reconfig'));
-    }
   })
   .seq(function(){
-    if (this.vars.hasOwnProperty('reconfig')){
-      if (this.vars.reconfig.trim().toLowerCase() == 'y' || this.vars.reconfig.trim().toLowerCase() == 'yes'){
-        require('./configure');
-      } else {
-        process.exit();
-      }
-    } else {
-      console.log('Done!'.green.bold);
+    if (this.vars.proceed.trim().toLowerCase().substring(0,1) !== 'y'){
+      process.exit();
     }
+    var cfg = require(path.join(__dirname,'..','..','.config.json'));
+    NGN.npm.installer({
+      package: 'ngn-mechanic',
+      name: 'Mechanic',
+      global: true,
+      registry: cfg.npmregistry
+    },function(next){
+      console.log("Mapping NGN Mechanic modules.".cyan);
+      exec('npm link bcrypt seq read colors forever ngn',{cwd:path.join(npmg,'ngn-mechanic')},function(){
+        console.log('Finished.'.green);
+        require('./configure');
+      });
+    });
   });
-
-// Configure Mechanic if installed
