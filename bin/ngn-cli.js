@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 
-try {
-  var util = require('ngn-util');
-} catch (e) {
-  throw e;
-}
+var util = require('ngn-util');
 
 Object.defineProperty(global,'NGN',{
   enumerable: false,
