@@ -1,8 +1,6 @@
-console.log('dgfdfsgdsfgsdfg')
 var path = require('path'),
     npmg = path.join(NGN.npm.globalDirectory,'node_modules');
-    console.log('>>>>',npmg);
-    return;
+
 try {
   var mechanic = require(path.join(npmg,'ngn-mechanic'));
   mechanic.shell();
@@ -23,7 +21,7 @@ try {
     })
     .seq(function(){
       if (this.vars.install.trim().toLowerCase() == 'y' || this.vars.install.trim().toLowerCase() == 'yes'){
-        npm.installer({
+        NGN.npm.installer({
           package: 'ngn-mechanic',
           name: 'Mechanic',
           registry: cfg.npmregistry

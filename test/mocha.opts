@@ -1,0 +1,6 @@
+--require ./
+--require should
+--reporter spec
+--ui bdd
+--growl
+--globals __NGN,NGN,ngn,__NGNX,NGNX,ngnx,NGNA,ngna,$,__$,nocirculr

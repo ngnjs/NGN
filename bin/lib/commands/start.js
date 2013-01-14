@@ -18,11 +18,9 @@ var argv = cli
 switch (argv.start.trim().toLowerCase()){
   case 'mechanic':
     var mechanic = require(path.join(npmg,'ngn-mechanic'));
-    console.log(mechanic);
     mechanic.service.start();
     break;
   default:
-    console.log(argv.start.bold+' is not a valid feature.');
     process.exit(1);
     break;
 }

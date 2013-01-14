@@ -1,18 +1,23 @@
 #!/usr/bin/env node
 
+try {
+  var util = require('ngn-util');
+} catch (e) {
+  throw e;
+}
+
 Object.defineProperty(global,'NGN',{
   enumerable: false,
   value:      {
     optimist: require('optimist'),
-    npm: require('./lib/npm-utils')
+    npm: util.npm
   }
 });
 
 // AVAILABLE CLI OPTIONS
 var opts = {
-  'configure': 'Create or update the NGN configuration.',
   'init': 'Initialize a project directory for use with NGN.',
-  'install': 'Install a NGN feature.',
+  'install': 'Install an NGN feature.',
   'uninstall': 'Remove a NGN feature.',
   'start': 'Start the NGN manager or a process.',
   'stop': 'Stop the manager or a process.',
@@ -24,10 +29,13 @@ var opts = {
 };
 
 // AVAILABLE NGN MODULES
-var mods = [
+/*var mods = [
   'manager','core','extensions','functions','examples','admin',
   'websockets','rest','web','static','logs',
   'deployer', 'dns'	//FUTURE ADDITIONS?
+];*/
+var mods = [
+  'mechanic','proxy','deployer','extensions','functions','examples'
 ];
 
 // Placeholder for the selected command

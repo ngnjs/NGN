@@ -1,0 +1,8 @@
+{
+	"redis": {
+		"autoConnect": false
+	},
+	"mongodb": {
+		"autoConnect": false
+	}
+}
