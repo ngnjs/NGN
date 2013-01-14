@@ -2,6 +2,7 @@ var util = require('ngn-util'),
     Seq = require('seq'),
     read = require('read'),
     path = require('path'),
+    fs = require('fs'),
     exec = require("child_process").exec,
     OS = require('os'),
     isWin = OS.platform().toLowerCase().indexOf('win') !== -1,
@@ -106,7 +107,7 @@ Seq()
               me.next();
               break;
             case '2':
-              require('./configure');
+              require('./configure-mechanic');
               return;
             default:
               process.exit();
@@ -140,69 +141,36 @@ Seq()
         //registry: cfg.npmregistry || null,
         global: true
       });
-      //this.vars.deps = require(require('path').join(util.npm.globalDirectory,'node_modules','ngn-mechanic','package.json')).ngnDependencies;
-      this.vars.pth = path.join(util.npm.globalDirectory,'node_modules','ngn-mechanic');
+      this.vars.deps = require(require('path').join(util.npm.globalDirectory,'node_modules','ngn-mechanic','package.json')).ngnDependencies;
+      //this.vars.pth = path.join(util.npm.globalDirectory,'node_modules','ngn-mechanic');
+      //console.log('dfgdsfgdsfgdsfg'.magenta);
       this.next();
     } else {
       process.exit();
     }
   })
   .seq(function(){
-    exec('npm link ngn-util',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link ngn-daemon',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link bcrypt',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link shell',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link easy-table',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link seq',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link read',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link json-socket',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link colors',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    exec('npm link node-uuid',{cwd:this.vars.pth},this.next);
-  })
-  .seq(function(){
-    console.log('sddfsfsafasfd'.red)
-    /*this.vars.deps.forEach(function(module){
-      console.log('Installing/linking '+module);
-      util.npm.linkToGlobal(module);
-    });*/
-    //exec('npm link '+)    
-    /*var efn = function(mods,callback){
-      callback = callback || function(){};
-      if (mods.length > 0){
-        var mod = mods.pop();
-        util.npm.globalLink('ngn-mechanic',mod,false,function(){
-          console.log('huh?')
-          efn(mods,callback);
-        });        
-      } else {
-        console.log('mods are 0')
-        callback();
+
+    console.log('\nValidating installation...'.blue.bold);    
+    this.vars.deps.forEach(function(module){
+      var src = path.join(util.npm.globalDirectory,'node_modules',module),
+          dst = path.join(util.npm.globalDirectory,'node_modules','ngn-mechanic','node_modules',module);
+          
+      if (!fs.existsSync(src)){
+        util.npm.installSync({
+          package: module,
+          hideoutput: true,
+          global: true
+        });
       }
-    }
-    console.log(this.stack_)
-    efn(mods)*/
-   
+      fs.symlinkSync(src,dst,'dir');
+    });
+
+    this.next();
+    
   })
   .seq(function(){
     console.log('DONE'.bold.green);
-    console.log('','\nngn start mechanic'.bold+' to launch Mechanic.');
+    //console.log('','\nngn start mechanic'.bold+' to launch Mechanic.');
   });
 // Configure Mechanic if installed

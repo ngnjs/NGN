@@ -24,11 +24,12 @@
   "license": "GPL",
   "dependencies": {
     "optimist": "~0.3.5",
-    "exec-sync": "~0.1.5",
     "colors": "~0.6.0-1",
     "read": "~1.0.4",
     "seq": "~0.3.5",
-    "ngn-util": "latest"
+    "ngn-util": "latest",
+    "exec-sync": "~0.1.5",
+    "wordwrap": "0.0.2"
   },
   "devDependencies": {
     "grunt-contrib-concat": "~0.1.1",
