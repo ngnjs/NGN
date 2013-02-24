@@ -1,11 +1,11 @@
 var util = require('ngn-util'),
-    read = require('read'),
-    Sequence = require('seq'),
+    read = util.require('read',true),
+    Sequence = util.require('seq',true),
     fs = require('fs'),
     p = require('path'),
-    npmg = util.npm.globalDirectory;
+    npmg = util.npm.globalDir;
 	
-require('colors');
+util.require('colors',true);
 
 var ngnpkg = require(p.join(npmg,'node_modules','ngn','package.json'));
 
@@ -97,7 +97,7 @@ var Build = function(arg){
     }
 
     if (cfg.process_key !== arg.key || arg.key === 'auto'){
-      var uuid = require('node-uuid');
+      var uuid = util.require('node-uuid',true);
       cfg.process_key = arg.key !== 'auto' ? arg.key : uuid.v1().replace(/-/gi,'');
     }
 	} else if (cfg.hasOwnProperty('process_key')){
@@ -144,11 +144,10 @@ var Build = function(arg){
       },this.into('launch'));
     })
     .seq(function(){
-      if (this.vars.launch.trim().toLowerCase() == 'y' || this.vars.launch.trim().toLowerCase() == 'yes'){
-        var mechanic = require('ngn-mechanic');
-        mechanic.service.start();
-      }
       console.log('\nDONE!'.green.bold);
+      if (this.vars.launch.trim().toLowerCase() == 'y' || this.vars.launch.trim().toLowerCase() == 'yes'){
+        require('child_process').exec("ngn start mechanic");
+      }
     });
 };
 

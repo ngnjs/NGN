@@ -1,6 +1,7 @@
+--harmony
 --require ./
 --require should
 --reporter spec
---ui bdd
+--ui tdd
 --growl
---globals __NGN,NGN,ngn,__NGNX,NGNX,ngnx,NGNA,ngna,$,__$,nocirculr
+--globals __NGN,NGN,ngn,__NGNX,NGNX,ngnx,$,__$,nocirculr

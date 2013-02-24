@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 
-var util = require('ngn-util');
-
-Object.defineProperty(global,'NGN',{
-  enumerable: false,
-  value:      {
-    optimist: require('optimist'),
-    npm: util.npm
-  }
-});
+var path = require('path'),
+    fs = require('fs'),
+    util = require('ngn-util'),
+    optimist = util.require('optimist',true),
+    exec = require('child_process').exec,
+    pkg = require(path.join(process.mainModule.paths[0],'..','..','package.json'));
 
 // AVAILABLE CLI OPTIONS
 var opts = {
@@ -57,7 +54,7 @@ var minOptions = function(argv){
 			break;
 		}
 	}
-	NGN.optimist.describe(opts);
+	optimist.describe(opts);
 	if (cmd == null){
 		throw('');
 	}
@@ -71,6 +68,9 @@ var validOption = function(argv){
 		// Make sure an installation/uninstall is using valid modules
 		case 'uninstall':
 		case 'install':
+      if (typeof argv[cmd] == 'boolean'){
+        argv[cmd] = '';
+      }
 			if (mods.indexOf(argv[cmd].trim().toLowerCase()) < 0){
 				throw('"'+argv[cmd]+'" is not a valid NGN module. Available modules include:\n\n   - '+mods.sort().toString().replace(/,/g,"\n   - "));
 			}
@@ -85,8 +85,6 @@ var validOption = function(argv){
 
     case 'start':
     case 'stop':		
-		case 'setup':
-		case 'repair':
 		  return true;
       	
 		// All other options do not require additional parameters, or they
@@ -100,14 +98,14 @@ var validOption = function(argv){
 
 			// If the command is not recognized, the list of valid commands
 			// is described and the usage/error is displayed.
-			NGN.optimist.describe(opts);
+			optimist.describe(opts);
 			throw('"'+cmd+'" is not a valid option.');
 	}
 	return true;
 };
 
 // ARGUMENTS
-var argv = NGN.optimist
+var argv = optimist
 			.alias('config','configuration')
 			.usage('Usage: ngn <option>')
 			.wrap(80)

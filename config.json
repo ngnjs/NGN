@@ -1,0 +1,24 @@
+{
+  "mechanic": {
+    "host": "localhost",
+    "port": 55555',
+    "key": "12345"
+  }
+  "datasource":{
+    "connections": {}
+  },
+  "mail":{
+    "servers": {
+      "primary": {
+        "username": "corey@coreybutler.com",
+        "password": "glaubers",
+        "type": "gmail"
+      },
+      "default": "primary"
+    }
+  },
+  "http": {},
+  "data": {
+    "facebook": {}
+  }  
+}

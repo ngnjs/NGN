@@ -7,7 +7,7 @@
   },
   "main": "./lib/bootstrap.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --harmony ./test/suite.js"
   },
   "repository": {
     "type": "git",
@@ -23,19 +23,35 @@
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
   "license": "GPL",
   "dependencies": {
-    "optimist": "~0.3.5",
-    "colors": "~0.6.0-1",
-    "read": "~1.0.4",
-    "seq": "~0.3.5",
     "ngn-util": "latest",
-    "exec-sync": "~0.1.5",
-    "wordwrap": "0.0.2"
+    "stack-trace": "0.0.6"
   },
   "devDependencies": {
     "grunt-contrib-concat": "~0.1.1",
     "grunt-contrib-jshint": "~0.1.0",
     "grunt-contrib-uglify": "~0.1.0",
     "grunt": "~0.4.0rc1",
-    "grunt-bump": "0.0.1"
+    "grunt-bump": "0.0.1",
+    "colors": "~0.6.0-1",
+    "wrench": "~1.4.4",
+    "nodemailer": "~0.3.42",
+    "eyes": "~0.1.8",
+    "mongodb": "~1.2.12",
+    "redis": "~0.8.2",
+    "hooks": "~0.3.0",
+    "harmony-reflect": "0.0.4",
+    "consolidate": "~0.8.0",
+    "restify": "~2.2.1",
+    "http-proxy": "~0.8.7",
+    "express": "~3.1.0",
+    "send": "~0.1.0",
+    "passport": "~0.1.15",
+    "should": "~1.2.1",
+    "mocha": "~1.8.1",
+    "clone": "~0.1.5",
+    "request": "~2.12.0",
+    "node-uuid": "~1.4.0",
+    "grunt-jsduck": "~0.1.2",
+    "grunt-contrib-copy": "~0.4.0"
   }
 }

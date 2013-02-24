@@ -1,6 +1,24 @@
 /*global module:false*/
 module.exports = function(grunt) {
-
+  
+  var cfg = {};
+  
+  Object.defineProperties(cfg,{
+    _ngn: {
+      enumerable: false,
+      writable: true,
+      configurable: false,
+      value: null
+    },
+    ngn: {
+      enumerable: true,
+      get: function(){
+        this._ngn = this._ngn || require('./package.json');
+        return this._ngn;
+      }
+    }
+  });
+  
   // Get list of minimatch patterns that should be excluded
   // from JSHint.
   var _jshint = {
@@ -65,7 +83,7 @@ module.exports = function(grunt) {
       tasks: 'lint test'
     },
     jshint: {
-      all: ['Gruntfile.js', 'bin/**/*.js', 'test/**/*.js','!bin/lib/builder/*.js'],
+      all: ['Gruntfile.js', 'test/**/*.js','/lib/**/*.js','/bin/**/*.js'],
       options: {
         "curly": true,
         "eqnull": true,
@@ -80,12 +98,49 @@ module.exports = function(grunt) {
       },
       globals: {}
     },
-    uglify: {}
+    uglify: {},
+    jsduck: {
+      main: {
+        // source paths with your code
+        src: [
+          './lib',
+          'docs/src/node'
+        ],
+  
+        // docs output dir
+        dest: 'docs/manual',
+  
+        // extra options
+        options: {
+          "title": "NGN v"+cfg.ngn.version,
+          "welcome": "docs/src/assets/html/welcome.html",
+          "head-html": '<link rel="stylesheet" href="resources/css/ngn.css" type="text/css">',
+          "categories": "docs/src/categories.json",
+          "guides": "docs/src/guides.json",
+          "output": "docs/manual",
+          "meta-tags": "docs/custom/tags",
+          'builtin-classes': true,
+          'warnings': [],
+          'external': ['XMLHttpRequest']
+        }
+      }
+    },
+    copy: {
+      jsduckassets: {
+        files: [
+          {expand: true, cwd: './docs/src/assets/css/', src:['*.*'], dest: './docs/manual/resources/css/'},
+          {expand: true, cwd: './docs/src/assets/images/', src:['*.*'], dest: './docs/manual/resources/images/'}//,
+        ]
+      }
+    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-copy');
   //grunt.loadNpmTasks('grunt-bump');
+  grunt.loadNpmTasks('grunt-jsduck');
 
   // Default task.
-  grunt.registerTask('default', 'lint test concat min');
+  grunt.registerTask('default', 'jshint');
+  grunt.registerTask('docs', ['jsduck','copy:jsduckassets']);
 };

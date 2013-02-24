@@ -1,17 +1,17 @@
-var util = require('ngn-util'),
-    Seq = require('seq'),
-    read = require('read'),
+var exec = require("child_process").exec,
     path = require('path'),
     fs = require('fs'),
-    exec = require("child_process").exec,
-    OS = require('os'),
-    isWin = OS.platform().toLowerCase().indexOf('win') !== -1,
+    isWin = require('os').platform().toLowerCase().indexOf('win') !== -1,
+    util = require('ngn-util'),
+    Seq = util.require('seq',true),
+    read = util.require('read',true),
     exists = false,
-    npmg = util.npm.globalDirectory,
-    libs = require('../modules.json'),
+    npmg = util.npm.globalDir,
+    libs = require('../mechanic.modules.json'),
     _libs = [],
     cfg = {};
-require('colors');
+    
+util.require('colors',true);
 
 // Check for Mechanic & offer to install it if it isn't already.
 Seq()
@@ -22,7 +22,7 @@ Seq()
 
     console.log("Mechanic is the server agent for NGN. This");
     console.log("wizard will install several global node");
-    console.log("modules used repeatedly within NGN and\nMechanic, including:\n");
+    console.log("modules used by Mechanic, including:\n");
     
     var uninstalled = 0;
     for (var item in libs){
@@ -36,7 +36,7 @@ Seq()
         uninstalled += 1;
         console.log(' > '+title.magenta.bold,libs[item]);
       } else {
-        console.log(' > '+title.green,'Installed  '.green+' -> '+libs[item]);
+        console.log(' > '+title.green,'Already Installed.  '.green+' -> '+libs[item]);
       }
     };
     
@@ -99,7 +99,7 @@ Seq()
         var me = this;
         read({
           prompt: 'Action?',
-          'default': "1"
+          'default': "3"
         },function(err,value){
           switch(value){
             case '1':
@@ -120,7 +120,7 @@ Seq()
   .seq(function(){
     // Make sure the proper libraries are available
     if (this.vars.minstalled){
-      this.vars.deps = require(require('path').join(util.npm.globalDirectory,'node_modules','ngn-mechanic','package.json')).ngnDependencies;
+      this.vars.deps = require(require('path').join(util.npm.globalDir,'node_modules','ngn-mechanic','package.json')).ngnDependencies;
       this.vars.deps.forEach(function(mod){
         if (!util.npm.installed(mod).global){
           console.log('Module Missing: '.bold.yellow+mod.bold)
@@ -132,7 +132,7 @@ Seq()
       });
     }
     if (this.vars.proceed.trim().toLowerCase().substring(0,1) == 'y'){
-      //cfg = require(require('path').join(util.npm.globalDirectory,'node_modules','ngn','bin','.config.json')) || {};
+      //cfg = require(require('path').join(util.npm.globalDir,'node_modules','ngn','bin','.config.json')) || {};
       if (this.vars.minstalled){
         util.npm.removeSync('ngn-mechanic',true);
       }
@@ -141,8 +141,11 @@ Seq()
         //registry: cfg.npmregistry || null,
         global: true
       });
-      this.vars.deps = require(require('path').join(util.npm.globalDirectory,'node_modules','ngn-mechanic','package.json')).ngnDependencies;
-      //this.vars.pth = path.join(util.npm.globalDirectory,'node_modules','ngn-mechanic');
+      this.vars.deps = require(require('path').join(util.npm.globalDir,'node_modules','ngn-mechanic','package.json')).ngnDependencies;
+      if (this.vars.deps.inedxOf('ngn-util') < 0){
+        this.vars.deps.push('ngn-util');
+      }
+      //this.vars.pth = path.join(util.npm.globalDir,'node_modules','ngn-mechanic');
       //console.log('dfgdsfgdsfgdsfg'.magenta);
       this.next();
     } else {
@@ -153,8 +156,8 @@ Seq()
 
     console.log('\nValidating installation...'.blue.bold);    
     this.vars.deps.forEach(function(module){
-      var src = path.join(util.npm.globalDirectory,'node_modules',module),
-          dst = path.join(util.npm.globalDirectory,'node_modules','ngn-mechanic','node_modules',module);
+      var src = path.join(util.npm.globalDir,'node_modules',module),
+          dst = path.join(util.npm.globalDir,'node_modules','ngn-mechanic','node_modules',module);
           
       if (!fs.existsSync(src)){
         util.npm.installSync({
