@@ -1,10 +1,10 @@
 [{
   "title": "Overview",
   "items": [{
-  			"name": "overview",
-  			"title": "Features & Components",
-  			"description": "A short breakdown of features, components, and how to use them."
-  		},{
+        "name": "overview",
+        "title": "Features & Components",
+        "description": "A short breakdown of features, components, and how to use them."
+      },{
         "name": "mechanic",
         "title": "NGN Mechanic",
         "description": "The server management utility."
@@ -13,11 +13,18 @@
         "title": "Creating NGN Processes",
         "description": "Learn to write server-side processes and applications."
       },{
-	       "name": "roadmap",
-	       "title": "Roadmap",
-	       "description": "This is currently a wishlist of features to add."
-      	}
+         "name": "roadmap",
+         "title": "Roadmap",
+         "description": "This is currently a wishlist of features to add."
+        }
    ]
+},{
+  "title": "Designing Systems & Applications",
+  "items": [{
+    "name": "rpcapi",
+    "title": "API Design",
+    "description": "Recommendations for structuring an API codebase."
+  }]
 },{
   "title": "Libraries",
   "items": [

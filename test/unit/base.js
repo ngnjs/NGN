@@ -4,6 +4,23 @@ var wrench = require('wrench'),
     path = require('path');
 
 /**
+ * Make sure the NGN Utilities namespace is available.
+ */
+suite('Utilities', function(){
+  
+  var lib = null;
+  setup(function(){
+    lib = wrench.readdirSyncRecursive(path.join(__dirname,'..','..','lib'));
+    require(path.join(__dirname,'..','..'));
+  });
+  
+  test('Load UTIL namespace via require()', function(){
+    assert.ok(UTIL !== undefined);
+  });
+
+});
+
+/**
  * Make sure the NGN global namespace is available.
  */
 suite('NGN Package', function(){
