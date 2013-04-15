@@ -1,5 +1,5 @@
 var util = require('ngn-util'),
-    cli = util.require('optimist',true),
+    cli = require('optimist'),
     argv = cli
             .usage('Usage: ngn install <feature>')
             .describe('feature'.bold,'Specify a feature to install it. For example,\n'+'ngn install mechanic'.blue.bold+'.')

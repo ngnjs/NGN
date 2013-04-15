@@ -6,7 +6,7 @@ var should = require('should');
 
 var cfg = require('./personalconfig.json');
 
-__NGN.application(function(){
+NGN.application(function(){
 	
 	// REDIS
 	if (cfg.redis !== undefined) {
@@ -14,7 +14,7 @@ __NGN.application(function(){
 		var rconfig = cfg.redis;
 		rconfig.id = "redistest";
 		
-		var rconn	= new __NGN.datasource.Redis(rconfig),
+		var rconn	= new NGN.datasource.Redis(rconfig),
 			rclient = rconn.getClient();
 	
 		describe('NGN.datasource.Redis',function(){
@@ -42,7 +42,7 @@ __NGN.application(function(){
 		var mconfig = cfg.mongodb;
 		mconfig.id = "mongotest";
 		
-		var mconn 	= new __NGN.datasource.MongoDB(mconfig),
+		var mconn 	= new NGN.datasource.MongoDB(mconfig),
 			mclient = mconn.getClient();
 		
 		describe('NGN.datasource.MongoDB',function(){

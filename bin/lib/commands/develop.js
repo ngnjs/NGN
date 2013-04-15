@@ -1,12 +1,13 @@
 var util = require('ngn-util'),
-    cli = util.require('optimist',true),
+    cli = require('optimist'),
     p = require('path'),
     fs = require('fs'),
     child_process = require('child_process'),
     spawn = child_process.spawn,
     fork = child_process.fork,
     procs = {};
-util.require('colors',true);
+
+require('colors');
 
 var argv = cli
 		  .usage('Usage: ngn keepalive <file>')
@@ -94,7 +95,7 @@ files.forEach(function(file){
 
 // Use TTY and keypress module to maintain an open process
 var tty = require('tty');
-var keypress = util.require('keypress',true);
+var keypress = require('keypress');
 
 // make `process.stdin` begin emitting "keypress" events
 keypress(process.stdin);

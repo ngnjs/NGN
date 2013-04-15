@@ -1,13 +1,13 @@
 {
   "name": "ngn",
   "version": "0.0.1",
-  "description": "The NGN Framework",
+  "description": "The distributed services platform core and CLI.",
   "bin": {
     "ngn": "./bin/ngn-cli.js"
   },
   "main": "./lib/bootstrap.js",
   "scripts": {
-    "test": "mocha --harmony ./test/suite.js"
+    "test": "mocha --harmony ./test/unit/"
   },
   "repository": {
     "type": "git",
@@ -18,39 +18,30 @@
   ],
   "preferGlobal": true,
   "engines": {
-    "node": ">= 0.8.2"
+    "node": ">= 0.10.1"
   },
   "author": "Corey Butler <corey@coreybutler.com> (http://www.coreybutler.com)",
+  "homepage": "http://nodengn.com",
   "license": "GPL",
   "dependencies": {
-    "ngn-util": "latest",
-    "stack-trace": "0.0.6"
+    "stack-trace": "0.0.6",
+    "colors": "~0.6.0-1",
+    "wordwrap": "0.0.2",
+    "node-uuid": "~1.4.0",
+    "wrench": "~1.4.4",
+    "optimist": "~0.3.5",
+    "read": "~1.0.4",
+    "seq": "~0.3.5",
+    "npm": "~1.2.16",
+    "watch": "~0.6.0"
   },
   "devDependencies": {
+    "mocha": "~1.8.1",
     "grunt-contrib-concat": "~0.1.1",
     "grunt-contrib-jshint": "~0.1.0",
     "grunt-contrib-uglify": "~0.1.0",
     "grunt": "~0.4.0rc1",
     "grunt-bump": "0.0.1",
-    "colors": "~0.6.0-1",
-    "wrench": "~1.4.4",
-    "nodemailer": "~0.3.42",
-    "eyes": "~0.1.8",
-    "mongodb": "~1.2.12",
-    "redis": "~0.8.2",
-    "hooks": "~0.3.0",
-    "harmony-reflect": "0.0.4",
-    "consolidate": "~0.8.0",
-    "restify": "~2.2.1",
-    "http-proxy": "~0.8.7",
-    "express": "~3.1.0",
-    "send": "~0.1.0",
-    "passport": "~0.1.15",
-    "should": "~1.2.1",
-    "mocha": "~1.8.1",
-    "clone": "~0.1.5",
-    "request": "~2.12.0",
-    "node-uuid": "~1.4.0",
     "grunt-jsduck": "~0.1.2",
     "grunt-contrib-copy": "~0.4.0"
   }

@@ -3,15 +3,15 @@ var exec = require("child_process").exec,
     fs = require('fs'),
     isWin = require('os').platform().toLowerCase().indexOf('win') !== -1,
     util = require('ngn-util'),
-    Seq = util.require('seq',true),
-    read = util.require('read',true),
+    Seq = require('seq'),
+    read = require('read'),
     exists = false,
     npmg = util.npm.globalDir,
     libs = require('../mechanic.modules.json'),
     _libs = [],
     cfg = {};
-    
-util.require('colors',true);
+
+require('colors');
 
 // Check for Mechanic & offer to install it if it isn't already.
 Seq()
@@ -23,7 +23,7 @@ Seq()
     console.log("Mechanic is the server agent for NGN. This");
     console.log("wizard will install several global node");
     console.log("modules used by Mechanic, including:\n");
-    
+
     var uninstalled = 0;
     for (var item in libs){
       var title = item+':',
@@ -39,7 +39,7 @@ Seq()
         console.log(' > '+title.green,'Already Installed.  '.green+' -> '+libs[item]);
       }
     };
-    
+
     if (uninstalled > 0){
       console.log('');
       read({
@@ -49,7 +49,7 @@ Seq()
     } else {
       this.vars.proceedsetup = 'y';
       this();
-    }    
+    }
   })
   .seq(function(){
     if (this.vars.proceedsetup.trim().toLowerCase().substr(0,1) !== 'y'){
@@ -82,9 +82,9 @@ Seq()
       console.log("they can be used by issuing "+"npm link <module>".bold.blue);
       console.log("from the command line within your project\ndirectory.");
       console.log("\n--------------------------------------------\n".blue.bold);
-      
+
       this.vars.minstalled = util.npm.installed('ngn-mechanic').global;
-      
+
       if (this.vars.minstalled == false){
         read({
           prompt: 'Continue?',
@@ -154,11 +154,11 @@ Seq()
   })
   .seq(function(){
 
-    console.log('\nValidating installation...'.blue.bold);    
+    console.log('\nValidating installation...'.blue.bold);
     this.vars.deps.forEach(function(module){
       var src = path.join(util.npm.globalDir,'node_modules',module),
           dst = path.join(util.npm.globalDir,'node_modules','ngn-mechanic','node_modules',module);
-          
+
       if (!fs.existsSync(src)){
         util.npm.installSync({
           package: module,
@@ -170,7 +170,7 @@ Seq()
     });
 
     this.next();
-    
+
   })
   .seq(function(){
     console.log('DONE'.bold.green);

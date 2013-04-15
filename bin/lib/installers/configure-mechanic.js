@@ -1,11 +1,11 @@
 var util = require('ngn-util'),
-    read = util.require('read',true),
-    Sequence = util.require('seq',true),
+    read = require('read'),
+    Sequence = require('seq'),
     fs = require('fs'),
     p = require('path'),
     npmg = util.npm.globalDir;
-	
-util.require('colors',true);
+
+require('colors');
 
 var ngnpkg = require(p.join(npmg,'node_modules','ngn','package.json'));
 
@@ -52,7 +52,7 @@ var wizard = function(){
 			if (cfg.secret){
         console.log('An admin password already exists. A new password is not required, but can be reset now.'.cyan);
 			}
-			
+
 			read({
 				prompt: 'Admin Secret:',
 				silent: true,
@@ -85,7 +85,7 @@ var wizard = function(){
 // The main build process
 var Build = function(arg){
 	console.log('\n>> Creating Configuration Files'.cyan);
-	
+
 	cfg.name         = arg.name;
 	cfg.description  = arg.dsc;
 	cfg.port         = arg.port;
@@ -97,7 +97,7 @@ var Build = function(arg){
     }
 
     if (cfg.process_key !== arg.key || arg.key === 'auto'){
-      var uuid = util.require('node-uuid',true);
+      var uuid = require('node-uuid');
       cfg.process_key = arg.key !== 'auto' ? arg.key : uuid.v1().replace(/-/gi,'');
     }
 	} else if (cfg.hasOwnProperty('process_key')){
@@ -110,7 +110,7 @@ var Build = function(arg){
 	} else {
     arg.pwd = arg.pwd.trim();
 	}
-	
+
 	// If the password is not defined, create it.
 	if (!cfg.hasOwnProperty('secret')){
     cfg.secret = null;
@@ -121,18 +121,18 @@ var Build = function(arg){
     var bcrypt = require('bcrypt');
 
 		console.log('   ... Encrypting'.magenta);
-		
+
 		var salt = bcrypt.genSaltSync(12);
 
     cfg.secret = bcrypt.hashSync(arg.pwd,salt);
-	
+
 		console.log('   ... Complete.'.magenta);
 	}
-	
+
 	if (cfg.secret == null){
     delete cfg.secret;
   }
-	
+
 	console.log('>> Saving Configuration...\n'.cyan);
 	fs.writeFileSync(p.join(cfgPath,'mechanic.json'),JSON.stringify(cfg,true,2),'utf8');
 

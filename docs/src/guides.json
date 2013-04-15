@@ -1,4 +1,11 @@
 [{
+  "title": "Uncategorized",
+  "items": [{
+    "name": "processes",
+    "title": "Processes",
+    "description": "Processes are a fundamental part of system architecture."
+  }]
+},{
   "title": "Overview",
   "items": [{
         "name": "overview",

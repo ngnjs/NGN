@@ -4,4 +4,4 @@
 --reporter spec
 --ui tdd
 --growl
---globals __NGN,NGN,ngn,__NGNX,NGNX,ngnx,UTIL,nocirculr
+--globals NGN,NGN,ngn,NGNX,NGNX,ngnx,UTIL,nocirculr

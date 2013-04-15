@@ -3,7 +3,7 @@
 var path = require('path'),
     fs = require('fs'),
     util = require('ngn-util'),
-    optimist = util.require('optimist',true),
+    optimist = require('optimist'),
     exec = require('child_process').exec,
     pkg = require(path.join(process.mainModule.paths[0],'..','..','package.json'));
 
@@ -18,7 +18,8 @@ var opts = {
   'version':'List the version of NGN installed on the system.',
   'help':'View help for a specific command.',
   'mechanic': 'Open the NGN Mechanic shell.',
-  'repair': 'Repair an existing NGN installation.'
+  'repair': 'Repair an existing NGN installation.',
+  'develop': 'Auto-restart processes when the gile changes. (Dev Tool)'
 };
 
 // AVAILABLE NGN MODULES
@@ -61,7 +62,7 @@ var minOptions = function(argv){
 	throw('"'+cmd+'" is not a valid option.');
 };
 
-// Make sure the command option has the appropriate parameters which 
+// Make sure the command option has the appropriate parameters which
 // are required to run.
 var validOption = function(argv){
 	switch (cmd.trim().toLowerCase()){
@@ -75,7 +76,7 @@ var validOption = function(argv){
 				throw('"'+argv[cmd]+'" is not a valid NGN module. Available modules include:\n\n   - '+mods.sort().toString().replace(/,/g,"\n   - "));
 			}
 			break;
-		
+
 		// Make sure the CLI knows what it needs to create
 		case 'create':
 			if (argv[cmd] === true || ['class','docs','api'].indexOf(argv[cmd].trim().toLowerCase()) < 0){
@@ -84,9 +85,9 @@ var validOption = function(argv){
 			break;
 
     case 'start':
-    case 'stop':		
+    case 'stop':
 		  return true;
-      	
+
 		// All other options do not require additional parameters, or they
 		// are not valid.
 		default:
@@ -106,7 +107,6 @@ var validOption = function(argv){
 
 // ARGUMENTS
 var argv = optimist
-			.alias('config','configuration')
 			.usage('Usage: ngn <option>')
 			.wrap(80)
 			.check(minOptions)
