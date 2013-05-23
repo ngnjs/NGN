@@ -1,8 +1,8 @@
 /*global module:false*/
 module.exports = function(grunt) {
-  
+
   var cfg = {};
-  
+
   Object.defineProperties(cfg,{
     _ngn: {
       enumerable: false,
@@ -18,7 +18,7 @@ module.exports = function(grunt) {
       }
     }
   });
-  
+
   // Get list of minimatch patterns that should be excluded
   // from JSHint.
   var _jshint = {
@@ -39,14 +39,14 @@ module.exports = function(grunt) {
             }
             return '!' + _ignore + '**/*.js';
           });
-              
+
           _jshint.ignore = function () { return ignores; };
           return ignores;
       }
       return [];
     }
   };
-  
+
   // Project configuration.
   grunt.initConfig({
     blah: function(){
@@ -104,12 +104,14 @@ module.exports = function(grunt) {
         // source paths with your code
         src: [
           './lib',
-          'docs/src/node'
+          'docs/src/node',
+          '../ngn-idk',
+          '../ngn-idk-web'
         ],
-  
+
         // docs output dir
         dest: 'docs/manual',
-  
+
         // extra options
         options: {
           "title": "NGN v"+cfg.ngn.version,
