@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "A distributed services platform (core and CLI).",
   "bin": {
     "ngn": "./bin/ngn-cli.js"
@@ -32,7 +32,6 @@
     "optimist": "~0.3.5",
     "read": "~1.0.4",
     "seq": "~0.3.5",
-    "npm": "~1.2.16",
     "watch": "~0.6.0",
     "keypress": "~0.1.0",
     "sockjs": "~0.3.5"
