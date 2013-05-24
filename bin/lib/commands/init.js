@@ -13,9 +13,10 @@ var argv = cli
 		.describe('test'.bold,'sdfsfsd')
 		.demand('test'.bold).argv;
 */
+/*
 var init = function(){
-  var cfg = fs.existsSync(path.join(process.cwd(),'package.json')) == true 
-            ? require(path.join(process.cwd(),'package.json')) 
+  var cfg = fs.existsSync(path.join(process.cwd(),'package.json')) == true
+            ? require(path.join(process.cwd(),'package.json'))
             : {};
 
   Seq()
@@ -66,13 +67,16 @@ var init = function(){
         }));
       });
     });
-};
+};*/
 
 fs.exists(path.join(process.cwd(),'node_modules','ngn'),function(exists){
   if (!exists){
     console.log('Adding NGN Support...'.blue.bold);
-    exec('npm link ngn',{cwd:process.cwd()},init);
+    exec('npm link ngn',{cwd:process.cwd()},function(){
+      console.log('NGN is now available.'.green);
+    });
   } else {
-    init();
+    console.log('NGN is already available.'.magenta)
+    //init();
   }
 });
