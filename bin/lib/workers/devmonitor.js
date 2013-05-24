@@ -1,5 +1,4 @@
-var util = require('ngn-util'),
-    p = require('path'),
+var p = require('path'),
     fs = require('fs'),
     child_process = require('child_process'),
     files = {};

@@ -2,7 +2,6 @@
 
 var path = require('path'),
     fs = require('fs'),
-    util = require('ngn-util'),
     optimist = require('optimist'),
     exec = require('child_process').exec,
     pkg = require(path.join(process.mainModule.paths[0],'..','..','package.json'));
