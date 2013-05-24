@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <title>NGN Log</title>
+    <link type="text/css" rel="stylesheet" href="./main.css"/>
+    <script src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+  </head>
+  <body>
+    <h3>NGN Live Log</h3>
+    <a id="scrolltoggle" href="javascript:toggleScroll();">Stop Autoscroll</a>
+    <div id="log"></div>
+    <script type="text/javascript">
+      var format = function(data){
+        return data
+                .replace(/\[1m/g,'<b>').replace(/\[22m/g,'</b>')    // bold
+                .replace(/\[3m/g,'<em>').replace(/\[23m/g,'</em>')  // italic
+                .replace(/\[4m/g,'<u>').replace(/\[24m/g,'</u>')    // underline
+                .replace(/\[7m/g,'<span style="background-color:black;color:white;">').replace(/\[27m/g,'</span>')    // inverse
+                .replace(/\[9m/g,'<del>').replace(/\[29m/g,'</del>')// strikethrough
+                .replace(/\[37m/g,'<span style="color:white;">')    // white
+                .replace(/\[90m/g,'<span style="color:grey;">')     // grey
+                .replace(/\[30m/g,'<span style="color:white;">')    // black
+                .replace(/\[34m/g,'<span style="color:blue;">')     // blue
+                .replace(/\[36m/g,'<span style="color:cyan;">')     // cyan
+                .replace(/\[34m/g,'<span style="color:blue;">')     // blue
+                .replace(/\[32m/g,'<span style="color:green;">')    // green
+                .replace(/\[35m/g,'<span style="color:magenta;">')  // magenta
+                .replace(/\[31m/g,'<span style="color:red;">')      // red
+                .replace(/\[33m/g,'<span style="color:yellow;">')     // blue
+                .replace(/\[39m/g,'</span>')
+                .replace(/\n\r/g,'<br/>')
+                .replace(/\n/g,'<br/>')
+                .replace(/\r/g,'<br/>')
+                .replace(/\<br\/\>\<br\/\>/g,'<br/>')
+                .trim();
+      };
+      var scrollable = true;
+      var connect = function(){
+        var connected = null,
+            procs = {},
+            socket = new SockJS('/logviewer'),
+            log = function(data,isError){
+              isError = (typeof isError === 'boolean') == true ? isError : false;
+              document.getElementById('log').innerHTML += '<li'+(isError==true?' class="error"':'')+'>'+(isError==true?'<span class="message">':'')+format(data)+(isError==true?'</span>':'')+'</li>';
+            },
+            closed = function(){
+              document.getElementById('log').innerHTML += '<div class="disconnected">&mdash;&nbsp;Disconnected&nbsp;&mdash;<span class="time">'+(new Date()).toLocaleTimeString()+'</div>';
+              if (scrollable){
+                window.scroll(0,document.height);
+              }
+            };
+
+        socket.onopen = function() {
+          connected = true;
+        }
+
+        socket.onmessage = function(evt) {
+          var d = evt.data.split(',');
+          if (d[0] == 'metadata'){
+            d.shift();
+            for (var i=0;i<d.length;i++){
+              var p = d[i].split('~'),
+                  fn = p[1].replace(/\\/gi,',').split(',');
+              procs[p[0]] = fn[fn.length-1].replace(/\.js$/,'');
+            }
+          } else {
+            var d = evt.data.split('~'),
+                e = false;
+            if (d[0] == 'ERROR'){
+              e = true;
+              d.shift();
+            }
+            log((d.length>1?'<span class="process">'+procs[d[0]]+' @'+(new Date()).toLocaleTimeString()+'</span>'+d[1]:d[1]),e);
+          }
+          if (scrollable){
+            window.scroll(0,document.height);
+          }
+        }
+
+        socket.onclose = function() {
+          if (connected !== null){
+            if (connected == true){
+              connected = false;
+              closed();
+            }
+          }
+          connect();
+        }
+      }
+
+      connect();
+
+      var toggler = document.getElementById('scrolltoggle');
+      var toggleScroll = function(){
+        toggler.innerHTML = (scrollable == false ? 'Stop' : 'Start')+' Autoscroll';
+        scrollable = !scrollable;
+        if (scrollable){
+          window.scroll(0,document.height);
+        }
+      };
+
+      document.onkeydown = function(e){
+        if(e.keyCode == 32){
+          toggleScroll();
+        }
+      };
+    </script>
+  </body>
+</html>

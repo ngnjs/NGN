@@ -1,0 +1,50 @@
+{
+  "name": "ngn",
+  "version": "0.1.1",
+  "description": "A distributed services platform (core and CLI).",
+  "bin": {
+    "ngn": "./bin/ngn-cli.js"
+  },
+  "main": "./lib/bootstrap.js",
+  "scripts": {
+    "test": "mocha --harmony ./test/unit/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thinkfirst/NGN.git"
+  },
+  "keywords": [
+    "NGN"
+  ],
+  "preferGlobal": true,
+  "engines": {
+    "node": ">= 0.10.1"
+  },
+  "author": "Corey Butler <corey@nodengn.com> (http://www.nodengn.com)",
+  "homepage": "http://nodengn.com",
+  "license": "GPL",
+  "dependencies": {
+    "stack-trace": "0.0.6",
+    "colors": "~0.6.0-1",
+    "wordwrap": "0.0.2",
+    "node-uuid": "~1.4.0",
+    "wrench": "~1.4.4",
+    "optimist": "~0.3.5",
+    "read": "~1.0.4",
+    "seq": "~0.3.5",
+    "watch": "~0.6.0",
+    "keypress": "~0.1.0",
+    "sockjs": "~0.3.5"
+  },
+  "devDependencies": {
+    "mocha": "~1.10.0",
+    "grunt-contrib-concat": "~0.1.1",
+    "grunt-contrib-jshint": "~0.1.0",
+    "grunt-contrib-uglify": "~0.1.0",
+    "grunt": "~0.4.0rc1",
+    "grunt-bump": "0.0.1",
+    "grunt-jsduck": "~0.1.4",
+    "grunt-contrib-copy": "~0.4.0",
+    "should": "~1.2.2"
+  }
+}
