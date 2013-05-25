@@ -185,13 +185,13 @@ var createMonitoredProcess = function(file,output) {
   // Create output file
   var out = fs.openSync(output,'a');
 
-  // Spawn independent process
+  // Spawn process
   var child = spawn(process.execPath, ['--harmony',file],
     {
       cwd: cwd,
       env: process.env,
       //stdio: ['ignore',sout,out],
-      detached: true
+      detached: false
     });
 
   child.stdout.on('data',function(chunk){
