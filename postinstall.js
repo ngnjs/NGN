@@ -18,9 +18,6 @@ switch (os.platform().toLowerCase()){
 }
 
 exec('npm config get prefix',function(err,prefix){
-  exec('npm link',{cwd:p.join(prefix,'node_modules',pkg)},function(){
-    exec('npm link '+pkg,{cwd:p.join(prefix,'node_modules','ngn')},function(){
-      console.log('Daemon functionality mapped to NGN.');
-    });
-  });
+  require('fs').symlinkSync(p.join(prefix,'node_modules',pkg),p.join(prefix,'node_modules','ngn','node_modules',pkg),'dir');
+  console.log('Daemon link established.');
 });
