@@ -8,7 +8,7 @@
   "main": "./lib/bootstrap.js",
   "scripts": {
     "test": "mocha --harmony ./test/unit/",
-    "preinstall": "node bin/install_dependencies.js"
+    "preinstall": "node install_deps.js"
   },
   "repository": {
     "type": "git",
