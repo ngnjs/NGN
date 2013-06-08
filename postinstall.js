@@ -18,7 +18,7 @@ switch (os.platform().toLowerCase()){
 }
 
 exec('npm config get prefix',function(err,prefix){
-  require('fs').symlink(p.join(out,'node_modules',pkg),p.join(out,'node_modules','ngn','node_modules',pkg),'dir',function(){
+  require('fs').symlink(p.join(prefix,'node_modules',pkg),p.join(prefix,'node_modules','ngn','node_modules',pkg),'dir',function(){
     console.log('Daemon functionality mapped to NGN.');
   });
 });
