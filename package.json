@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.2.16",
+  "version": "0.2.17",
   "description": "A distributed services platform (core and CLI).",
   "bin": {
     "ngn": "./bin/ngn-cli.js"
@@ -8,7 +8,7 @@
   "main": "./lib/bootstrap.js",
   "scripts": {
     "test": "mocha --harmony ./test/unit/",
-    "postinstall": "node postinstall.js"
+    "preinstall": "node preinstall.js",
   },
   "repository": {
     "type": "git",
