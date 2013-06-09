@@ -17,6 +17,11 @@ switch (os.platform().toLowerCase()){
     break;
 }
 
+exec('npm install -g '+pkg,{cwd:p.join(prefix,'node_modules','ngn')},function(){
+  console.log(pkg+' support added for NGN.');
+});
+
+/*
 exec('npm config get prefix',function(err,prefix){
   console.log('npm global prefix found at '+prefix);
   exec('npm link',{cwd:p.join(prefix,'node_modules',pkg)},function(){
@@ -27,3 +32,4 @@ exec('npm config get prefix',function(err,prefix){
     });
   });
 });
+*/
