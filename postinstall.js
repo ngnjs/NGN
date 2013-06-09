@@ -17,7 +17,7 @@ switch (os.platform().toLowerCase()){
     break;
 }
 
-exec('npm install -g '+pkg,{cwd:p.join(prefix,'node_modules','ngn')},function(){
+exec('npm install '+pkg,{cwd:p.join(prefix,'node_modules','ngn')},function(){
   console.log(pkg+' support added for NGN.');
 });
 
