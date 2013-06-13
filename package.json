@@ -30,7 +30,7 @@
     "wordwrap": "0.0.2",
     "node-uuid": "~1.4.0",
     "wrench": "~1.4.4",
-    "optimist": "~0.3.5",
+    "optimist": "~0.3.7",
     "read": "~1.0.4",
     "seq": "~0.3.5",
     "watch": "~0.6.0",
