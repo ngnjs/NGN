@@ -30,12 +30,13 @@
     "wordwrap": "0.0.2",
     "node-uuid": "~1.4.0",
     "wrench": "~1.5.1",
-    "optimist": "~0.5.2",
+    "optimist": "~0.6.0",
     "read": "~1.0.4",
     "seq": "~0.3.5",
-    "watch": "~0.7.0",
-    "keypress": "~0.1.0",
-    "sockjs": "~0.3.5"
+    "watch": "~0.8.0",
+    "keypress": "~0.2.0",
+    "sockjs": "~0.3.5",
+    "clone": "~0.1.9"
   },
   "devDependencies": {
     "mocha": "~1.10.0",
