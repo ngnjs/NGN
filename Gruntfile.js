@@ -134,6 +134,24 @@ module.exports = function(grunt) {
           {expand: true, cwd: './docs/src/assets/images/', src:['*.*'], dest: './docs/manual/resources/images/'}//,
         ]
       }
+    },
+    report: {
+      core:{}
+    }
+  });
+
+  grunt.task.registerTask('check', 'Check the build', function() {
+    var mods = require('./bin/ngn.modules.json').modules;
+    for (var dir in mods){
+      var done = this.async();
+      grunt.log.writeln(require('path').join(process.cwd(),dir));
+      require('child_process').exec("git status",{
+        cwd: require('path').join(process.cwd(),dir),
+        env: process.env
+      },function(err,result){
+        console.log(err);
+        done();
+      });
     }
   });
 
@@ -141,6 +159,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
   //grunt.loadNpmTasks('grunt-bump');
   grunt.loadNpmTasks('grunt-jsduck');
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-ngn-dev');
 
   // Default task.
   grunt.registerTask('default', 'jshint');

@@ -9,15 +9,17 @@ var path = require('path'),
 // AVAILABLE CLI OPTIONS
 var opts = {
   'init': 'Initialize a project directory for use with NGN.',
+  /*
   'install': 'Install an NGN feature.',
   'uninstall': 'Remove a NGN feature.',
   'start': 'Start the NGN manager or a process.',
   'stop': 'Stop the manager or a process.',
   'create': 'Create a custom class, API, process, or documentation.',
+  */
   'version':'List the version of NGN installed on the system.',
   'help':'View help for a specific command.',
-  'mechanic': 'Open the NGN Mechanic shell.',
-  'repair': 'Repair an existing NGN installation.',
+  //'mechanic': 'Open the NGN Mechanic shell.',
+  //'repair': 'Repair an existing NGN installation.',
   'develop': 'Auto-restart processes when the gile changes. (Dev Tool)'
 };
 

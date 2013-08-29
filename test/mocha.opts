@@ -1,7 +1,0 @@
---harmony
---require ./
---require should
---reporter spec
---ui tdd
---growl
---globals NGN,NGN,ngn,NGNX,NGNX,ngnx,UTIL,nocirculr
