@@ -1,0 +1,26 @@
+{
+  "modules": {
+    "ngn-idk-core": "1.0.0",
+    "ngn-idk-rpc": "1.0.0",
+    "ngn-idk-http-web": "1.0.0",
+    "ngn-idk-http-api": "1.0.0",
+    "ngn-idk-http-proxy": "1.0.0",
+    "ngn-idk-mail": "1.0.0",
+    "ngn-idk-tcp": "1.0.0",
+    "ngn-sdk": "1.0.0"
+  },
+  "groups":{
+    "idk": [
+      "ngn-idk",
+      "ngn-idk-rpc",
+      "ngn-idk-http-web",
+      "ngn-idk-http-api",
+      "ngn-idk-http-proxy",
+      "ngn-idk-mail",
+      "ngn-idk-tcp"
+    ],
+    "sdk": [
+      "ngn-sdk"
+    ]
+  }
+}

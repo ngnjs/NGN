@@ -141,7 +141,7 @@ module.exports = function(grunt) {
   });
 
   grunt.task.registerTask('check', 'Check the build', function() {
-    var mods = require('./bin/ngn.modules.json').modules;
+    var mods = require('./package.json').ngn.modules;
     for (var dir in mods){
       var done = this.async();
       grunt.log.writeln(require('path').join(process.cwd(),dir));

@@ -3,12 +3,12 @@
   "version": "0.2.18",
   "description": "A distributed services platform (core and CLI).",
   "bin": {
-    "ngn": "./bin/ngn-cli.js"
+    "ngn": "./bin/CLI.js"
   },
   "main": "./lib/bootstrap.js",
   "scripts": {
     "test": "mocha --harmony ./test/unit/",
-    "preinstall": "node preinstall.js"
+    "preinstall": "node ./bin/preinstall.js"
   },
   "repository": {
     "type": "git",
@@ -50,5 +50,31 @@
     "grunt-contrib-copy": "~0.4.0",
     "should": "~1.2.2",
     "grunt-ngn-dev": "~0.1.0"
+  },
+  "ngn": {
+    "modules": {
+      "ngn-idk-core": "1.0.0",
+      "ngn-idk-rpc": "1.0.0",
+      "ngn-idk-http-web": "1.0.0",
+      "ngn-idk-http-api": "1.0.0",
+      "ngn-idk-http-proxy": "1.0.0",
+      "ngn-idk-mail": "1.0.0",
+      "ngn-idk-tcp": "1.0.0",
+      "ngn-sdk": "1.0.0"
+    },
+    "groups":{
+      "idk": [
+        "ngn-idk-core",
+        "ngn-idk-rpc",
+        "ngn-idk-http-web",
+        "ngn-idk-http-api",
+        "ngn-idk-http-proxy",
+        "ngn-idk-mail",
+        "ngn-idk-tcp"
+      ],
+      "sdk": [
+        "ngn-sdk"
+      ]
+    }
   }
 }
