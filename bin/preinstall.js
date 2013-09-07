@@ -3,21 +3,19 @@ var os = require('os'),
     exec = require('child_process').exec,
     pkg = '';
 
-console.log('Installing background service utilities...');
-
 switch (os.platform().toLowerCase()){
   case 'win32':
-    console.log('Installing node-windows service manager...');
+    console.log('Installing Windows service manager...');
     pkg = 'node-windows';
     break;
   case 'darwin':
-    console.log('Installing node-mac daemon manager...');
+    console.log('Installing Mac daemon manager...');
     pkg = 'node-mac';
     break;
   case 'linux':
-    console.log('Installing node-linux daemon manager...');
+    console.log('Installing Linux daemon manager...');
     pkg = 'node-linux';
     break;
 }
 
-exec('npm install -g '+pkg,function(){});
+exec('npm install '+pkg,{cwd:__dirname},function(){});
