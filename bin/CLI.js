@@ -58,8 +58,8 @@ var minOptions = function(argv){
 var validOption = function(argv){
 	switch (cmd.trim().toLowerCase()){
 		// Make sure an installation/uninstall is using valid modules
-		case 'uninstall':
-		case 'install':
+		case 'unsupport':
+		case 'support':
       if (typeof argv[cmd] == 'boolean'){
         argv[cmd] = '';
       }
