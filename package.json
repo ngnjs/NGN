@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.2.18",
+  "version": "0.2.19",
   "description": "A distributed services platform (core and CLI).",
   "bin": {
     "ngn": "./bin/CLI.js"
@@ -75,6 +75,11 @@
       "sdk": [
         "ngn-sdk"
       ]
+    },
+    "daemon":{
+      "node-windows": "0.1.5",
+      "node-mac": "0.1.3",
+      "node-linux": "0.1.1"
     }
   }
 }
