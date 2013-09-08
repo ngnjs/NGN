@@ -2,8 +2,7 @@ require('colors');
 var Seq = require('seq'),
   read = require('read'),
   exec = require('child_process').exec,
-  p = require('path'),
-  async = require('async');
+  p = require('path');
 
 Seq()
   .seq(function(){
