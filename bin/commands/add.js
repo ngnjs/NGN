@@ -39,7 +39,7 @@ if (available.modules[mod] !== undefined){
   available.groups[mod].forEach(function(m){
     install(m);
   });
-} else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
+} else if (['all'/*,'*'*/].indexOf(mod.toString().trim().toLowerCase()) >= 0){
   console.log(('Installing every add-on ('+Object.keys(available.modules).length.toString()+' total). This may take a few moments.').cyan.bold);
   for (var m in available.modules){
     install(m);
