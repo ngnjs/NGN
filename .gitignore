@@ -6,3 +6,4 @@ node_modules
 !.npmignore
 !.travis.yml
 *.db
+npm-debug.log
