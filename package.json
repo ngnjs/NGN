@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.2.28",
+  "version": "0.2.29",
   "description": "A distributed services platform (core and CLI).",
   "bin": {
     "ngn": "./bin/CLI.js"
