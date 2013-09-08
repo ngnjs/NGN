@@ -3,7 +3,9 @@ var cli = require('optimist'),
     p = require('path'),
     u = require('util'),
     fs = require('fs'),
-    exec = require('child_process').exec;
+    exec = require('child_process').exec,
+    Seq = require('seq'),
+    read = require('read');
 
 var available = require(p.join(process.mainModule.paths[0],'..','..','package.json')).ngn;
 
@@ -15,6 +17,7 @@ var argv = cli
 
 // Global Package Installer
 var install = function(ngnpkg){
+  console.log(('Downloading '+ngnpkg+'...').gray);
   exec('npm install -g '+ngnpkg+' --json --loglevel=silent',function(err,stdout,stderr){
     try {
       // Handle edge case when gyp output screws up npm json format
@@ -22,7 +25,7 @@ var install = function(ngnpkg){
         stdout = stdout.substr(stdout.indexOf('['),stdout.length);
       }
       var out = JSON.parse(stdout)[0];
-      console.log((out.name.toString()+' v'+out.version+' support added.').green.bold);
+      console.log((out.name.toString()+' support added --> '+' v'+out.version).green.bold);
     } catch (e) {
       console.log('Module installed, but may have errors:'.yellow.bold);
       console.log(e.message.toString().yellow);
@@ -34,15 +37,13 @@ var install = function(ngnpkg){
 if (available.modules[mod] !== undefined){
   exec('npm install -g '+mod);
 } else if (available.groups[mod] !== undefined){
-  var cmd = [];
-  console.log(('Adding '+available.groups[mod].length+' package'+(available.groups[mod].length==1?'':'s')+'...').cyan.bold);
-  for (var i=0;i<available.groups[mod].length;i++){
-    install(available.groups[mod][i]);
-  };
+  available.groups[mod].forEach(function(m){
+    install(m);
+  });
 } else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
-  console.log('Installing every add-on...'.cyan.bold+' (this may take a few moments)');
-  for (var ngnpkg in available.modules){
-    install(ngnpkg);
+  console.log('Installing every add-on ('+Object.keys(available.modules).length+' total).'.cyan.bold+' This may take a few moments.');
+  for (var m in available.modules){
+    install(m);
   };
 } else {
   throw 'No module or group called \"'+mod+'\" is available.';
