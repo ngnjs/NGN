@@ -17,7 +17,6 @@ var argv = cli
 
 // Global Package Installer
 var install = function(ngnpkg){
-  console.log(('Downloading '+ngnpkg+'...').gray);
   exec('npm install -g '+ngnpkg+' --json --loglevel=silent',function(err,stdout,stderr){
     try {
       // Handle edge case when gyp output screws up npm json format
@@ -41,7 +40,7 @@ if (available.modules[mod] !== undefined){
     install(m);
   });
 } else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
-  console.log('Installing every add-on ('+Object.keys(available.modules).length+' total).'.cyan.bold+' This may take a few moments.');
+  console.log('Installing every add-on ('+Object.keys(available.modules).length.toString()+' total).'.cyan.bold+' This may take a few moments.');
   for (var m in available.modules){
     install(m);
   };
