@@ -3,14 +3,14 @@ var cli = require('optimist'),
     path = require('path'),
     fs = require('fs');
 
+require('colors');
 fs.exists(path.join(process.cwd(),'node_modules','ngn'),function(exists){
   if (!exists){
     exec('npm link ngn',{cwd:process.cwd()},function(err){
       if (err){
-        require('colors');
         console.log('Error adding NGN support.'.bold.red);
       } else {
-        console.log('Ready.');
+        console.log('Ready.'.green.bold);
       }
     });
   }
