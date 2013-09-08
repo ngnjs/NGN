@@ -21,11 +21,9 @@ if (available.modules[mod] !== undefined){
   var cmd = [];
   available.groups[mod].forEach(function(ngnpkg){
     exec('npm install -g '+ngnpkg,function(){
-      console.log(ngnpkg+' support added.');
+      console.log(ngnpkg+' support added.'.green.bold);
     });
   });
 } else {
   throw 'No module or group called \"'+mod+'\" is available.';
 }
-
-console.log('proceed');
