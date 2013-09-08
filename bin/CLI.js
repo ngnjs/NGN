@@ -7,7 +7,7 @@ var path = require('path'),
     pkg = require(path.join(process.mainModule.paths[0],'..','..','package.json'));
 
 // AVAILABLE CLI OPTIONS
-var opts = {
+var base = {
   'init': 'Initialize a project directory for use with NGN.',
   'add': 'Add an NGN feature.',
   'remove': 'Remove an NGN feature.',
@@ -18,11 +18,31 @@ var opts = {
   'create': 'Create a custom class, API, process, or documentation.',
   */
   'version':'List the version of NGN installed on the system.',
-  'help':'View help for a specific command.',
+  'help':'View help for a specific command.'
   //'mechanic': 'Open the NGN Mechanic shell.',
   //'repair': 'Repair an existing NGN installation.',
-  'develop': 'Auto-restart processes when the gile changes. (Dev Tool)'
 };
+
+var opts = {};
+for(var o in base){
+  opts[o] = base[o];
+}
+
+// Optional CLI Options
+var opt = {
+  'ngn-dev': {
+    'develop': 'Auto-restart processes when the file changes. (Dev Tool)',
+  }
+}
+
+// Add optional CLI options if they're installed.
+for (var mod in opt){
+  if (fs.existsSync(path.join(__dirname,'..','..','ngn-dev'))){
+    for (var m in opt[mod]){
+      opts[m] = opt[mod][m];
+    }
+  }
+}
 
 // Placeholder for the selected command
 var cmd = null;
@@ -106,8 +126,15 @@ var argv = optimist
   cwd  = process.cwd(),
 	root = p.dirname(process.mainModule.filename);
 
-console.log(''); // Visual spacer
-
 // Include the appropriate command
-require(require('path').join(__dirname,'commands',cmd));
+if (cmd in base){
+  require(require('path').join(__dirname,'commands',cmd));
+} else {
+  for (var pkg in opt){
+    if (opt[pkg][cmd] !== undefined){
+      require(require('path').join(__dirname,'..','..',pkg))[cmd]();
+      break;
+    }
+  }
+}
 return;
