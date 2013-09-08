@@ -22,13 +22,16 @@ if (available.modules[mod] !== undefined){
   for (var i=0;i<available.groups[mod].length;i++){
     var ngnpkg = available.groups[mod][i];
     exec('npm install -g '+ngnpkg,function(){
-      console.log(ngnpkg+' support added.'.green.bold);
+      console.log(ngnpkg.bold.green+' support added.'.green.bold);
     });
   };
 } else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
-  console.log('Installing everything...'.cyan.bold);
+  console.log('Installing every add on...'.cyan.bold);
   for (var ngnpkg in available.modules){
-    exec('npm install -g '+ngnpkg,function(){});
+    exec('npm install -g '+ngnpkg+' --json --loglevel=silent',function(err,stdout,stderr){
+      var out = JSON.parse(stdout)[0];
+      console.log((out.name.toString()+' v'+out.version+' support added.').green.bold);
+    });
   };
 } else {
   throw 'No module or group called \"'+mod+'\" is available.';
