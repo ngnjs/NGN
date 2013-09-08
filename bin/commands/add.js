@@ -17,9 +17,16 @@ var argv = cli
 if (available.modules[mod] !== undefined){
   exec('npm install -g '+mod);
 } else if (available.groups[mod] !== undefined){
-  console.log('Install '+mod+' group.');
   var cmd = [];
+  console.log(('Adding '+available.groups[mod].length+' packages...').cyan.bold);
   available.groups[mod].forEach(function(ngnpkg){
+    exec('npm install -g '+ngnpkg,function(){
+      console.log(ngnpkg+' support added.'.green.bold);
+    });
+  });
+} else if (mod.toString().trim().toLowerCase() === 'all'){
+  console.log('Installing everything...'.cyan.bold);
+  available.modules.forEach(function(ngnpkg){
     exec('npm install -g '+ngnpkg,function(){
       console.log(ngnpkg+' support added.'.green.bold);
     });
