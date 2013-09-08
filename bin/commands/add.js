@@ -40,7 +40,7 @@ if (available.modules[mod] !== undefined){
     install(available.groups[mod][i]);
   };
 } else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
-  console.log('Installing every add-on...'.cyan.bold);
+  console.log('Installing every add-on...'.cyan.bold+' (this may take a few moments)');
   for (var ngnpkg in available.modules){
     install(ngnpkg);
   };
