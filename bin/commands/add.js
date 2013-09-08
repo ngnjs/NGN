@@ -13,36 +13,36 @@ var argv = cli
 		  .argv,
 		mod = argv._.filter(function(value){return value !== 'add'})[0];
 
-// Check first for a module
+// Global Package Installer
+var install = function(ngnpkg){
+  exec('npm install -g '+ngnpkg+' --json --loglevel=silent',function(err,stdout,stderr){
+    try {
+      // Handle edge case when gyp output screws up npm json format
+      if (stdout.substr(0,1) !== '['){
+        stdout = stdout.substr(stdout.indexOf('['),stdout.length);
+      }
+      var out = JSON.parse(stdout)[0];
+      console.log((out.name.toString()+' v'+out.version+' support added.').green.bold);
+    } catch (e) {
+      console.log('Module installed, but may have errors:'.yellow.bold);
+      console.log(e.message.toString().yellow);
+    }
+  });
+};
+
+// Check first for a module or group and install/warn accordingly
 if (available.modules[mod] !== undefined){
   exec('npm install -g '+mod);
 } else if (available.groups[mod] !== undefined){
   var cmd = [];
   console.log(('Adding '+available.groups[mod].length+' package'+(available.groups[mod].length==1?'':'s')+'...').cyan.bold);
   for (var i=0;i<available.groups[mod].length;i++){
-    var ngnpkg = available.groups[mod][i];
-    exec('npm install -g '+ngnpkg,function(err,stdout,stderr){
-      try {
-        var out = JSON.parse(stdout)[0];
-        console.log((out.name.toString()+' v'+out.version+' support added.').green.bold);
-      } catch (e) {
-        console.log('Module installed, but may have errors:'.yellow.bold);
-        console.log(e.message.toString().yellow);
-      }
-    });
+    install(available.groups[mod][i]);
   };
 } else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
-  console.log('Installing every add on...'.cyan.bold);
+  console.log('Installing every add-on...'.cyan.bold);
   for (var ngnpkg in available.modules){
-    exec('npm install -g '+ngnpkg+' --json --loglevel=silent',function(err,stdout,stderr){
-      try {
-        var out = JSON.parse(stdout)[0];
-        console.log((out.name.toString()+' v'+out.version+' support added.').green.bold);
-      } catch (e) {
-        console.log('Module installed, but may have errors:'.yellow.bold);
-        console.log(e.message.toString().yellow);
-      }
-    });
+    install(ngnpkg);
   };
 } else {
   throw 'No module or group called \"'+mod+'\" is available.';
