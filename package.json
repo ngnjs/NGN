@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "description": "A distributed services platform (core and CLI).",
   "bin": {
     "ngn": "./bin/CLI.js"
@@ -60,7 +60,7 @@
       "ngn-idk-tcp": "1.0.0",
       "ngn-sdk": "1.0.0"
     },
-    "groups":{
+    "groups": {
       "idk": [
         "ngn-idk-core",
         "ngn-idk-rpc",
@@ -74,7 +74,7 @@
         "ngn-sdk"
       ]
     },
-    "daemon":{
+    "daemon": {
       "node-windows": "0.1.5",
       "node-mac": "0.1.3",
       "node-linux": "0.1.1"
