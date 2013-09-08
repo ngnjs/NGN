@@ -11,7 +11,7 @@ var available = require(p.join(process.mainModule.paths[0],'..','..','package.js
 
 // Basic CLI
 var argv = cli
-		  .usage('Usage: ngn support <module or group>')
+		  .usage('Usage: ngn add <module or group>')
 		  .argv,
 		mod = argv._.filter(function(value){return value !== 'add'})[0];
 
