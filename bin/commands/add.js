@@ -10,7 +10,7 @@ var available = require(p.join(process.mainModule.paths[0],'..','..','package.js
 var argv = cli
 		  .usage('Usage: ngn support <module or group>')
 		  .argv,
-		mod = argv._.filter(function(value){return value !== 'support'})[0];
+		mod = argv._.filter(function(value){return value !== 'add'})[0];
 
 // Check first for a module
 if (available.modules[mod] !== undefined){

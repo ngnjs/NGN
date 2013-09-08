@@ -9,7 +9,8 @@ var path = require('path'),
 // AVAILABLE CLI OPTIONS
 var opts = {
   'init': 'Initialize a project directory for use with NGN.',
-  'support': 'Install an NGN feature.',
+  'add': 'Add an NGN feature.',
+  'remove': 'Remove an NGN feature.',
   'uninstall': 'Remove NGN completely.',
   /*
   'start': 'Start the NGN manager or a process.',
