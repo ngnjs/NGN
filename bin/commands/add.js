@@ -2,7 +2,8 @@ require('colors');
 var cli = require('optimist'),
     p = require('path'),
     u = require('util'),
-    fs = require('fs');
+    fs = require('fs'),
+    exec = require('child_process').exec;
 
 var available = require(p.join(process.mainModule.paths[0],'..','..','package.json')).ngn;
 
