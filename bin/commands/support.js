@@ -18,7 +18,7 @@ if (available.modules[mod] !== undefined){
 } else if (available.groups[mod] !== undefined){
   console.log('Install '+mod+' group.');
   var cmd = [];
-  available.groups[mod].forEach(function(pkg){
+  available.groups[mod].forEach(function(ngnpkg){
     exec('npm install -g '+ngnpkg,function(){
       console.log(ngnpkg+' support added.');
     });
