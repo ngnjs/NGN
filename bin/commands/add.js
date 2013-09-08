@@ -24,7 +24,7 @@ if (available.modules[mod] !== undefined){
       console.log(ngnpkg+' support added.'.green.bold);
     });
   });
-} else if (mod.toString().trim().toLowerCase() === 'all'){
+} else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
   console.log('Installing everything...'.cyan.bold);
   available.modules.forEach(function(ngnpkg){
     exec('npm install -g '+ngnpkg,function(){
