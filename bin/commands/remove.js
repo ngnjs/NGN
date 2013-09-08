@@ -18,13 +18,13 @@ var argv = cli
 // Global Package Installer
 var uninstall = function(ngnpkg){
   exec('npm uninstall -g '+ngnpkg+' --json --loglevel=silent',function(err,stdout,stderr){
+    if (stdout.toString().trim().length == 0){
+      console.log((ngnpkg+' support not found/installed. Skipped.').yellow);
+      return;
+    }
     try {
-      // Handle edge case when gyp output screws up npm json format
-      if (stdout.substr(0,1) !== '['){
-        stdout = stdout.substr(stdout.indexOf('['),stdout.length);
-      }
-      var out = stdout.replace(/unbuild/gi,'').replace(/\s/).split('@');
-      console.log((out[0].toString()+' support removed --> '+' v'+out[1].toString()).red.bold);
+      var out = stdout.toString().trim().replace(/unbuild/gi,'').replace(/\s/,'').split('@');
+      console.log(((out[0]||'Unknown').toString()+' support removed --> '+' v'+(out[1]||'?').toString()).red.bold);
     } catch (e) {
       console.log('Module removed, but there were errors:'.yellow.bold);
       console.log(e.message.toString().yellow);
