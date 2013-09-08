@@ -20,7 +20,7 @@ Seq()
     if (this.vars.uninstall.trim().substr(0,1).toLowerCase() !== 'y'){
       console.log('Uninstall aborted.'.cyan);
     } else {
-      var mods = require(p.join(__dirname,'..','config.json')).modules;
+      var mods = require(p.join(__dirname,'..','..','package.json')).ngn.modules;
       for(var mod in mods){
         exec('npm uninstall -g '+mod,function(err,stdout,stderr){
           if (err) throw err;

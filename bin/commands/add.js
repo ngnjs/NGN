@@ -18,18 +18,17 @@ if (available.modules[mod] !== undefined){
   exec('npm install -g '+mod);
 } else if (available.groups[mod] !== undefined){
   var cmd = [];
-  console.log(('Adding '+available.groups[mod].length+' packages...').cyan.bold);
-  available.groups[mod].forEach(function(ngnpkg){
+  console.log(('Adding '+available.groups[mod].length+' package'+(available.groups[mod].length==1?'':'s')+'...').cyan.bold);
+  for (var i=0;i<available.groups[mod].length;i++){
+    var ngnpkg = available.groups[mod][i];
     exec('npm install -g '+ngnpkg,function(){
       console.log(ngnpkg+' support added.'.green.bold);
     });
-  });
+  };
 } else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
   console.log('Installing everything...'.cyan.bold);
   for (var ngnpkg in available.modules){
-    exec('npm install -g '+ngnpkg,function(){
-      console.log(ngnpkg+' support added.'.green.bold);
-    });
+    exec('npm install -g '+ngnpkg,function(){});
   };
 } else {
   throw 'No module or group called \"'+mod+'\" is available.';
