@@ -26,11 +26,11 @@ if (available.modules[mod] !== undefined){
   });
 } else if (['all','*'].indexOf(mod.toString().trim().toLowerCase()) >= 0){
   console.log('Installing everything...'.cyan.bold);
-  available.modules.forEach(function(ngnpkg){
+  for (var ngnpkg in available.modules){
     exec('npm install -g '+ngnpkg,function(){
       console.log(ngnpkg+' support added.'.green.bold);
     });
-  });
+  };
 } else {
   throw 'No module or group called \"'+mod+'\" is available.';
 }
