@@ -34,7 +34,7 @@ var install = function(ngnpkg){
 
 // Check first for a module or group and install/warn accordingly
 if (available.modules[mod] !== undefined){
-  exec('npm install -g '+mod);
+  install(mod);
 } else if (available.groups[mod] !== undefined){
   available.groups[mod].forEach(function(m){
     install(m);
