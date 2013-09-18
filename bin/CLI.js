@@ -23,6 +23,11 @@ var base = {
   //'repair': 'Repair an existing NGN installation.',
 };
 
+var shortcuts = {
+  'v': 'version',
+  'h': 'help'
+};
+
 var opts = {};
 for(var o in base){
   opts[o] = base[o];
@@ -67,10 +72,17 @@ var minOptions = function(argv){
 			break;
 		}
 	}
+
 	optimist.describe(opts);
 	if (cmd == null){
 		throw('');
 	}
+
+	if (cmd in shortcuts){
+	  cmd = shortcuts[cmd];
+	  return true;
+	}
+
 	throw('"'+cmd+'" is not a valid option.');
 };
 
