@@ -4,12 +4,25 @@ var p = require('path'),
 require('colors');
 
 console.log((' + NGN v'+pkg.version).bold);
-for (var mod in pkg.ngn.modules){
+
+// Module Display Logic
+var display = function(mod,hideIfNotExists){
+  hideIfNotExists = hideIfNotExists || false;
   var path = p.join(__dirname,'../../../',mod);
   if (fs.existsSync(path)){
     var mpkg = require(p.join(path,'package.json'));
-    console.log((' + '+mod.cyan+' v'+mpkg.version).bold);
+    console.log((' + '+mod.cyan+' v'+mpkg.version));
   } else {
-    console.log(' - '+mod+' (Not Installed)'.red);
+    if (hideIfNotExists){
+      console.log(' - '+mod+' (Not Installed)'.red);
+    }
   }
+};
+
+// Loop through modules and display them.
+for (var m in pkg.ngn.modules){
+  display(m);
 }
+
+// Display dev tools if they're installed, hide if they're not.
+display('ngn-dev',true);
