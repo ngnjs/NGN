@@ -14,7 +14,9 @@ var argv = cli
 		})
 		.argv;
 
-switch(argv.help){
+cmd = argv.help || argv.h;
+
+switch(cmd){
   case 'configure':
     console.log('The configuration wizard asks the following questions:\n');
     var data = [{
@@ -114,7 +116,7 @@ switch(argv.help){
     console.log('Typing '+'ngn version'.bold+' outputs the version of NGN running on this computer.');
     break;
   default:
-    console.log('* '+argv.help.bold+' * is not a recognized command.');
+    console.log('*'+(cmd.toString()).bold+'* is not a recognized command.');
     cli.usage();
     break;
 }
