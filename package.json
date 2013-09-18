@@ -34,7 +34,8 @@
     "read": "~1.0.4",
     "seq": "~0.3.5",
     "watch": "~0.8.0",
-    "clone": "~0.1.9"
+    "clone": "~0.1.9",
+    "semver": "~2.1.0"
   },
   "devDependencies": {
     "mocha": "~1.10.0",
