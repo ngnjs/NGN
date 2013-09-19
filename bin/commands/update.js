@@ -12,17 +12,17 @@ evt.on('updatemods',function(coreupdated){
   if (coreupdated){
     delete require.cache[p.join(__dirname,'..','..','package.json')];
     pkg = require(p.join(__dirname,'..','..','package.json'));
-    console.log(('NGN updated to version '+pkg.version).green.bold);
+  }
 
-    console.log('Checking for updates...');
+  console.log(('NGN updated to version '+pkg.version).green.bold);
+  console.log('Checking for updates...');
 
-    // Loop through modules and update accordingly.
-    for (var m in pkg.ngn.modules){
-      installer.update(m);
-    }
-    if (fs.existsSync(p.join(__dirname,'../../../ngn-dev'))){
-      installer.update('ngn-dev');
-    }
+  // Loop through modules and update accordingly.
+  for (var m in pkg.ngn.modules){
+    installer.update(m);
+  }
+  if (fs.existsSync(p.join(__dirname,'../../../ngn-dev'))){
+    installer.update('ngn-dev');
   }
 });
 
