@@ -2,6 +2,7 @@ require('colors');
 var cli = require('optimist'),
     p = require('path'),
     fs = require('fs'),
+    perms = require('../lib/permissions'),
     exec = require('child_process').exec;
 
 var available = require(p.join(process.mainModule.paths[0],'..','..','package.json')).ngn;

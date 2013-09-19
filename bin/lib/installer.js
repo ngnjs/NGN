@@ -39,7 +39,7 @@ var obj = {
     if (fs.existsSync(p.join(__dirname,'..','..','..',ngnpkg))){
       var currv = require(p.join(__dirname,'..','..','..',ngnpkg,'package.json')).version;
 
-      console.log((ngnpkg+' version '+currv+' is already installed.\n').yellow);
+      console.log((ngnpkg+' version '+currv+' is already installed.').yellow);
 
       getVersion(ngnpkg,function(stdo){
         if (semver.lt(currv,stdo)){

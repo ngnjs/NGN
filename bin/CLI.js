@@ -4,6 +4,7 @@ var path = require('path'),
     fs = require('fs'),
     optimist = require('optimist'),
     exec = require('child_process').exec,
+    user = require('./lib/permissions'),
     pkg = require(path.join(process.mainModule.paths[0],'..','..','package.json'));
 
 // AVAILABLE CLI OPTIONS
@@ -87,14 +88,33 @@ var minOptions = function(argv){
 	throw('"'+cmd+'" is not a valid option.');
 };
 
+var priv = function(){
+  if (!user.isElevatedUser()){
+    console.log('Insufficient privileges.'.red.bold);
+    if (require('os').platform() == 'win32'){
+      console.log('\nPlease run this command with an admin account.'.yellow.bold);
+    } else {
+      console.log('\nPlease run this command as root (or sudo).'.yellow.bold);
+    }
+    return false;
+  }
+  return true;
+};
+
 // Make sure the command option has the appropriate parameters which
 // are required to run.
 var validOption = function(argv){
 	switch (cmd.trim().toLowerCase()){
 		case 'uninstall':
+		  if (!priv()){
+		    return false;
+		  }
 		  return true;
-		case 'unsupport':
-		case 'support':
+		case 'remove':
+		case 'add':
+		  if (!priv()){
+        return false;
+      }
       if (typeof argv[cmd] == 'boolean'){
         argv[cmd] = '';
       }
