@@ -8,8 +8,8 @@ var p = require('path'),
   installer = require('../lib/installer');
 require('colors');
 
-evt.on('updatemods',function(coreupdated){
-  if (coreupdated){
+evt.on('updatemods',function(core){
+  if (core.updated){
     delete require.cache[p.join(__dirname,'..','..','package.json')];
     pkg = require(p.join(__dirname,'..','..','package.json'));
     console.log(('NGN updated to version '+pkg.version).green.bold);
@@ -19,7 +19,11 @@ evt.on('updatemods',function(coreupdated){
 
   // Loop through modules and update accordingly.
   for (var m in pkg.ngn.modules){
-    installer.update(m);
+    installer.update(m,function(updated){
+      if (updated){
+        console.log((m+' updated successfully.').green.bold);
+      }
+    });
   }
   if (fs.existsSync(p.join(__dirname,'../../../ngn-dev'))){
     installer.update('ngn-dev');
@@ -32,10 +36,10 @@ exec('npm show ngn version --silent',function(e,stdout,stderr){
   if (semver.lt(pkg.version,stdout)){
     console.log('Updating NGN Core...'.yellow.bold);
     installer.update('ngn',function(){
-      evt.emit('updatemods',true);
+      evt.emit('updatemods',{updated: true});
     });
   } else {
     console.log(('The latest version of NGN, v'+pkg.version+', is already installed.').green.bold);
-    evt.emit('updatemods',false);
+    evt.emit('updatemods',{updated: false});
   }
 });
