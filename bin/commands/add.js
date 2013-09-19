@@ -1,5 +1,6 @@
 require('colors');
 var cli = require('optimist'),
+  p = require('path'),
   installer = require('../lib/installer'),
   available = require(p.join(process.mainModule.paths[0],'..','..','package.json')).ngn;
 
