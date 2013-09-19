@@ -9,11 +9,11 @@ var p = require('path'),
 require('colors');
 
 evt.on('updatemods',function(core){
-  if (core.updated){
+  /*if (core.updated){
     delete require.cache[p.join(__dirname,'..','..','package.json')];
     pkg = require(p.join(__dirname,'..','..','package.json'));
     console.log(('NGN updated to version '+pkg.version).green.bold);
-  }
+  }*/
 
   console.log('Checking for updates...');
 
