@@ -92,7 +92,7 @@ var minOptions = function(argv){
 
 var priv = function(){
   if (!user.isElevatedUser()){
-    throw('Insufficient privileges to run this command.\nPlease run this command '+(require('os').platform() == 'win32' ? 'with and admin account' : 'as root (or sudo)'));
+    throw('Insufficient privileges to run this command.\nPlease run this command '+(require('os').platform() == 'win32' ? 'with and admin account' : 'as root (or sudo)')+'.');
   }
 };
 
