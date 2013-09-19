@@ -92,15 +92,8 @@ var minOptions = function(argv){
 
 var priv = function(){
   if (!user.isElevatedUser()){
-    console.log('Insufficient privileges.'.red.bold);
-    if (require('os').platform() == 'win32'){
-      console.log('\nPlease run this command with an admin account.'.yellow.bold);
-    } else {
-      console.log('\nPlease run this command as root (or sudo).'.yellow.bold);
-    }
-    return false;
+    throw('Insufficient privileges to run this command.\nPlease run this command '+(require('os').platform() == 'win32' ? 'with and admin account' : 'as root (or sudo)'));
   }
-  return true;
 };
 
 // Make sure the command option has the appropriate parameters which
@@ -108,15 +101,14 @@ var priv = function(){
 var validOption = function(argv){
 	switch (cmd.trim().toLowerCase()){
 		case 'uninstall':
-		  if (!priv()){
-		    throw('Insufficient privileges to run this command.');
-		  }
+		  priv();
+		  return true;
+		case 'update':
+		  priv();
 		  return true;
 		case 'remove':
 		case 'add':
-		  if (!priv()){
-        throw('Insufficient privileges to run this command.');
-      }
+		  priv();
       if (typeof argv[cmd] == 'boolean'){
         argv[cmd] = '';
       }
