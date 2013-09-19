@@ -31,7 +31,7 @@ exec('npm show ngn version --silent',function(e,stdout,stderr){
   if (e) throw e;
   if (semver.lt(pkg.version,stdout)){
     console.log('Updating NGN Core...'.yellow.bold);
-    exec('npm install -g ngn --silent',function(ee,so,ser){
+    installer.update('ngn',function(){
       evt.emit('updatemods',true);
     });
   } else {
