@@ -7,6 +7,8 @@ var path = require('path'),
     user = require('./lib/permissions'),
     pkg = require(path.join(process.mainModule.paths[0],'..','..','package.json'));
 
+require('colors');
+
 // AVAILABLE CLI OPTIONS
 var base = {
   'init': 'Initialize a project directory for use with NGN.',
