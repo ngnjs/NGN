@@ -12,7 +12,7 @@ module.exports = {
     var path = p.join(__dirname,'..','..','..');
     try {
       fs.writeFileSync(p.join(path,'test'));
-      fs.unlinkFileSync(p.join(path,'test'));
+      fs.unlinkSync(p.join(path,'test'));
       return true;
     } catch(err) {
         if (err.message.toString().toLowerCase().indexOf('permission') >= 0 || err.message.toString().toLowerCase().indexOf('access') >= 0){
