@@ -58,7 +58,7 @@ var obj = {
   // Global Package Uninstaller
   uninstall: function(ngnpkg,callback){
     exec('npm uninstall -g '+ngnpkg,function(err,out,serr){
-      callback && callback();
+      callback && callback(ngnpkg);
     });
   },
 
@@ -71,10 +71,10 @@ var obj = {
         if (semver.lt(currv,stdo)){
           obj.uninstall(ngnpkg,function(){
             obj.install(ngnpkg,'updated');
-            callback && callback(true);
+            callback && callback(ngnpkg);
           });
         } else {
-          callback && callback(false);
+          callback && callback(ngnpkg);
         }
       });
     } else {
