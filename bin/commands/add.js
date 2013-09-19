@@ -15,12 +15,12 @@ if (available.modules[mod] !== undefined){
   installer.install(mod);
 } else if (available.groups[mod] !== undefined){
   available.groups[mod].forEach(function(m){
-    installer.installer.install(m);
+    installer.install(m);
   });
 } else if (['all'/*,'*'*/].indexOf(mod.toString().trim().toLowerCase()) >= 0){
   console.log(('Installing every add-on ('+Object.keys(available.modules).length.toString()+' total). This may take a few moments.').cyan.bold);
   for (var m in available.modules){
-    installer.installer.install(m);
+    installer.install(m);
   };
 } else {
   console.log(('No module or group called \"'+mod+'\" is available.').red.bold);
