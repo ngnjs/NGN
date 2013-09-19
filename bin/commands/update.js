@@ -2,6 +2,8 @@ var p = require('path'),
   pkg = require(p.join(__dirname,'..','..','package.json')),
   fs = require('fs'),
   exec = require('child_process').exec,
+  events = require('events'),
+  evt = new events.EventEmitter(),
   installer = require('../lib/installer');
 require('colors');
 
