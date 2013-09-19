@@ -4,6 +4,7 @@ var p = require('path'),
   exec = require('child_process').exec,
   events = require('events'),
   evt = new events.EventEmitter(),
+  semver = require('semver'),
   installer = require('../lib/installer');
 require('colors');
 
