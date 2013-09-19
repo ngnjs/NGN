@@ -68,10 +68,11 @@ var obj = {
     if (fs.existsSync(path)){
       var currv = require(p.join(path,'package.json')).version;
       getVersion(ngnpkg,function(stdo){
-        if (err) throw err;
-        obj.uninstall(ngnpkg,function(){
-          obj.install(ngnpkg,'updated');
-        });
+        if (semver.lt(currv,stdo)){
+          obj.uninstall(ngnpkg,function(){
+            obj.install(ngnpkg,'updated');
+          });
+        }
       });
     } else {
       console.log((ngnpkg+' is not installed.').red.bold);
