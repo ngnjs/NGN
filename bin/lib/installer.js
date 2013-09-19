@@ -39,14 +39,19 @@ var obj = {
     if (fs.existsSync(p.join(__dirname,'..','..','..',ngnpkg))){
       var currv = require(p.join(__dirname,'..','..','..',ngnpkg,'package.json')).version;
 
-      console.log((ngnpkg+' version '+currv+' is already installed.\n').yellow+('Checking for updates...').yellow.bold);
+      console.log((ngnpkg+' version '+currv+' is already installed.\n').yellow);
 
       getVersion(ngnpkg,function(stdo){
         if (semver.lt(currv,stdo)){
-          console.log((('A new version ('+stdo.toString().trim()).green.bold+') is available. Update in progress...'.green.bold));
-          evt.emit('install',ngnpkg);
+          console.log((('A new version ('+stdo.toString().trim()).green.bold+') of '+ngnpkg+' is available. Updating...'.green.bold));
+          obj.update(ngnpkg,function(updated,_pkg){
+            if (updated){
+              console.log((_pkg+' updated successfully.').green.bold);
+            } else {
+              console.log((_pkg+' could not be updated.').red)
+            }
+          });
         } else {
-          console.log(currv.toString().yellow.bold+' is the latest version.'.yellow);
           return;
         }
       });
