@@ -42,12 +42,9 @@ evt.on('updatemods',function(core){
 exec('npm show ngn version --silent',function(e,stdout,stderr){
   if (e) throw e;
   if (semver.lt(pkg.version,stdout)){
-    console.log('Updating NGN Core...'.yellow.bold);
-    installer.update('ngn',function(){
-      evt.emit('updatemods',{updated: true});
-    });
+    console.log(('NGN Core v'+stdout+' is available.\nTo install the update, run ').magenta.bold+'npm install -g ngn'.cyan.bold);
   } else {
     console.log(('The latest version of NGN, v'+pkg.version+', is already installed.').green.bold);
-    evt.emit('updatemods',{updated: false});
   }
+  evt.emit('updatemods');
 });
