@@ -11,6 +11,7 @@ var base = {
   'init': 'Initialize a project directory for use with NGN.',
   'add': 'Add an NGN feature.',
   'remove': 'Remove an NGN feature.',
+  'update': 'Update the NGN installation',
   'uninstall': 'Remove NGN completely.',
   /*
   'start': 'Start the NGN manager or a process.',
