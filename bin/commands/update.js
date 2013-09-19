@@ -23,7 +23,7 @@ evt.on('updatemods',function(core){
       if (updated){
         console.log((m+' updated successfully.').green.bold);
       } else {
-        console.log((m+' does not require an update...').green);
+        console.log((m+' does not require an update.').green);
       }
     });
   }
@@ -32,7 +32,7 @@ evt.on('updatemods',function(core){
       if (updated){
         console.log(('ngn-dev updated successfully.').green.bold);
       } else {
-        console.log(('ngn-dev does not require an update...').green);
+        console.log(('ngn-dev does not require an update.').green);
       }
     });
   }
