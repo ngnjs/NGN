@@ -63,7 +63,7 @@ var obj = {
   },
 
   // Global package updater
-  update: function(ngnpkg){
+  update: function(ngnpkg,callback){
     var path = p.join(__dirname,'..','..','..',ngnpkg);
     if (fs.existsSync(path)){
       var currv = require(p.join(path,'package.json')).version;
@@ -71,7 +71,10 @@ var obj = {
         if (semver.lt(currv,stdo)){
           obj.uninstall(ngnpkg,function(){
             obj.install(ngnpkg,'updated');
+            callback && callback(true);
           });
+        } else {
+          callback && callback(false);
         }
       });
     } else {

@@ -22,11 +22,19 @@ evt.on('updatemods',function(core){
     installer.update(m,function(updated){
       if (updated){
         console.log((m+' updated successfully.').green.bold);
+      } else {
+        console.log((m+' does not require an update..').green);
       }
     });
   }
   if (fs.existsSync(p.join(__dirname,'../../../ngn-dev'))){
-    installer.update('ngn-dev');
+    installer.update('ngn-dev',function(updated){
+      if (updated){
+        console.log(('ngn-dev updated successfully.').green.bold);
+      } else {
+        console.log(('ngn-dev does not require an update..').green);
+      }
+    });
   }
 });
 
