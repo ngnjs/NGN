@@ -19,7 +19,7 @@ evt.on('updatemods',function(core){
 
   // Loop through modules and update accordingly.
   for (var m in pkg.ngn.modules){
-    installer.update(m,function(mod){
+    installer.update(m,function(updated,mod){
       if (updated){
         console.log((mod+' updated successfully.').green.bold);
       } else {

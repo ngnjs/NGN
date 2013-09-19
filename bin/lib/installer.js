@@ -71,10 +71,10 @@ var obj = {
         if (semver.lt(currv,stdo)){
           obj.uninstall(ngnpkg,function(){
             obj.install(ngnpkg,'updated');
-            callback && callback(ngnpkg);
+            callback && callback(true,ngnpkg);
           });
         } else {
-          callback && callback(ngnpkg);
+          callback && callback(false,ngnpkg);
         }
       });
     } else {
