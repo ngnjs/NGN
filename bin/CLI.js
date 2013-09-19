@@ -109,13 +109,13 @@ var validOption = function(argv){
 	switch (cmd.trim().toLowerCase()){
 		case 'uninstall':
 		  if (!priv()){
-		    return false;
+		    throw('Insufficient privileges to run this command.');
 		  }
 		  return true;
 		case 'remove':
 		case 'add':
 		  if (!priv()){
-        return false;
+        throw('Insufficient privileges to run this command.');
       }
       if (typeof argv[cmd] == 'boolean'){
         argv[cmd] = '';
