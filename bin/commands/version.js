@@ -13,7 +13,7 @@ var display = function(mod,hideIfNotExists){
     var mpkg = require(p.join(path,'package.json'));
     console.log((' + '+mod.cyan+' v'+mpkg.version));
   } else {
-    if (hideIfNotExists){
+    if (!hideIfNotExists){
       console.log(' - '+mod+' (Not Installed)'.red);
     }
   }
