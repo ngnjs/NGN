@@ -50,14 +50,14 @@
   },
   "ngn": {
     "modules": {
-      "ngn-idk-core": "1.0.0",
-      "ngn-idk-rpc": "1.0.0",
-      "ngn-idk-http-web": "1.0.0",
-      "ngn-idk-http-api": "1.0.0",
-      "ngn-idk-http-proxy": "1.0.0",
-      "ngn-idk-mail": "1.0.0",
-      "ngn-idk-tcp": "1.0.0",
-      "ngn-sdk": "1.0.0"
+      "ngn-idk-core": "1.0.x",
+      "ngn-idk-rpc": "1.0.x",
+      "ngn-idk-http-web": "1.0.x",
+      "ngn-idk-http-api": "1.0.x",
+      "ngn-idk-http-proxy": "1.0.x",
+      "ngn-idk-mail": "1.0.x",
+      "ngn-idk-tcp": "1.0.x",
+      "ngn-sdk": "1.0.x"
     },
     "groups": {
       "idk": [
