@@ -3,6 +3,9 @@ var os = require('os'),
     exec = require('child_process').exec,
     pkg = '';
 
+console.log('Exiting gracefully');
+process.exit(0);
+
 switch (os.platform().toLowerCase()){
   case 'win32':
     console.log('Installing Windows service manager...');
@@ -18,4 +21,5 @@ switch (os.platform().toLowerCase()){
     break;
 }
 
+// Installs a native driver
 exec('npm install '+pkg,{cwd:__dirname},function(){});
