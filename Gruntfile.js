@@ -110,17 +110,17 @@ module.exports = function(grunt) {
         ],
 
         // docs output dir
-        dest: 'docs/manual',
-
+        dest: '../ngn-docs/docs/manual',
+				
         // extra options
         options: {
           "title": "NGN v"+cfg.ngn.version,
-          "welcome": "docs/src/assets/html/welcome.html",
+          "welcome": "../ngn-docs/src/assets/html/welcome.html",
           "head-html": '<link rel="stylesheet" href="resources/css/ngn.css" type="text/css">',
-          "categories": "docs/src/categories.json",
-          "guides": "docs/src/guides.json",
-          "output": "docs/manual",
-          "meta-tags": "docs/custom/tags",
+          "categories": "../ngn-docs/src/categories.json",
+          "guides": "../ngn-docs/src/guides.json",
+          "output": "../ngn-docs/manual",
+          //"meta-tags": "docs/custom/tags",
           'builtin-classes': true,
           'warnings': [],
           'external': ['XMLHttpRequest']
@@ -130,8 +130,8 @@ module.exports = function(grunt) {
     copy: {
       jsduckassets: {
         files: [
-          {expand: true, cwd: './docs/src/assets/css/', src:['*.*'], dest: './docs/manual/resources/css/'},
-          {expand: true, cwd: './docs/src/assets/images/', src:['*.*'], dest: './docs/manual/resources/images/'}//,
+          {expand: true, cwd: '../ngn-docs/src/assets/css/', src:['*.*'], dest: '../ngn-docs/manual/resources/css/'},
+          {expand: true, cwd: '../ngn-docs/src/assets/images/', src:['*.*'], dest: '../ngn-docs/manual/resources/images/'}//,
         ]
       }
     },

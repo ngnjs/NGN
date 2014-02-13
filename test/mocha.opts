@@ -1,6 +1,5 @@
 --harmony
 --require ./
---require should
 --reporter spec
 --ui tdd
 --growl

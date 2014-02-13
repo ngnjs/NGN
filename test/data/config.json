@@ -1,8 +1,5 @@
 {
-	"redis": {
-		"autoConnect": false
+	"test": {
+		"value": false
 	},
-	"mongodb": {
-		"autoConnect": false
-	}
 }
