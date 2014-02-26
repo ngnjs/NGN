@@ -1,6 +1,7 @@
 # NGN
 
-[![NPM version](https://badge.fury.io/js/ngn.png)](http://badge.fury.io/js/ngn)
+[![NPM](https://nodei.co/npm/ngn.png?downloads=true&stars=true)](https://nodei.co/npm/ngn/)
+
 [![Code Climate](https://codeclimate.com/github/nodengn/NGN.png)](https://codeclimate.com/github/nodengn/NGN)
 [![Build](https://api.travis-ci.org/nodengn/NGN.png)](https://travis-ci.org/nodengn/NGN)
 [![NGN Dependencies](https://david-dm.org/nodengn/NGN.png)](https://david-dm.org/nodengn/NGN)
