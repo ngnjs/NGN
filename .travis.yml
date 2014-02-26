@@ -1,3 +1,10 @@
 language: node_js
 node_js:
-  - "0.10"
+- '0.10'
+notifications:
+  hipchat:
+    rooms:
+      secure: YmmMoQxsGStu6ra0aKo4/CtPu9Yr5XCNf9uEdaux5o4hGe+UJWXL++7xpAW2VFqLovWE0emvFJ6z5K4Rx3WuYr6K/83dM/2biJXJrjrf8fBVshI4pR9nfOZ32JiLA4SI7CAhTf6u+FiaHM+VbZAXZnj9IQ6gXry87C/sb8e6R8E=
+		template:
+      - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}'
+		format: html
