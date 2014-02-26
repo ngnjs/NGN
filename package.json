@@ -35,7 +35,7 @@
     "seq": "~0.3.5",
     "watch": "~0.9.0",
     "clone": "~0.1.9",
-    "semver": "~2.1.0",
+    "semver": "~2.2.1",
     "grunt-jsduck": "~1.0.0"
   },
   "devDependencies": {
