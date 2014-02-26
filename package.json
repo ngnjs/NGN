@@ -25,7 +25,7 @@
   "homepage": "http://nodengn.com",
   "license": "GPL",
   "dependencies": {
-    "stack-trace": "0.0.6",
+    "stack-trace": "0.0.9",
     "colors": "~0.6.1",
     "wordwrap": "0.0.2",
     "node-uuid": "~1.4.0",
