@@ -150,7 +150,7 @@ suite('NGN Package', function(){
 		assert.ok(NGN.typeOf(undefined) === 'undefined','Failed to detect undefined type.');
 	});
 		
-	test('NGN.coalesce',function(){
+	test('NGN.coalesce()',function(){
 		assert.ok(NGN.coalesce(null,null,true,null) === true,'Failed boolean coalesce');
 		assert.ok(NGN.coalesce(null,'test') === 'test','Failed string coalesce');
 	});
