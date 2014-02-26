@@ -78,7 +78,7 @@ suite('NGN Package', function(){
   });
 
 	test('Core Library Loads', function(){
-	  assert.ok(NGN !== undefined);
+		assert.ok(NGN !== undefined);
 	});
 
 	test('Core Framework Classes Load',function(){
