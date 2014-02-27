@@ -9,7 +9,7 @@ suite('Class Structure',function(){
 		Class = require(require('path').join(__dirname,'..','..','lib','Class.js'));
 	});
 	
-	test('Check basic inheritance',function(){
+	test('Basic inheritance.',function(){
 		var val = null;
 		var Test = Class.extend({
 			constructor: function(){
@@ -52,11 +52,11 @@ suite('Utilities', function(){
     require(path.join(__dirname,'..','..'));
   });
 
-  test('Load namespace via require()', function(){
+  test('Load namespace via require().', function(){
     assert.ok(UTIL !== undefined);
   });
 	
-	test('Unrequire',function(){
+	test('Unrequire.',function(){
 		var file = require('path').join(__dirname,'..','data','config.json');
 		var x = require(file);
 		assert.ok(require.cache[file] !== undefined,'Invalid require. Cannot test unrequire method.');
@@ -95,7 +95,7 @@ suite('NGN Package', function(){
     }
   });
 	
-	test('NGN.clone()',function(){
+	test('NGN.clone().',function(){
 		// Validate object cloning method
 		var obj = {
 				a: 'a',
@@ -126,11 +126,11 @@ suite('NGN Package', function(){
 		assert.ok(new (NGN.clone(Test))() instanceof Test, 'Complex object clone failed.');
 	});
 	
-	test('NGN.absolutePath()',function(){
+	test('NGN.absolutePath().',function(){
 		assert.ok(NGN.absolutePath('./') === require('path').join(__dirname,'..','..'),'Absolute path is incorrect');
 	});	
 		
-	test('NGN.getConstructor()',function(){
+	test('NGN.getConstructor().',function(){
 		assert.ok(NGN.getConstructor('string') === String,'Invalid #getConstructor (string)');
 		assert.ok(NGN.getConstructor('number') === Number,'Invalid #getConstructor (number)');
 		assert.ok(NGN.getConstructor('boolean') === Boolean,'Invalid #getConstructor (boolean)');
@@ -139,7 +139,7 @@ suite('NGN Package', function(){
 		assert.ok(NGN.getConstructor('array') === Array,'Invalid #getConstructor (array)');
 	});
 		
-	test('NGN.typeOf()',function(){
+	test('NGN.typeOf().',function(){
 		assert.ok(NGN.typeOf('string') === 'string','Failed to detect string type.');
 		assert.ok(NGN.typeOf([]) === 'array','Failed to detect array type.');
 		assert.ok(NGN.typeOf(1) === 'number','Failed to detect number type.');
@@ -150,7 +150,7 @@ suite('NGN Package', function(){
 		assert.ok(NGN.typeOf(undefined) === 'undefined','Failed to detect undefined type.');
 	});
 		
-	test('NGN.coalesce()',function(){
+	test('NGN.coalesce().',function(){
 		assert.ok(NGN.coalesce(null,null,true,null) === true,'Failed boolean coalesce');
 		assert.ok(NGN.coalesce(null,'test') === 'test','Failed string coalesce');
 	});
