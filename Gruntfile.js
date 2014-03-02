@@ -16,7 +16,47 @@ module.exports = function(grunt) {
         this._ngn = this._ngn || require('./package.json');
         return this._ngn;
       }
-    }
+    },
+		output: {
+			enumerable: false,
+			get: function(){
+				return require('path').resolve('../../Website/docs.nodengn.com/ngn-'+cfg.ngn.version.replace(/\./g,'-'));
+			}
+		},
+		input:{
+			enumerable: false,
+			value: {
+				docs: require('path').resolve('../../Documentation'),
+				code: require('path').resolve('../../Library')
+			}
+    },
+		productDocs: {
+			enumerable: false,
+			get: function(){
+				var p = [];
+				require('fs').readdirSync(require('path').join(this.output,'..')).forEach(function(dir,i,a){
+					var d = require('path').basename(dir),
+							v = d.split('-').splice(0,1).join('.');
+					if (v !== cfg.ngn.version) {
+						var	nm = d.split('-')[0].replace('ngn','NGN')+' '+v;
+						p.push("{text: '"+nm+"', href: './"+d+"'}"+(i<a.length?',':''));
+					}
+				});
+				return p.length === 0 ? [] : (["<script type='text/javascript'>","Docs.otherProducts = ["].concat(p)).concat(["];","</script>"]);
+			}
+		},
+		docexclusions: {
+			enumerable: false,
+			get: function(){
+				var wrench = require('wrench');
+				var exclusions = [];
+				exclusions = wrench.readdirSyncRecursive(this.input.code).filter(function(d){
+					// Skip anything that isn't in the list of ignored directories
+					return (d.match(/node_modules/gi)||[]).length === 1 && require('path').basename(d).toLowerCase() === 'node_modules';
+				});
+				return exclusions;
+			}
+		}
   });
 
   // Get list of minimatch patterns that should be excluded
@@ -104,34 +144,42 @@ module.exports = function(grunt) {
         // source paths with your code
         src: [
           './lib',
-          'docs/src/node',
-          '../ngn-idk',
-          '../ngn-idk-web'
+          cfg.input.docs+'/node',
+          cfg.input.code+'/ngn-idk-core',
+          cfg.input.code+'ngn-idk-http-web',
+          cfg.input.code+'ngn-idk-http-data',
+          cfg.input.code+'ngn-idk-http-proxy',
+          cfg.input.code+'ngn-idk-http-rpc',
+          cfg.input.code+'ngn-idk-http-tcp',
+          cfg.input.code+'ngn-idk-mail',
+          cfg.input.code+'ngn-sdk'
         ],
 
         // docs output dir
-        dest: '../ngn-docs/docs/manual',
+        dest: cfg.output,
 				
         // extra options
         options: {
           "title": "NGN v"+cfg.ngn.version,
-          "welcome": "../ngn-docs/src/assets/html/welcome.html",
+          "welcome": cfg.input.docs+"/assets/html/welcome.html",
           "head-html": '<link rel="stylesheet" href="resources/css/ngn.css" type="text/css">',
-          "categories": "../ngn-docs/src/categories.json",
-          "guides": "../ngn-docs/src/guides.json",
-          "output": "../ngn-docs/manual",
+          "categories": cfg.input.docs+"/categories.json",
+          "guides": cfg.input.docs+"/guides.json",
+          "output": cfg.output,
           //"meta-tags": "docs/custom/tags",
-          'builtin-classes': true,
-          'warnings': [],
-          'external': ['XMLHttpRequest']
+          "builtin-classes": true,
+          "warnings": [],
+          "external": ['XMLHttpRequest'],
+					"exclude": cfg.docexclusions,
+					"body-html": cfg.productDocs
         }
       }
     },
     copy: {
       jsduckassets: {
         files: [
-          {expand: true, cwd: '../ngn-docs/src/assets/css/', src:['*.*'], dest: '../ngn-docs/manual/resources/css/'},
-          {expand: true, cwd: '../ngn-docs/src/assets/images/', src:['*.*'], dest: '../ngn-docs/manual/resources/images/'}//,
+          {expand: true, cwd: cfg.input.docs+'/assets/css/', src:['*.*'], dest: cfg.output+'/resources/css/'},
+          {expand: true, cwd: cfg.input.docs+'/assets/images/', src:['*.*'], dest: cfg.output+'/resources/images/'}//,
         ]
       }
     },
@@ -139,6 +187,18 @@ module.exports = function(grunt) {
       core:{}
     }
   });
+	
+	grunt.task.registerTask('jsduckcheck', 'Make sure the doc directories are available for output.', function(){
+		var done = this.async();
+		console.log('>>>>>>>>>>>>>>>>>>>>>>',cfg.docexclusions);
+		require('fs').exists(cfg.output,function(exists){
+			if (!exists){
+				require('fs').mkdir(cfg.output,done);
+			} else {
+				done();
+			}
+		});
+	});
 
   grunt.task.registerTask('check', 'Check the build', function() {
     var mods = require('./package.json').ngn.modules;
@@ -164,5 +224,5 @@ module.exports = function(grunt) {
 
   // Default task.
   grunt.registerTask('default', 'jshint');
-  grunt.registerTask('docs', ['jsduck','copy:jsduckassets']);
+  grunt.registerTask('docs', ['jsduckcheck','jsduck','copy:jsduckassets']);
 };
