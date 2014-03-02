@@ -52,7 +52,8 @@ module.exports = function(grunt) {
 				var exclusions = [];
 				exclusions = wrench.readdirSyncRecursive(this.input.code).filter(function(d){
 					// Skip anything that isn't in the list of ignored directories
-					return (d.match(/node_modules/gi)||[]).length === 1 && require('path').basename(d).toLowerCase() === 'node_modules';
+					return (d.match(/node_modules|\.git/gi)||[]).length === 1 
+						&& ['node_modules','.git'].indexOf(require('path').basename(d).toLowerCase()) >= 0;
 				});
 				return exclusions;
 			}
