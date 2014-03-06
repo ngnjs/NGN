@@ -41,7 +41,7 @@ suite('Class Structure',function(){
 	});
 });
 
-/**
+/*
  * Make sure the NGN Utilities namespace is available.
  */
 suite('Utilities', function(){
@@ -66,7 +66,7 @@ suite('Utilities', function(){
 
 });
 
-/**
+/*
  * Make sure the NGN global namespace is available.
  */
 suite('NGN Package', function(){
@@ -155,4 +155,8 @@ suite('NGN Package', function(){
 		assert.ok(NGN.coalesce(null,'test') === 'test','Failed string coalesce');
 	});
 
+});
+
+suite('Logging', function(){
+	assert.ok(console !== undefined,'console is not defined');
 });
