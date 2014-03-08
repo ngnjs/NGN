@@ -14,15 +14,14 @@ For more information, please visit the [NGN website](http://nodengn.com).
 		<th>Build</th>
 	</tr>
 	<tr style="background-color:#ccffc7;">
-		<th>NGN<br/>(required)</th>
-		<td><a href="https://nodei.co/npm/ngn/" target="_blank"><img src="https://nodei.co/npm/ngn.png?downloads=true&stars=true"/></a></td>
+		<td colspan="2"><a href="https://nodei.co/npm/ngn/" target="_blank"><img src="https://nodei.co/npm/ngn.png?downloads=true&stars=true"/></a></td>
 		<td><a href="https://codeclimate.com/github/nodengn/NGN" target="_blank"><img src="https://codeclimate.com/github/nodengn/NGN.png"/></a></td>
 		<td><a href="https://david-dm.org/nodengn/NGN" target="_blank"><img src="https://david-dm.org/nodengn/NGN.png"/></a></td>
 		<td><a href="https://travis-ci.org/nodengn/NGN" target="_blank"><img src="https://api.travis-ci.org/nodengn/NGN.png"/></a></td>
 	</tr>
 	<tr>
-		<th>NGN Core</th>
-		<td><a href="https://nodei.co/npm/ngn-core/" target="_blank"><img src="https://nodei.co/npm/ngn-core.png?downloads=true&stars=true"/></a></td>
+		<th>NGN&nbsp;Core</th>
+		<td><code>ngn install core</code></td>
 		<td><a href="https://codeclimate.com/github/nodengn/ngn-core" target="_blank"><img src="https://codeclimate.com/github/nodengn/ngn-core.png"/></a></td>
 		<td><a href="https://david-dm.org/nodengn/ngn-core" target="_blank"><img src="https://david-dm.org/nodengn/ngn-core.png"/></a></td>
 		<td><a href="https://travis-ci.org/nodengn/ngn-core" target="_blank"><img src="https://api.travis-ci.org/nodengn/ngn-core.png"/></a></td>
