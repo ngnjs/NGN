@@ -4,6 +4,8 @@ A foundation for building distributed POA/SOA systems with [Node.js](http://node
 
 For more information, please visit the [NGN website](http://nodengn.com).
 
+<a href="https://nodei.co/npm/ngn/" target="_blank"><img src="https://nodei.co/npm/ngn.png?downloads=true&stars=true"/></a>
+
 ### Platform Status
 
 <table>
@@ -14,7 +16,8 @@ For more information, please visit the [NGN website](http://nodengn.com).
 		<th>Build</th>
 	</tr>
 	<tr style="background-color:#ccffc7;">
-		<td colspan="2"><a href="https://nodei.co/npm/ngn/" target="_blank"><img src="https://nodei.co/npm/ngn.png?downloads=true&stars=true"/></a></td>
+		<th>NGN</th>
+		<td><code>ngn install -g ngn</code></td>
 		<td><a href="https://codeclimate.com/github/nodengn/NGN" target="_blank"><img src="https://codeclimate.com/github/nodengn/NGN.png"/></a></td>
 		<td><a href="https://david-dm.org/nodengn/NGN" target="_blank"><img src="https://david-dm.org/nodengn/NGN.png"/></a></td>
 		<td><a href="https://travis-ci.org/nodengn/NGN" target="_blank"><img src="https://api.travis-ci.org/nodengn/NGN.png"/></a></td>
