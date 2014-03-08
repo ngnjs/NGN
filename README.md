@@ -9,7 +9,7 @@ For more information, please visit the [NGN website](http://nodengn.com).
 <table>
 	<tr>
 		<th colspan="2">Component</th>
-		<th>Quality Grade</th>
+		<th>Grade</th>
 		<th>Dependencies</th>
 		<th>Build</th>
 	</tr>
@@ -20,7 +20,7 @@ For more information, please visit the [NGN website](http://nodengn.com).
 		<td><a href="https://travis-ci.org/nodengn/NGN" target="_blank"><img src="https://api.travis-ci.org/nodengn/NGN.png"/></a></td>
 	</tr>
 	<tr>
-		<th>NGN&nbsp;Core</th>
+		<th><a href="https://github.com/nodengn/ngn-core" target="blank">NGN&nbsp;Core</a></th>
 		<td><code>ngn install core</code></td>
 		<td><a href="https://codeclimate.com/github/nodengn/ngn-core" target="_blank"><img src="https://codeclimate.com/github/nodengn/ngn-core.png"/></a></td>
 		<td><a href="https://david-dm.org/nodengn/ngn-core" target="_blank"><img src="https://david-dm.org/nodengn/ngn-core.png"/></a></td>
