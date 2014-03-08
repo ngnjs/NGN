@@ -1,16 +1,17 @@
 # NGN
 
-A foundation for building distributed POA/SOA systems with [Node.js](http://nodejs.org). For
-more information, please visit the [NGN website](http://nodengn.com).
+A foundation for building distributed POA/SOA systems with [Node.js](http://nodejs.org).
 
-## NGN Status
+For more information, please visit the [NGN website](http://nodengn.com).
+
+### Platform Status
 
 <table>
 	<tr>
 		<th colspan="2">Component</th>
-		<th>Code Quality Grade</th>
+		<th>Quality Grade</th>
 		<th>Dependencies</th>
-		<th>Build Status</th>
+		<th>Build</th>
 	</tr>
 	<tr style="background-color:#ccffc7;">
 		<th>NGN<br/>(required)</th>
