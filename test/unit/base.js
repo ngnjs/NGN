@@ -95,6 +95,20 @@ suite('NGN Package', function(){
     }
   });
 	
+	test('NGN.createNamespace() and NGN.ns() alias.',function(){
+		// Create a global namespace
+		NGN.createNamespace('test.basic.namespace');
+		assert.ok(test.basic.hasOwnProperty('namespace'),'Global namespace not constructed properly.');
+		
+		// Alias should work too
+		NGN.ns('test2.basic.namespace');
+		assert.ok(test2.basic.hasOwnProperty('namespace'),'Global namespace not constructed properly via alias.');
+		
+		// Add something to an existing namespace
+		NGN.ns('NGN.non.sense');
+		assert.ok(NGN.non.hasOwnProperty('sense'),'Existing namespace not decorated properly.');
+	});
+	
 	test('NGN.clone().',function(){
 		// Validate object cloning method
 		var obj = {
@@ -153,6 +167,20 @@ suite('NGN Package', function(){
 	test('NGN.coalesce().',function(){
 		assert.ok(NGN.coalesce(null,null,true,null) === true,'Failed boolean coalesce');
 		assert.ok(NGN.coalesce(null,'test') === 'test','Failed string coalesce');
+	});
+	
+	test('NGN.createException().',function(){
+		var XError = NGN.createException({
+			name: 'TestError',
+			message: 'test',
+			level: 'critical'
+		});
+		assert.ok(XError() instanceof Error,'The error was not instantiated.');
+		assert.throws(function(){throw XError();},function(err) {
+				if ( (err instanceof XError) && /test/.test(err) ) {
+					return true;
+				}
+			},"Unexpected Error");
 	});
 
 });
