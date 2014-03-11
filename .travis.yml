@@ -5,7 +5,8 @@ node_js:
 notifications:
   hipchat:
     rooms:
-      secure: ft51x/ak4BDKpEDyFh6zuS5nZsGcPvChd0f6yrrOuhKUuKAx3KzAPjeqTnRsRBCHYnjAwvxEzE0SsgftHTrYFkosm7WCZArMqsRoSRrTHGRqQImcO0RQzGV7i9G+2rgL+LlOXkZWhCTYuCu5oijKaeSLvORUiMK/25i8SKsS+gM=
+      secure: G86agoGJWFpnW+DIwoY0iZjTi4858qgZUnVSFKkz39zfeIFm/lnmcBG3MqLMzvkjFrj+qoofqAUUbycvA8ZE7FbX6+rOfChPpco14LM/cPWrltNuLEYGHA5ikLTrGXOQpy6HFx0MFxhDQc5GFZWoNOVZb8bRogyv1PZwS2AG7tQ=
     template:
     - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}'
     format: html
+    
