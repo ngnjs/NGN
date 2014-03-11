@@ -74,7 +74,7 @@ module.exports = function(grunt) {
 							v = d.split('-').slice(1,d.split('-').length).join('.');
 					if (v !== cfg.ngn.version && d !== 'latest') {
 						var	nm = d.split('-')[0].replace('ngn','NGN')+' '+v;
-						p.push("{text: '"+nm+"', href: './"+d+"'}"+(i<a.length?',':''));
+						p.push("{text: '"+nm+"', href: '../"+d+"'}"+(i<a.length?',':''));
 					}
 				});
 				return p.length === 0 ? [] : (["<script type='text/javascript'>","Docs.otherProducts = ["].concat(p)).concat(["];","</script>"]);
@@ -87,12 +87,21 @@ module.exports = function(grunt) {
 				var exclusions = [];
 				exclusions = wrench.readdirSyncRecursive(this.input.code).filter(function(d){
 					// Skip anything that isn't in the list of ignored directories
-					return (d.match(/node_modules|\.git|test/gi)||[]).length === 1 
-						&& ['node_modules','.git','test'].indexOf(path.basename(d).toLowerCase()) >= 0;
+					return (d.match(/node_modules|\.git|test|\_ARCHIVE/gi)||[]).length === 1 
+						&& ['node_modules','.git','test','_archive'].indexOf(path.basename(d).toLowerCase()) >= 0;
 				}).map(function(el){
 					return path.resolve('../'+el);
 				});
 				return exclusions;
+			}
+		},
+		library: {
+			enumerable: false,
+			get: function(){
+				var me = this;
+				return Object.keys(this.ngn.ngn.modules).map(function(el){
+					return require('path').join(me.input.code,el);
+				});
 			}
 		}
   });
@@ -180,18 +189,7 @@ module.exports = function(grunt) {
     jsduck: {
       main: {
         // source paths with your code
-        src: [
-          './lib',
-          cfg.input.docs+'/node',
-          cfg.input.code+'/ngn-idk-core',
-          cfg.input.code+'/ngn-idk-http-web',
-          cfg.input.code+'/ngn-idk-http-data',
-          cfg.input.code+'/ngn-idk-http-proxy',
-          cfg.input.code+'/ngn-idk-rpc',
-          cfg.input.code+'/ngn-idk-tcp',
-          cfg.input.code+'/ngn-idk-mail',
-          cfg.input.code+'/ngn-sdk'
-        ],
+        src: ['./lib',cfg.input.docs+'/node'].concat(cfg.library),
 
         // docs output dir
         dest: cfg.output,
