@@ -173,14 +173,20 @@ suite('NGN Package', function(){
 		var XError = NGN.createException({
 			name: 'TestError',
 			message: 'test',
-			level: 'critical'
+			level: 'critical',
+			custom: {
+				help: 'help'
+			}
 		});
-		assert.ok(XError() instanceof Error,'The error was not instantiated.');
+		assert.ok(XError() instanceof Error, 'The custom exception is not a valid Error.');
+		assert.ok(XError().message === 'test', 'The custom exception did not return the proper message.');
+		assert.ok(XError().help === 'help', 'A custom attribute was not properly added to the custom error.');
+		assert.ok(NGN.typeOf(XError().trace) === 'array', 'A detailed stack trace was not generated properly.');
 		assert.throws(function(){throw XError();},function(err) {
-				if ( (err instanceof XError) && /test/.test(err) ) {
-					return true;
-				}
-			},"Unexpected Error");
+			if ( (err instanceof XError) && /test/.test(err) ) {
+				return true;
+			}
+		},"The custom exception does not throw properly.");
 	});
 
 });
