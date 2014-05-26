@@ -4,16 +4,16 @@ var events = require('events'),
   fs = require('fs'),
   semver = require('semver');
 
-var install = function(pkg,term){
+var install = function (pkg, term) {
   term = term || 'added';
-  exec('npm install -g '+pkg+' --json --loglevel=silent',function(err,stdout,stderr){
+  exec('npm install -g ' + pkg + ' --json --loglevel=silent', function (err, stdout, stderr) {
     try {
       // Handle edge case when gyp output screws up npm json format
-      if (stdout.substr(0,1) !== '['){
-        stdout = stdout.substr(stdout.indexOf('['),stdout.length);
+      if (stdout.substr(0, 1) !== '[') {
+        stdout = stdout.substr(stdout.indexOf('['), stdout.length);
       }
       var out = JSON.parse(stdout)[0];
-      console.log((out.name.toString()+' support '+term+' --> '+' v'+out.version).green.bold);
+      console.log((out.name.toString() + ' support ' + term + ' --> ' + ' v' + out.version).green.bold);
     } catch (e) {
       console.log('Module installed, but may have errors:'.yellow.bold);
       console.log(e.message.toString().yellow);
@@ -21,9 +21,11 @@ var install = function(pkg,term){
   });
 };
 
-var getVersion = function(pkg,callback){
-  exec('npm show '+pkg+' version --silent',function(err,stdo,stde){
-    if (err) throw err;
+var getVersion = function (pkg, callback) {
+  exec('npm show ' + pkg + ' version --silent', function (err, stdo) {
+    if (err) {
+      throw err;
+    }
     callback(stdo);
   });
 };
@@ -31,24 +33,24 @@ var getVersion = function(pkg,callback){
 var obj = {
 
   // Global Package Installer
-  install: function(ngnpkg){
+  install: function (ngnpkg) {
     var evt = new events.EventEmitter();
 
-    evt.on('install',install);
+    evt.on('install', install);
 
-    if (fs.existsSync(p.join(__dirname,'..','..','..',ngnpkg))){
-      var currv = require(p.join(__dirname,'..','..','..',ngnpkg,'package.json')).version;
+    if (fs.existsSync(p.join(__dirname, '..', '..', '..', ngnpkg))) {
+      var currv = require(p.join(__dirname, '..', '..', '..', ngnpkg, 'package.json')).version;
 
-      console.log((ngnpkg+' version '+currv+' is already installed.').yellow);
+      console.log((ngnpkg + ' version ' + currv + ' is already installed.').yellow);
 
-      getVersion(ngnpkg,function(stdo){
-        if (semver.lt(currv,stdo)){
-          console.log((('A new version ('+stdo.toString().trim()).green.bold+') of '+ngnpkg+' is available. Updating...'.green.bold));
-          obj.update(ngnpkg,function(updated,_pkg){
-            if (updated){
-              console.log((_pkg+' updated successfully.').green.bold);
+      getVersion(ngnpkg, function (stdo) {
+        if (semver.lt(currv, stdo)) {
+          console.log((('A new version (' + stdo.toString().trim()).green.bold + ') of ' + ngnpkg + ' is available. Updating...'.green.bold));
+          obj.update(ngnpkg, function (updated, _pkg) {
+            if (updated) {
+              console.log((_pkg + ' updated successfully.').green.bold);
             } else {
-              console.log((_pkg+' could not be updated.').red)
+              console.log((_pkg + ' could not be updated.').red);
             }
           });
         } else {
@@ -56,34 +58,34 @@ var obj = {
         }
       });
     } else {
-      evt.emit('install',ngnpkg);
+      evt.emit('install', ngnpkg);
     }
   },
 
   // Global Package Uninstaller
-  uninstall: function(ngnpkg,callback){
-    exec('npm uninstall -g '+ngnpkg,function(err,out,serr){
+  uninstall: function (ngnpkg, callback) {
+    exec('npm uninstall -g ' + ngnpkg, function (err) {
       callback && callback(ngnpkg);
     });
   },
 
   // Global package updater
-  update: function(ngnpkg,callback){
-    var path = p.join(__dirname,'..','..','..',ngnpkg);
-    if (fs.existsSync(path)){
-      var currv = require(p.join(path,'package.json')).version;
-      getVersion(ngnpkg,function(stdo){
-        if (semver.lt(currv,stdo)){
-          obj.uninstall(ngnpkg,function(){
-            obj.install(ngnpkg,'updated');
-            callback && callback(true,ngnpkg);
+  update: function (ngnpkg, callback) {
+    var path = p.join(__dirname, '..', '..', '..', ngnpkg);
+    if (fs.existsSync(path)) {
+      var currv = require(p.join(path, 'package.json')).version;
+      getVersion(ngnpkg, function (stdo) {
+        if (semver.lt(currv, stdo)) {
+          obj.uninstall(ngnpkg, function () {
+            obj.install(ngnpkg, 'updated');
+            callback && callback(true, ngnpkg);
           });
         } else {
-          callback && callback(false,ngnpkg);
+          callback && callback(false, ngnpkg);
         }
       });
     } else {
-      console.log((ngnpkg+' is not installed.').red.bold);
+      console.log((ngnpkg + ' is not installed.').red.bold);
     }
   }
 };
