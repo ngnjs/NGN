@@ -190,7 +190,3 @@ suite('NGN Package', function(){
   });
 
 });
-
-suite('Logging', function(){
-  assert.ok(console !== undefined,'console is not defined');
-});
