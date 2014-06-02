@@ -6,7 +6,7 @@ var events = require('events'),
 
 var install = function (pkg, term) {
   term = term || 'added';
-  exec('npm install -g ' + pkg + ' --json --loglevel=silent', function (err, stdout, stderr) {
+  exec('npm install -g ' + pkg + ' --json --loglevel=silent', function (err, stdout) {
     try {
       // Handle edge case when gyp output screws up npm json format
       if (stdout.substr(0, 1) !== '[') {
@@ -64,7 +64,7 @@ var obj = {
 
   // Global Package Uninstaller
   uninstall: function (ngnpkg, callback) {
-    exec('npm uninstall -g ' + ngnpkg, function (err) {
+    exec('npm uninstall -g ' + ngnpkg, function() {
       callback && callback(ngnpkg);
     });
   },

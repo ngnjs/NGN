@@ -22,9 +22,11 @@ new Seq()
     } else {
       var mods = require(p.join(__dirname, '..', '..', 'package.json')).ngn.modules;
       for (var mod in mods) {
-        exec('npm uninstall -g ' + mod, function (err) {
-          if (err) { throw err; }
-        });
+        if (mods.hasOwnProperty(mod){
+          exec('npm uninstall -g ' + mod, function (err) {
+            if (err) { throw err; }
+          });
+        }
       }
       console.log('NGN is removing everything. However; you must manually remove');
       console.log('the main executable using the following command:\n');

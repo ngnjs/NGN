@@ -8,7 +8,7 @@ var p = require('path'),
   installer = require('../lib/installer');
 require('colors');
 
-evt.on('updatemods',function(core){
+evt.on('updatemods',function(){
   /*if (core.updated){
     delete require.cache[p.join(__dirname,'..','..','package.json')];
     pkg = require(p.join(__dirname,'..','..','package.json'));
@@ -39,8 +39,8 @@ evt.on('updatemods',function(core){
 });
 
 // Check for core update
-exec('npm show ngn version --silent',function(e,stdout,stderr){
-  if (e) throw e;
+exec('npm show ngn version --silent',function(e,stdout){
+  if (e) {throw e;}
   if (semver.lt(pkg.version,stdout)){
     console.log(('NGN Core v'+stdout.toString().trim().replace(/\\n/gi,'')+' is available.\nTo install the update, run ').magenta.bold+'npm install -g ngn'.cyan.bold+'\n');
   } else {

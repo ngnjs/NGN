@@ -1,8 +1,7 @@
 require('colors');
 var cli = require('optimist'),
   p = require('path'),
-  fs = require('fs'),
-  exec = require('child_process').exec;
+  fs = require('fs');
 
 var available = require(p.join(process.mainModule.paths[0], '..', '..', 'package.json')).ngn;
 
@@ -51,19 +50,6 @@ var uninstall = function (ngnpkg) {
   } else {
     console.log((ngnpkg + ' support not found/installed. Skipped.').yellow);
   }
-  /*exec('npm uninstall -g '+ngnpkg+' --json --loglevel=silent',function(err,stdout,stderr){
-    if (stdout.toString().trim().length == 0){
-      console.log((ngnpkg+' support not found/installed. Skipped.').yellow);
-      return;
-    }
-    try {
-      var out = stdout.toString().trim().replace(/unbuild/gi,'').replace(/\s/,'').split('@');
-      console.log(((out[0]||'Unknown').toString()+' support removed --> '+' v'+(out[1]||'?').toString()).red.bold);
-    } catch (e) {
-      console.log('Module removed, but there were errors:'.yellow.bold);
-      console.log(e.message.toString().yellow);
-    }
-  });*/
 };
 
 // Check first for a module or group and install/warn accordingly
