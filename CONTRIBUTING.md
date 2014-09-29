@@ -1,11 +1,12 @@
 # How to contribute
 
-Third-party patches are help keep NGN great. The world of Node.js is quite
+Third-party patches help keep NGN great. The world of Node.js is quite
 large, and it is impossible for anyone to keep up with absolutely everything.
-Knowing that, we appreciate contributions. In an effort to keep community
-code working to the standards expected of NGN, there are a few guidelines that we
-need contributors to follow so that we can have a chance of keeping on
-top of things.
+Knowing that, we appreciate contributions. 
+
+In an effort to keep community code working to the standards expected of NGN, 
+there are a few guidelines that we need contributors to follow so that we can 
+have a chance of keeping on top of things.
 
 ## Getting Started
 
@@ -23,7 +24,7 @@ To get started, <a href="http://www.clahub.com/agreements/nodengn/NGN">sign the 
 * Make commits of logical units.
 * Check for unnecessary whitespace with `git diff --check` before committing.
 * Make sure you have added the necessary tests for your changes.
-* Run _all_ the tests to assure nothing else was accidentally broken.
+* Run _all_ the tests to ensure nothing else was accidentally broken.
 * Make sure your commit messages are in the proper format.
 
 ```
