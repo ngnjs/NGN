@@ -26,6 +26,8 @@ logic found in the SDK.
 
 For complete details, please visit the [NGN website](http://ngn.js.org). This repository is the home of the primary SDK.
 
+[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+
 <a href="https://nodei.co/npm/ngn/" target="_blank"><img src="https://nodei.co/npm/ngn.png?downloads=true&stars=true"/></a>
 
 ### Platform Status
