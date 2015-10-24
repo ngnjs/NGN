@@ -8,3 +8,6 @@ notifications:
     template:
     - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}'
     format: html
+addons:
+  code_climate:
+    repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
