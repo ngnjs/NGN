@@ -2,7 +2,6 @@
 _*
 node_modules
 !.gitignore
-!.jshintignore
 !.npmignore
 !.travis.yml
 !.imdone
