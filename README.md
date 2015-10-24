@@ -40,21 +40,21 @@ For complete details, please visit the [NGN website](http://ngn.js.org). This re
 	<tr style="background-color:#ccffc7;">
 		<th style="text-align:left">NGN</th>
 		<td><code>npm install ngn</code></td>
-		<td><a href="https://codeclimate.com/github/nodengn/NGN" target="_blank"><img src="https://codeclimate.com/github/nodengn/NGN.png"/></a></td>
-		<td><a href="https://david-dm.org/nodengn/NGN" target="_blank"><img src="https://david-dm.org/nodengn/NGN.png"/></a></td>
-		<td><a href="https://travis-ci.org/nodengn/NGN" target="_blank"><img src="https://api.travis-ci.org/nodengn/NGN.png"/></a></td>
+		<td><a href="https://codeclimate.com/github/ngnjs/NGN" target="_blank"><img src="https://codeclimate.com/github/ngnjs/NGN.png"/></a></td>
+		<td><a href="https://david-dm.org/ngnjs/NGN" target="_blank"><img src="https://david-dm.org/ngnjs/NGN.png"/></a></td>
+		<td><a href="https://travis-ci.org/ngnjs/NGN" target="_blank"><img src="https://api.travis-ci.org/ngnjs/NGN.png"/></a></td>
 	</tr>
 	<!--<tr>
-		<th style="text-align:left"><a href="https://github.com/nodengn/ngn-core" target="blank">NGN&nbsp;Core</a></th>
+		<th style="text-align:left"><a href="https://github.com/ngnjs/ngn-core" target="blank">NGN&nbsp;Core</a></th>
 		<td><code>ngn install core</code></td>
-		<td><a href="https://codeclimate.com/github/nodengn/ngn-core" target="_blank"><img src="https://codeclimate.com/github/nodengn/ngn-core.png"/></a></td>
-		<td><a href="https://david-dm.org/nodengn/ngn-core" target="_blank"><img src="https://david-dm.org/nodengn/ngn-core.png"/></a></td>
-		<td><a href="https://travis-ci.org/nodengn/ngn-core" target="_blank"><img src="https://api.travis-ci.org/nodengn/ngn-core.png"/></a></td>
+		<td><a href="https://codeclimate.com/github/ngnjs/ngn-core" target="_blank"><img src="https://codeclimate.com/github/ngnjs/ngn-core.png"/></a></td>
+		<td><a href="https://david-dm.org/ngnjs/ngn-core" target="_blank"><img src="https://david-dm.org/ngnjs/ngn-core.png"/></a></td>
+		<td><a href="https://travis-ci.org/ngnjs/ngn-core" target="_blank"><img src="https://api.travis-ci.org/ngnjs/ngn-core.png"/></a></td>
 	</tr>
-		<th style="text-align:left"><a href="https://github.com/nodengn/ngn-idk-core" target="blank">NGN&nbsp;IDK&nbsp;Core</a></th>
+		<th style="text-align:left"><a href="https://github.com/ngnjs/ngn-idk-core" target="blank">NGN&nbsp;IDK&nbsp;Core</a></th>
 		<td><code>ngn install idk-core</code></td>
-		<td><a href="https://codeclimate.com/github/nodengn/ngn-idk-core" target="_blank"><img src="https://codeclimate.com/github/nodengn/ngn-idk-core.png"/></a></td>
-		<td><a href="https://david-dm.org/nodengn/ngn-idk-core" target="_blank"><img src="https://david-dm.org/nodengn/ngn-idk-core.png"/></a></td>
-		<td><a href="https://travis-ci.org/nodengn/ngn-idk-core" target="_blank"><img src="https://api.travis-ci.org/nodengn/ngn-idk-core.png"/></a></td>
+		<td><a href="https://codeclimate.com/github/ngnjs/ngn-idk-core" target="_blank"><img src="https://codeclimate.com/github/ngnjs/ngn-idk-core.png"/></a></td>
+		<td><a href="https://david-dm.org/ngnjs/ngn-idk-core" target="_blank"><img src="https://david-dm.org/ngnjs/ngn-idk-core.png"/></a></td>
+		<td><a href="https://travis-ci.org/ngnjs/ngn-idk-core" target="_blank"><img src="https://api.travis-ci.org/ngnjs/ngn-idk-core.png"/></a></td>
 	</tr>-->
 </table>
