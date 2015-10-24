@@ -1,0 +1,43 @@
+{
+  "name": "ngn",
+  "version": "0.2.67",
+  "description": "A distributed services platform (core).",
+  "main": "./NGN.js",
+  "scripts": {
+    "test": "tape test/**/*.js | tap-spec && snazzy --verbose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ngnjs/ngn.git"
+  },
+  "keywords": [
+    "NGN"
+  ],
+  "preferGlobal": false,
+  "engines": {
+    "node": ">= 4.2.1"
+  },
+  "author": "Corey Butler (http://ngn.js.org)",
+  "homepage": "http://ngn.js.org",
+  "license": "GPL",
+  "dependencies": {
+    "axon": "^2.0.2",
+    "ngn-axon-rpc": "0.1.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^4.1.3",
+    "snazzy": "^2.0.1",
+    "standard": "^5.3.1",
+    "standard-tap": "^1.0.1",
+    "tap-spec": "^4.1.0",
+    "tape": "^4.2.2"
+  },
+  "standard": {
+    "parser": "babel-eslint",
+    "ignore": [
+      "_*",
+      "_**/*"
+    ],
+    "globals": [ "NGN", "ngn" ]
+  }
+}

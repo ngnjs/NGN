@@ -1,8 +1,7 @@
-Gruntfile.js
-!bin/.config.json
-logs
-docs
-node_modules
+_*
 *.md
 .*
-_*
+*.log
+typescript
+examples
+test
