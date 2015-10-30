@@ -1,6 +1,9 @@
 'use strict'
 
+require('colors')
+
 const pkg = require('./package.json')
+const Log = require('./lib/Log')
 
 let NGN = {}
 
@@ -18,6 +21,16 @@ Object.defineProperties(NGN, {
     value: pkg.version
   },
 
+  /**
+   * @method createException
+   */
+  createException: {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: require('./lib/Exception').create
+  },
+
   Class: {
     enumerable: false,
     writable: false,
@@ -29,25 +42,29 @@ Object.defineProperties(NGN, {
     enumerable: false,
     writable: false,
     configurable: false,
-    value: require('./lib/Log')
+    value: new Log()
   },
 
-  /**
-   * @method createException
-   */
-  createException: {
+  Tunnel: {
     enumerable: false,
     writable: false,
     configurable: false,
-    value: require('./lib/Exception').create
+    value: require('./lib/SshTunnel')
   },
 
-//  BUS: {
-//    enumerable: true,
-//    writable: false,
-//    configurable: false,
-//    value: require('./lib/BUS')
-//  },
+  Server: {
+    enumerable: false,
+    writable: false,
+    configurable: false,
+    value: require('./lib/Server')
+  },
+
+  BUS: {
+    enumerable: true,
+    writable: false,
+    configurable: false,
+    value: require('./lib/BUS')
+  },
 
   rpc: {
     enumerable: true,

@@ -48,6 +48,10 @@ test('RPC:', function (t) {
     })
   })
 
+  s.once('clientconnection', function () {
+    t.pass('RPC server recognized client.')
+  })
+
   // 6. Check to make sure the client attempts to reconnect
   //    after it loses connectivity to the server
   c.once('reconnecting', function () {
@@ -68,15 +72,15 @@ test('RPC:', function (t) {
     // 6. Restart the server after a half second pause
     setTimeout(function () {
       s.start()
-    }, 500)
+    }, 750)
   })
 
   // 9. When the client disconnects, shutdown the server
-  c.on('disconnect', function () {
+  c.once('disconnect', function () {
     t.ok(!c.connected, 'RPC client disconnected successfully.')
 
     // 10. When the server is stopped, exit successfully.
-    s.on('stop', function () {
+    s.once('stop', function () {
       t.ok(!s.running, 'RPC server stopped successfully.')
       t.end()
     })

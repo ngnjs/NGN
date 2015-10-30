@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.2.67",
+  "version": "0.2.68",
   "description": "A distributed services platform (core).",
   "main": "./NGN.js",
   "scripts": {
@@ -22,7 +22,9 @@
   "license": "GPL",
   "dependencies": {
     "axon": "^2.0.2",
-    "ngn-axon-rpc": "0.1.0"
+    "colors": "^1.1.2",
+    "ngn-axon-rpc": "0.1.0",
+    "ssh2": "^0.4.11"
   },
   "devDependencies": {
     "babel-eslint": "^4.1.3",
@@ -38,6 +40,11 @@
       "_*",
       "_**/*"
     ],
-    "globals": [ "NGN", "ngn" ]
+    "globals": [
+      "NGN",
+      "ngn",
+      "LoggingMethodError",
+      "DuplicateLoggingMethodError"
+    ]
   }
 }
