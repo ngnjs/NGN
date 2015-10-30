@@ -26,21 +26,36 @@ test('BUS:', function (t) {
     NGN.BUS.connect('127.0.0.1:' + rpc_port)
 
     // 3. When the BUS is ready, it's safe to disconnect
-    NGN.BUS.on('ready', function () {
+    NGN.BUS.once('ready', function () {
       t.pass('NGN.BUS connected to remote system successfully.')
-      NGN.BUS.disconnect()
-    })
 
-    // 4. When the BUS disconnects, close the bridge.
-    NGN.BUS.on('disconnect', function () {
-      t.pass('NGN.BUS disconnected from remote system successfully.')
-      server.stop()
+      // 6. When the BUS remote connection is restablished, disconnect.
+      NGN.BUS.once('ready', function () {
+        t.ok(NGN.BUS.connected, 'NGN.BUS successfully enabled.')
+
+        // 7. When the BUS disconnects, close the bridge.
+        NGN.BUS.once('disconnect', function () {
+          t.pass('NGN.BUS disconnected from remote system successfully.')
+          server.stop()
+        })
+
+        NGN.BUS.disconnect()
+      })
+
+      // 5. After the BUS is disabled, re-enable it.
+      NGN.BUS.on('disabled', function () {
+        t.ok(!NGN.BUS.connected, 'NGN.BUS disabled successfully.')
+        NGN.BUS.enable()
+      })
+
+      // 4. Disable the BUS
+      NGN.BUS.disable()
     })
   })
 
-  // 5. When the bridge is closed, run additional tests
+  // 8. When the bridge is closed, run additional tests
   server.once('stop', function () {
-    NGN.BUS.on('trigger', function () {
+    NGN.BUS.once('trigger', function () {
       t.pass('Basic event handling and attaching is supported.')
       NGN.BUS.emit('test.a')
     })
