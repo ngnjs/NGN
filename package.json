@@ -23,7 +23,7 @@
   "dependencies": {
     "axon": "^2.0.2",
     "colors": "^1.1.2",
-    "ngn-axon-rpc": "0.1.0",
+    "ngn-rpc": "0.1.1",
     "ssh2": "^0.4.11"
   },
   "devDependencies": {
