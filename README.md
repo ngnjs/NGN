@@ -36,14 +36,12 @@ For complete details, please visit the [NGN website](http://ngn.js.org). This re
 	<tr>
 		<th colspan="2" style="text-align:left">Component</th>
 		<th>Grade</th>
-		<th>Dependencies</th>
 		<th>Build</th>
 	</tr>
 	<tr style="background-color:#ccffc7;">
 		<th style="text-align:left">NGN</th>
 		<td><code>npm install ngn</code></td>
 		<td><a href="https://codeclimate.com/github/ngnjs/NGN" target="_blank"><img src="https://codeclimate.com/github/ngnjs/NGN.png"/></a></td>
-		<td><a href="https://david-dm.org/ngnjs/NGN" target="_blank"><img src="https://david-dm.org/ngnjs/NGN.png"/></a></td>
 		<td><a href="https://travis-ci.org/ngnjs/NGN" target="_blank"><img src="https://api.travis-ci.org/ngnjs/NGN.png"/></a></td>
 	</tr>
 	<!--<tr>
