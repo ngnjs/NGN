@@ -4,6 +4,8 @@ var test = require('tape')
 var rpc_port = process.env.RPC_PORT || 47911
 
 require('../')
+NGN.Log.disable()
+NGN.BUS.disableRemote()
 
 test('RPC:', function (t) {
   t.ok(NGN.rpc.Server !== undefined, 'NGN.rpc.Server exists.')

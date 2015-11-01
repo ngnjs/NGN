@@ -3,6 +3,8 @@
 var test = require('tape')
 
 require('../')
+NGN.Log.disable()
+NGN.BUS.disableRemote()
 
 test('Custom Exceptions', function (t) {
   // Create a custom exception
