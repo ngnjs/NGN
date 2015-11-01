@@ -19,6 +19,13 @@ test('RPC:', function (t) {
       testing: {
         echo: function (txt, callback) {
           callback(null, txt)
+        },
+        echo2: function (txt1, txt2, callback) {
+          callback(null, txt1 + txt2)
+        },
+        fireforget: function (txt, txt2) {
+          t.pass('Remote method with no callback works.')
+          s.stop()
         }
       }
     }
@@ -46,7 +53,10 @@ test('RPC:', function (t) {
         t.ok(!s.running, 'RPC server temporarily stopped.')
       })
 
-      s.stop()
+      c.testing.echo2('a', 'b', function (out) {
+        t.ok(out === 'ab', 'Multiargument remote method works.')
+        c.testing.fireforget('a', 'b')
+      })
     })
   })
 
