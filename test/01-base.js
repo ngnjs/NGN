@@ -4,6 +4,7 @@ var test = require('tape')
 
 require('../')
 NGN.Log.disable()
+NGN.BUS.disableRemote()
 
 test('Primary Namespace', function (t) {
   t.ok(NGN !== undefined, 'NGN is defined globally.')

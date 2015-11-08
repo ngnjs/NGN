@@ -1,7 +1,7 @@
 'use strict'
 
 let test = require('tape')
-let rpc_port = parseInt(process.env.RPC_PORT || 47911, 10) + 3
+let bus_rpc_port = parseInt(process.env.RPC_PORT || 47911, 10) + 3
 
 require('../')
 NGN.Log.disable()
@@ -13,7 +13,7 @@ test('BUS:', function (t) {
   // 1. Mimic the Bridge app
   let server = new NGN.rpc.Server({
     host: 'localhost',
-    port: rpc_port,
+    port: bus_rpc_port,
     expose: {
       testing: {
         echo: function (txt, callback) {
@@ -24,8 +24,8 @@ test('BUS:', function (t) {
   })
 
   // 2. When the "Bridge" is ready, connect the BUS
-  server.once('ready', function () {
-    NGN.BUS.connect('127.0.0.1:' + rpc_port)
+  server.once('ready', function () {console.log('bp2')
+    NGN.BUS.connect('127.0.0.1:' + bus_rpc_port)
 
     // 3. When the BUS is ready, it's safe to disconnect
     NGN.BUS.once('enabled', function () {
@@ -86,4 +86,5 @@ test('BUS:', function (t) {
 
     fn(NGN.BUS.attach('trigger'))
   })
+  console.log('bp')
 })

@@ -4,6 +4,8 @@ require('colors')
 
 const pkg = require('./package.json')
 const Log = require('./lib/Log')
+const Base = require('./lib/Base')
+const Exception = require('./lib/exception/bootstrap')
 
 let NGN = {}
 
@@ -28,14 +30,14 @@ Object.defineProperties(NGN, {
     enumerable: false,
     writable: false,
     configurable: false,
-    value: require('./lib/Exception').create
+    value: Exception.create
   },
 
   Class: {
     enumerable: false,
     writable: false,
     configurable: false,
-    value: require('./lib/NgnClass')
+    value: Base
   },
 
   Log: {
@@ -49,7 +51,7 @@ Object.defineProperties(NGN, {
     enumerable: false,
     writable: false,
     configurable: false,
-    value: require('./lib/SshTunnel')
+    value: require('./lib/Tunnel')
   },
 
   Server: {
