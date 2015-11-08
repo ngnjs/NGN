@@ -19,11 +19,11 @@
   },
   "author": "Corey Butler (http://ngn.js.org)",
   "homepage": "http://ngn.js.org",
-  "license": "GPL",
+  "license": "LGPL-3.0",
   "dependencies": {
     "colors": "^1.1.2",
     "eventsource": "^0.1.6",
-    "ngn-rpc": "^0.1.3",
+    "ngn-rpc": "^0.1.4",
     "ssh2": "^0.4.11"
   },
   "devDependencies": {
