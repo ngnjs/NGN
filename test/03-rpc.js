@@ -3,11 +3,10 @@
 var test = require('tape')
 var rpc_port = process.env.RPC_PORT || 47911
 
-require('../')
-NGN.Log.disable()
-NGN.BUS.disableRemote()
-
 test('RPC:', function (t) {
+  require('../')
+  NGN.Log.disable()
+
   t.ok(NGN.rpc.Server !== undefined, 'NGN.rpc.Server exists.')
   t.ok(NGN.rpc.Client !== undefined, 'NGN.rpc.Client exists.')
 
@@ -45,8 +44,8 @@ test('RPC:', function (t) {
     t.ok(c.testing !== undefined, 'RPC client recognized remote namespace.')
     t.ok(c.testing.echo !== undefined, 'RPC client recognized remote method.')
 
-    c.testing.echo('blah', function (out) {
-      t.ok(out === 'blah', 'RPC remote method called successfully.')
+    c.testing.echo('sometext', function (out) {
+      t.ok(out === 'sometext', 'RPC remote method called successfully.')
 
       // 5. Stop the server & check the status of the client
       s.once('stop', function () {

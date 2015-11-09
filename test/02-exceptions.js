@@ -2,12 +2,11 @@
 
 var test = require('tape')
 
-require('../')
-NGN.Log.disable()
-NGN.BUS.disableRemote()
-
 test('Custom Exceptions', function (t) {
-  // Create a custom exception
+  require('../')
+  NGN.Log.disable()
+
+// Create a custom exception
   NGN.createException({
     name: 'Test Problem',
     message: 'This is a test problem.',

@@ -2,9 +2,9 @@
 
 var test = require('tape')
 
-require('../')
-
 test('Custom Logging', function (t) {
+  require('../')
+
   // Sanity checks
   t.ok(console.debug !== undefined, 'console.debug() exists.')
   t.ok(console.level !== undefined, 'console.level() exists.')
@@ -21,7 +21,7 @@ test('Custom Logging', function (t) {
     t.ok(evt.name !== undefined, 'logevent payload has a name attribute.')
     t.ok(evt.data !== undefined, 'logevent payload has a data attribute.')
     t.ok(evt.name === 'log', 'logevent emitted with proper name.')
-    t.ok(evt.data === 'test', 'logevent emitted with proper data.')
+    t.ok(evt.data === 'test log', 'logevent emitted with proper data.')
 
     NGN.Log.once('enabled', function () {
       t.ok(NGN.Log.enabled, 'NGN.Log enabled successfully.')
@@ -55,5 +55,5 @@ test('Custom Logging', function (t) {
   })
 
   NGN.Log.enable()
-  console.log('test')
+  console.log('test log')
 })
