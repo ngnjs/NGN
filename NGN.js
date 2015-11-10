@@ -4,6 +4,7 @@ require('colors')
 
 const pkg = require('./package.json')
 const Log = require('./lib/Log')
+const Tunnel = require('./lib/Tunnel')
 const Base = require('./lib/Base')
 const Exception = require('./lib/exception/bootstrap')
 
@@ -51,7 +52,7 @@ Object.defineProperties(NGN, {
     enumerable: false,
     writable: false,
     configurable: false,
-    value: require('./lib/Tunnel')
+    value: Tunnel
   },
 
   Server: {

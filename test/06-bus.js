@@ -107,7 +107,8 @@ test('BUS:', function (t) {
                 setTimeout(function () {
                   if (heard.indexOf('health.status') >= 0) {
                     t.pass('Health: Status received by remote host.')
-                    NGN.BUS.disconnect()
+                    NGN.Log.enable()
+                    console.log('test remote log shipping')
                   }
                 }, 350)
               })
@@ -133,6 +134,16 @@ test('BUS:', function (t) {
               })
             })
             NGN.BUS.healthmonitor.heartbeatWaitTime = 500
+          })
+
+          NGN.BUS.once('syslog.log', function (data) {
+            t.pass('Triggered log event via console.')
+            setTimeout(function () {
+              if (heard.indexOf('syslog.log')) {
+                t.ok(data.toString() === 'test remote log shipping', 'Recognized log event remotely.')
+                NGN.BUS.disconnect()
+              }
+            }, 350)
           })
         })
 

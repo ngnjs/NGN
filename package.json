@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "babel-eslint": "^4.1.3",
+    "buffer-equal-constant-time": "^1.0.1",
     "ngn-sse": "^0.0.3",
     "snazzy": "^2.0.1",
     "standard": "^5.3.1",
