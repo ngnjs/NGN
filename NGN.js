@@ -48,6 +48,13 @@ Object.defineProperties(NGN, {
     value: new Log()
   },
 
+  log: {
+    enumerable: false,
+    get: function () {
+      return this.Log
+    }
+  },
+
   Tunnel: {
     enumerable: false,
     writable: false,
@@ -69,6 +76,13 @@ Object.defineProperties(NGN, {
     value: require('./lib/BUS')
   },
 
+  bus: {
+    enumerable: false,
+    get: function () {
+      return this.BUS
+    }
+  },
+
   rpc: {
     enumerable: true,
     writable: false,
@@ -77,8 +91,14 @@ Object.defineProperties(NGN, {
       Client: require('./lib/rpc/Client'),
       Server: require('./lib/rpc/Server')
     }
-  }
+  },
 
+  RPC: {
+    enumerable: false,
+    get: function () {
+      return this.RPC
+    }
+  }
 })
 
 // Append to global object

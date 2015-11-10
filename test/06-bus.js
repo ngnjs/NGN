@@ -103,7 +103,7 @@ test('BUS:', function (t) {
               t.ok(NGN.BUS.healthmonitor.heartbeatrunning, 'Heartbeat restarted.')
 
               NGN.BUS.healthmonitor.once('health.status.start', function () {
-                t.ok(NGN.BUS.healthmonitor.statusrunning, 'Health: status monitor restarted.')
+                t.ok(NGN.BUS.healthmonitor.statusrunning, 'Health: Status monitor restarted.')
                 setTimeout(function () {
                   if (heard.indexOf('health.status') >= 0) {
                     t.pass('Health: Status received by remote host.')
