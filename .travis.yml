@@ -13,10 +13,14 @@ addons:
   code_climate:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
 deploy:
-  provider: npm
-  email: corey@coreybutler.com
+  provider: releases
   api_key:
-    secure: D7FaxsTqTFt8EhyXXwfBfOVN8tW4AktNnc+NUCIdzKRa/+Jyd02ZsHr2edPbmc1CnA3nmLOciHBwLBn63zMSrF8/CVdhT3Z8b+whWaa+YRl1twEzyHlW+F1ldDWPNXrdgch5WLyG52RoJdiEhYGNZNh78tgRUEdBaUNCmmrYltk=
+    secure: ZcWoKlPJI3vhYxNchE5gdpZBfwRo9khsfwbHK1Mz//dO+lnWDKY5UjVutOSQM86VDM3BGiy7kkWC7Em08GRKuTbLIFGBWTEJi2DdnR97rmYaGbBOjmgZdmI4gQL+yB3pusPOfOn6rY8kocpfxPlTQSAj724Ypo3qemZTCHSEKH4=
+  skip_cleanup: true
+  file:
+    - NGN.js
+    - lib/*
+    - LICENSE
+    - package.json
   on:
-    tags: true
     repo: ngnjs/NGN
