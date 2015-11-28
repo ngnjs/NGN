@@ -9,12 +9,6 @@ notifications:
     template:
     - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
     format: html
-  webhooks:
-    urls:
-      - "${POSTOP_URL}"
-    on_failure: never
-    on_start: never
-    on_success: always
 addons:
   code_climate:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
@@ -38,5 +32,4 @@ deploy:
       tags: true
       repo: ngnjs/NGN
 after_success:
-  - echo -H "Content-Type:\ application/json" -d '{"ngn":"'${TRAVIS_TAG}'","trigger":"ngnjs/docker-ngn-base"}' -X POST ${POSTOP_URL}
-  - curl -H "Content-Type:\ application/json" -d '{"ngn":"'${TRAVIS_TAG}'","trigger":"ngnjs/docker-ngn-base"}' -X POST ${POSTOP_URL}
+  - curl -H "Content-Type:\ application/json" -d '{"ngn":"'$TRAVIS_TAG'","trigger":"ngnjs/docker-ngn-base"}' -X POST $POSTOP_URL
