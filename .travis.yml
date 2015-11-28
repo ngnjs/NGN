@@ -36,5 +36,4 @@ after_success:
   - echo $TRAVIS_TAG
   - curl -H "Content-Type:\ application/json" -d '{"ngn":"'$TRAVIS_TAG'","trigger":"ngnjs\/docker-ngn-base"}' -X POST "${POSTOP_URL_DEV}"
   - curl -g -H "Content-Type:\ application/json" -d '{"ngn":"'$TRAVIS_TAG'","trigger":"ngnjs\/docker-ngn-base"}' -X POST "${POSTOP_URL}"
-  code_name
-  oauth
+
