@@ -13,19 +13,15 @@ addons:
   code_climate:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
 before-deploy:
-  - export RELEASE_PKG_FILE=$(ls lib/*)
-  - echo "deploying $RELEASE_PKG_FILE to GitHub releases"
+  - export RELEASE_PKG=$(ls ./NGN.js lib/*.js lib/exception/*.js lib/rpc/*.js package.json LICENSE)
+  - echo "deploying $RELEASE_PKG to GitHub releases"
 deploy:
   provider: releases
   api_key:
     secure: ZcWoKlPJI3vhYxNchE5gdpZBfwRo9khsfwbHK1Mz//dO+lnWDKY5UjVutOSQM86VDM3BGiy7kkWC7Em08GRKuTbLIFGBWTEJi2DdnR97rmYaGbBOjmgZdmI4gQL+yB3pusPOfOn6rY8kocpfxPlTQSAj724Ypo3qemZTCHSEKH4=
-  file_glob: true
-  file:
-    - NGN.js
-    - lib/**/*
-    - LICENSE
-    - package.json
   skip_cleanup: true
+  file_glob: true
+  file: "${RELEASE_PKG}"
   on:
     repo: ngnjs/NGN
     tags: true
