@@ -12,15 +12,11 @@ notifications:
 addons:
   code_climate:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
-# before_deploy:
-# - export RELEASE_PKG=$(ls ./NGN.js lib/*.js lib/exception/*.js lib/rpc/*.js package.json
-#   LICENSE)
-# - echo "deploying $RELEASE_PKG to GitHub releases"
 deploy:
   provider: npm
   email: corey@coreybutler.com
   api_key:
-    secure: DbvI7ialsnF7TwncBZUO6gu++yQjnqqE37ZR3R6v7hHwoYL3S53HhsWCNmweFrj/BZkriAyaHYfra73mDePwceQdHq0nO1eUvSOCtl1UqmENe3ClWHiMHQmqB2wwJi0DCd5es2lU5wWYe4Jr0b5elr4cjBduaDlSAip2JXqOvaI=
+    secure: NJxNt177RmOSY/5uEOBd3/THgUFH6UGqXmZ3eD0XD3vt8bpc+AfjZb1vzg6VUfDswNx9IAQ5399I3wWe8Uzs5qJK+7UwhXl02GutcaQxPj9BNZ3fpcgsu1m9WqdR8utXwoW1VDRPtmzom25Sx6ZxLacXuvJU4u/fCriTth/d6zw=
   on:
     tags: true
     repo: ngnjs/NGN
