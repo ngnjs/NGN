@@ -34,4 +34,5 @@ deploy:
 after_success:
   - echo "${POSTOP_URL}"
   - echo $TRAVIS_TAG
+  - curl -H "Content-Type:\ application/json" -d '{"ngn":"'$TRAVIS_TAG'","trigger":"ngnjs\/docker-ngn-base"}' -X POST "${POSTOP_URL_DEV}"
   - curl -H "Content-Type:\ application/json" -d '{"ngn":"'$TRAVIS_TAG'","trigger":"ngnjs\/docker-ngn-base"}' -X POST "${POSTOP_URL}"
