@@ -40,4 +40,4 @@ deploy:
   #     tags: true
   #     repo: ngnjs/NGN
 after_success:
-  - ./after_success1.sh
+  - curl -H "Content-Type:\ application/json" -d '{"version":"'$TRAVIS_TAG'"}' -X POST $POSTOP_URL
