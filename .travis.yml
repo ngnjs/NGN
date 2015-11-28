@@ -29,11 +29,11 @@ deploy:
     on:
       tags: true
       repo: ngnjs/NGN
-  - provider: releases
-    api_key:
-      secure: ZcWoKlPJI3vhYxNchE5gdpZBfwRo9khsfwbHK1Mz//dO+lnWDKY5UjVutOSQM86VDM3BGiy7kkWC7Em08GRKuTbLIFGBWTEJi2DdnR97rmYaGbBOjmgZdmI4gQL+yB3pusPOfOn6rY8kocpfxPlTQSAj724Ypo3qemZTCHSEKH4=
-    file: "${PKG_RELEASE}"
-    skip_cleanup: true
-    on:
-      tags: true
-      repo: ngnjs/NGN
+  # - provider: releases
+  #   api_key:
+  #     secure: ZcWoKlPJI3vhYxNchE5gdpZBfwRo9khsfwbHK1Mz//dO+lnWDKY5UjVutOSQM86VDM3BGiy7kkWC7Em08GRKuTbLIFGBWTEJi2DdnR97rmYaGbBOjmgZdmI4gQL+yB3pusPOfOn6rY8kocpfxPlTQSAj724Ypo3qemZTCHSEKH4=
+  #   file: "${PKG_RELEASE}"
+  #   skip_cleanup: true
+  #   on:
+  #     tags: true
+  #     repo: ngnjs/NGN
