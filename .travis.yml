@@ -9,6 +9,12 @@ notifications:
     template:
     - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
     format: html
+  webhooks:
+    urls:
+      - "${POSTOP_URL}"
+    on_failure: never
+    on_start: never
+    on_success: always
 addons:
   code_climate:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
@@ -31,5 +37,3 @@ deploy:
     on:
       tags: true
       repo: ngnjs/NGN
-after_deploy:
-  - ./postop.sh
