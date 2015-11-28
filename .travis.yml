@@ -12,7 +12,7 @@ notifications:
 addons:
   code_climate:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
-before-deploy:
+before_deploy:
   - export RELEASE_PKG=$(ls ./NGN.js lib/*.js lib/exception/*.js lib/rpc/*.js package.json LICENSE)
   - echo "deploying $RELEASE_PKG to GitHub releases"
 deploy:
