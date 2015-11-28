@@ -7,4 +7,4 @@ deployment:
     commands:
       - echo 'version:$CIRCLE_BRANCH'
       - echo $POSTOP_URL
-      - curl -H "Content-Type:\ application/json" -d '{"version":"$CIRCLE_BRANCH"}' -X POST $POSTOP_URL
+      - curl -H "Content-Type:\ application/json" -d '{"version":"'$CIRCLE_BRANCH'"}' -X POST $POSTOP_URL
