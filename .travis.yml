@@ -1,14 +1,22 @@
 language: node_js
 node_js:
-- '4.2.1'
+- 4.2.1
 sudo: false
 notifications:
   hipchat:
     rooms:
       secure: G86agoGJWFpnW+DIwoY0iZjTi4858qgZUnVSFKkz39zfeIFm/lnmcBG3MqLMzvkjFrj+qoofqAUUbycvA8ZE7FbX6+rOfChPpco14LM/cPWrltNuLEYGHA5ikLTrGXOQpy6HFx0MFxhDQc5GFZWoNOVZb8bRogyv1PZwS2AG7tQ=
     template:
-    - '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}'
+    - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
     format: html
 addons:
   code_climate:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
+deploy:
+  provider: npm
+  email: corey@coreybutler.com
+  api_key:
+    secure: D7FaxsTqTFt8EhyXXwfBfOVN8tW4AktNnc+NUCIdzKRa/+Jyd02ZsHr2edPbmc1CnA3nmLOciHBwLBn63zMSrF8/CVdhT3Z8b+whWaa+YRl1twEzyHlW+F1ldDWPNXrdgch5WLyG52RoJdiEhYGNZNh78tgRUEdBaUNCmmrYltk=
+  on:
+    tags: true
+    repo: ngnjs/NGN
