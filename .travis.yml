@@ -16,11 +16,12 @@ deploy:
   provider: releases
   api_key:
     secure: ZcWoKlPJI3vhYxNchE5gdpZBfwRo9khsfwbHK1Mz//dO+lnWDKY5UjVutOSQM86VDM3BGiy7kkWC7Em08GRKuTbLIFGBWTEJi2DdnR97rmYaGbBOjmgZdmI4gQL+yB3pusPOfOn6rY8kocpfxPlTQSAj724Ypo3qemZTCHSEKH4=
-  skip_cleanup: true
   file:
     - NGN.js
     - lib/*
     - LICENSE
     - package.json
+  skip_cleanup: true
   on:
     repo: ngnjs/NGN
+    tags: true
