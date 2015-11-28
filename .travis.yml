@@ -14,6 +14,8 @@ addons:
     repo_token: eea1f32d56a3c36788ad2a85540fae519760ddc8f179fedf60693977085d08bb
 before_deploy:
   - export PKG_RELEASE=$(ls ./NGN.js lib/*.js lib/exception/*.js lib/rpc/*.js package.json LICENSE)
+  - echo "curl -X POST -d '{"version":"${TRAVIS_TAG}"}' ${POSTOP_URL}" > ./after.sh
+  - chmod +x ./after.sh
   - echo "deploying ${PKG_RELEASE} to GitHub releases"
 deploy:
   - provider: npm
@@ -32,4 +34,4 @@ deploy:
       tags: true
       repo: ngnjs/NGN
 after_deploy:
-  - curl -H "Content-Type: application/json" -X POST -d '{"version":"${TRAVIS_TAG}"}' $POSTOP_URL
+  - ./after.sh
