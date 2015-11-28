@@ -4,6 +4,5 @@ node_modules
 !.gitignore
 !.npmignore
 !.travis.yml
-!.imdone
 *.db
 npm-debug.log
