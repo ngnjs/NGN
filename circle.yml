@@ -5,6 +5,8 @@ deployment:
   release:
     tag: /[0-9]+(\.[0-9]+)*/
     commands:
-      - echo $CIRCLE_BRANCH
+      - echo "process.stdout.write(require('./package.json').version)" > _circleci.js
+      - export APP_VERSION=`node _circleci.js`
+      - echo $APP_VERSION
       - echo $POSTOP_URL
-      - curl -H "Content-Type:\ application/json" -d '{"version":"'$CIRCLE_BRANCH'"}' -X POST $POSTOP_URL
+      - curl -H "Content-Type:\ application/json" -d '{"version":"'$APP_VERSION'"}' -X POST $POSTOP_URL
