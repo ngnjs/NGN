@@ -8,6 +8,10 @@ let bus_rpc_port = parseInt(process.env.RPC_PORT || 47911, 10) + 3
 test('BUS:', function (t) {
   require('../')
   NGN.Log.disable()
+  NGN.setup({
+    system: 'user',
+    secret: 'pass'
+  })
 
   // 1. Mimic the Bridge app
   let heard = []
@@ -44,10 +48,15 @@ test('BUS:', function (t) {
         })
         callback && callback(null)
       },
-      configuration: function (callback) {
-        callback(null, {
-          test: 'test'
-        })
+      configuration: function (user, pass, callback) {
+        if (user === 'user' && pass === 'pass') {
+          t.pass('NGN.setup used proper authentication settings for configuration request.')
+          callback(null, {
+            test: 'test'
+          })
+        } else {
+          callback(new Error('Unauthorized'))
+        }
       }
     }
   })
