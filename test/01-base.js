@@ -15,5 +15,6 @@ test('Primary Namespace', function (t) {
   t.ok(typeof NGN.Tunnel === 'function', 'NGN.Tunnel (ssh) exists.')
   t.ok(typeof NGN.createException === 'function', 'NGN.createException exists.')
   t.ok(typeof NGN.rpc === 'object', 'NGN.rpc namespace exists.')
+  t.ok(NGN.BRIDGE === null, 'NGN.BRIDGE exists.')
   t.end()
 })

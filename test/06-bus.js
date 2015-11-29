@@ -43,6 +43,11 @@ test('BUS:', function (t) {
           data: payload
         })
         callback && callback(null)
+      },
+      configuration: function (callback) {
+        callback(null, {
+          test: 'test'
+        })
       }
     }
   })
@@ -73,9 +78,16 @@ test('BUS:', function (t) {
 
   // 2. When the "Bridge" is ready, connect the BUS
   server.once('ready', function () {
+    // Make sure the configuration is available.
+    NGN.on('configuration.ready', function () {
+      t.ok(NGN.config !== null, 'Configuration populated from bridge.')
+      t.ok(NGN.config.test === 'test', 'Configuration is accurate.')
+    })
+
     // 3. When the BUS is ready, it's safe to disconnect
     NGN.BUS.once('connect', function () {
       t.ok(NGN.BUS.connected, 'Connected to remote NGN Bridge.')
+      t.ok(NGN.BRIDGE !== null, 'NGN.BRIDGE is accessible.')
 
       // 4. Pause remote event shipping
       NGN.BUS.once('pause', function () {
@@ -92,6 +104,7 @@ test('BUS:', function (t) {
           // 6. When the BUS disconnects, close the bridge.
           NGN.BUS.once('disconnect', function () {
             t.ok(!NGN.BUS.connected, 'Disconnected from remote NGN Bridge.')
+            t.ok(NGN.BRIDGE === null, 'NGN.BRIDGE cleared upon disconnect.')
             web.close()
           })
 
