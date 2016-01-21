@@ -24,7 +24,7 @@ const Exception = require('./lib/exception/bootstrap')
  * Fired when the configuration changes.
  */
 class NGNFactory extends Base {
-  constructor() {
+  constructor () {
     super()
 
     // Create non-configurable attributes
