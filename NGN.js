@@ -24,7 +24,7 @@ const Exception = require('./lib/exception/bootstrap')
  * Fired when the configuration changes.
  */
 class NGNFactory extends Base {
-  constructor () {
+  constructor() {
     super()
 
     // Create non-configurable attributes
@@ -174,7 +174,7 @@ class NGNFactory extends Base {
         }
       },
 
-      rpc: {
+      RPC: {
         enumerable: true,
         writable: false,
         configurable: false,
@@ -184,7 +184,7 @@ class NGNFactory extends Base {
         }
       },
 
-      RPC: {
+      rpc: {
         enumerable: false,
         get: function () {
           return this.RPC
