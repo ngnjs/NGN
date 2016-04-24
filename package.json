@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A distributed services platform (core).",
   "main": "./NGN.js",
   "scripts": {
