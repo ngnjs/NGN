@@ -6,6 +6,7 @@ const pkg = require('./package.json')
 const Log = require('./lib/Log')
 const Tunnel = require('./lib/Tunnel')
 const Base = require('./lib/Base')
+const Utility = require('./lib/Utility')
 const Exception = require('./lib/exception/bootstrap')
 
 /**
@@ -262,6 +263,13 @@ class NGNFactory extends Base {
           this._meta.bridge = settings.bridge || this._meta.bridge
           this.emit('setup.complete')
         }
+      },
+
+      util: {
+        enumerable: true,
+        writable: false,
+        configurable: false,
+        value: Utility
       }
     })
   }
