@@ -1,0 +1,16 @@
+engines:
+  nodesecurity:
+    enabled: true
+  eslint:
+    enabled: true
+    exclude_fingerprints:
+    - 481dd35fe9d0159a29146031423d935d
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - javascript
+  fixme:
+    enabled: true
+  markdownlint:
+    enabled: true
