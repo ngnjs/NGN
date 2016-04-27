@@ -44,7 +44,8 @@ test('RPC:', function (t) {
     t.ok(c.testing !== undefined, 'RPC client recognized remote namespace.')
     t.ok(c.testing.echo !== undefined, 'RPC client recognized remote method.')
 
-    c.testing.echo('sometext', function (out) {
+    c.testing.echo('sometext', function (err, out) {
+      t.ok(err === null, 'No RPC error.')
       t.ok(out === 'sometext', 'RPC remote method called successfully.')
 
       // 5. Stop the server & check the status of the client
@@ -52,7 +53,8 @@ test('RPC:', function (t) {
         t.ok(!s.running, 'RPC server temporarily stopped.')
       })
 
-      c.testing.echo2('a', 'b', function (out) {
+      c.testing.echo2('a', 'b', function (err, out) {
+        t.ok(err === null, 'No RPC error.')
         t.ok(out === 'ab', 'Multiargument remote method works.')
         c.testing.fireforget('a', 'b')
       })

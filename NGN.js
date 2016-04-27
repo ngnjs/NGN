@@ -72,7 +72,10 @@ class NGNFactory extends Base {
             rpc.on('ready', function () {
               me.emit('bridge.ready')
               if (rpc.configuration && typeof rpc.configuration === 'function') {
-                rpc.configuration(NGN._meta.system || '', NGN._meta.secret || '', function (cfg) {
+                rpc.configuration(NGN._meta.system || '', NGN._meta.secret || '', function (err, cfg) {
+                  if (err) {
+                    throw err
+                  }
                   let exists = me._cmdb !== null
                   me._cmdb = cfg || {}
                   me.emit('configuration.' + (exists ? 'change' : 'ready'))
