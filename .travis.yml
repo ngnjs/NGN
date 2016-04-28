@@ -17,9 +17,9 @@ before_deploy:
   - echo "deploying ${PKG_RELEASE} to GitHub releases"
 deploy:
   - provider: npm
-    email: corey@coreybutler.com
+    email: sysadmin@coreybutler.com
     api_key:
-      secure: NJxNt177RmOSY/5uEOBd3/THgUFH6UGqXmZ3eD0XD3vt8bpc+AfjZb1vzg6VUfDswNx9IAQ5399I3wWe8Uzs5qJK+7UwhXl02GutcaQxPj9BNZ3fpcgsu1m9WqdR8utXwoW1VDRPtmzom25Sx6ZxLacXuvJU4u/fCriTth/d6zw=
+      secure: MZxXBK0/84Lagwx8SbhVxXgwrPwRr/R8dBbzSNZHk+gki/w7r/TvgFIUJKOfEkBGpBhBIRHrJh3K9wudkJRqYLrSNWLq0Ea59vO7rZ0AIws11OZRuxgIPCyy5YBmF3Pr6SY3uIuyqPS3p2CaUO3t4oXVfMDSMA66qFVMt5b79d4=
     on:
       tags: true
       repo: ngnjs/NGN
