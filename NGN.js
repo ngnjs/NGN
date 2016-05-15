@@ -293,3 +293,40 @@ Object.defineProperties(global, {
     }
   }
 })
+
+Object.defineProperty(global.NGN, 'define', {
+  enumerable: false,
+  writable: false,
+  configurable: false,
+  value: function (e, w, c, v) {
+    return {
+      enumerable: e,
+      writable: w,
+      configurable: c,
+      value: v
+    }
+  }
+})
+
+Object.defineProperties(global.NGN, {
+  _slice: NGN.define(false, false, false, function (o) {
+    return Array.prototype.slice.call(o)
+  }),
+  _splice: NGN.define(false, false, false, function (o) {
+    return Array.prototype.splice.call(o)
+  }),
+  _typeof: NGN.define(false, false, false, function (el) {
+    return Object.prototype.toString.call(el).split(' ')[1].replace(/\]|\[/gi, '').toLowerCase()
+  }),
+  _od: NGN.define(false, false, false, function (obj, name, e, w, c, v) {
+    Object.defineProperty(obj, name, NGN.define(e, w, c, v))
+  }),
+
+  /**
+   * @method coalesce
+   * A shortcut to NGN.util.coalesce.
+   */
+  coalesce: NGN.define(true, false, false, function () {
+    NGN.util.coalesce.call(arguments)
+  })
+})
