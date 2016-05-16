@@ -327,6 +327,6 @@ Object.defineProperties(global.NGN, {
    * A shortcut to NGN.util.coalesce.
    */
   coalesce: NGN.define(true, false, false, function () {
-    NGN.util.coalesce.call(arguments)
+    return NGN.util.coalesce.apply(this, arguments)
   })
 })
