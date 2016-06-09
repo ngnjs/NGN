@@ -195,7 +195,23 @@ test('BUS:', function (t) {
 
         setTimeout(function () {
           t.ok(bindtest === 2, 'Correct number of events fired with bind().')
-          t.end()
+
+          NGN.BUS.once('mature.queue', function () {
+            t.pass('NGN.BUS.queue successfully executed a unique delayed event.')
+            t.ok(matureValue === 3, 'NGN.BUS.queue triggered in the proper sequence.')
+            t.end()
+          })
+
+          var matureValue = 0
+          var ct = 0
+          var queueInterval = setInterval(function () {
+            NGN.BUS.queue('mature.queue')
+            ct += 1
+            matureValue += 1
+            if (ct > 2) {
+              clearInterval(queueInterval)
+            }
+          }, 99)
         }, 500)
       }
     })
