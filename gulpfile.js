@@ -180,16 +180,16 @@ gulp.task('prereleasecheck', function (next) {
   const child = cp.spawn('npm', ['info', pkg.name])
 
   let data = ''
-  process.env.DEPLOY_ME = 'false'
   child.stdout.on('data', function (chunk) {
     data += chunk.toString()
   })
   child.on('close', function () {
     const re = new RegExp('latest: \'' + pkg.version + '\'')
     if (re.exec(data) === null) {
+      fs.writeFileSync(path.join('./', 'postprocess.sh'), 'npm publish')
       next()
     } else {
-      process.env.DEPLOY_ME = 'true'
+      fs.writeFileSync(path.join('./', 'postprocess.sh'), 'echo \"The version has not changed (' + pkg.version + '). A new release is unnecessary. Aborting deployment with success code.\"')
       console.log('The version has not changed (' + pkg.version + '). A new release is unnecessary. Aborting deployment with success code.')
       process.exit(0)
     }
