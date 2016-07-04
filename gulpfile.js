@@ -189,7 +189,7 @@ gulp.task('prereleasecheck', function (next) {
       fs.writeFileSync(path.join('./', 'postprocess.sh'), 'npm publish')
       next()
     } else {
-      fs.writeFileSync(path.join('./', 'postprocess.sh'), 'echo \"The version has not changed (' + pkg.version + '). A new release is unnecessary. Aborting deployment with success code.\"')
+      fs.writeFileSync(path.join('./', 'postprocess.sh'), 'echo "The version has not changed (' + pkg.version + '). A new release is unnecessary. Aborting deployment with success code."')
       console.log('The version has not changed (' + pkg.version + '). A new release is unnecessary. Aborting deployment with success code.')
       process.exit(0)
     }
