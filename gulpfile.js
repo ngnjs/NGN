@@ -60,23 +60,31 @@ gulp.task('generate', function () {
   let primaryother = []
 
   primary.forEach(function (file) {
-    if (/[^.*\.js]$/gi.test(file)) {
-      primaryother.push(file)
-    } else {
-      primaryjs.push(file)
+    if (file.indexOf('.git') < 0) {
+      if (/[^.*\.js]$/gi.test(file)) {
+        primaryother.push(file)
+      } else {
+        primaryjs.push(file)
+      }
     }
   })
 
-  console.log('Stripping comments from', primaryjs)
-  gulp.src(primaryjs)
-    .pipe(stripper())
-    .pipe(header(headerComment))
-    .pipe(gulp.dest(path.join(DIR.dist, 'lib')))
+  console.log('Stripping comments from:', primaryjs)
+  primaryjs.forEach(function (file) {
+    let localpath = path.dirname(file.replace(DIR.source + path.sep, ''))
+    gulp.src(file)
+      .pipe(stripper())
+      .pipe(header(headerComment))
+      .pipe(gulp.dest(path.join(DIR.dist, localpath)))
+  })
 
   console.log('Copying', primaryother)
-  gulp.src(primaryother)
-    .pipe(header(headerComment))
-    .pipe(gulp.dest(path.join(DIR.dist, 'lib')))
+  primaryother.forEach(function (file) {
+    let localpath = path.dirname(file.replace(DIR.source + path.sep, ''))
+    gulp.src(file)
+      .pipe(header(headerComment))
+      .pipe(gulp.dest(path.join(DIR.dist, localpath)))
+  })
 
   // Shared codebase
   const primaryshared = walk(DIR.shared)
@@ -84,23 +92,31 @@ gulp.task('generate', function () {
   let primarysharedother = []
 
   primaryshared.forEach(function (file) {
-    if (/[^.*\.js]$/gi.test(file)) {
-      primarysharedother.push(file)
-    } else {
-      primarysharedjs.push(file)
+    if (file.indexOf('.git') < 0) {
+      if (/[^.*\.js]$/gi.test(file)) {
+        primarysharedother.push(file)
+      } else {
+        primarysharedjs.push(file)
+      }
     }
   })
 
   console.log('Stripping comments from', primarysharedjs)
-  gulp.src(primarysharedjs)
-    .pipe(stripper())
-    .pipe(header(headerComment))
-    .pipe(gulp.dest(path.join(DIR.dist, 'shared')))
+  primarysharedjs.forEach(function (file) {
+    let localpath = path.dirname(file.replace(DIR.source + path.sep, ''))
+    gulp.src(file)
+      .pipe(stripper())
+      .pipe(header(headerComment))
+      .pipe(gulp.dest(path.join(DIR.dist, localpath)))
+  })
 
   console.log('Copying', primarysharedother)
-  gulp.src(primarysharedother)
-    .pipe(header(headerComment))
-    .pipe(gulp.dest(path.join(DIR.dist, 'shared')))
+  primarysharedother.forEach(function (file) {
+    let localpath = path.dirname(file.replace(DIR.source + path.sep, ''))
+    gulp.src(file)
+      .pipe(header(headerComment))
+      .pipe(gulp.dest(path.join(DIR.dist, localpath)))
+  })
 
   // Primary Files
   const files = ['NGN.js'].map(function (file) {
@@ -118,23 +134,31 @@ gulp.task('generate', function () {
   let filesother = []
 
   files.forEach(function (file) {
-    if (/[^.*\.js]$/gi.test(file)) {
-      filesother.push(file)
-    } else {
-      filesjs.push(file)
+    if (file.indexOf('.git') < 0) {
+      if (/[^.*\.js]$/gi.test(file)) {
+        filesother.push(file)
+      } else {
+        filesjs.push(file)
+      }
     }
   })
 
   console.log('Stripping comments from', filesjs)
-  gulp.src(filesjs)
-    .pipe(stripper())
-    .pipe(header(headerComment))
-    .pipe(gulp.dest(DIR.dist))
+  filesjs.forEach(function (file) {
+    let localpath = path.dirname(file.replace(DIR.source + path.sep, ''))
+    gulp.src(file)
+      .pipe(stripper())
+      .pipe(header(headerComment))
+      .pipe(gulp.dest(path.join(DIR.dist, localpath)))
+  })
 
   console.log('Copying', filesother)
-  gulp.src(filesother)
-    .pipe(header(headerComment))
-    .pipe(gulp.dest(DIR.dist))
+  filesother.forEach(function (file) {
+    let localpath = path.dirname(file.replace(DIR.source + path.sep, ''))
+    gulp.src(file)
+      .pipe(header(headerComment))
+      .pipe(gulp.dest(path.join(DIR.dist, localpath)))
+  })
 
   // Copy other files
   const assets = ['LICENSE', '.npmignore'].map(function (file) {
