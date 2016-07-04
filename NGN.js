@@ -38,11 +38,6 @@ class NGNCore extends EventEmitter {
        */
       version: NGN.privateconst(pkg.version),
 
-      /**
-       * @method createException
-       */
-      createException: NGN.privateconst(Exception.create),
-
       // The bridge connection
       _bridgerpc: NGN.private(null),
 
@@ -179,7 +174,26 @@ require('./shared/eventemitter')
 const Log = require('./lib/Log')
 const Tunnel = require('./lib/Tunnel')
 const Utility = require('./lib/Utility')
-const Exception = require('./lib/exception/bootstrap')
+// const Exception = require('./lib/exception/bootstrap')
+
+/**
+ * @method createException
+ */
+const CustomException = require('./shared/exception')
+NGN.extend('createException', NGN.privateconst(function (config) {
+  config = config || {}
+  config = typeof config === 'string' ? { message: config } : config
+  config.name = config.name || 'NgnError'
+  config.name = config.name.replace(/[^a-zA-Z0-9_]/gi, '')
+
+  // Create the error as a function
+  global[config.name] = function () {
+    if (arguments.length > 0) {
+      config.message = arguments[0]
+    }
+    return new CustomException(config)
+  }
+}))
 
 // Extend the NGN namespace with common feature classes.
 // NGN.extend('Log', NGN.const(new Log()))

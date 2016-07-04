@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "A distributed services platform (core).",
   "main": "./NGN.js",
   "scripts": {
@@ -19,7 +19,7 @@
   },
   "author": "Corey Butler (http://ngn.js.org)",
   "homepage": "http://ngn.js.org",
-  "license": "BSD3",
+  "license": "BSD-3-Clause",
   "dependencies": {
     "colors": "1.1.2",
     "eventsource": "0.2.1",
