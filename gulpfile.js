@@ -67,11 +67,13 @@ gulp.task('generate', function () {
     }
   })
 
+  console.log('Stripping comments from', primaryjs)
   gulp.src(primaryjs)
     .pipe(stripper())
     .pipe(header(headerComment))
     .pipe(gulp.dest(path.join(DIR.dist, 'lib')))
 
+  console.log('Copying', primaryother)
   gulp.src(primaryother)
     .pipe(header(headerComment))
     .pipe(gulp.dest(path.join(DIR.dist, 'lib')))
@@ -89,11 +91,13 @@ gulp.task('generate', function () {
     }
   })
 
+  console.log('Stripping comments from', primarysharedjs)
   gulp.src(primarysharedjs)
     .pipe(stripper())
     .pipe(header(headerComment))
     .pipe(gulp.dest(path.join(DIR.dist, 'shared')))
 
+  console.log('Copying', primarysharedother)
   gulp.src(primarysharedother)
     .pipe(header(headerComment))
     .pipe(gulp.dest(path.join(DIR.dist, 'shared')))
@@ -121,11 +125,13 @@ gulp.task('generate', function () {
     }
   })
 
+  console.log('Stripping comments from', filesjs)
   gulp.src(filesjs)
     .pipe(stripper())
     .pipe(header(headerComment))
     .pipe(gulp.dest(DIR.dist))
 
+  console.log('Copying', filesother)
   gulp.src(filesother)
     .pipe(header(headerComment))
     .pipe(gulp.dest(DIR.dist))
@@ -135,6 +141,7 @@ gulp.task('generate', function () {
     return path.join(DIR.source, file)
   })
 
+  console.log('Copying other assets', assets)
   gulp.src(assets)
     .pipe(gulp.dest(DIR.dist))
 
@@ -162,7 +169,10 @@ gulp.task('generate', function () {
     }
   })
 
+  console.log('Generating package.json...')
   fs.writeFileSync(path.join(DIR.dist, 'package.json'), JSON.stringify(newpkg, null, 2))
+
+  console.log('DONE!')
 })
 
 gulp.task('prereleasecheck', function (next) {
