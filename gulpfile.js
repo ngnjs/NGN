@@ -4,15 +4,15 @@ const path = require('path')
 const fs = require('fs')
 const gulp = require('gulp')
 const stripper = require('gulp-strip-comments')
-const concat = require('gulp-concat')
+// const concat = require('gulp-concat')
 const header = require('gulp-header')
 const del = require('del')
 const cp = require('child_process')
 const pkg = require('./package.json')
 
-let headerComment = '/**\n  * v' + pkg.version + ' generated on: '
-  + (new Date()) + '\n  * Copyright (c) 2014-' + (new Date()).getFullYear()
-  + ', Ecor Ventures LLC. All Rights Reserved. See LICENSE (BSD3).\n  */\n'
+let headerComment = '/**\n  * v' + pkg.version + ' generated on: ' +
+  (new Date()) + '\n  * Copyright (c) 2014-' + (new Date()).getFullYear() +
+  ', Ecor Ventures LLC. All Rights Reserved. See LICENSE (BSD3).\n  */\n'
 
 const DIR = {
   source: path.resolve('./'),
@@ -169,7 +169,7 @@ gulp.task('prereleasecheck', function (next) {
   console.log('Checking if package already exists.')
   const child = cp.spawn('npm', ['info', pkg.name])
 
-  let data = ""
+  let data = ''
   process.env.DEPLOY_ME = false
   child.stdout.on('data', function (chunk) {
     data += chunk.toString()
