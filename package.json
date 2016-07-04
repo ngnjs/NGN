@@ -15,11 +15,11 @@
   ],
   "preferGlobal": false,
   "engines": {
-    "node": ">= 4.2.1"
+    "node": ">= 6.0.0"
   },
   "author": "Corey Butler (http://ngn.js.org)",
   "homepage": "http://ngn.js.org",
-  "license": "LGPL-3.0",
+  "license": "BSD3",
   "dependencies": {
     "colors": "1.1.2",
     "eventsource": "0.2.1",
@@ -29,6 +29,11 @@
   "devDependencies": {
     "babel-eslint": "6.1.0",
     "buffer-equal-constant-time": "1.0.1",
+    "del": "^2.2.1",
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-header": "^1.8.7",
+    "gulp-strip-comments": "^2.4.3",
     "ngn-sse": "0.0.3",
     "snazzy": "4.0.0",
     "standard": "7.1.2",
