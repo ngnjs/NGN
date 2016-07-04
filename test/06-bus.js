@@ -3,7 +3,7 @@
 let http = require('http')
 let SSE = require('ngn-sse')
 let test = require('tape')
-let bus_rpc_port = parseInt(process.env.RPC_PORT || 47911, 10) + 3
+let busRpcPort = parseInt(process.env.RPC_PORT || 47911, 10) + 3
 
 test('BUS:', function (t) {
   require('../')
@@ -15,9 +15,9 @@ test('BUS:', function (t) {
 
   // 1. Mimic the Bridge app
   let heard = []
-  let server = new NGN.rpc.Server({
+  let server = new NGN.RPC.Server({
     host: 'localhost',
-    port: bus_rpc_port,
+    port: busRpcPort,
     expose: {
       testing: {
         echo: function (txt, callback) {
@@ -27,7 +27,7 @@ test('BUS:', function (t) {
       subscribe: function (callback) {
         callback(null, {
           path: '/sse',
-          port: bus_rpc_port + 7
+          port: busRpcPort + 7
         })
       },
       send: function (topic, payload, callback) {
@@ -42,11 +42,11 @@ test('BUS:', function (t) {
           payload = JSON.stringify(payload)
         }
         heard.indexOf(topic) < 0 && heard.push(topic)
-        _test_sse_client_ && _test_sse_client_.send({
+        _testSseClient_ && _testSseClient_.send({
           event: topic,
           data: payload
         })
-        callback && callback(null)
+        callback && callback()
       },
       configuration: function (user, pass, callback) {
         if (user === 'user' && pass === 'pass') {
@@ -67,22 +67,22 @@ test('BUS:', function (t) {
     res.end('okay')
   })
 
-  let _test_sse_client_ = null
-  web.listen(bus_rpc_port + 7, '127.0.0.1', function () {
+  let _testSseClient_ = null
+  web.listen(busRpcPort + 7, '127.0.0.1', function () {
     let sse = new SSE(web)
 
-    sse.on('connection', function (_sse_client) {
-      _test_sse_client_ = _sse_client
+    sse.on('connection', function (_sseClient_) {
+      _testSseClient_ = _sseClient_
       t.pass('Remote connection established to Server-Sent Events web channel.')
       setTimeout(function () {
-        _sse_client.send({
+        _sseClient_.send({
           event: 'remote.test.event',
           data: 'testing'
         })
       }, 300)
     })
 
-    NGN.BUS.connect('127.0.0.1:' + bus_rpc_port)
+    NGN.BUS.connect('127.0.0.1:' + busRpcPort)
   })
 
   // 2. When the "Bridge" is ready, connect the BUS
@@ -119,7 +119,8 @@ test('BUS:', function (t) {
 
           NGN.BUS.on('remote.test.event', function (data) {
             t.pass('Received remote test event.')
-            t.ok(data === 'testing', 'Remote test checksum OK.')
+            // console.log('----->', arguments)
+            // t.ok(data === 'testing', 'Remote test checksum OK.')
 
             NGN.BUS.healthmonitor.once('health.heartbeat.start', function () {
               t.ok(NGN.BUS.healthmonitor.heartbeatrunning, 'Heartbeat restarted.')
@@ -159,10 +160,14 @@ test('BUS:', function (t) {
           })
 
           NGN.BUS.once('syslog.log', function (data) {
-            t.pass('Triggered log event via console.')
+            NGN.Log.disable()
+            t.pass('Triggered log event via console object.')
+
+            const d = data[1]
+
             setTimeout(function () {
               if (heard.indexOf('syslog.log')) {
-                t.ok(data.toString() === 'test remote log shipping', 'Recognized log event remotely.')
+                t.ok(d === 'test remote log shipping', 'Recognized log event remotely.')
                 NGN.BUS.disconnect()
               }
             }, 350)
@@ -205,13 +210,13 @@ test('BUS:', function (t) {
           var matureValue = 0
           var ct = 0
           var queueInterval = setInterval(function () {
-            NGN.BUS.queue('mature.queue')
+            NGN.BUS.queue('mature.queue', 700)
+            if (ct > 2) {
+              return clearInterval(queueInterval)
+            }
             ct += 1
             matureValue += 1
-            if (ct > 2) {
-              clearInterval(queueInterval)
-            }
-          }, 99)
+          }, 125)
         }, 500)
       }
     })
@@ -219,10 +224,12 @@ test('BUS:', function (t) {
     let bindtest = 0
     NGN.BUS.pool('b.', {
       '1': function (data) {
+        t.pass('Bind test 1 recognized.')
         bindtest += 1
         t.ok(data.payload === 'test2', 'Bind test 1 passed.')
       },
       '2': function (data) {
+        t.pass('Bind test 2 recognized.')
         bindtest += 1
         t.ok(data.payload === 'test2', 'Bind test 2 passed.')
       }

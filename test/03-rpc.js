@@ -1,19 +1,19 @@
 'use strict'
 
 var test = require('tape')
-var rpc_port = process.env.RPC_PORT || 47911
+var rpcPort = process.env.rpcPort || 47911
 
 test('RPC:', function (t) {
   require('../')
   NGN.Log.disable()
 
-  t.ok(NGN.rpc.Server !== undefined, 'NGN.rpc.Server exists.')
-  t.ok(NGN.rpc.Client !== undefined, 'NGN.rpc.Client exists.')
+  t.ok(NGN.RPC.Server !== undefined, 'NGN.RPC.Server exists.')
+  t.ok(NGN.RPC.Client !== undefined, 'NGN.RPC.Client exists.')
 
   // 1. Create the server
-  let s = new NGN.rpc.Server({
+  let s = new NGN.RPC.Server({
     host: 'localhost',
-    port: rpc_port,
+    port: rpcPort,
     expose: {
       testing: {
         echo: function (txt, callback) {
@@ -31,9 +31,9 @@ test('RPC:', function (t) {
   })
 
   // 2. Create the client but don't autoconnect
-  let c = new NGN.rpc.Client({
+  let c = new NGN.RPC.Client({
     host: 'localhost',
-    port: rpc_port,
+    port: rpcPort,
     autoConnect: false
   })
 

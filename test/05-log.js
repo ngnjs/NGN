@@ -19,12 +19,13 @@ test('Custom Logging', function (t) {
   // Functional Checks
   NGN.Log.once('logevent', function (evt) {
     NGN.Log.disable()
-    t.ok(true, 'Log event captured.')
+
+    t.pass('Log event captured.')
     t.ok(typeof evt === 'object', 'logevent emits a payload.')
     t.ok(evt.name !== undefined, 'logevent payload has a name attribute.')
-    t.ok(evt.data !== undefined, 'logevent payload has a data attribute.')
+    t.ok(evt.content !== undefined, 'logevent payload has a data attribute.')
     t.ok(evt.name === 'log', 'logevent emitted with proper name.')
-    t.ok(evt.data === 'test log', 'logevent emitted with proper data.')
+    t.ok(evt.content === 'test log', 'logevent emitted with proper data.')
 
     NGN.Log.once('enabled', function () {
       t.ok(NGN.Log.enabled, 'NGN.Log enabled successfully.')
@@ -45,31 +46,33 @@ test('Custom Logging', function (t) {
       NGN.Log.once('logevent', function (evt) {
         if (evt.name === 'log') {
           NGN.Log.unuse('log', middleware)
-          t.ok(evt.data.split(' ')[0] === 'prefix', 'Middleware successfully modified log output.')
+          t.ok(evt.content[0] === 'prefix', 'Middleware successfully modified log output.')
           t.ok(!NGN.Log.middleware.hasOwnProperty('log'), 'Middleware removed successfully.')
           NGN.Log.disable()
         }
       })
-      console.log('change log')
-    //      NGN.Log.level = ['critical', 'error']
-    //
-    //      NGN.Log.once('info', function () {
-    //        t.fail('Failed to filter properly.')
-    //      })
-    //
-    //      NGN.Log.once('critical', function () {
-    //        NGN.Log.disable()
-    //      })
-    //
-    //      console.info('generic info')
-    //      console.critical('crtical test')
-    })
 
-    NGN.Log.once('disabled', function () {
-      t.end()
+      console.log('change log')
+
+      NGN.Log.level = ['critical', 'error']
+
+      NGN.Log.once('info', function () {
+        t.fail('Failed to filter properly.')
+      })
+
+      NGN.Log.once('critical', function () {
+        NGN.Log.disable()
+      })
+
+      console.info('generic info')
+      console.critical('crtical test')
     })
 
     NGN.Log.enable()
+  })
+
+  NGN.Log.once('disabled', function () {
+    t.end()
   })
 
   NGN.Log.enable()

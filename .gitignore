@@ -7,3 +7,4 @@ node_modules
 !.codeclimate.yml
 *.db
 npm-debug.log
+shared

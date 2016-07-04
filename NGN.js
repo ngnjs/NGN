@@ -3,16 +3,18 @@
 require('colors')
 
 const pkg = require('./package.json')
-const Log = require('./lib/Log')
-const Tunnel = require('./lib/Tunnel')
-const Base = require('./lib/Base')
-const Utility = require('./lib/Utility')
-const Exception = require('./lib/exception/bootstrap')
+const EventEmitter = require('./lib/EventEmitter')
+
+// Append to global object
+global.NGN = {}
+require('./shared/core')
 
 /**
  * @class NGN
  * The primary namespace.
+ * @inheritdoc
  * @singleton
+ * @extends EventEmitter
  * @readonly
  * @fires bridge.ready
  * Fired when NGN.BRIDGE is available.
@@ -24,7 +26,7 @@ const Exception = require('./lib/exception/bootstrap')
  * @fires configuration.change
  * Fired when the configuration changes.
  */
-class NGNFactory extends Base {
+class NGNCore extends EventEmitter {
   constructor () {
     super()
 
@@ -34,30 +36,15 @@ class NGNFactory extends Base {
        * @property {string} version
        * The version of NGN that's running.
        */
-      version: {
-        enumerable: false,
-        writable: false,
-        configurable: false,
-        value: pkg.version
-      },
+      version: NGN.privateconst(pkg.version),
 
       /**
        * @method createException
        */
-      createException: {
-        enumerable: false,
-        writable: false,
-        configurable: false,
-        value: Exception.create
-      },
+      createException: NGN.privateconst(Exception.create),
 
       // The bridge connection
-      _bridgerpc: {
-        enumerable: false,
-        writable: true,
-        configurable: false,
-        value: null
-      },
+      _bridgerpc: NGN.private(null),
 
       // A handler to emit proper events when the NGN Bridge
       // connection changes.
@@ -68,7 +55,7 @@ class NGNFactory extends Base {
         },
         set: function (rpc) {
           let me = this
-          if (rpc instanceof this.rpc.Client) {
+          if (rpc instanceof this.RPC.Client) {
             rpc.on('ready', function () {
               me.emit('bridge.ready')
               if (rpc.configuration && typeof rpc.configuration === 'function') {
@@ -93,119 +80,15 @@ class NGNFactory extends Base {
         }
       },
 
-      /**
-       * @property {NGN.rpc.Client} BRIDGE
-       * The connection to the bridge. This is shared/pooled
-       * within the running node process.
-       * @private
-       */
-      BRIDGE: {
-        enumerable: false,
-        get: function () {
-          return this._bridge
-        }
-      },
-
       // Hold the configuration
-      _cmdb: {
-        enumerable: false,
-        writable: true,
-        configurable: false,
-        value: null
-      },
+      _cmdb: NGN.private(null),
 
-      /**
-       * @property {object} config
-       * **Only available when connected to an NGN Bridge.**
-       * A configuration provided by the NGN Bridge. The configuration
-       * is populated when a connection to the bridge is established.
-       * It is also automatically updated when the remote configuration
-       * is modified.
-       */
-      config: {
-        enumerable: true,
-        get: function () {
-          return this._cmdb || {}
-        }
-      },
-
-      Class: {
-        enumerable: false,
-        writable: false,
-        configurable: false,
-        value: Base
-      },
-
-      Log: {
-        enumerable: false,
-        writable: false,
-        configurable: false,
-        value: new Log()
-      },
-
-      log: {
-        enumerable: false,
-        get: function () {
-          return this.Log
-        }
-      },
-
-      Tunnel: {
-        enumerable: false,
-        writable: false,
-        configurable: false,
-        value: Tunnel
-      },
-
-      Server: {
-        enumerable: false,
-        writable: false,
-        configurable: false,
-        value: require('./lib/Server')
-      },
-
-      BUS: {
-        enumerable: true,
-        writable: false,
-        configurable: false,
-        value: require('./lib/BUS')
-      },
-
-      bus: {
-        enumerable: false,
-        get: function () {
-          return this.BUS
-        }
-      },
-
-      RPC: {
-        enumerable: true,
-        writable: false,
-        configurable: false,
-        value: {
-          Client: require('./lib/rpc/Client'),
-          Server: require('./lib/rpc/Server')
-        }
-      },
-
-      rpc: {
-        enumerable: false,
-        get: function () {
-          return this.RPC
-        }
-      },
-
-      _meta: {
-        enumerable: false,
-        writable: true,
-        configurable: false,
-        value: {
-          system: process.env.NGN_SYSTEM_ID || null,
-          secret: process.env.NGN_SYSTEM_SECRET || null,
-          name: process.env.NGN_SERVICE_NAME || process.title !== 'node' ? process.title : 'Unknown',
-          bridge: process.env.NGN_BRIDGE || 'localhost:5555'
-        }
-      },
+      _meta: NGN.private({
+        system: process.env.NGN_SYSTEM_ID || null,
+        secret: process.env.NGN_SYSTEM_SECRET || null,
+        name: process.env.NGN_SERVICE_NAME || process.title !== 'node' ? process.title : 'Unknown',
+        bridge: process.env.NGN_BRIDGE || 'localhost:5555'
+      }),
 
       /**
        * @method setup
@@ -255,36 +138,77 @@ class NGNFactory extends Base {
        * @fires setup.complete
        * Fired when the #setup is finished.
        */
-      setup: {
-        enumerable: true,
-        writable: false,
-        configurable: false,
-        value: function (settings) {
-          this._meta.system = settings.system || this._meta.system
-          this._meta.secret = settings.secret || this._meta.secret
-          this._meta.name = settings.name || this._meta.name
-          this._meta.bridge = settings.bridge || this._meta.bridge
-          this.emit('setup.complete')
-        }
-      },
-
-      util: {
-        enumerable: true,
-        writable: false,
-        configurable: false,
-        value: Utility
-      }
+      setup: NGN.const(function (settings) {
+        this._meta.system = settings.system || this._meta.system
+        this._meta.secret = settings.secret || this._meta.secret
+        this._meta.name = settings.name || this._meta.name
+        this._meta.bridge = settings.bridge || this._meta.bridge
+        this.emit('setup.complete')
+      })
     })
+  }
+
+  /**
+   * @property {NGN.rpc.Client} BRIDGE
+   * The connection to the bridge. This is shared/pooled
+   * within the running node process.
+   * @private
+   */
+  get BRIDGE () {
+    return this._bridge
+  }
+
+  /**
+   * @property {object} config
+   * **Only available when connected to an NGN Bridge.**
+   * A configuration provided by the NGN Bridge. The configuration
+   * is populated when a connection to the bridge is established.
+   * It is also automatically updated when the remote configuration
+   * is modified.
+   */
+  get config () {
+    return this._cmdb || {}
   }
 }
 
-// Append to global object
+// Extend with additional classes
+NGN.extend('EventEmitter', NGN.privateconst(EventEmitter))
+require('./shared/eventemitter')
+
+// Define these after the event emitter (they are dependent on it)
+const Log = require('./lib/Log')
+const Tunnel = require('./lib/Tunnel')
+const Utility = require('./lib/Utility')
+const Exception = require('./lib/exception/bootstrap')
+
+// Extend the NGN namespace with common feature classes.
+// NGN.extend('Log', NGN.const(new Log()))
+NGN.extend('_log', NGN.private(null))
+NGN.extend('Log', NGN.get(function () {
+  if (this._log === null) {
+    this._log = new Log()
+  }
+  return this._log
+}))
+NGN.extend('Tunnel', NGN.const(Tunnel))
+NGN.extend('Server', NGN.const(require('./lib/Server')))
+NGN.extend('BUS', NGN.const(require('./lib/BUS')))
+NGN.extend('util', NGN.const(Utility))
+NGN.extend('RPC', NGN.const({
+  Client: require('./lib/rpc/Client'),
+  Server: require('./lib/rpc/Server')
+}))
+
+global.__core__ = new NGNCore()
+NGN.inherit(NGN, global.__core__)
+delete global.NGN
+
 Object.defineProperties(global, {
   NGN: {
     enumerable: true,
-    writable: false,
+    writable: true,
     configurable: false,
-    value: new NGNFactory()
+    value: global.__core__
   },
   ngn: {
     enumerable: true,
@@ -294,39 +218,4 @@ Object.defineProperties(global, {
   }
 })
 
-Object.defineProperty(global.NGN, 'define', {
-  enumerable: false,
-  writable: false,
-  configurable: false,
-  value: function (e, w, c, v) {
-    return {
-      enumerable: e,
-      writable: w,
-      configurable: c,
-      value: v
-    }
-  }
-})
-
-Object.defineProperties(global.NGN, {
-  _slice: NGN.define(false, false, false, function (o) {
-    return Array.prototype.slice.call(o)
-  }),
-  _splice: NGN.define(false, false, false, function (o) {
-    return Array.prototype.splice.call(o)
-  }),
-  _typeof: NGN.define(false, false, false, function (el) {
-    return Object.prototype.toString.call(el).split(' ')[1].replace(/\]|\[/gi, '').toLowerCase()
-  }),
-  _od: NGN.define(false, false, false, function (obj, name, e, w, c, v) {
-    Object.defineProperty(obj, name, NGN.define(e, w, c, v))
-  }),
-
-  /**
-   * @method coalesce
-   * A shortcut to NGN.util.coalesce.
-   */
-  coalesce: NGN.define(true, false, false, function () {
-    return NGN.util.coalesce.apply(this, arguments)
-  })
-})
+delete global.__core__

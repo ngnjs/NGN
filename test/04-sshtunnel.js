@@ -4,6 +4,7 @@ const LOCAL_PORT = parseInt(process.env.LOCAL_SSH_PORT || 47911, 10) - 3
 const REMOTE_PORT = parseInt(process.env.LOCAL_SSH_PORT || 47911, 10) - 5
 const test = require('tape')
 const fs = require('fs')
+const path = require('path')
 const net = require('net')
 const crypto = require('crypto')
 const ssh2 = require('ssh2')
@@ -33,10 +34,9 @@ test('SSH Tunneling', function (t) {
   }).listen(REMOTE_PORT, '127.0.0.1')
 
   // 2. Create a mock SSH server
-  let pubKey = utils.genPublicKey(utils.parseKey(fs.readFileSync(__dirname + '/files/ssh-client-private.key')))
-
+  let pubKey = utils.genPublicKey(utils.parseKey(fs.readFileSync(path.join(__dirname, '/files/ssh-client-private.key'))))
   let sshserver = new ssh2.Server({
-    privateKey: fs.readFileSync(__dirname + '/files/ssh-host-private.key')
+    hostKeys: [fs.readFileSync(path.join(__dirname, '/files/ssh-host-private.key'))]
   }, function (client) {
     t.pass('SSH client connected.')
 
@@ -85,11 +85,11 @@ test('SSH Tunneling', function (t) {
       t.pass('Tunnel established.')
 
       // Attempt to communicate over the tunnel
-      let ssh_client = net.connect({
+      let sshClient = net.connect({
         port: LOCAL_PORT
       }, function () { // 'connect' listener
         t.pass('Connected to remote server via local port.')
-        ssh_client.setNoDelay()
+        sshClient.setNoDelay()
 
 //        console.log('Writing data to remote host.')
 //        let x = ssh_client.write('world!\r\n')
@@ -100,8 +100,8 @@ test('SSH Tunneling', function (t) {
 //        console.log(chunk)
 //      })
 
-      ssh_client.on('end', function () {
-        console.info('Ignore ADMINISTRATIVELY_PROHIBITED error. This is an sshd_config problem.')
+      sshClient.on('end', function () {
+        console.info('Ignore ADMINISTRATIVELY_PROHIBITED error. This is an sshd_config false positive.')
         t.pass('Disconnected from local port.')
         tunnel.disconnect()
       })

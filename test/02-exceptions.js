@@ -6,7 +6,7 @@ test('Custom Exceptions', function (t) {
   require('../')
   NGN.Log.disable()
 
-// Create a custom exception
+  // Create a custom exception
   NGN.createException({
     name: 'Test Problem',
     message: 'This is a test problem.',
@@ -33,5 +33,8 @@ test('Custom Exceptions', function (t) {
     t.ok(e.a === 'a', 'Custom attribute exists.')
   }
 
-  t.end()
+  // Delay the end so the error can write to stdout.
+  setTimeout(function () {
+    t.end()
+  }, 300)
 })
