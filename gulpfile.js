@@ -180,7 +180,7 @@ gulp.task('prereleasecheck', function (next) {
   const child = cp.spawn('npm', ['info', pkg.name])
 
   let data = ''
-  process.env.DEPLOY_ME = false
+  process.env.DEPLOY_ME = 'false'
   child.stdout.on('data', function (chunk) {
     data += chunk.toString()
   })
@@ -189,7 +189,7 @@ gulp.task('prereleasecheck', function (next) {
     if (re.exec(data) === null) {
       next()
     } else {
-      process.env.DEPLOY_ME = true
+      process.env.DEPLOY_ME = 'true'
       console.log('The version has not changed (' + pkg.version + '). A new release is unnecessary. Aborting deployment with success code.')
       process.exit(0)
     }
