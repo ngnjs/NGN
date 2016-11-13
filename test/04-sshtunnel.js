@@ -11,14 +11,8 @@ const ssh2 = require('ssh2')
 const utils = ssh2.utils
 const buffersEqual = require('buffer-equal-constant-time')
 
-test('SSH Tunneling', function (t) {
-  require('../')
-//  NGN.Log.disable()
-
-  t.ok(typeof NGN.Tunnel === 'function', 'NGN.Tunnel is available.')
-
-  // 1. Create a mock TCP server
-  let server = net.createServer(function (c) { // 'connection' listener
+const createServer = function () {
+  return net.createServer(function (c) { // 'connection' listener
     console.log('remote client connected')
     c.on('data', function (d) {
       console.log('DATA', d)
@@ -32,6 +26,16 @@ test('SSH Tunneling', function (t) {
     c.write('hello\r\n')
 //    c.pipe(c)
   }).listen(REMOTE_PORT, '127.0.0.1')
+}
+
+test('SSH Tunneling', function (t) {
+  require('../')
+//  NGN.Log.disable()
+
+  t.ok(typeof NGN.Tunnel === 'function', 'NGN.Tunnel is available.')
+
+  // 1. Create a mock TCP server
+  let server = createServer()
 
   // 2. Create a mock SSH server
   let pubKey = utils.genPublicKey(utils.parseKey(fs.readFileSync(path.join(__dirname, '/files/ssh-client-private.key'))))
@@ -129,4 +133,23 @@ test('SSH Tunneling', function (t) {
   sshserver.on('close', function () {
     server.close()
   })
+})
+
+test('SSH Tunneling Network Error Management', function (t) {
+  require('../')
+
+  let tunnel = new NGN.Tunnel({
+    host: 'none.com:22',
+    user: 'foo',
+    password: 'bar',
+    port: LOCAL_PORT,
+    remoteport: REMOTE_PORT
+  })
+
+  tunnel.on('error', function (err) {
+    t.ok(err.message === 'host unreachable', 'Error triggered when host is unreachable.')
+    t.end()
+  })
+
+  tunnel.connect()
 })

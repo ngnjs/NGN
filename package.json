@@ -1,10 +1,11 @@
 {
   "name": "ngn",
-  "version": "0.3.22",
+  "version": "0.3.23",
   "description": "A distributed services platform (core).",
   "main": "./NGN.js",
   "scripts": {
-    "test": "tape test/**/*.js | tap-spec && snazzy --verbose"
+    "test": "tape test/**/*.js | tap-spec && snazzy --verbose",
+    "test:tunnel": "tape test/**/04-sshtunnel.js | tap-spec && snazzy --verbose"
   },
   "repository": {
     "type": "git",
