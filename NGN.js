@@ -141,6 +141,14 @@ class NGNCore extends EventEmitter {
         this.emit('setup.complete')
       })
     })
+
+    this.on('newListener', () => {
+      this.setMaxListeners(this.getMaxListeners() + 1)
+    })
+
+    this.on('removeListener', () => {
+      this.setMaxListeners(this.getMaxListeners() - 1)
+    })
   }
 
   /**
