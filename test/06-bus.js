@@ -286,7 +286,6 @@ test('NGN.BUS.chainOnce', function (t) {
     }).length
 
     // One listener remains from prior test
-    console.log(count, NGN.BUS.collectionQueue)
     t.ok(count === 1, 'The event listeners were removed after the first invocation.')
 
     // Listen again. Make sure the event doesn't fire again. Fail if it does.
@@ -378,4 +377,28 @@ test('NGN.BUS.thresholdOnce', {
   setTimeout(function () {
     NGN.BUS.emit('threshold.test')
   }, 300)
+})
+
+test('NGN.BUS.pool Namespacing', {
+  timeout: 2000
+}, function (t) {
+  NGN.BUS.pool('demo.', {
+    test: {
+      space: function (payload) {
+        t.pass('Nested event triggered.')
+        t.ok(payload === 7, 'Successfully passed payload.')
+        NGN.BUS.emit('demo.test.another.name', payload)
+      },
+
+      another: {
+        name: function (payload) {
+          t.pass('Deeply nested event triggered.')
+          t.ok(payload === 7, 'Successfully passed payload to deep nested event namespace.')
+          t.end()
+        }
+      }
+    }
+  })
+
+  NGN.BUS.emit('demo.test.space', 7)
 })
