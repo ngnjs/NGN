@@ -45,29 +45,32 @@ class NGNCore extends EventEmitter {
       // connection changes.
       _bridge: {
         enumerable: false,
-        get: function () {
+        get: () => {
           return this._bridgerpc
         },
-        set: function (rpc) {
-          let me = this
+        set: (rpc) => {
           if (rpc instanceof this.RPC.Client) {
-            rpc.on('ready', function () {
-              me.emit('bridge.ready')
+            rpc.on('ready', () => {
+              this.emit('bridge.ready')
+
               if (rpc.configuration && typeof rpc.configuration === 'function') {
-                rpc.configuration(NGN._meta.system || '', NGN._meta.secret || '', function (err, cfg) {
+                rpc.configuration(NGN._meta.system || '', NGN._meta.secret || '', (err, cfg) => {
                   if (err) {
                     throw err
                   }
-                  let exists = me._cmdb !== null
-                  me._cmdb = cfg || {}
-                  me.emit('configuration.' + (exists ? 'change' : 'ready'))
+
+                  let exists = this._cmdb !== null
+                  this._cmdb = cfg || {}
+                  this.emit('configuration.' + (exists ? 'change' : 'ready'))
                 })
               }
             })
-            rpc.once('disconnect', function () {
-              me.emit('bridge.disconnect')
-              me._bridge = null
+
+            rpc.once('disconnect', () => {
+              this.emit('bridge.disconnect')
+              this._bridge = null
             })
+
             this._bridgerpc = rpc
           } else {
             this._bridgerpc = null
@@ -210,6 +213,7 @@ NGN.extend('Log', NGN.get(function () {
   if (this._log === null) {
     this._log = new Log()
   }
+
   return this._log
 }))
 NGN.extend('Tunnel', NGN.const(Tunnel))
@@ -222,6 +226,7 @@ NGN.extend('RPC', NGN.const({
 }))
 
 global.__core__ = new NGNCore()
+
 NGN.inherit(NGN, global.__core__)
 delete global.NGN
 
