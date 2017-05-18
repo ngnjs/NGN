@@ -185,7 +185,6 @@ require('./shared/eventemitter')
 const Log = require('./lib/Log')
 const Tunnel = require('./lib/Tunnel')
 const Utility = require('./lib/Utility')
-// const Exception = require('./lib/exception/bootstrap')
 
 /**
  * @method createException
@@ -224,6 +223,8 @@ NGN.extend('RPC', NGN.const({
   Client: require('./lib/rpc/Client'),
   Server: require('./lib/rpc/Server')
 }))
+NGN.extend('Task', NGN.const(require('./shared/tasks/task')))
+NGN.extend('Tasks', NGN.const(require('./shared/tasks/queue')))
 
 global.__core__ = new NGNCore()
 
