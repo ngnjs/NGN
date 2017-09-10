@@ -1,0 +1,9 @@
+*.log
+_*
+.*
+env.json
+/**/env.json
+node_modules
+!.gitignore
+!.npmignore
+!.codeclimate.yml
