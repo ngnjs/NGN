@@ -5,9 +5,11 @@
   if (NGN.nodelike) {
     EE = require('events').EventEmitter
   } else {
-    class EEmitter {}
+    (function () {
+      // [INCLUDE: ./eventemitter/EventEmitterBase.js]
 
-    EE = EEmitter
+      EE = EventEmitterBase // eslint-disable-line no-undef
+    })()
   }
 
   /**
@@ -27,6 +29,92 @@
         queued: NGN.private({}),
         collectionQueue: NGN.private({}),
         thresholdQueue: NGN.private({}),
+
+        /**
+         * @method on
+         * Create a new event handler for the specified event.
+         * @param  {string|object} eventName
+         * Name of the event to listen for.
+         * If an object is passed, this method will automatically setup a #pool.
+         * @param  {Function} handler
+         * The method responsible for responding to the event.
+         * This is ignored if eventName is an object.
+         * @param {boolean} [prepend=false]
+         * When set to `true`, the event is added to the beginning of
+         * the processing list instead of the end.
+         * This is ignored if eventName is an object.
+         */
+        on: NGN.public((eventName, callback, prepend) => {
+          if (prepend) {
+            this.prependListener(eventName, callback)
+          } else {
+            this.addListener(eventName, callback)
+          }
+        }),
+
+        /**
+         * @method once
+         * Create a new event handler for the specified event. The
+         * handler will be removed immediately after it is executed. This
+         * effectively listens for an event to happen once and only once
+         * before the handler is destroyed.
+         * @param  {string} eventName
+         * Name of the event to listen for.
+         * @param  {Function} handler
+         * The method responsible for responding to the event.
+         * @param {boolean} [prepend=false]
+         * When set to `true`, the event is added to the beginning of
+         * the processing list instead of the end.
+         */
+        once: NGN.public((eventName, callback, prepend) => {
+          if (prepend) {
+            this.prependOnceListener(eventName, callback)
+          } else {
+            super.once.apply(this, [eventName, callback])
+          }
+        }),
+
+        /**
+         * @alias off
+         * Remove an event handler. If no handler is specified, all handlers for
+         * the specified event will be removed.
+         * This is a shortcut for #removeListener.
+         * @param {string} eventName
+         * Name of the event to remove.
+         * @param {function} [handlerFn]
+         * The handler function to remove from the event handlers.
+         */
+        off: NGN.public((eventName, handlerFn) => {
+          let l = this.listeners(eventName)
+
+          if (l.indexOf(handlerFn) < 0) {
+            for (let i = 0; i < l.length; i++) {
+              if (l[i].toString() === handlerFn.toString()) {
+                this.removeListener(eventName, l[i])
+                break
+              }
+            }
+          } else {
+            this.removeListener(eventName, handlerFn)
+          }
+        }),
+
+        /**
+         * @alias clear
+         * Remove all event handlers from the EventEmitter (both regular and adhoc).
+         * This is a shortcut for #removeAllListeners.
+         */
+        clear: NGN.public(function () {
+          let events = NGN.slice(arguments)
+
+          if (events.length === 0) {
+            this.removeAllListeners()
+          } else {
+            for (let i = 0; i < events.length; i++) {
+              this.removeAllListeners(events[i])
+            }
+          }
+        }),
 
         /**
          * @method deprecate
@@ -183,7 +271,7 @@
          * For example:
          *
          * ```js
-         * BUS.bind('sourceEvent', ['someEvent','anotherEvent'], {payload:true})
+         * NGN.BUS.forward('sourceEvent', ['someEvent','anotherEvent'], {payload:true})
          * ```
          * When `sourceEvent` is published, the bind method triggers `someEvent` and
          * `anotherEvent`, passing the payload object to `someEvent` and
@@ -377,7 +465,7 @@
          * }
          * ```
          */
-        funnel: NGN.const(function (eventCollection, triggerEventName, payload = null) {
+        funnel: NGN.const((eventCollection, triggerEventName, payload = null) => {
           if (NGN.typeof(eventCollection) !== 'array') {
             throw new Error(`NGN.BUS.funnel expected an array of events, but received a(n) ${NGN.typeof(eventCollection)}`)
           }
@@ -395,22 +483,20 @@
             remove: NGN.const(() => {
               let events = this.collectionQueue[key].masterqueue.slice()
 
-              delete this.collectionQueue[key]
-
-              for (let name in events) {
+              for (let i = 0; i < events.length; i++) {
                 this.decreaseMaxListeners()
-                this.off(name, this.handleCollectionTrigger(name, key))
+                this.off(events[i], this.handleCollectionTrigger(events[i], key))
               }
+
+              delete this.collectionQueue[key]
             }),
             payload: NGN.const(payload)
           })
 
-          for (let event in eventCollection) {
+          for (let i = 0; i < eventCollection.length; i++) {
             this.increaseMaxListeners()
-            this.on(event, this.handleCollectionTrigger(event, key))
+            this.on(eventCollection[i], this.handleCollectionTrigger(eventCollection[i], key))
           }
-
-          key = null
 
           return this.collectionQueue[key]
         }),
@@ -480,7 +566,7 @@
          * @returns {object} collection
          * Provides the key/value configuration of the collection.
          */
-        funnelOnce: NGN.const(function (eventCollection, triggerEventName, payload = null) {
+        funnelOnce: NGN.const((eventCollection, triggerEventName, payload = null) => {
           let collection = this.funnel(eventCollection, triggerEventName, payload)
 
           this.increaseMaxListeners()

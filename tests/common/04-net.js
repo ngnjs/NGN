@@ -203,7 +203,7 @@ test('NGN.NET Basic Requests', function (t) {
     t.end()
   })
 
-  reqs.run(true)
+  reqs.run()
 })
 
 test('NGN.NET.Resource', function (t) {
