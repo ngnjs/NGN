@@ -5,7 +5,6 @@ const Tasks = require('shortbus')
 // otherwise the lib directory will not exist.
 
 require('../lib/core')
-require('../lib/exception')
 require('../lib/eventemitter')
 
 test('NGN.EventEmitter Sanity Checks', function (t) {
@@ -203,16 +202,16 @@ test('NGN.EventEmitter Basic Events', function (t) {
   })
 
   tasks.add('delayEmit()', function (next) {
-    let count = 0
+    var count = 0
 
     NGN.BUS.once('done', function () {
       t.ok(count === 1, 'The emit triggered after a slight delay.')
       next()
     })
 
-    setTimeout(function () { count++ }, 200)
-
     NGN.BUS.delayEmit('test', 400)
+
+    count++
   })
 
   tasks.add('funnel()', function (next) {
@@ -223,6 +222,8 @@ test('NGN.EventEmitter Basic Events', function (t) {
     NGN.BUS.once('done', function () {
       t.pass('The funnel method successfully fired after other events completed.')
       t.ok(NGN.BUS.eventNames().length === 3, 'All of the event handlers still exist.')
+
+      NGN.BUS.clear()
 
       next()
     })

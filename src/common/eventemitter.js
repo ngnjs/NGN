@@ -108,11 +108,11 @@
           let events = NGN.slice(arguments)
 
           if (events.length === 0) {
-            this.removeAllListeners()
-          } else {
-            for (let i = 0; i < events.length; i++) {
-              this.removeAllListeners(events[i])
-            }
+            return this.removeAllListeners()
+          }
+
+          for (let i = 0; i < events.length; i++) {
+            this.removeAllListeners(events[i])
           }
         }),
 
@@ -404,6 +404,57 @@
         }),
 
         /**
+         * @method getInternalCollectionId
+         * Returns a unique ID for special collections.
+         * @param {object} collection
+         * The collection to generate an ID for.
+         * @private
+         */
+        getInternalCollectionId: NGN.privateconst(function (collection) {
+          let time = (new Date()).getTime().toString()
+          let rand = Math.random().toString()
+          let key = Object.keys(collection).length + 1
+
+          while (collection.hasOwnProperty(`${key.toString()}${time}${rand}`)) {
+            key++
+          }
+
+          return `${key.toString()}${time}${rand}`
+        }),
+
+        /**
+         * @method handleCollectionTrigger
+         * A method to manage #chain event handlers.
+         * @private
+         */
+        handleCollectionTrigger: NGN.privateconst(function (eventName, key) {
+          let me = this
+          return function () {
+            // Use setTimeout to simulate nextTick
+            setTimeout(() => {
+              let cq = me.collectionQueue
+              if (cq.hasOwnProperty(key)) {
+                if (cq[key].remainingqueue.indexOf(eventName) >= 0) {
+                  cq[key].remainingqueue = cq[key].remainingqueue.filter((remainingEventName) => {
+                    return remainingEventName !== eventName
+                  })
+                }
+
+                if (cq[key].remainingqueue.length === 0) {
+                  cq[key].remainingqueue = cq[key].masterqueue
+
+                  if (NGN.isFn(cq[key].eventName)) {
+                    cq[key].eventName(cq[key].payload)
+                  } else {
+                    me.emit(cq[key].eventName, cq[key].payload)
+                  }
+                }
+              }
+            }, 0)
+          }
+        }),
+
+        /**
          * @method funnel
          * Emit an event after a collection of unique events have all fired.
          * This can be useful in situations where multiple asynchronous actions
@@ -502,56 +553,6 @@
         }),
 
         /**
-         * @method getInternalCollectionId
-         * Returns a unique ID for special collections.
-         * @param {object} collection
-         * The collection to generate an ID for.
-         * @private
-         */
-        getInternalCollectionId: NGN.privateconst(function (collection) {
-          let time = (new Date()).getTime().toString()
-          let rand = Math.random().toString()
-          let key = Object.keys(collection).length + 1
-
-          while (collection.hasOwnProperty(`${key.toString()}${time}${rand}`)) {
-            key++
-          }
-
-          return `${key.toString()}${time}${rand}`
-        }),
-
-        /**
-         * @method handleCollectionTrigger
-         * A method to manage #chain event handlers.
-         * @private
-         */
-        handleCollectionTrigger: NGN.privateconst(function (eventName, key) {
-          let me = this
-          return function () {
-            // Use setTimeout to simulate nextTick
-            setTimeout(() => {
-              if (me.collectionQueue.hasOwnProperty(key)) {
-                if (me.collectionQueue[key].remainingqueue.indexOf(eventName) >= 0) {
-                  me.collectionQueue[key].remainingqueue = me.collectionQueue[key].remainingqueue.filter((remainingEventName) => {
-                    return remainingEventName !== eventName
-                  })
-                }
-
-                if (me.collectionQueue[key].remainingqueue.length === 0) {
-                  me.collectionQueue[key].remainingqueue = me.collectionQueue[key].masterqueue
-
-                  if (NGN.isFn(me.collectionQueue[key].eventName)) {
-                    me.collectionQueue[key].eventName(me.collectionQueue[key].payload)
-                  } else {
-                    me.emit(me.collectionQueue[key].eventName, me.collectionQueue[key].payload)
-                  }
-                }
-              }
-            }, 0)
-          }
-        }),
-
-        /**
          * @method funnelOnce
          * This provides the same functionality as #funnel, but
          * removes the listener after the resultant event has fired.
@@ -567,12 +568,14 @@
          * Provides the key/value configuration of the collection.
          */
         funnelOnce: NGN.const((eventCollection, triggerEventName, payload = null) => {
-          let collection = this.funnel(eventCollection, triggerEventName, payload)
+          let funnelClosureEvent = `::NGNFUNNEL::${(new Date()).getTime()}::${triggerEventName}`
+          let collection = this.funnel(eventCollection, funnelClosureEvent, payload)
 
           this.increaseMaxListeners()
-          this.once(triggerEventName, () => {
+          this.once(funnelClosureEvent, () => {
             collection.remove()
             collection = null
+            this.emit(triggerEventName, payload)
           })
         }),
 
@@ -646,11 +649,13 @@
         }),
 
         thresholdOnce: NGN.const(function (thresholdEventName, limit, finalEventName, payload = null) {
-          let threshold = this.threshold(thresholdEventName, limit, finalEventName, payload)
+          let thresholdClosureEvent = `::NGNTHRESHOLD::${(new Date()).getTime()}::${finalEventName}`
+          let threshold = this.threshold(thresholdEventName, limit, thresholdClosureEvent, payload)
 
-          this.once(finalEventName, () => {
+          this.once(thresholdClosureEvent, () => {
             threshold.remove()
             threshold = null
+            this.emit(finalEventName, payload)
           })
         }),
 

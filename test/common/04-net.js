@@ -1,12 +1,11 @@
 const test = require('tape')
 const TaskRunner = require('shortbus')
-const uri = require('../../package.json').mocky
+const uri = require('../../package.json').endpoints
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
 require('../lib/core')
-require('../lib/exception')
 require('../lib/eventemitter')
 require('../lib/net/NET')
 
@@ -39,8 +38,27 @@ test('NGN.NET Sanity Checks', function (t) {
   t.end()
 })
 
+test('NGN.NET.Resource Validation', function (t) {
+  var req = new NGN.NET.Resource({
+    url: uri.get,
+    method: 'GET'
+  })
+
+  req.username = 'john'
+  req.password = 'passwd'
+
+  t.ok(req.username === 'john', 'Properly set username.')
+  t.ok(req.password === undefined, 'Password is not easily accessible.')
+
+  req.username = 'bill'
+  t.ok(req.username === 'bill', 'Properly reset username.')
+
+  t.end()
+})
+
+
 test('NGN.NET.Request', function (t) {
-  let request = new NGN.NET.Request({
+  var request = new NGN.NET.Request({
     username: 'test',
     password: 'test',
     url: uri.get,
@@ -51,9 +69,10 @@ test('NGN.NET.Request', function (t) {
 
   request.setHeader('X-NGN', 'test')
 
+  t.ok(request.getHeader('X-NGN') === 'test', 'Request.getHeader returns proper value.')
   t.ok(request.password === undefined, 'Password is not exposed.')
-  t.ok(request.hostname === 'mockbin.org', 'Properly parsed hostname.')
-  t.ok(request.protocol === 'http', 'Properly parsed protocol.')
+  t.ok(request.hostname === 'test.author.io', 'Properly parsed hostname.')
+  t.ok(request.protocol === uri.get.split(':')[0], 'Properly parsed protocol.')
   t.ok(request.method === 'GET', 'Defaults to GET method.')
   t.ok(request.headers.hasOwnProperty('x-ngn'), 'Custom header applied.')
   t.ok(request.headers.hasOwnProperty('content-length'), 'Content-Length header present for secure requests (basic auth).')
@@ -63,6 +82,15 @@ test('NGN.NET.Request', function (t) {
   t.ok(request.headers['content-length'] === 15, 'Content-Type correctly identifies length of JSON string.')
   t.ok(request.headers['x-ngn'] === 'test', 'Custom header contains appropriate value.')
   t.ok(request.headers.authorization.indexOf('Basic ') === 0, 'Authorization basic auth digest correctly assigned to header.')
+  t.ok(request.hash === '', 'Correct hash identified.')
+
+  t.ok(request.maxRedirects === 10, 'Default to a maximum of 10 redirects.')
+  request.maxRedirects = 30
+  t.ok(request.maxRedirects === 25, 'Prevent exceeding 25 redirect threshold.')
+  request.maxRedirects = -1
+  t.ok(request.maxRedirects === 0, 'Do not allow negative redirect maximum.')
+  request.maxRedirects = 15
+  t.ok(request.maxRedirects === 15, 'Support custom redirect maximum between 0-25.')
 
   request.accessToken = '12345'
 
@@ -70,7 +98,7 @@ test('NGN.NET.Request', function (t) {
   t.ok(request.headers.authorization === 'Bearer 12345', 'Authorization token correctly assigned to header.')
   t.ok(request.crossOriginRequest, 'Correctly identifies request as a cross-domain request.')
 
-  let params = request.queryParameters
+  var params = request.queryParameters
   t.ok(Object.keys(params).length === 1, 'Correctly identifies and parses query parameters.')
 
   request.removeHeader('X-NGN')
@@ -89,21 +117,25 @@ test('NGN.NET.Request', function (t) {
 
   request.method = 'post'
   t.ok(request.method === 'POST', 'Dynamically setting method returns proper HTTP method.')
-
-  t.ok(request.port === 80, 'Proper port identified.')
+  t.ok(request.port === (request.protocol === 'https' ? 443 : 80), 'Proper port identified.')
 
   t.end()
 })
 
 test('NGN.NET Basic Requests', function (t) {
-  let reqs = new TaskRunner()
+  var reqs = new TaskRunner()
 
   reqs.add('OPTIONS', function (next) {
-    NGN.NET.OPTIONS(uri.get, function (res) {
-      t.pass('NGN.NET.OPTIONS alias points to NGN.NET.options')
-      t.ok(res.status === 200, 'NGN.NET.OPTIONS sends and receives.')
+    try {
+      NGN.NET.OPTIONS(uri.options, function (res) {
+        t.pass('NGN.NET.OPTIONS alias points to NGN.NET.options')
+        t.ok(res.status === 200, 'NGN.NET.OPTIONS sends and receives.')
+        next()
+      })
+    } catch (eeee) {
+      console.error(eeee)
       next()
-    })
+    }
   })
 
   reqs.add('HEAD', function (next) {
@@ -114,19 +146,24 @@ test('NGN.NET Basic Requests', function (t) {
     })
   })
 
-  reqs.add('TRACE', function (next) {
-    NGN.NET.TRACE(uri.trace, function (res) {
-      t.pass('NGN.NET.TRACE alias points to NGN.NET.trace')
+  if (NGN.nodelike) {
+    reqs.add('TRACE', function (next) {
+      NGN.NET.TRACE(uri.trace, function (res) {
+        t.pass('NGN.NET.TRACE alias points to NGN.NET.trace')
 
-      if (res.status === 405) {
-        t.pass('NGN.NET.TRACE sends and receives.')
-      } else {
-        t.ok(res.status === 200, 'NGN.NET.TRACE sends and receives.')
-      }
+        if (res.status === 405) {
+          t.pass('NGN.NET.TRACE sends and receives.')
+        } else {
+          t.ok(res.status === 200, 'NGN.NET.TRACE sends and receives.')
+        }
 
-      next()
+        next()
+      })
     })
-  })
+  } else {
+    t.skip('Skipping HTTP TRACE alias test (unsupported in browsers).')
+    t.skip('Skipping HTTP TRACE request (unsupported in browsers).')
+  }
 
   reqs.add('GET', function (next) {
     NGN.NET.GET(uri.get, function (res) {
@@ -151,7 +188,7 @@ test('NGN.NET Basic Requests', function (t) {
       }
     }, function (res) {
       t.pass('NGN.NET.POST alias points to NGN.NET.post')
-      t.ok(res.status === 200, 'NGN.NET.POST sends and receives.')
+      t.ok(res.status === 200 || res.status === 201, 'NGN.NET.POST sends and receives.')
       next()
     })
   })
@@ -186,28 +223,31 @@ test('NGN.NET Basic Requests', function (t) {
   })
 
   reqs.add('JSONP', function (next) {
-    NGN.NET.JSONP(uri.json, function (err, data) {
+    NGN.NET.JSONP(uri.jsonp, function (err, data) {
       t.pass('NGN.NET.JSONP alias points to NGN.NET.jsonp')
 
       if (NGN.nodelike) {
         t.ok(err !== null, 'NGN.NET.JSONP throws error in node-like environment.')
       } else {
-        t.ok(err === null, 'NGN.NET.JSONP sends and receives.')
+        t.ok(err === null && data.ok, 'NGN.NET.JSONP sends and receives.')
       }
 
       next()
     })
   })
 
-  reqs.on('complete', function () {
-    t.end()
-  })
+  // reqs.on('complete', function () {
+  //   console.log('DONE')
+  //   setTimeout(() => t.end(), 30000)
+  // })
 
-  reqs.run()
+  reqs.on('complete', t.end)
+
+  reqs.run(true)
 })
 
 test('NGN.NET.Resource', function (t) {
-  let a = new NGN.NET.Resource({
+  var a = new NGN.NET.Resource({
     headers: {
       'X-NGN-TEST': 'test'
     },
@@ -221,7 +261,7 @@ test('NGN.NET.Resource', function (t) {
     nocache: true
   })
 
-  let b = new NGN.NET.Resource({
+  var b = new NGN.NET.Resource({
     headers: {
       'X-OTHER': 'other'
     },
@@ -237,12 +277,12 @@ test('NGN.NET.Resource', function (t) {
   t.ok(a.baseUrl.indexOf('https://') < 0, 'Not forcing SSL does not reqrite baseURL to use HTTPS')
   t.ok(b.baseUrl.indexOf('https://') === 0, 'Forcing SSL rewrites baseURL to use HTTPS')
 
-  let req = new NGN.NET.Request({
+  var req = new NGN.NET.Request({
     url: uri.get,
     method: 'GET'
   })
 
-  let breq = new NGN.NET.Request({
+  var breq = new NGN.NET.Request({
     url: uri.get,
     method: 'GET'
   })
@@ -256,7 +296,31 @@ test('NGN.NET.Resource', function (t) {
   t.ok(breq.headers.hasOwnProperty('authorization'), 'Authorization header present for secure requests (token auth).')
   t.ok(breq.headers.authorization === 'Bearer 12345', 'Authorization token correctly assigned to header.')
   t.ok(req.queryParameters.hasOwnProperty('nonce'), 'Proper query parameter appended to URL.')
-  t.ok(Object.keys(req.queryParameters).length === 3, 'Nocache query parameter applied to request.')
+  t.ok(Object.keys(req.queryParameters).length === 2, 'Nocache query parameter applied to request.')
+
+  t.ok(req.headers['x-ngn-test'] === 'test', 'Header reference retrieves correct headers.')
+
+  req.headers = {
+    'X-TEST': 'test'
+  }
+
+  t.ok(req.headers['X-TEST'] === 'test', 'Properly set global headers.')
+
+  req.credentials = {
+    accessToken: '12345ABCDEF'
+  }
+
+  t.ok(req.credentials.accessToken === '12345ABCDEF' && req.credentials.username === undefined, 'Properly replaced basic auth with token.')
+
+  a.query = { test: 1 }
+  t.ok(a.query.test === 1, 'Properly set query parameters of a resource.')
+
+  req.method = 'GET' // Does nothing, but induces code coverage
+  req.method = 'head'
+
+  t.ok(req.method === 'HEAD', 'Correctly sets method.')
+
+
 
   t.end()
 })

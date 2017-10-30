@@ -23,7 +23,7 @@ const DIR = {
     runtime: path.resolve('./src/runtime')
   },
   dist: path.resolve('./dist'),
-  test: path.resolve('./tests/lib')
+  test: path.resolve('./test/lib')
 }
 
 let comments = {
@@ -159,7 +159,7 @@ gulp.task('test', (next) => {
   tasks.add('Build Library', (nextTask) => testBuild(nextTask))
 
   tasks.add('Run "npm test"', (nextTask) => {
-    let child = require('child_process').spawn('npm', ['run', 'test'], {
+    let child = require('child_process').spawn('npm', ['run', 'test:node'], {
       cwd: __dirname,
       stdio: 'inherit'
     })

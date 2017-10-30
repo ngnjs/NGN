@@ -4,7 +4,9 @@ const test = require('tape')
 // otherwise the lib directory will not exist.
 
 require('../lib/core')
-require('../lib/exception')
+require('../lib/eventemitter')
+require('../lib/net/NET')
+require('../lib/tasks/bootstrap')
 
 test('Namespace', (t) => {
   t.ok(NGN !== undefined, 'NGN namespace is recognized.')
@@ -51,13 +53,17 @@ test('Method Existance', (t) => {
     'objectRequires',
     'needs',
     'createAlias',
+    'CustomExceptionClass',
+    'CustomException',
     'createException',
     'WARN',
 
     // Classes
     'EventEmitter',
     'BUS',
-    'NET'
+    'NET',
+    'Task',
+    'Tasks'
   ]
 
   for (let method of methodList) {

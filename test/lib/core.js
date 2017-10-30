@@ -313,32 +313,30 @@ Object.defineProperties(NGN, {
    * @param  {object|function} destination
    * The object properties get copied to.
    */
-  inherit: NGN.const(function (source, dest) {
-    if (!source || !dest) {
-      return
+  inherit: NGN.const(function (source = null, dest = null) {
+    if (source && dest) {
+      source = typeof source === 'function' ? source.prototype : source
+      dest = typeof dest === 'function' ? dest.prototype : dest
+
+      Object.getOwnPropertyNames(source).forEach(function (attr) {
+        const definition = Object.getOwnPropertyDescriptor(source, attr)
+        Object.defineProperty(dest, attr, definition)
+      })
+
+      const prototype = Object.getOwnPropertyNames(Object.getPrototypeOf(source)).filter((attr) => {
+        return attr.trim().toLowerCase() !== 'constructor' && !dest.hasOwnProperty(attr)
+      })
+
+      prototype.forEach((attr) => {
+        const cfg = Object.getOwnPropertyDescriptor(source, attr)
+
+        if (cfg === undefined && typeof source[attr] === 'function') {
+          Object.defineProperty(dest, attr, NGN.public(function () {
+            return source[attr].apply(this, arguments)
+          }))
+        }
+      })
     }
-
-    source = typeof source === 'function' ? source.prototype : source
-    dest = typeof dest === 'function' ? dest.prototype : dest
-
-    Object.getOwnPropertyNames(source).forEach(function (attr) {
-      const definition = Object.getOwnPropertyDescriptor(source, attr)
-      Object.defineProperty(dest, attr, definition)
-    })
-
-    const prototype = Object.getOwnPropertyNames(Object.getPrototypeOf(source)).filter((attr) => {
-      return attr.trim().toLowerCase() !== 'constructor' && !dest.hasOwnProperty(attr)
-    })
-
-    prototype.forEach((attr) => {
-      const cfg = Object.getOwnPropertyDescriptor(source, attr)
-
-      if (cfg === undefined && typeof source[attr] === 'function') {
-        Object.defineProperty(dest, attr, NGN.const(function () {
-          return source[attr].apply(this, arguments)
-        }))
-      }
-    })
   }),
 
   /**
@@ -412,11 +410,9 @@ Object.defineProperties(NGN, {
         }
 
         if (typeof sourceExpression === 'string') {
-          if (sourceExpression.trim() === comparisonExpression.trim()) {
-            return null
+          if (sourceExpression.trim() !== comparisonExpression.trim()) {
+            return sourceExpression
           }
-
-          return sourceExpression
         }
       }
 
@@ -427,7 +423,7 @@ Object.defineProperties(NGN, {
   }),
 
   // Private alias for nullIf
-  nullif: NGN.get(() => {
+  nullif: NGN.public(function () {
     return this.nullIf(...arguments)
   }),
 
@@ -451,19 +447,19 @@ Object.defineProperties(NGN, {
     }
 
     for (let arg = 1; arg < arguments.length; arg++) {
-      try {
-        if (arguments[arg] !== undefined &&
-          (
-            arguments[0]
-            ? NGN.nullIf(arguments[arg])
-            : arguments[arg]
-          ) !== null
-        ) {
-          if (arguments[arg] !== undefined) {
-            return arguments[arg]
-          }
+      // try {
+      if (arguments[arg] !== undefined &&
+        (
+          arguments[0]
+          ? NGN.nullIf(arguments[arg])
+          : arguments[arg]
+        ) !== null
+      ) {
+        if (arguments[arg] !== undefined) {
+          return arguments[arg]
         }
-      } catch (e) {}
+      }
+      // } catch (e) {}
     }
 
     return null
@@ -501,13 +497,14 @@ Object.defineProperties(NGN, {
    * NW.js, and other environments presumably supporting Node.js.
    * @private
    */
-  nodelike: NGN.get(function () {
-    try {
-      return process !== undefined
-    } catch (e) {
-      return false
-    }
-  }),
+  // nodelike: NGN.get(function () {
+  //   try {
+  //     return process !== undefined
+  //   } catch (e) {
+  //     return false
+  //   }
+  // }),
+  nodelike: NGN.const(NGN.global.process !== undefined),
 
   /**
    * @method dedupe
@@ -571,7 +568,7 @@ Object.defineProperties(NGN, {
     * @private
     */
   forceArray: NGN.private((value) => {
-    if (NGN.coalesce(value) === null) {
+    if (value === null) {
       return []
     }
 
@@ -682,18 +679,17 @@ Object.defineProperties(NGN, {
       }
     })
 
-    if (stack.length === 0) {
-      return [{
+    return stack.length !== 0
+      ? (this.nodelike
+          ? stack.reverse()
+          : stack
+        )
+      : [{
         path: 'unknown',
         file: 'unknown',
         line: 0,
         column: 0
       }]
-    } else if (this.nodelike) {
-      stack.reverse()
-    }
-
-    return stack
   }),
 
   /**
@@ -764,17 +760,7 @@ Object.defineProperties(NGN, {
    * the event handler.
    */
   deprecate: NGN.privateconst(function (fn, message = 'The method has been deprecated.') {
-    return this.wrap(() => {
-      if (NGN.BUS) {
-        return NGN.BUS.emit('DEPRECATED.METHOD', message)
-      }
-
-      if (NGN.nodelike) {
-        console.warn('DEPRECATION NOTICE: ' + message)
-      } else {
-        console.warn('%cDEPRECATION NOTICE: %c' + message, 'font-weight: bold;', 'font-weight: normal;')
-      }
-    }, fn)
+    return this.wrap(() => NGN.WARN('DEPRECATED.METHOD', message), fn)
   }),
 
   /**
@@ -792,17 +778,7 @@ Object.defineProperties(NGN, {
    * @return {Class}
    */
   deprecateClass: NGN.privateconst(function (classFn, message = 'The class has been deprecated.') {
-    return this.wrapClass(() => {
-      if (NGN.BUS) {
-        return NGN.BUS.emit('DEPRECATED.CLASS', message)
-      }
-
-      if (NGN.nodelike) {
-        console.warn('DEPRECATION NOTICE: ' + message)
-      } else {
-        console.warn('%cDEPRECATION NOTICE: %c' + message, 'font-weight: bold;', 'font-weight: normal;')
-      }
-    }, classFn)
+    return this.wrapClass(() => NGN.WARN('DEPRECATED.CLASS', message), classFn)
   }),
 
   /**
@@ -986,17 +962,26 @@ Object.defineProperties(NGN, {
    * @return {Boolean}
    */
   objectHasExactly: NGN.private(function () {
-    if (this.getObjectMissingPropertyNames(arguments[0])) {
+    // If there are missing properties, it's not an exact match.
+    if (this.getObjectMissingPropertyNames(arguments[0]).length !== 0) {
       return false
     }
 
     let properties = Object.keys(arguments[0])
     let args = NGN.slice(arguments)
 
-    args.unshift()
+    args.shift()
 
-    for (let p = 0; p < properties.length; p++) {
-      if (args.indexOf(properties[p]) < 0) {
+    // Check for extra properties on the object
+    for (let i = 0; i < properties.length; i++) {
+      if (args.indexOf(properties[i]) < 0) {
+        return false
+      }
+    }
+
+    // Make sure there are enough properties.
+    for (let i = 0; i < args.length; i++) {
+      if (properties.indexOf(args[i]) < 0) {
         return false
       }
     }
@@ -1038,6 +1023,135 @@ Object.defineProperties(NGN, {
     Object.defineProperty(namespace, name, NGN.get(() => {
       return value
     }))
+  }),
+
+  /**
+   * @method WARN
+   * This method is used to emit special warning events.
+   * Event names are prepended with `_NGN_.WARN.`, which is a notation
+   * recognized by the internal NGN warning ledger. The ledger can respond
+   * appropriately for it's environment, such as logging to
+   * the console, writing to a syslog, etc. This method requires
+   * the existance of the NGN.BUS event emitter.
+   *
+   * See NGN.EventEmitter#emit for detailed parameter usage.
+   * @private
+   */
+  WARN: NGN.privateconst(function () {
+    let args = NGN.slice(arguments)
+
+    if (NGN.BUS !== undefined) {
+      if (arguments.length > 0) {
+        args[0] = `_NGN_.WARN.${arguments[0]}}`
+
+        NGN.BUS.emit.apply(NGN.BUS, args)
+      }
+    } else {
+      console.warn(args.join(' '))
+    }
+  }),
+
+  CustomExceptionClass: NGN.private(null),
+
+  CustomException: NGN.get(function () {
+    if (this.CustomExceptionClass === null) {
+      // [PARTIAL]
+
+class CustomException extends Error { // eslint-disable-line
+  constructor (config) {
+    super()
+
+    Object.defineProperty(this, 'frameFilter', NGN.privateconst((frame) => {
+      return NGN.nodelike
+        ? frame.getFileName() !== __filename && frame.getFileName()
+        : frame.getFileName()
+    }))
+
+    config = config || {}
+    config = typeof config === 'string' ? { message: config } : config
+    config.custom = config.custom || {}
+
+    let me = this
+
+    this.name = config.name || 'NgnError'
+    this.type = config.type || 'TypeError'
+    this.severity = config.severity || 'minor'
+    this.message = config.message || 'Unknown Error'
+    this.category = config.category || 'operational' // Alternative is "programmer"
+
+    // Cleanup name
+    this.name = this.name.replace(/[^a-zA-Z0-9_]/gi, '')
+
+    // Add any custom properties
+    for (let attr in config.custom) {
+      if (config.custom.hasOwnProperty(attr)) {
+        this[attr] = config.custom[attr]
+      }
+    }
+
+    this.hasOwnProperty('custom') && delete this.custom
+
+    if (NGN.nodelike || Error.prepareStackTrace) {
+      // Capture the stack trace on a new error so the detail can be saved as a structured trace.
+      Error.prepareStackTrace = function (_, stack) { return stack }
+
+      let _err = new Error()
+
+      Error.captureStackTrace(_err, this)
+
+      this.rawstack = _err.stack
+
+      Error.prepareStackTrace = function (err, stack) { // eslint-disable-line handle-callback-err
+        me.cause && console.warn(me.cause)
+        me.help && console.info(me.help)
+
+        return `${me.name}: ${me.message}\n` + stack.filter(me.frameFilter).map((el) => {
+          return `    at ${el}`
+        }).join('\n')
+      }
+
+      // Enable stack trace
+      Error.captureStackTrace(this)
+    }
+  }
+
+  /*
+   * @property {Array} trace
+   * The structured data of the stacktrace. Each array element is a JSON object corresponding to
+   * the full stack trace:
+   *
+   * ```js
+   * {
+   *   filename: String,
+   *   line: Number,
+   *   column: Number,
+   *   functionname: String,
+   *   native: Boolean,
+   *   eval: Boolean,
+   *   type: String
+   * }
+   * ```
+   * @readonly
+   */
+  get trace () {
+    return this.rawstack.filter(this.frameFilter).map((frame) => {
+      return {
+        filename: frame.getFileName(),
+        line: frame.getLineNumber(),
+        column: frame.getColumnNumber(),
+        functionname: frame.getFunctionName(),
+        native: frame.isNative(),
+        eval: frame.isEval(),
+        type: frame.getTypeName()
+      }
+    })
+  }
+}
+
+      this.CustomExceptionClass = CustomException // eslint-disable-line no-undef
+    }
+
+    return this.CustomExceptionClass
   }),
 
   /**
@@ -1092,7 +1206,6 @@ Object.defineProperties(NGN, {
     config = config || {}
     config = typeof config === 'string' ? { message: config } : config
     config.name = config.name || 'NgnError'
-    config.name = config.name.replace(/[^a-zA-Z0-9_]/gi, '')
 
     // Create the error as a function
     NGN.global[config.name] = function () {
@@ -1100,31 +1213,7 @@ Object.defineProperties(NGN, {
         config.message = arguments[0]
       }
 
-      return new NgnCustomException(config)
-    }
-  }),
-
-  /**
-   * @method WARN
-   * This method is used to emit special warning events.
-   * Event names are prepended with `_NGN_.WARN.`, which is a notation
-   * recognized by the internal NGN warning ledger. The ledger can respond
-   * appropriately for it's environment, such as logging to
-   * the console, writing to a syslog, etc. This method requires
-   * the existance of the NGN.BUS event emitter.
-   *
-   * See NGN.EventEmitter#emit for detailed parameter usage.
-   * @private
-   */
-  WARN: NGN.privateconst(function () {
-    if (NGN.BUS !== undefined) {
-      if (arguments.length > 0) {
-        let args = NGN.slice(arguments)
-
-        args[0] = `_NGN_.WARN.${arguments[0]}}`
-
-        NGN.BUS.emit.apply(NGN.BUS, args)
-      }
+      return new NGN.CustomException(config)
     }
   })
 })

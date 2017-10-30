@@ -126,7 +126,7 @@ class Request { // eslint-disable-line no-unused-vars
       bearerAccessToken: NGN.private(NGN.coalesceb(cfg.accessToken)),
 
       /**
-       * @cfgproperty {boolean} [withCredentials=true]
+       * @cfgproperty {boolean} [withCredentials=false]
        * Indicates whether or not cross-site `Access-Control` requests should
        * be made using credentials such as cookies, authorization headers or
        * TLS client certificates. Setting `withCredentials` has no effect on
@@ -142,7 +142,7 @@ class Request { // eslint-disable-line no-unused-vars
        * [document.cookie](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie)
        * or from response headers.
        */
-      withCredentials: NGN.private(NGN.coalesce(cfg.withCredentials, true)),
+      withCredentials: NGN.private(NGN.coalesce(cfg.withCredentials, false)),
 
       /**
        * @cfgproperty {Number} [timeout=30000]
@@ -263,7 +263,7 @@ class Request { // eslint-disable-line no-unused-vars
 
       /**
        * @cfgproperty {Number} [maxRedirects=10]
-       * Set the maximum number of redirects. There is a hard-cap of 20
+       * Set the maximum number of redirects. There is a hard-cap of 25
        * redirects to prevent cyclic requests (endless loop).
        */
       maximumRedirects: NGN.private(10),
@@ -365,7 +365,7 @@ class Request { // eslint-disable-line no-unused-vars
       value = 0
     }
 
-    this.maxRedirects = value
+    this.maximumRedirects = value
   }
 
   /**
@@ -815,6 +815,7 @@ class Request { // eslint-disable-line no-unused-vars
     } else {
       let xhr = new XMLHttpRequest()
       let responded = false
+      let me = this
 
       // Apply readystate change handler
       xhr.onreadystatechange = function () {
@@ -822,10 +823,12 @@ class Request { // eslint-disable-line no-unused-vars
           return
         }
 
-        if (xhr.readyState === 4) {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
           responded = true
 
-          this.stopMonitor()
+          if (xhr.status === 0) {
+            NGN.WARN(`Request Error: ${me.method} ${me.url} (likely a CORS issue).`)
+          }
 
           if (NGN.isFn(callback)) {
             callback(xhr)
@@ -837,8 +840,6 @@ class Request { // eslint-disable-line no-unused-vars
       xhr.onerror = function (e) {
         NGN.WARN('NET.error', e)
 
-        this.stopMonitor()
-
         if (!responded && NGN.isFn(callback)) {
           callback(xhr)
         }
@@ -846,7 +847,12 @@ class Request { // eslint-disable-line no-unused-vars
         responded = true
       }
 
-      this.startMonitor()
+      xhr.ontimeout = function (e) {
+        responded = true
+        callback(xhr)
+      }
+
+      xhr.timeout = this.timeout
 
       // Open the request
       xhr.open(this.method, this.url, true)
@@ -855,9 +861,11 @@ class Request { // eslint-disable-line no-unused-vars
       xhr.withCredentials = this.withCredentials
 
       // Apply Request Headers
-      let headers = Object.keys(this.headers)
-      for (let i = 0; i < headers.length; i++) {
-        xhr.setRequestHeader(headers[i], this.headers[headers[i]])
+      if (this.headers !== null) {
+        let headers = Object.keys(this.headers)
+        for (let i = 0; i < headers.length; i++) {
+          xhr.setRequestHeader(headers[i], this.headers[headers[i]])
+        }
       }
 
       // Write the body (which may be null) & send the request

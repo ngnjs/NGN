@@ -1,9 +1,11 @@
 *.log
 _*
 .*
+*.old
 env.json
 /**/env.json
 node_modules
+coverage
 !.gitignore
 !.npmignore
 !.codeclimate.yml
