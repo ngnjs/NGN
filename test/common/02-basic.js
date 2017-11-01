@@ -604,34 +604,32 @@ test('NGN.deprecate', function (t) {
 })
 
 test('NGN.createException', function (t) {
-console.log('SKIP NGN.createException')
-t.end()
-  // NGN.createException({
-  //   name: 'TestError',
-  //   type: 'TestError',
-  //   severity: 'critical',
-  //   message: 'A test message',
-  //   category: 'programmer',
-  //   custom: {
-  //     help: 'Test help.',
-  //     cause: 'Test cause.'
-  //   }
-  // })
-  //
-  // t.ok(typeof TestError === 'function', 'Create a global exception.')
-  //
-  // try {
-  //   throw new TestError() // eslint-disable-line no-undef
-  // } catch (e) {
-  //   if (NGN.nodelike) {
-  //     console.log(e)
-  //     t.ok(NGN.typeof(e.trace) === 'array', 'Exception trace returns an array.')
-  //   } else {
-  //     t.skip('Exception trace attribute unavailable in browser (use stack trace instead).')
-  //   }
-  //   t.ok(e.name === 'TestError', 'Recognized custom error name.')
-  //   t.ok(e.message === 'A test message', 'Successfully thrown.')
-  // }
-  //
-  // t.end()
+  NGN.createException({
+    name: 'TestError',
+    type: 'TestError',
+    severity: 'critical',
+    message: 'A test message',
+    category: 'programmer',
+    custom: {
+      help: 'Test help.',
+      cause: 'Test cause.'
+    }
+  })
+
+  t.ok(typeof TestError === 'function', 'Create a global exception.')
+
+  try {
+    throw new TestError() // eslint-disable-line no-undef
+  } catch (e) {
+    if (NGN.nodelike) {
+      console.log(e)
+      t.ok(NGN.typeof(e.trace) === 'array', 'Exception trace returns an array.')
+    } else {
+      t.skip('Exception trace attribute unavailable in browser (use stack trace instead).')
+    }
+    t.ok(e.name === 'TestError', 'Recognized custom error name.')
+    t.ok(e.message === 'A test message', 'Successfully thrown.')
+  }
+
+  t.end()
 })

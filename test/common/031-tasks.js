@@ -267,7 +267,14 @@ test('NGN.Tasks Asynchronous sequential execution.', function (t) {
     x.push(3)
   })
 
+  var extra = tasks.add('t4', function () {
+    x.push(4)
+  })
+
+  extra.skip()
+
   tasks.on('complete', function () {
+    t.ok(x.length === 3, 'Appropriately skipped step.')
     t.ok(x[0] === 1 && x[1] === 2 && x[2] === 3, 'Invalid result.' + x.toString())
     t.end()
   })
@@ -297,6 +304,7 @@ test('NGN.Tasks Abort Process', {
       }
 
       t.pass('Successfully aborted process.')
+      tasks.reset()
 
       t.end()
     }, 1500)
@@ -313,6 +321,7 @@ test('NGN.Tasks Process an empty queue.', function (t) {
   var tasks = new NGN.Tasks()
   tasks.on('complete', function () {
     t.pass('No error on empty task.')
+    tasks.reset()
     t.end()
   })
 

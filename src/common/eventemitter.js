@@ -45,6 +45,14 @@
          * This is ignored if eventName is an object.
          */
         on: NGN.public((eventName, callback, prepend) => {
+          if (NGN.typeof(eventName) === 'array') {
+            for (let i = 0; i < eventName.length; i++) {
+              this.on(eventName[i], callback, prepend)
+            }
+
+            return
+          }
+
           if (prepend) {
             this.prependListener(eventName, callback)
           } else {
@@ -67,6 +75,14 @@
          * the processing list instead of the end.
          */
         once: NGN.public((eventName, callback, prepend) => {
+          if (NGN.typeof(eventName) === 'array') {
+            for (let i = 0; i < eventName.length; i++) {
+              this.once(eventName[i], callback, prepend)
+            }
+
+            return
+          }
+
           if (prepend) {
             this.prependOnceListener(eventName, callback)
           } else {
@@ -85,6 +101,14 @@
          * The handler function to remove from the event handlers.
          */
         off: NGN.public((eventName, handlerFn) => {
+          if (NGN.typeof(eventName) === 'array') {
+            for (let i = 0; i < eventName.length; i++) {
+              this.off(eventName[i], handlerFn)
+            }
+
+            return
+          }
+
           let l = this.listeners(eventName)
 
           if (l.indexOf(handlerFn) < 0) {

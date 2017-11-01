@@ -218,8 +218,8 @@ class NetworkResource extends Network {
    * ```
    */
   set credentials (credentials) {
-    if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('token')) {
-      credentials.accessToken = NGN.coalesce(credentials.accesstoken, credentials.token)
+    if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('accessToken') || credentials.hasOwnProperty('token')) {
+      credentials.accessToken = NGN.coalesce(credentials.accessToken, credentials.accesstoken, credentials.token)
 
       if (credentials.hasOwnProperty('username')) {
         delete credentials.username
@@ -233,6 +233,14 @@ class NetworkResource extends Network {
     }
 
     this.globalCredentials = credentials
+
+    if (credentials.username) {
+      this.username = credentials.username
+    }
+
+    if (credentials.password) {
+      this.password = credentials.password
+    }
   }
 
   // Explicitly deny credential reading.
@@ -284,7 +292,7 @@ class NetworkResource extends Network {
    */
   prepareUrl (uri) {
     if (uri.indexOf('://') < 0) {
-      uri = this.normalizeUrl(`${this.baseUrl}/${uri}`)
+      uri = normalizeUrl(`${this.baseUrl}/${uri}`)
     }
 
     return uri.replace(/\/{2,5}/gi, '/').replace(/:\/{1}/i, '://')

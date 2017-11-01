@@ -257,7 +257,7 @@ class Request { // eslint-disable-line no-unused-vars
        * @private
        */
       isCrossOrigin: NGN.privateconst(function (url) {
-        if (NGN.nodelike && networkInterfaces.indexOf(this.host)) {
+        if (NGN.nodelike && networkInterfaces.indexOf(this.host) < 0) {
           return true
         }
 
@@ -328,7 +328,8 @@ class Request { // eslint-disable-line no-unused-vars
 
         // URL contains a username/password.
         if (url.hostname.indexOf('@') > 0) {
-          let credentials = url.hostname.match(/\/{1,2}(.*):(.*)@/gi)
+          let credentials = uri.match(/^.*\/{1,2}(.*):(.*)@/i)
+
           url.hostname = url.hostname.split('@').pop()
 
           this.user = credentials[1]
@@ -369,11 +370,8 @@ class Request { // eslint-disable-line no-unused-vars
           let contentType = NGN.coalesceb(this.headers['Content-Type'], this.headers['content-type'], this.headers['Content-type'])
 
           if (typeof this.requestbody === 'object') {
-            this.requestbody = JSON.stringify(this.requestbody).trim()
-
             if (NGN.objectHasExactly(this.requestbody, 'form')) {
               let form = this.requestbody.form
-
               let keys = Object.keys(form)
               let dataString = []
 
@@ -389,33 +387,36 @@ class Request { // eslint-disable-line no-unused-vars
 
               this.requestbody = dataString.join('&')
             } else {
+              this.requestbody = JSON.stringify(this.requestbody).trim()
               this.setHeader('Content-Length', this.requestbody.length, false)
               this.setHeader('Content-Type', NGN.coalesceb(contentType, 'application/json'), false)
             }
-          } else if (typeof this.requestbody === 'string') {
+          }
+
+          if (typeof this.requestbody === 'string') {
             if (contentType !== null) {
               // Check for form data
               let match = /([^=]+)=([^&]+)/.exec(this.requestbody)
 
-              if (match !== null) {
+              if (match !== null && this.requestbody.trim().substr(0, 5).toLowerCase() !== 'data:' && this.requestbody.trim().substr(0, 1).toLowerCase() !== '<') {
                 this.setHeader('Content-Type', 'application/x-www-form-urlencoded', false)
               } else {
-                if (this.requestbody.trim().substr(0, 5).toLowerCase() === 'data') {
+                this.setHeader('Content-Type', 'text/plain')
+
+                if (this.requestbody.trim().substr(0, 5).toLowerCase() === 'data:') {
                   // Crude Data URL mimetype detection
                   match = /^data:(.*);/gi.exec(this.requestbody.trim())
 
                   if (match !== null) {
-                    this.setHeader('Content-Type', match[0], false)
+                    this.setHeader('Content-Type', match[1])
                   }
-                } else if (this.requestbody.trim().test(/<\?xml.*/gi)) {
+                } else if (/^<\?xml.*/gi.test(this.requestbody.trim())) {
                   // Crude XML Detection
-                  this.setHeader('Content-Type', 'application/xml', false)
-                } else if (this.requestbody.trim().test(/<html.*/gi)) {
+                  this.setHeader('Content-Type', 'application/xml')
+                } else if (/^<html.*/gi.test(this.requestbody.trim())) {
                   // Crude HTML Detection
-                  this.setHeader('Content-Type', 'text/html', false)
+                  this.setHeader('Content-Type', 'text/html')
                 }
-
-                this.setHeader('Content-Type', 'text/plain', false)
               }
             }
 
@@ -1042,7 +1043,7 @@ class Network { // eslint-disable-line
     cfg.method = NGN.coalesceb(cfg.method, 'GET')
 
     if (NGN.isFn(this[cfg.method])) {
-      this.makeRequest(cfg.method).call(this, arguments)
+      this.makeRequest(cfg.method)(...arguments)
     } else {
       this.send(new Request(cfg), callback)
     }
@@ -1471,8 +1472,8 @@ class NetworkResource extends Network {
    * ```
    */
   set credentials (credentials) {
-    if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('token')) {
-      credentials.accessToken = NGN.coalesce(credentials.accesstoken, credentials.token)
+    if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('accessToken') || credentials.hasOwnProperty('token')) {
+      credentials.accessToken = NGN.coalesce(credentials.accessToken, credentials.accesstoken, credentials.token)
 
       if (credentials.hasOwnProperty('username')) {
         delete credentials.username
@@ -1486,6 +1487,14 @@ class NetworkResource extends Network {
     }
 
     this.globalCredentials = credentials
+
+    if (credentials.username) {
+      this.username = credentials.username
+    }
+
+    if (credentials.password) {
+      this.password = credentials.password
+    }
   }
 
   // Explicitly deny credential reading.
@@ -1537,7 +1546,7 @@ class NetworkResource extends Network {
    */
   prepareUrl (uri) {
     if (uri.indexOf('://') < 0) {
-      uri = this.normalizeUrl(`${this.baseUrl}/${uri}`)
+      uri = normalizeUrl(`${this.baseUrl}/${uri}`)
     }
 
     return uri.replace(/\/{2,5}/gi, '/').replace(/:\/{1}/i, '://')

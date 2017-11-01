@@ -76,7 +76,7 @@ class Network { // eslint-disable-line
     cfg.method = NGN.coalesceb(cfg.method, 'GET')
 
     if (NGN.isFn(this[cfg.method])) {
-      this.makeRequest(cfg.method).call(this, arguments)
+      this.makeRequest(cfg.method)(...arguments)
     } else {
       this.send(new Request(cfg), callback)
     }

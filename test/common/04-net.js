@@ -40,7 +40,7 @@ test('NGN.NET Sanity Checks', function (t) {
 
 test('NGN.NET.Resource Validation', function (t) {
   var req = new NGN.NET.Resource({
-    url: uri.get,
+    baseUrl: 'https://test.author.io',
     method: 'GET'
   })
 
@@ -53,9 +53,29 @@ test('NGN.NET.Resource Validation', function (t) {
   req.username = 'bill'
   t.ok(req.username === 'bill', 'Properly reset username.')
 
+  req.headers = req.globalHeaders // Forces code coeverage
+  t.ok(req.headers === req.globalHeaders, 'NET Resource headers getter returns correct headers.')
+
+  req.credentials = {
+    accessToken: '12345abcde',
+    username: 'unnecessary',
+    password: 'unnecessary'
+  }
+
+  t.ok(req.credentials.accessToken === null, 'Explicitly deny credentials access.')
+
+  req.credentials = {
+    username: 'bob',
+    password: 'xpwd'
+  }
+
+  t.ok(req.username === 'bob', 'Properly set username via credentials.')
+
+  var tmpurl = req.prepareUrl('/blah')
+  t.ok(tmpurl === req.baseUrl + '/blah', 'Sucessfully prepended base URL to URI.')
+
   t.end()
 })
-
 
 test('NGN.NET.Request', function (t) {
   var request = new NGN.NET.Request({
@@ -118,6 +138,48 @@ test('NGN.NET.Request', function (t) {
   request.method = 'post'
   t.ok(request.method === 'POST', 'Dynamically setting method returns proper HTTP method.')
   t.ok(request.port === (request.protocol === 'https' ? 443 : 80), 'Proper port identified.')
+
+  request.parseUri('http://user:passwd@test.com:7788/path/to/file.html')
+
+  t.ok(request.username === 'user', 'Properly parsed basic auth string')
+  t.ok(request.isCrossOrigin, 'CORS recognition correctly identifies cross origin request.')
+
+  request.url = 'http://test.com:7788/path/to/to/../file.html'
+  t.ok(request.url === 'http://test.com:7788/path/to/file.html', 'Properly normalized URL.')
+
+  request.body = {
+    form: {
+      a: 'test',
+      b: 1,
+      c: {
+        nested: true
+      }
+    }
+  }
+
+  t.ok(typeof request.body === 'string', 'Properly converted structured form to string-based body.')
+
+  request.body = 'data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=='
+  t.ok(request.getHeader('content-type') === 'image/png', 'Correctly identified data image body type.')
+
+  request.body = '<?xml version="1.0" encoding="UTF-8"?><note><to>Tove</to><from>Jani</from><heading>Reminder</heading><body>Don\'t forget me this weekend!</body></note>'
+  t.ok(request.getHeader('content-type') === 'application/xml', 'Correctly identified XML body type.')
+
+  request.body = '<html><body>test</body></html>'
+  t.ok(request.getHeader('content-type') === 'text/html', 'Correctly identified HTML body type.')
+
+  request.body = 'Basic text body.'
+  t.ok(request.getHeader('content-type') === 'text/plain', 'Correctly identified HTML body type.')
+
+  request = new NGN.NET.Request({
+    url: uri.get,
+    maxRedirects: 7
+  })
+
+  t.ok(request.maxRedirects === 7, 'Maximum redirects can be set via configuration.')
+
+  var tmpurl = request.parseUri('path/to/file.html')
+  t.ok(tmpurl.path === '/path/to/file.html', 'Properly handles local paths.')
 
   t.end()
 })
@@ -236,10 +298,14 @@ test('NGN.NET Basic Requests', function (t) {
     })
   })
 
-  // reqs.on('complete', function () {
-  //   console.log('DONE')
-  //   setTimeout(() => t.end(), 30000)
-  // })
+  reqs.add('Custom Request', function (next) {
+    NGN.NET.request({
+      url: uri.get,
+      method: 'GET'
+    }, function () {
+      next()
+    })
+  })
 
   reqs.on('complete', t.end)
 
@@ -319,8 +385,6 @@ test('NGN.NET.Resource', function (t) {
   req.method = 'head'
 
   t.ok(req.method === 'HEAD', 'Correctly sets method.')
-
-
 
   t.end()
 })
