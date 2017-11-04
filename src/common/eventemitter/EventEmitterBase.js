@@ -294,8 +294,9 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
       event: eventName
     }
 
-    for (let name in events) {
+    for (let name = 0; name < events.length; name++) {
       let adhocEvent = this.adhoc[events[name]]
+
       // Adhoc event handling
       if (adhocEvent) {
         delete this.adhoc[events[name]]

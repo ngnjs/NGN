@@ -85,7 +85,7 @@ class QueueItem extends NGN.EventEmitter {
       this.emit('skip', this)
 
       if (mode && mode === 'dev') {
-        console.warn('SKIPPED ' + this.name)
+        NGN.WARN('SKIPPED ' + this.name)
       }
 
       return
@@ -94,7 +94,7 @@ class QueueItem extends NGN.EventEmitter {
     this.emit('start', this)
 
     if (mode && mode === 'dev') {
-      console.info('Executing ' + this.name + ':')
+      NGN.INFO('Executing ' + this.name + ':')
     }
 
     this._status = 'running'
@@ -127,11 +127,11 @@ class QueueItem extends NGN.EventEmitter {
    */
   skip () {
     if (this._status === 'running') {
-      console.warn(`Cannot skip step: ${this.name} is currently running.`)
+      NGN.WARN(`Cannot skip step: ${this.name} is currently running.`)
     } else if (this._status === 'timedout') {
-      console.warn(`Cannot skip step: ${this.name} timed out.`)
+      NGN.WARN(`Cannot skip step: ${this.name} timed out.`)
     } else if (this._status === 'complete') {
-      console.warn(`Cannot skip step: ${this.name} already completed.`)
+      NGN.WARN(`Cannot skip step: ${this.name} already completed.`)
     }
 
     this._skip = true

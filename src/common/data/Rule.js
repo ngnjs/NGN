@@ -1,5 +1,3 @@
-'use strict'
-
 /**
   * @class NGN.DATA.Rule
   * A simple validation rule.
@@ -9,12 +7,12 @@
   *
   * @fires validator.add
   */
-class NgnDataValidationRule extends NGN.EventEmitter {
+class NGNDataValidationRule extends NGN.EventEmitter {
   /**
    * @constructor
    * Create a new data rule.
    * @param {Function/String[]/Number[]/Date[]/RegExp/Array} rule
-   * * * When rule is a _function_, the value is passed to it as an argument.
+   * * When rule is a _function_, the value is passed to it as an argument.
    * * When rule is a _String_, the value is compared for an exact match (case sensitive)
    * * When rule is a _Number_, the value is compared for equality.
    * * When rule is a _Date_, the value is compared for exact equality.

@@ -56,7 +56,13 @@ test('Method Existance', (t) => {
     'CustomExceptionClass',
     'CustomException',
     'createException',
+    'LEDGER_EVENT',
+    'WARNING_EVENT',
+    'INFO_EVENT',
+    'ERROR_EVENT',
     'WARN',
+    'INFO',
+    'ERROR',
 
     // Classes
     'EventEmitter',

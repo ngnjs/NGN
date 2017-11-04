@@ -86,7 +86,7 @@ class QueueItem extends NGN.EventEmitter {
       this.emit('skip', this)
 
       if (mode && mode === 'dev') {
-        console.warn('SKIPPED ' + this.name)
+        NGN.WARN('SKIPPED ' + this.name)
       }
 
       return
@@ -95,7 +95,7 @@ class QueueItem extends NGN.EventEmitter {
     this.emit('start', this)
 
     if (mode && mode === 'dev') {
-      console.info('Executing ' + this.name + ':')
+      NGN.INFO('Executing ' + this.name + ':')
     }
 
     this._status = 'running'
@@ -128,11 +128,11 @@ class QueueItem extends NGN.EventEmitter {
    */
   skip () {
     if (this._status === 'running') {
-      console.warn(`Cannot skip step: ${this.name} is currently running.`)
+      NGN.WARN(`Cannot skip step: ${this.name} is currently running.`)
     } else if (this._status === 'timedout') {
-      console.warn(`Cannot skip step: ${this.name} timed out.`)
+      NGN.WARN(`Cannot skip step: ${this.name} timed out.`)
     } else if (this._status === 'complete') {
-      console.warn(`Cannot skip step: ${this.name} already completed.`)
+      NGN.WARN(`Cannot skip step: ${this.name} already completed.`)
     }
 
     this._skip = true
@@ -203,7 +203,7 @@ class TaskRunner extends NGN.EventEmitter {
       this.completed++
 
       if (this.mode === 'dev') {
-        console.info(step.name + ' completed.')
+        NGN.INFO(step.name + ' completed.')
       }
 
       // If all of the queries have been tallied, we're done.
@@ -309,7 +309,7 @@ class TaskRunner extends NGN.EventEmitter {
    */
   add (name, fn) {
     if (this.processing) {
-      return console.warn('Cannot add a step while processing.')
+      return NGN.WARN('Cannot add a step while processing.')
     }
 
     if (typeof name === 'function') {
@@ -388,7 +388,7 @@ class TaskRunner extends NGN.EventEmitter {
    */
   remove (requestedStep) {
     if (this.processing) {
-      return console.warn('Cannot add a step while processing.')
+      return NGN.WARN('Cannot add a step while processing.')
     }
 
     // Remove by name
@@ -430,7 +430,7 @@ class TaskRunner extends NGN.EventEmitter {
    */
   removeAt (requestedStep) {
     if (this.processing) {
-      return console.warn('Cannot add a step while processing.')
+      return NGN.WARN('Cannot add a step while processing.')
     }
 
     // Remove by index
@@ -452,7 +452,7 @@ class TaskRunner extends NGN.EventEmitter {
    */
   reset () {
     if (this.processing) {
-      return console.warn('Cannot reset a running queue. Abort or wait for the process to complete before resetting.')
+      return NGN.WARN('Cannot reset a running queue. Abort or wait for the process to complete before resetting.')
     }
 
     // Refresh cancelled steps
@@ -471,7 +471,7 @@ class TaskRunner extends NGN.EventEmitter {
    */
   process (sequential) {
     if (this.processing) {
-      return console.warn('Cannot start processing (already running). Please wait for this process to complete before calling process() again.')
+      return NGN.WARN('Cannot start processing (already running). Please wait for this process to complete before calling process() again.')
     }
 
     if (this.steps.length === 0) {

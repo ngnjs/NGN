@@ -1,6 +1,8 @@
-'use strict'
-
-class NgnDataField extends NGN.EventEmitter {
+/**
+ * @class NGN.DATA.Field
+ * Represents a data field within a model/record.
+ */
+class NGNDataField extends NGN.EventEmitter {
   constructor (cfg) {
     cfg = cfg || {}
 
@@ -11,70 +13,79 @@ class NgnDataField extends NGN.EventEmitter {
 
     super()
 
+    const INSTANCE = Symbol('datafield')
+
     Object.defineProperties(this, {
-      idAttribute: NGN.private(false),
+      META: NGN.get(() => this[INSTANCE]),
 
-      /**
-       * @cfg {string} name
-       * The field name.
-       */
-      fieldName: NGN.private(NGN.coalesce(cfg.name)),
+      [INSTANCE]: NGN.privateconst({
+        /**
+         * @cfg {boolean} [required=false]
+         * Indicates the value is required.
+         */
+        required: NGN.coalesce(cfg.required, false),
 
-      /**
-       * @cfg {any} default
-       * The default value of the field when no value is specified.
-       */
-      defaultValue: NGN.private(NGN.coalesce(cfg.default)),
+        /**
+         * @cfgproperty {boolean} [hidden=false]
+         * Indicates the field is hidden (metadata).
+         */
+        hidden: NGN.coalesce(cfg.hidden, false),
 
-      /**
-       * @cfg {Primitive} [type=String]
-       * The JS primitive representing the type of data represented
-       * by the field.
-       */
-      dataType: NGN.private(NGN.coalesce(cfg.type, String)),
+        fieldType: 'data',
 
-      raw: NGN.private(null),
+        isIdentifier: NGN.coalesce(cfg.identifier, false),
 
-      /**
-       * @cfg {boolean} [required=false]
-       * Indicates the value is required.
-       */
-      _required: NGN.public(NGN.coalesce(cfg.required, false)),
+        /**
+         * @cfg {RegExp} [pattern]
+         * A pattern, as defined by a standard RegExp, that the data must match.
+         */
+        pattern: NGN.coalesceb(cfg.pattern),
 
-      /**
-       * @cfgproperty {boolean} [hidden=false]
-       * Indicates the field is hidden (metadata).
-       */
-      _hidden: NGN.private(NGN.coalesce(cfg.hidden, false)),
+        /**
+         * @cfg {string} name
+         * The field name.
+         */
+        name: NGN.coalesce(cfg.name),
 
-      /**
-       * @cfg {function} [rule[]]
-       * A function, or an array of functions, which determine whether the
-       * field value is valid or not. These functions receive a single argument
-       * (the data value) and must return a Boolean value.
-       */
-      rules: NGN.private(NGN.coalesce(cfg.rules, cfg.validators, [])),
+        /**
+         * @cfg {any} default
+         * The default value of the field when no value is specified.
+         */
+        default: NGN.coalesce(cfg.default),
 
-      /**
-       * @cfg {boolean} [allowInvalid=true]
-       * If this is set to `false`, invalid values will throw an error.
-       */
-      allowInvalid: NGN.private(NGN.coalesce(cfg.allowInvalid, true)),
+        /**
+         * @cfg {Primitive} [type=String]
+         * The JS primitive representing the type of data represented
+         * by the field.
+         */
+        dataType: NGN.coalesce(cfg.type, String),
 
-      _fieldType: NGN.private('data')
+        /**
+         * @cfg {function} [rule[]]
+         * A function, or an array of functions, which determine whether the
+         * field value is valid or not. These functions receive a single argument
+         * (the data value) and must return a Boolean value.
+         */
+        rules: NGN.coalesce(cfg.rule, cfg.validators, []),
+
+        /**
+         * @cfg {boolean} [allowInvalid=true]
+         * If this is set to `false`, invalid values will throw an error.
+         */
+        allowInvalid: NGN.coalesce(cfg.allowInvalid, true),
+
+        ENUMERABLE_VALUES: null
+      })
     })
 
-    this.rules = NGN.typeof(this.rules) !== 'array' ? [this.rules] : this.rules
+    this.META.rules = NGN.forceArray(this.rules)
 
-    /**
-     * @cfg {RegExp} [pattern]
-     * A pattern, as defined by a standard RegExp, that the data must match.
-     */
-    if (this.dataType === String && cfg.hasOwnProperty('pattern')) {
-      this.rules.unshift(new NGN.DATA.Rule(cfg.pattern))
+    // Apply pattern validation if specified.
+    if (this.META.dataType === String && this.META.pattern !== null) {
+      this.META.rules.unshift(new NGN.DATA.Rule(cfg.pattern))
     }
 
-    if (this.dataType === Number) {
+    if (this.META.dataType === Number) {
       /**
        * @cfg {Array} [range]
        * An enumeration of acceptable numeric ranges. For example, if
@@ -130,7 +141,7 @@ class NgnDataField extends NGN.EventEmitter {
          * @cfg {number} [min]
          * The minimum accepted value.
          */
-        if (cfg.hasOwnProperty('min') || cfg.hasOwnProperty('minimum')) {
+        if (NGN.hasAny(cfg, 'min', 'minimum')) {
           this.rules.unshift(new NGN.DATA.Rule((value) => {
             return value >= NGN.coalesce(cfg.min, cfg.minimum)
           }))
@@ -140,7 +151,7 @@ class NgnDataField extends NGN.EventEmitter {
          * @cfg {number} [max]
          * The maximum accepted value.
          */
-        if (cfg.hasOwnProperty('max') || cfg.hasOwnProperty('maximum')) {
+        if (NGN.hasAny(cfg, 'max', 'maximum')) {
           this.rules.unshift(new NGN.DATA.Rule((value) => {
             return value <= NGN.coalesce(cfg.max, cfg.maximum)
           }))
@@ -152,8 +163,8 @@ class NgnDataField extends NGN.EventEmitter {
      * @cfg {Array} [enum]
      * An enumeration of available values this field is allowed to have.
      */
-    if (cfg.hasOwnProperty('enum') || cfg.hasOwnProperty('enumeration')) {
-      this.rules.unshift(new NGN.DATA.Rule(NGN.coalesce(cfg.enum, cfg.enumeration)))
+    if (NGN.hasAny(cfg, 'enum', 'enumeration')) {
+      // this.rules.unshift(new NGN.DATA.Rule(NGN.coalesce(cfg.enum, cfg.enumeration)))
     }
 
     /**
@@ -169,7 +180,7 @@ class NgnDataField extends NGN.EventEmitter {
    * The type of field.
    */
   get fieldType () {
-    return this._fieldType
+    return this.META.fieldType
   }
 
   /**
@@ -177,26 +188,27 @@ class NgnDataField extends NGN.EventEmitter {
    * Indicates the field must have a non-null value.
    */
   get required () {
-    return this._required
+    return this.META.required
   }
 
   set required (value) {
     switch (NGN.typeof(value)) {
       case 'boolean':
-        this._required = value
+        this.META.required = value
         return
 
       case 'number':
-        this._required = value === 0 ? false : true
+        this.META.required = value === 0 ? false : true
         return
 
       case 'string':
         value = value.trim().toLowerCase()
+
         if (value === 'true') {
-          this._required = true
+          this.META.required = true
           return
         } else if (value === 'false') {
-          this._required = false
+          this.META.required = false
           return
         }
 
@@ -210,7 +222,7 @@ class NgnDataField extends NGN.EventEmitter {
    * The type of data in string format.
    */
   get type () {
-    return NGN.typeof(this.dataType)
+    return NGN.typeof(this.META.dataType)
   }
 
   /**
@@ -218,7 +230,7 @@ class NgnDataField extends NGN.EventEmitter {
    * Indicates the field should be considered hidden.
    */
   get hidden () {
-    return this._hidden
+    return this.META.hidden
   }
 
   /**
@@ -226,11 +238,11 @@ class NgnDataField extends NGN.EventEmitter {
    * The default field value.
    */
   get 'default' () {
-    return this.defaultValue
+    return this.META.default
   }
 
   set 'default' (value) {
-    this.defaultValue = value
+    this.META.default = value
   }
 
   /**
@@ -238,7 +250,7 @@ class NgnDataField extends NGN.EventEmitter {
    * The value of the field.
    */
   get value () {
-    return NGN.coalesce(this.raw, this.defaultValue)
+    return NGN.coalesce(this.raw, this.META.default)
   }
 
   set value (value) {

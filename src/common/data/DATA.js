@@ -1,11 +1,10 @@
 (function () {
   // [INCLUDE: ./Model.js]
   // [INCLUDE: ./Index.js]
-  // [INCLUDE: ./BTree.js]
   // [INCLUDE: ./Store.js]
 
   let NGNModel = function (cfg) {
-    const ModelLoader = function (data) {
+    const Model = function (data) {
       let model = new NGNDataModel(cfg)
 
       if (data) {
@@ -15,14 +14,13 @@
       return model
     }
 
-    return ModelLoader
+    return Model
   }
 
   NGN.extend('DATA', Object.freeze(Object.defineProperties({}, {
-    Entity: NGN.private(NGNDataModel),
+    Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
-    'Index': NGN.const(NGNDataIndex),
-    BTreeIndex: NGN.private(BTreeIndex),
+    'Index': NGN.privateconst(NGNDataIndex),
     Store: NGN.const(NGNDataStore)
   })))
 })()

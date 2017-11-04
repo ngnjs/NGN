@@ -245,6 +245,18 @@ Object.defineProperties(NGN, {
       get: getterFn,
       set: setterFn
     }
+  }),
+
+  LEDGER_EVENT: NGN.define(false, false, false, (EVENT) => {
+    return function () {
+      let args = NGN.slice(arguments)
+
+      if (arguments.length > 0) {
+        args[0] = EVENT
+
+        NGN.BUS.emit.apply(NGN.BUS, args)
+      }
+    }
   })
 })
 
@@ -497,13 +509,6 @@ Object.defineProperties(NGN, {
    * NW.js, and other environments presumably supporting Node.js.
    * @private
    */
-  // nodelike: NGN.get(function () {
-  //   try {
-  //     return process !== undefined
-  //   } catch (e) {
-  //     return false
-  //   }
-  // }),
   nodelike: NGN.const(NGN.global.process !== undefined),
 
   /**
@@ -1027,29 +1032,55 @@ Object.defineProperties(NGN, {
 
   /**
    * @method WARN
-   * This method is used to emit special warning events.
-   * Event names are prepended with `_NGN_.WARN.`, which is a notation
-   * recognized by the internal NGN warning ledger. The ledger can respond
-   * appropriately for it's environment, such as logging to
-   * the console, writing to a syslog, etc. This method requires
-   * the existance of the NGN.BUS event emitter.
+   * This method is used to emit special info events.
+   * The NGN.BUS can listen for all events using the NGN.WARN global symbol.
+   *
+   * ```js
+   * NGN.BUS.on(NGN.WARNING_EVENT, function () => {
+   *   console.warn(...arguments)
+   * })
+   * ```
    *
    * See NGN.EventEmitter#emit for detailed parameter usage.
    * @private
    */
-  WARN: NGN.privateconst(function () {
-    let args = NGN.slice(arguments)
+  WARNING_EVENT: NGN.privateconst(Symbol.for('NGN.WARN')),
+  WARN: NGN.privateconst(NGN.LEDGER_EVENT(NGN.WARNING_EVENT)),
 
-    if (NGN.BUS !== undefined) {
-      if (arguments.length > 0) {
-        args[0] = `_NGN_.WARN.${arguments[0]}}`
+  /**
+   * @method INFO
+   * This method is used to emit special warning events.
+   * The NGN.BUS can listen for all events using the NGN.INFO global symbol.
+   *
+   * ```js
+   * NGN.BUS.on(NGN.INFO_EVENT, function () => {
+   *   console.info(...arguments)
+   * })
+   * ```
+   *
+   * See NGN.EventEmitter#emit for detailed parameter usage.
+   * @private
+   */
+  INFO_EVENT: NGN.privateconst(Symbol.for('NGN.INFO')),
+  INFO: NGN.privateconst(NGN.LEDGER_EVENT(NGN.INFO_EVENT)),
 
-        NGN.BUS.emit.apply(NGN.BUS, args)
-      }
-    } else {
-      console.warn(args.join(' '))
-    }
-  }),
+  /**
+   * @method ERROR
+   * This method is used to emit special soft error events. A soft error
+   * is one that does not throw, but does get logged (typically non-critical).
+   * The NGN.BUS can listen for all events using the NGN.ERROR global symbol.
+   *
+   * ```js
+   * NGN.BUS.on(NGN.ERROR_EVENT, function () => {
+   *   console.info(...arguments)
+   * })
+   * ```
+   *
+   * See NGN.EventEmitter#emit for detailed parameter usage.
+   * @private
+   */
+  ERROR_EVENT: NGN.privateconst(Symbol.for('NGN.ERROR')),
+  ERROR: NGN.privateconst(NGN.LEDGER_EVENT(NGN.ERROR_EVENT)),
 
   CustomExceptionClass: NGN.private(null),
 

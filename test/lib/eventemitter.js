@@ -302,8 +302,9 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
       event: eventName
     }
 
-    for (let name in events) {
+    for (let name = 0; name < events.length; name++) {
       let adhocEvent = this.adhoc[events[name]]
+
       // Adhoc event handling
       if (adhocEvent) {
         delete this.adhoc[events[name]]
@@ -385,32 +386,72 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
     constructor () {
       super()
 
+      const INSTANCE = Symbol('instance')
+
       Object.defineProperties(this, {
-        queued: NGN.private({}),
-        collectionQueue: NGN.private({}),
-        thresholdQueue: NGN.private({}),
+        META: NGN.get(() => this[INSTANCE]),
+
+        [INSTANCE]: NGN.privateconst({
+          queued: {},
+          collectionQueue: {},
+          thresholdQueue: {},
+          defaultTTL: -1
+        }),
+
+        /**
+         * @method setTTL
+         * Set a default time-to-live for event handlers (in milliseconds).
+         * After the TTL period elapses, event handlers are removed.
+         * By default, there is no TTL (`-1`).
+         * @param {number} ttl
+         * The number of milliseconds before an event handler is automatically
+         * removed. This value may be `-1` (no TTL/never expires) or a value
+         * greater than `0`.
+         */
+        setTTL: NGN.const((ttl = -1) => {
+          if (ttl === 0) {
+            NGN.WARN('NGN.EventEmitter#TTL cannot be 0.')
+            return
+          }
+
+          this.META.defaultTTL = ttl
+        }),
 
         /**
          * @method on
          * Create a new event handler for the specified event.
-         * @param  {string|object} eventName
+         * @param  {string|string[]|object} eventName
          * Name of the event to listen for.
          * If an object is passed, this method will automatically setup a #pool.
-         * @param  {Function} handler
+         * @param  {function} handler
          * The method responsible for responding to the event.
          * This is ignored if eventName is an object.
+         * @param {number} [TTL]
+         * Time-To-Live is the number of milliseconds before the event handler
+         * is automatically removed. This is useful for automatically cleaning
+         * up limited-life event handlers.
          * @param {boolean} [prepend=false]
          * When set to `true`, the event is added to the beginning of
          * the processing list instead of the end.
          * This is ignored if eventName is an object.
          */
-        on: NGN.public((eventName, callback, prepend) => {
-          if (NGN.typeof(eventName) === 'array') {
-            for (let i = 0; i < eventName.length; i++) {
-              this.on(eventName[i], callback, prepend)
-            }
+        on: NGN.public((eventName, callback, ttl, prepend = false) => {
+          switch (NGN.typeof(eventName)) {
+            case 'array':
+              for (let i = 0; i < eventName.length; i++) {
+                this.on(eventName[i], callback, prepend)
+              }
 
-            return
+              return
+          }
+
+          if (NGN.typeof(ttl) === 'boolean') {
+            prepend = ttl
+            ttl = this.META.defaultTTL
+          }
+
+          if (ttl > 0) {
+            setTimeout(() => this.off(eventName, callback), ttl)
           }
 
           if (prepend) {
@@ -434,13 +475,23 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
          * When set to `true`, the event is added to the beginning of
          * the processing list instead of the end.
          */
-        once: NGN.public((eventName, callback, prepend) => {
-          if (NGN.typeof(eventName) === 'array') {
-            for (let i = 0; i < eventName.length; i++) {
-              this.once(eventName[i], callback, prepend)
-            }
+        once: NGN.public((eventName, callback, ttl, prepend) => {
+          switch (NGN.typeof(eventName)) {
+            case 'array':
+              for (let i = 0; i < eventName.length; i++) {
+                this.once(eventName[i], callback, prepend)
+              }
 
-            return
+              return
+          }
+
+          if (NGN.typeof(ttl) === 'boolean') {
+            prepend = ttl
+            ttl = this.META.defaultTTL
+          }
+
+          if (ttl > 0) {
+            setTimeout(() => this.off(eventName, callback), ttl)
           }
 
           if (prepend) {
@@ -516,7 +567,7 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
           const me = this
 
           this.on(deprecatedEventName, function () {
-            console.warn(`${deprecatedEventName} is deprecated. ` + (!replacementEventName ? '' : `Use ${replacementEventName} instead.`))
+            NGN.WARN(`${deprecatedEventName} is deprecated. ` + (!replacementEventName ? '' : `Use ${replacementEventName} instead.`))
 
             if (replacementEventName) {
               let args = NGN.slice(arguments)
@@ -576,9 +627,9 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
 
               pool[eventName] = this.on(topic, group[eventName])
             } else if (typeof group[eventName] === 'object') {
-              this.pool(topic + '.', group[eventName])
+              this.pool(`${topic}.`, group[eventName])
             } else {
-              console.warn('%c' + topic + '%c could not be pooled in the event emitter because it\'s value is not a function.', 'font-weight: bold;', '')
+              NGN.WARN(`${topic} could not be pooled in the event emitter because it's value is not a function.`)
             }
           }
 
@@ -776,12 +827,12 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
          * An optional payload, such as data to be passed to an event handler.
          */
         delayEmit: NGN.const(function (eventName, delay) {
-          if (!this.queued.hasOwnProperty(eventName)) {
+          if (!this.META.queued.hasOwnProperty(eventName)) {
             let args = NGN.slice(arguments)
             args.splice(1, 1)
 
-            this.queued[eventName] = setTimeout(() => {
-              delete this.queued[eventName]
+            this.META.queued[eventName] = setTimeout(() => {
+              delete this.META.queued[eventName]
               this.emit(...args)
             }, delay)
           }
@@ -813,18 +864,16 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
          */
         handleCollectionTrigger: NGN.privateconst(function (eventName, key) {
           let me = this
+
           return function () {
             // Use setTimeout to simulate nextTick
             setTimeout(() => {
-              let cq = me.collectionQueue
-              if (cq.hasOwnProperty(key)) {
-                if (cq[key].remainingqueue.indexOf(eventName) >= 0) {
-                  cq[key].remainingqueue = cq[key].remainingqueue.filter((remainingEventName) => {
-                    return remainingEventName !== eventName
-                  })
-                }
+              let cq = me.META.collectionQueue
 
-                if (cq[key].remainingqueue.length === 0) {
+              if (cq[key]) {
+                cq[key].remainingqueue.delete(eventName)
+
+                if (cq[key].remainingqueue.size === 0) {
                   cq[key].remainingqueue = cq[key].masterqueue
 
                   if (NGN.isFn(cq[key].eventName)) {
@@ -905,35 +954,34 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
             throw new Error(`NGN.BUS.funnel expected an array of events, but received a(n) ${NGN.typeof(eventCollection)}`)
           }
 
-          eventCollection = NGN.dedupe(eventCollection)
+          let collection = new Set(eventCollection)
+          let key = this.getInternalCollectionId(this.META.collectionQueue)
 
-          let key = this.getInternalCollectionId(this.collectionQueue)
+          this.META.collectionQueue[key] = {}
 
-          this.collectionQueue[key] = {}
-
-          Object.defineProperties(this.collectionQueue[key], {
-            masterqueue: NGN.const(eventCollection),
-            remainingqueue: NGN.private(eventCollection),
+          Object.defineProperties(this.META.collectionQueue[key], {
+            masterqueue: NGN.const(new Set(eventCollection)),
+            remainingqueue: NGN.private(collection),
             eventName: NGN.const(triggerEventName),
             remove: NGN.const(() => {
-              let events = this.collectionQueue[key].masterqueue.slice()
+              this.META.collectionQueue[key].masterqueue.forEach(event => {
+                this.off(event, this.handleCollectionTrigger(event, key))
+              })
 
-              for (let i = 0; i < events.length; i++) {
-                this.decreaseMaxListeners()
-                this.off(events[i], this.handleCollectionTrigger(events[i], key))
-              }
+              this.decreaseMaxListeners(this.META.collectionQueue[key].masterqueue.size)
 
-              delete this.collectionQueue[key]
+              delete this.META.collectionQueue[key]
             }),
             payload: NGN.const(payload)
           })
 
-          for (let i = 0; i < eventCollection.length; i++) {
-            this.increaseMaxListeners()
-            this.on(eventCollection[i], this.handleCollectionTrigger(eventCollection[i], key))
-          }
+          this.increaseMaxListeners(collection.size)
 
-          return this.collectionQueue[key]
+          collection.forEach(event => {
+            this.on(event, this.handleCollectionTrigger(event, key))
+          })
+
+          return this.META.collectionQueue[key]
         }),
 
         /**
@@ -953,6 +1001,7 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
          */
         funnelOnce: NGN.const((eventCollection, triggerEventName, payload = null) => {
           let funnelClosureEvent = `::NGNFUNNEL::${(new Date()).getTime()}::${triggerEventName}`
+          // let funnelClosureEvent = Symbol(triggerEventName)
           let collection = this.funnel(eventCollection, funnelClosureEvent, payload)
 
           this.increaseMaxListeners()
@@ -1005,20 +1054,20 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
             throw new Error('The threshold event name must be a string (received ' + (typeof thresholdEventName) + ')')
           }
 
-          let key = `${this.getInternalCollectionId(this.thresholdQueue)}${limit.toString()}`
+          let key = `${this.getInternalCollectionId(this.META.thresholdQueue)}${limit.toString()}`
 
-          this.thresholdQueue[key] = {}
+          this.META.thresholdQueue[key] = {}
 
-          Object.defineProperties(this.thresholdQueue[key], {
+          Object.defineProperties(this.META.thresholdQueue[key], {
             key: NGN.const(key),
             eventName: NGN.const(thresholdEventName),
             limit: NGN.const(limit),
             count: NGN.private(0),
             finalEventName: NGN.const(finalEventName),
             remove: NGN.const(() => {
-              let event = this.thresholdQueue[key].eventName
+              let event = this.META.thresholdQueue[key].eventName
 
-              delete this.thresholdQueue[key]
+              delete this.META.thresholdQueue[key]
 
               this.decreaseMaxListeners()
               this.off(event, this.handleThresholdTrigger(key))
@@ -1029,7 +1078,7 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
           this.increaseMaxListeners()
           this.on(thresholdEventName, this.handleThresholdTrigger(key))
 
-          return this.thresholdQueue[key]
+          return this.META.thresholdQueue[key]
         }),
 
         thresholdOnce: NGN.const(function (thresholdEventName, limit, finalEventName, payload = null) {
@@ -1053,19 +1102,19 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
           return function () {
             // Use setTimeout to simulate nextTick
             setTimeout(() => {
-              if (me.thresholdQueue.hasOwnProperty(key)) {
-                me.thresholdQueue[key].count++
-                if (me.thresholdQueue[key].count === me.thresholdQueue[key].limit) {
-                  if (NGN.isFn(me.thresholdQueue[key].finalEventName)) {
-                    me.thresholdQueue[key].finalEventName(me.thresholdQueue[key].payload)
+              if (me.META.thresholdQueue.hasOwnProperty(key)) {
+                me.META.thresholdQueue[key].count++
+                if (me.META.thresholdQueue[key].count === me.META.thresholdQueue[key].limit) {
+                  if (NGN.isFn(me.META.thresholdQueue[key].finalEventName)) {
+                    me.META.thresholdQueue[key].finalEventName(me.META.thresholdQueue[key].payload)
                   } else {
-                    me.emit(me.thresholdQueue[key].finalEventName, me.thresholdQueue[key].payload)
+                    me.emit(me.META.thresholdQueue[key].finalEventName, me.META.thresholdQueue[key].payload)
                   }
 
                   // This if statement is required in case the event is removed
                   // during the reset process.
-                  if (me.thresholdQueue.hasOwnProperty(key)) {
-                    me.thresholdQueue[key].count = 0
+                  if (me.META.thresholdQueue.hasOwnProperty(key)) {
+                    me.META.thresholdQueue[key].count = 0
                   }
                 }
               }

@@ -312,3 +312,21 @@ test('NGN.EventEmitter Basic Events', function (t) {
 
   tasks.run(true)
 })
+
+test('EventEmitter TTL Capability', function (t) {
+  NGN.BUS.clear()
+
+  let ct = 0
+
+  NGN.BUS.on('ttl.test', function () {
+    ct += 1
+  }, 300)
+
+  setTimeout(() => {
+    t.ok(ct === 1, 'Successfully removed event handler after TTL elapsed.')
+    t.end()
+  }, 900)
+
+  NGN.BUS.emit('ttl.test')
+  NGN.BUS.delayEmit('ttl.test', 600)
+})

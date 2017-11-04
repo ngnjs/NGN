@@ -4,8 +4,9 @@
   "description": "A JavaScript-based systems and software authoring library.",
   "scripts": {
     "test": "gulp test",
-    "test:node": "nyc tape ./test/common/*.js --coverage | tap-spec && standard --verbose | tap-nyc | snazzy && nyc report --reporter=html",
-    "test:browser": "gulp test:clean && gulp test:build && karma start karma.conf.js ",
+    "test:build": "gulp test:clean && gulp test:build",
+    "test:node": "npm run test:build && nyc tape ./test/common/*.js --coverage | tap-spec && standard --verbose | tap-nyc | snazzy && nyc report --reporter=html",
+    "test:browser": "npm run test:build && karma start karma.conf.js ",
     "coverage": "nyc tape ./test/common/*.js | tap-nyc",
     "coverage:report": "nyc report --reporter=html",
     "cover": "npm run coverage && npm run coverage:report"

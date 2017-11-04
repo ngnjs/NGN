@@ -19,75 +19,212 @@ class NGNDataModel extends NGN.EventEmitter {
 
     super()
 
+    // A unique internal instance ID for referencing internal
+    // data placeholders
+    const INSTANCE = Symbol('instance')
+
+    // Create private attributes & data placeholders
     Object.defineProperties(this, {
       /**
-       * @property {Symbol} oid
+       * @property {Symbol} OID
        * A unique object ID assigned to the model. This is an
        * internal readon-only reference.
        * @private
        */
-      oid: NGN.privateconst(Symbol()),
+      OID: NGN.privateconst(Symbol('id')),
 
       /**
-       * @cfg {String} [idAttribute='id']
-       * Setting this allows an attribute of the object to be used as the ID.
-       * For example, if an email is the ID of a user, this would be set to
-       * `email`.
+       * @property {Object} DATA
+       * A reference to internal data values.
+       * @private
        */
-      idAttribute: NGN.privateconst(config.idAttribute || 'id'),
+      META: NGN.get(() => this[INSTANCE]),
 
-      /**
-       * @cfg {object} fields
-       * Represents the data fields of the model.
-       */
-      datafields: NGN.private(config.fields),
+      [INSTANCE]: NGN.privateconst({
+        // Contains the raw data
+        raw: {},
 
-      /**
-       * @property {Object}
-       * Custom validation rules used to verify the integrity of the entire
-       * model. This only applies to the full model. Individual data fields
-       * may have their own validators.
-       */
-      validators: NGN.private(NGN.coalesce(config.validators, {})),
+        /**
+         * @cfg {object} fields
+         * Represents the data fields of the model.
+         */
+        fields: NGN.coalesce(config.fields),
+        knownFields: new Set(),
 
-      /**
-       * @cfgproperty {boolean} [validation=true]
-       * Toggle data validation using this.
-       */
-      validation: NGN.public(NGN.coalesce(config.validation, true)),
+        /**
+         * @property {Object}
+         * Custom validation rules used to verify the integrity of the entire
+         * model. This only applies to the full model. Individual data fields
+         * may have their own validators.
+         */
+        validators: NGN.coalesce(config.validators, {}),
 
-      /**
-       * @cfg {boolean} [autoid=false]
-       * If the NGN.DATA.Model#idAttribute/id is not provided for a record,
-       * unique ID will be automatically generated for it. This means there
-       * will not be a `null` ID.
-       *
-       * An NGN.DATA.Store using a model with this set to `true` will never
-       * have a duplicate record, since the #id or #idAttribute will always
-       * be unique.
-       */
-      autoid: NGN.public(NGN.coalesce(config.autoid, false)),
+        /**
+         * @cfgproperty {boolean} [validation=true]
+         * Toggle data validation using this.
+         */
+        validation: NGN.coalesce(config.validation, true),
 
-      benchmark: NGN.private(null),
+        /**
+         * @cfg {boolean} [autoid=false]
+         * If the NGN.DATA.Model#idAttribute/id is not provided for a record,
+         * unique ID will be automatically generated for it. This means there
+         * will not be a `null` ID.
+         *
+         * An NGN.DATA.Store using a model with this set to `true` will never
+         * have a duplicate record, since the #id or #idAttribute will always
+         * be unique.
+         */
+        autoid: NGN.coalesce(config.autoid, false),
 
-      /**
-       * @cfgproperty {Date|Number} [expires]
-       * When this is set to a date/time, the model record will be marked
-       * as expired at the specified time/date. If a number is specified
-       * (milliseconds), the record will be marked as expired after the
-       * specified time period has elapsed. When a record/model is marked as
-       * "expired", it triggers the `expired` event. By default, expired
-       * records/models within an NGN.DATA.Store will be removed from the store.
-       *
-       * Setting this to any value less than `0` disables expiration.
-       * @fires expired
-       * Triggered when the model/record expires.
-       */
-      expiration: NGN.private(null),
+        IdentificationField: 'id',
+        IdentificationValue: null,
 
-      // Used to hold a setTimeout method for expiration events.
-      expirationTimeout: NGN.private(null),
+        /**
+         * @cfgproperty {Date|Number} [expires]
+         * When this is set to a date/time, the model record will be marked
+         * as expired at the specified time/date. If a number is specified
+         * (milliseconds), the record will be marked as expired after the
+         * specified time period has elapsed. When a record/model is marked as
+         * "expired", it triggers the `expired` event. By default, expired
+         * records/models within an NGN.DATA.Store will be removed from the store.
+         *
+         * Setting this to any value less than `0` disables expiration.
+         * @fires expired
+         * Triggered when the model/record expires.
+         */
+        expiration: NGN.coalesce(config.expires),
+
+        // Holds a setTimeout method for expiration events.
+        expirationTimeout: null,
+
+        created: Date.now(),
+        changelog: null,
+        store: null,
+
+        EVENTS: new Set([
+          'field.update',
+          'field.create',
+          'field.remove',
+          'field.invalid',
+          'validator.add',
+          'validator.remove',
+          'relationship.create',
+          'relationship.remove',
+          'expired',
+          'deleted',
+          'reset',
+          'load'
+        ]),
+
+        applyField: (field, cfg = null, suppressEvents = false) {
+
+        }
+      })
     })
+
+    // Bubble events to the BUS
+    for (let i = 0; i < this.META.EVENTS.length; i++) {
+      this.on(this.META.EVENTS[i], function () {
+        let args = NGN.slice(arguments)
+        args.push(this)
+        args.unshift(this.META.EVENTS[i])
+        NGN.BUS.emit.apply(NGN.BUS, args)
+      })
+    }
+
+    // Add data fields.
+    let fields = Object.keys(this.META.fields)
+    for (let i = 0; i < fields.length; i++) {
+      let name = fields[i]
+      if (this.META.knownFields.has(name)) {
+        NGN.WARN(`Duplicate field "${name}" detected.`)
+      } else {
+        this.META.knownFields.add(name)
+
+      }
+    }
+  }
+
+  /**
+   * The unique ID assigned to the model.
+   * @return {string}
+   */
+  get id () {
+    return this.get(this.IdentificationField)
+  }
+
+  set id (value) {
+    this.set('id', value)
+  }
+
+  /**
+   * @property ID
+   * An alias for #id.
+   */
+  get ID () {
+    return this.id
+  }
+
+  set ID (value) {
+    this.set('id', value)
+  }
+
+  /**
+   * @property {Number} createDate
+   * The date/time when the model is created.
+   */
+  get createDate () {
+    return this.META.created
+  }
+
+  /**
+   * Determines whether a field exists in the model or not.
+   * @param  {string} field
+   * Name of the field to check for.
+   * @return {boolean}
+   */
+  fieldExists (field) {
+    return this.META.knownFields.has(field)
+  }
+
+  /**
+   * Retrieve the value of the specified field.
+   * @param  {string} field
+   * Name of the field whose value should be returned.
+   * @return {any}
+   * Returns the value of the field.
+   */
+  get (field) {
+    if (field === 'id' || field === 'ID') {
+      field = this.META.IdentificationValue
+    }
+
+    if (this.META.knownFields.has(field)) {
+      return this[field]
+    } else {
+      NGN.WARN(`Cannot get "${field}". The field is not part of the model.`)
+      return undefined
+    }
+  }
+
+  /**
+   * Set a new value for the specified field.
+   * @param {string} field
+   * Name of the field whose value will be changed.
+   * @param {any} value
+   * The new value of the field.
+   */
+  set (field, value) {
+    if (field === 'id' || field === 'ID') {
+      field = this.META.IdentificationField
+    }
+
+    if (this.META.knownFields.has(field)) {
+      this[field] = value
+    } else {
+      NGN.WARN(`Cannot set "${field}". Unrecognized field name.`)
+    }
   }
 }
 
@@ -109,13 +246,13 @@ class NGNDataModel extends NGN.EventEmitter {
  * data indexes and graph data vertices are used.
  * @fires create {Symbol}
  * Triggered when a new record is indexed. The payload (Symbol)
- * represents the NGN.DATA.Model#oid
+ * represents the NGN.DATA.Model#oid.
  * @fires delete {Symbol}
  * Triggered when a record is de-indexed. The payload (Symbol)
- * represents the NGN.DATA.Model#oid
+ * represents the NGN.DATA.Model#oid.
  * @fires update {Symbol}
  * Triggered when a record is re-indexed (updated). The payload (Symbol)
- * represents the NGN.DATA.Model#oid
+ * represents the NGN.DATA.Model#oid.
  * @fires reset
  * Triggered when the index is completely cleared/reset to it's original state.
  * @private
@@ -293,18 +430,6 @@ class NGNDataIndex extends NGN.EventEmitter {
   // [PARTIAL]
 
 /**
- * @class NGN.DATA.BTreeIndex
- */
-class BTreeIndex extends NGN.EventEmitter {
-  constructor () {
-    super()
-    console.log('BTree Init')
-  }
-}
-
-  // [PARTIAL]
-
-/**
  * @class NGN.DATA.Store
  * Represents a collection of data.
  * @fires record.create
@@ -326,7 +451,7 @@ class NGNDataStore extends NGN.EventEmitter {
 
 
   let NGNModel = function (cfg) {
-    const ModelLoader = function (data) {
+    const Model = function (data) {
       let model = new NGNDataModel(cfg)
 
       if (data) {
@@ -336,14 +461,13 @@ class NGNDataStore extends NGN.EventEmitter {
       return model
     }
 
-    return ModelLoader
+    return Model
   }
 
   NGN.extend('DATA', Object.freeze(Object.defineProperties({}, {
-    Entity: NGN.private(NGNDataModel),
+    Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
-    'Index': NGN.const(NGNDataIndex),
-    BTreeIndex: NGN.private(BTreeIndex),
+    'Index': NGN.privateconst(NGNDataIndex),
     Store: NGN.const(NGNDataStore)
   })))
 })()
