@@ -1,15 +1,16 @@
+// [PARTIAL]
+
 /**
   * @class NGN.DATA.Rule
-  * A simple validation rule.
+  * A data validation rule.
   * @param {String} field
   * The data field to test.
   * @param {Function/String[]/Number[]/Date[]/RegExp/Array} validator
   *
   * @fires validator.add
   */
-class NGNDataValidationRule extends NGN.EventEmitter {
+class NGNDataValidationRule {
   /**
-   * @constructor
    * Create a new data rule.
    * @param {Function/String[]/Number[]/Date[]/RegExp/Array} rule
    * * When rule is a _function_, the value is passed to it as an argument.
@@ -22,7 +23,7 @@ class NGNDataValidationRule extends NGN.EventEmitter {
    */
   constructor (validation) {
     Object.defineProperties(this, {
-      validator: NGN.private(validation)
+      validator: NGN.privateconst(validation)
     })
   }
 
@@ -57,6 +58,3 @@ class NGNDataValidationRule extends NGN.EventEmitter {
     }
   }
 }
-
-NGN.DATA = NGN.DATA || {}
-Object.defineProperty(NGN.DATA, 'Rule', NGN.privateconst(NgnDataValidationRule))

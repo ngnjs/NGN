@@ -1123,6 +1123,29 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
         })
       })
     }
+
+    /**
+     * @method emit
+     * Emits an event.
+     * @param {string[]} eventName
+     * The event name can be a string or an array of strings. If an array
+     * of strings is specified, an event will be fired for each event name
+     * within the array.
+     * @param {any} [payload]
+     * An optional payload. This can be any number of additional arguments.
+     */
+    emit () {
+      if (NGN.typeof(arguments[0]) === 'array') {
+        let args = NGN.slice(arguments)
+        let eventNames = args.shift()
+
+        for (let i = 0; i < eventNames.length; i++) {
+          super.emit(eventNames[i], ...args)
+        }
+      } else {
+        super.emit(...arguments)
+      }
+    }
   }
 
   NGN.extend('EventEmitter', NGN.const(EventEmitter))

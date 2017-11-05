@@ -32,11 +32,6 @@ class NGNDataModel extends NGN.EventEmitter {
        */
       OID: NGN.privateconst(Symbol('id')),
 
-      /**
-       * @property {Object} DATA
-       * A reference to internal data values.
-       * @private
-       */
       META: NGN.get(() => this[INSTANCE]),
 
       [INSTANCE]: NGN.privateconst({
@@ -48,7 +43,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * Represents the data fields of the model.
          */
         fields: NGN.coalesce(config.fields),
-        knownFields: new Set(),
+        knownFieldNames: new Set(),
 
         /**
          * @property {Object}
@@ -116,8 +111,22 @@ class NGNDataModel extends NGN.EventEmitter {
           'load'
         ]),
 
-        applyField: (field, cfg = null, suppressEvents = false) {
+        applyField: (field, cfg = null, suppressEvents = false) => {
+          if (this.META.knownFieldNames.has(name)) {
+            return NGN.WARN(`Duplicate field "${name}" detected.`)
+          }
 
+          this.META.knownFieldNames.add(name)
+
+          if (!(cfg instanceof NGN.DATA.Field)) {
+            if (NGN.isFn(cfg) || cfg === null) {
+              this.META.fields[field] = new NGN.DATA.Field({
+                dataType: cfg
+              })
+            } else if (NGN.typeof('object')) {
+              this.META.fields[field] = new NGN.DATA.Field(cfg)
+            }
+          }
         }
       })
     })
@@ -126,8 +135,10 @@ class NGNDataModel extends NGN.EventEmitter {
     for (let i = 0; i < this.META.EVENTS.length; i++) {
       this.on(this.META.EVENTS[i], function () {
         let args = NGN.slice(arguments)
+
         args.push(this)
         args.unshift(this.META.EVENTS[i])
+
         NGN.BUS.emit.apply(NGN.BUS, args)
       })
     }
@@ -136,11 +147,12 @@ class NGNDataModel extends NGN.EventEmitter {
     let fields = Object.keys(this.META.fields)
     for (let i = 0; i < fields.length; i++) {
       let name = fields[i]
-      if (this.META.knownFields.has(name)) {
+
+      if (this.META.knownFieldNames.has(name)) {
         NGN.WARN(`Duplicate field "${name}" detected.`)
       } else {
-        this.META.knownFields.add(name)
-
+        // Configure a data field for each configuration.
+        this.applyField(name, this.META.fields[name], true)
       }
     }
   }
@@ -184,7 +196,7 @@ class NGNDataModel extends NGN.EventEmitter {
    * @return {boolean}
    */
   fieldExists (field) {
-    return this.META.knownFields.has(field)
+    return this.META.knownFieldNames.has(field)
   }
 
   /**
@@ -199,7 +211,7 @@ class NGNDataModel extends NGN.EventEmitter {
       field = this.META.IdentificationValue
     }
 
-    if (this.META.knownFields.has(field)) {
+    if (this.META.knownFieldNames.has(field)) {
       return this[field]
     } else {
       NGN.WARN(`Cannot get "${field}". The field is not part of the model.`)
@@ -219,7 +231,7 @@ class NGNDataModel extends NGN.EventEmitter {
       field = this.META.IdentificationField
     }
 
-    if (this.META.knownFields.has(field)) {
+    if (this.META.knownFieldNames.has(field)) {
       this[field] = value
     } else {
       NGN.WARN(`Cannot set "${field}". Unrecognized field name.`)

@@ -1,4 +1,6 @@
 (function () {
+  // [INCLUDE: ./Rule.js]
+  // [INCLUDE: ./Field.js]
   // [INCLUDE: ./Model.js]
   // [INCLUDE: ./Index.js]
   // [INCLUDE: ./Store.js]
@@ -17,10 +19,12 @@
     return Model
   }
 
-  NGN.extend('DATA', Object.freeze(Object.defineProperties({}, {
+  NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
+    Rule: NGN.privateconst(NGNDataValidationRule),
+    Field: NGN.const(NGNDataField),
     Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
-    'Index': NGN.privateconst(NGNDataIndex),
+    Index: NGN.privateconst(NGNDataIndex),
     Store: NGN.const(NGNDataStore)
   })))
 })()

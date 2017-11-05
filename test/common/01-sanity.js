@@ -68,6 +68,7 @@ test('Method Existance', (t) => {
     'EventEmitter',
     'BUS',
     'NET',
+    'DATA',
     'Task',
     'Tasks'
   ]

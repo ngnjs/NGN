@@ -313,6 +313,28 @@ test('NGN.EventEmitter Basic Events', function (t) {
   tasks.run(true)
 })
 
+test('Multievent Capability', function (t) {
+  NGN.BUS.clear()
+
+  let ct = 0
+
+  NGN.BUS.on('test.a', function () {
+    ct += 1
+  })
+
+  NGN.BUS.on('test.b', function () {
+    ct += 1
+  })
+
+  NGN.BUS.once('done', function () {
+    t.ok(ct === 2, 'The correct number of events were triggered.')
+    t.end()
+  })
+
+  NGN.BUS.emit(['test.a', 'test.b'])
+  NGN.BUS.delayEmit('done', 300)
+})
+
 test('EventEmitter TTL Capability', function (t) {
   NGN.BUS.clear()
 

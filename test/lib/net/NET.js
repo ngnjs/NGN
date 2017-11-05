@@ -65,7 +65,7 @@
     let interfaces = Object.keys(data)
 
     for (let i = 0; i < interfaces.length; i++) {
-      let iface = interfaces[i]
+      let iface = data[interfaces[i]]
 
       for (let x = 0; x < iface.length; x++) {
         if (iface[x].family === 'IPv4') {
