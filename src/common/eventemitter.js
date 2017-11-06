@@ -371,9 +371,7 @@
               args.push(payload)
             }
 
-            for (let trigger in triggers) {
-              me.emit(triggers[trigger], ...args)
-            }
+            me.emit(triggers, ...args)
           }
 
           this.increaseMaxListeners()
@@ -787,6 +785,6 @@
     }
   }
 
-  NGN.extend('EventEmitter', NGN.const(EventEmitter))
+  NGN.extend('EventEmitter', NGN.public(EventEmitter))
   NGN.extend('BUS', NGN.const(new NGN.EventEmitter()))
 })()

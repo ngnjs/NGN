@@ -581,6 +581,107 @@ Object.defineProperties(NGN, {
   }),
 
   /**
+   * @method forceBoolean
+   * Forces a value to become a boolean if it is not already one. For example:
+   *
+   * ```js
+   * let x = NGN.forceBoolean('false') // String ==> Boolean
+   * console.log(x) // Outputs false
+   *
+   * let y = NGN.forceBoolean('text') // String ==> Boolean
+   * console.log(y) // Outputs true (any non-blank text results in true, except the word "false")
+   *
+   * let z = NGN.forceBoolean(0) // Number ==> Boolean (0 = false, 1 = true)
+   * console.log(z) // Outputs false
+   * ```
+   *
+   * All other types will yield a `true` value, except for `null`. A `null`
+   * value is treated as `false`.
+   * @param {any} expression
+   * The value being forced to be a boolean.
+   * @private
+   */
+  forceBoolean: NGN.private((value) => {
+    switch (NGN.typeof(value)) {
+      case 'boolean':
+        return value
+
+      case 'number':
+        return value === 0 ? false : true // eslint-disable-line no-unneeded-ternary
+
+      case 'string':
+        value = value.trim().toLowerCase()
+
+        if (value === 'false') {
+          return false
+        }
+
+        return true
+
+      default:
+        return this.coalesceb(value) !== null
+    }
+  }),
+
+  /**
+   * @method forceNumber
+   * Forces a value to become a number if it is not already one. For example:
+   *
+   * ```js
+   * let x = NGN.forceNumber('10') // String ==> Number
+   * console.log(x === 10) // Outputs true
+   *
+   * let y = NGN.forceNumber(true) // Boolean ==> Number
+   * console.log(y) // Output 1
+   *
+   * let z = NGN.forceNumber(false) // Boolean ==> Number
+   * console.log(y) // Output 0
+   * ```
+   *
+   * All other types will yield a `NaN` value. This has no effect on
+   * @param {any} expression
+   * The value being forced to be a number. If the expression is a date,
+   * the result will be the number of milliseconds passed since the epoch.
+   * See [Date.getTime()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTime)
+   * for details.
+   * @param {number} [radix]
+   * An integer between 2 and 36 that represents the radix (the base in
+   * mathematical numeral systems) of the expression.
+   * Specify 10 for the decimal numeral system commonly used by humans.
+   * Always specify this parameter to eliminate reader confusion and to
+   * guarantee predictable behavior. Different implementations produce
+   * different results when a radix is not specified, usually defaulting the
+   * value to 10.
+   *
+   * **If no radix is supplied**, the `parseFloat` will be used to identify
+   * the numeric value. When a radix is supplied, `parseInt` is used.
+   * @private
+   */
+  forceNumber: NGN.private((value, radix = null) => {
+    try {
+      switch (NGN.typeof(value)) {
+        case 'boolean':
+          return value ? 1 : 0
+
+        case 'number':
+          return value
+
+        case 'date':
+          return value.getTime()
+
+        case 'string':
+          return radix !== null ? parseInt(value, radix) : parseFloat(value)
+
+        default:
+          return NaN
+      }
+    } catch (e) {
+      NGN.ERROR(e)
+      return NaN
+    }
+  }),
+
+  /**
    * @method stack
    * Retrieve the stack trace from a specific code location without throwing
    * an exception. Files are always listed from the root. This is the default

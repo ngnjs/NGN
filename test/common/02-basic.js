@@ -353,6 +353,24 @@ test('NGN.forceArray', function (t) {
   t.end()
 })
 
+test('NGN.forceBoolean', function (t) {
+  t.ok(NGN.typeof(NGN.forceBoolean('test')) === 'boolean', 'Non-boolean converted to boolean.')
+  t.ok(NGN.forceBoolean(0) === false, 'Number converted to boolean.')
+  t.ok(NGN.typeof(NGN.forceBoolean(false)) === 'boolean' && NGN.forceBoolean(false) === false, 'Boolean remains untouched.')
+  t.end()
+})
+
+test('NGN.forceNumber', function (t) {
+  let dt = new Date(2000, 1, 1, 0, 0, 0, 0).getTime()
+
+  t.ok(NGN.forceNumber(dt) === 949384800000, 'Parsing date into time since epoch succeeds.')
+  t.ok(NGN.forceNumber(true) === 1 && NGN.forceNumber(false) === 0, 'Parsing boolean succeeds.')
+  t.ok(NGN.forceNumber('100.1') === 100.1, 'Float parsing succeeds.')
+  t.ok(NGN.forceNumber('100.1', 10) === 100, 'Integer parsing succeeds.')
+
+  t.end()
+})
+
 test('NGN.stack', function (t) {
   let stack = NGN.stack
 

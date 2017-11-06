@@ -20,15 +20,33 @@ class NGNDataValidationRule {
    * * When rule is a _RegExp_, the value is tested and the results of the RegExp#test are used to validate.
    * * When rule is an _Array_, the value is checked to exist in the array, regardless of data type. This is treated as an `enum`.
    * * When rule is _an array of dates_, the value is compared to each date for equality.
+   * @param {string} [name]
+   * An optional name for the rule. This can be useful when debugging data issues.
+   * @param {object} [scope]
+   * Aplpy a custom scope to the validation functions (applicable to custom methods only).
    */
-  constructor (validation) {
+  constructor (validation, name = null, scope = null) {
+    const RULE_INSTANCE = Symbol('rule')
+    const type = NGN.typeof(validation)
+
     Object.defineProperties(this, {
-      validator: NGN.privateconst(validation)
+      RULE: NGN.get(() => this[RULE_INSTANCE]),
+
+      [RULE_INSTANCE]: NGN.private({
+        type: type,
+        validator: validation,
+        name: NGN.coalesce(name, `Untitled ${type.toUpperCase()} Validation`),
+        scope: NGN.coalesce(scope, this)
+      })
     })
   }
 
+  get name () {
+    return this.RULE.name
+  }
+
   get type () {
-    return NGN.typeof(this.validator)
+    return this.RULE.type
   }
 
   /**
@@ -40,21 +58,22 @@ class NGNDataValidationRule {
    * Returns `true` when the value meets the rule expectations and `false` when it does not.
    */
   test (value) {
-    switch (this.type) {
+    if (NGN.isFn(this.RULE.validator)) {
       // Custom enforcement function
-      case 'function':
-        return this.validator(value)
+      return this.RULE.validator.apply(this.RULE.scope, [value])
+    } else {
+      switch (this.type) {
+        // Enumeration
+        case 'array':
+          return this.RULE.validator.indexOf(value) !== -1
 
-      // Enumeration
-      case 'array':
-        return this.validator.includes(value)
+        // Pattern Matching
+        case 'regexp':
+          return this.RULE.validator.test(value)
 
-      // Pattern Matching
-      case 'regexp':
-        return this.validator.test(value)
-
-      default:
-        return this.validator === value
+        default:
+          return this.RULE.validator === value
+      }
     }
   }
 }

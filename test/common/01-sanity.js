@@ -38,6 +38,8 @@ test('Method Existance', (t) => {
     'dedupe',
     'typeof',
     'forceArray',
+    'forceBoolean',
+    'forceNumber',
     'processStackItem',
     'stack',
     'isFn',

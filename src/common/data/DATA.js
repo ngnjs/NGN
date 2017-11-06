@@ -1,6 +1,8 @@
 (function () {
   // [INCLUDE: ./Rule.js]
   // [INCLUDE: ./Field.js]
+  // [INCLUDE: ./VirtualField.js]
+  // [INCLUDE: ./Relationship.js]
   // [INCLUDE: ./Model.js]
   // [INCLUDE: ./Index.js]
   // [INCLUDE: ./Store.js]
@@ -22,6 +24,8 @@
   NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
     Rule: NGN.privateconst(NGNDataValidationRule),
     Field: NGN.const(NGNDataField),
+    VirtualField: NGN.const(NGNVirtualDataField),
+    Relationship: NGN.const(NgnRelationshipField),
     Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
     Index: NGN.privateconst(NGNDataIndex),

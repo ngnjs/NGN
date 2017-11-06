@@ -2,23 +2,59 @@
 
 /**
  * @class NGN.DATA.Field
- * Represents a data field within a model/record.
+ * Represents a data field to be used in a model/record.
+ * @fires hidden
+ * Triggered when the field changes from unhidden to hidden.
+ * @fires unhidden
+ * Triggered when the field changes from hidden to unhidden.
+ * @fires update {object}
+ * Triggered when the field value is updated. The payload contains
+ * an object with old and new values:
+ *
+ * ```js
+ * {
+ *   old: 'old value',
+ *   new: 'new value'
+ * }
+ * ```
+ * @fires invalid
+ * Triggered when a previously valid value becomes invalid.
+ * @fires valid
+ * Triggered when a previously invalid value becomes valid.
+ * @fires rule.add {NGN.DATA.Rule}
+ * Triggered when a new validation rule is added. The rule is emitted
+ * to event handlers.
+ * @fires rule.remove {NGN.DATA.Rule}
+ * Triggered when a validation rule is removed. The rule is emitted
+ * to event handlers.
  */
 class NGNDataField extends NGN.EventEmitter {
+  /**
+   * @param {string|object} configuration
+   * Accepts an object with all configuration objects, or a string representing
+   * the name of the field.
+   */
   constructor (cfg) {
     cfg = cfg || {}
+
+    if (typeof cfg === 'string') {
+      cfg = {
+        name: cfg
+      }
+    }
 
     // Validate field configuration values
     if (cfg.hasOwnProperty('pattern') && NGN.typeof(cfg.pattern) !== 'regexp') {
       throw new Error('Invalid data field configuration. Pattern must be a valid JavaScript regular expression (RegExp).')
     }
 
-    super()
+    super(cfg)
 
     const INSTANCE = Symbol('datafield')
+    const EMPTYDATA = Symbol('empty')
 
     Object.defineProperties(this, {
-      METADATA: NGN.get(() => { return this[INSTANCE] }),
+      METADATA: NGN.get(() => this[INSTANCE]),
 
       [INSTANCE]: NGN.privateconst({
         /**
@@ -33,9 +69,21 @@ class NGNDataField extends NGN.EventEmitter {
          */
         hidden: NGN.coalesce(cfg.hidden, false),
 
-        fieldType: 'data',
+        // Identifies the property as a standard data attribute.
+        // Alternative options include `data`, `key`, `join`, `virtual`.
+        fieldType: NGN.coalesce(cfg.identifier, false) ? 'key' : 'data',
 
         isIdentifier: NGN.coalesce(cfg.identifier, false),
+
+        /**
+         * @cfg {boolean} [autocorrectInput=true]
+         * Attempt to automatically correct data type values. For example,
+         * a numeric field receiving a value of `'10'` will automatically
+         * convert the input to `10`. Only arrays, numbers, and booleans are
+         * supported. See NGN#forceArray, NGN#forceBoolean, and NGN#forceNumber
+         * for details.
+         */
+        autocorrectInput: NGN.coalesce(cfg.autocorrectInput, false),
 
         /**
          * @cfg {RegExp} [pattern]
@@ -44,7 +92,7 @@ class NGNDataField extends NGN.EventEmitter {
         pattern: NGN.coalesceb(cfg.pattern),
 
         /**
-         * @cfg {string} name
+         * @cfgproperty {string} name
          * The field name.
          */
         name: NGN.coalesce(cfg.name),
@@ -54,6 +102,8 @@ class NGNDataField extends NGN.EventEmitter {
          * The default value of the field when no value is specified.
          */
         default: NGN.coalesce(cfg.default),
+
+        lastValue: Symbol('no.value'),
 
         /**
          * @cfg {Primitive} [type=String]
@@ -69,6 +119,7 @@ class NGNDataField extends NGN.EventEmitter {
          * (the data value) and must return a Boolean value.
          */
         rules: NGN.coalesce(cfg.rule, cfg.rules, cfg.validators, []),
+        violatedRule: null,
 
         /**
          * @cfg {boolean} [allowInvalid=true]
@@ -76,15 +127,44 @@ class NGNDataField extends NGN.EventEmitter {
          */
         allowInvalid: NGN.coalesce(cfg.allowInvalid, true),
 
-        ENUMERABLE_VALUES: null
+        RAWDATAPLACEHOLDER: EMPTYDATA,
+        RAW: EMPTYDATA,
+        ENUMERABLE_VALUES: null,
+        IS_NEW: true,
+
+        EVENTS: new Set([
+          'hidden',
+          'unhidden',
+          'update',
+          'invalid',
+          'valid',
+          'rule.add',
+          'rule.remove',
+        ]),
+
+        /**
+         * @cfg {NGN.DATA.Model} [model]
+         * Optionally specify the parent model.
+         */
+        model: NGN.coalesce(cfg.model)
       })
     })
 
-    this.METADATA.rules = NGN.forceArray(this.METADATA.rules)
+    if (NGN.typeof(this.METADATA.rules) !== 'array') {
+      this.METADATA.rules = NGN.forceArray(this.METADATA.rules)
+    }
+
+    if (this.METADATA.rules.length > 0) {
+      for (let i = 0; i < this.METADATA.rules.length; i++) {
+        if (NGN.isFn(this.METADATA.rules[i]) && !(this.METADATA.rules[i] instanceof NGN.DATA.Rule)) {
+          this.METADATA.rules[i] = new NGN.DATA.Rule(this.METADATA.rules[i], `Custom Rule #${i+1}`)
+        }
+      }
+    }
 
     // Apply pattern validation if specified.
     if (this.METADATA.dataType === String && this.METADATA.pattern !== null) {
-      this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern))
+      this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern, `Pattern Match (${cfg.pattern.toString()})`))
     }
 
     if (this.METADATA.dataType === Number) {
@@ -97,7 +177,7 @@ class NGNDataField extends NGN.EventEmitter {
        * ```js
        * range: [
        *   [5, 10],
-       *   [25-50]
+       *   ['25-50']
        * ]
        * ```
        *
@@ -110,7 +190,7 @@ class NGNDataField extends NGN.EventEmitter {
        * range: [
        *   [null, 0],
        *   [5, 10],
-       *   [25-50],
+       *   ['25-50'],
        *   [100, null]
        * ]
        * ```
@@ -121,40 +201,73 @@ class NGNDataField extends NGN.EventEmitter {
        * else within the ranges. However, the values `3`, `19`, and `62` would
        * all fail because they're outside the ranges.
        */
-      if (cfg.hasOwnProperty('range') && cfg.range.length > 1) {
-        this.METADATA.rules.unshift(new NGN.DATA.Rule((value) => {
+      if (cfg.hasOwnProperty('range')) {
+        if (cfg.range.length === 2 && NGN.typeof(cfg.range[0]) !== 'array' && NGN.typeof(cfg.range[1]) !== 'array') {
+          cfg.range = [cfg.range]
+        }
+      }
+
+      if (NGN.objectHasAny(cfg, 'min', 'minimum', 'max', 'maximum')) {
+        cfg.range = NGN.forceArray(NGN.coalesce(cfg.range))
+        /**
+         * @cfg {number} [min]
+         * The minimum accepted value.
+         */
+        /**
+         * @cfg {number} [max]
+         * The maximum accepted value.
+         */
+        cfg.range.push([NGN.coalesce(cfg.min, cfg.minimum), NGN.coalesce(cfg.max, cfg.maximum)])
+      }
+
+      if (cfg.hasOwnProperty('range')) {
+        // If a simple range is specified (single array), format it for the rule processor.
+        if (cfg.range.length === 2 && NGN.typeof(cfg.range[0]) !== 'array' && NGN.typeof(cfg.range[1]) !== 'array') {
+          cfg.range = [cfg.range]
+        }
+
+        for (let i = 0; i < cfg.range.length; i++) {
+          if (cfg.range[i][0] !== null && cfg.range[i][1] !== null && cfg.range[i][1] < cfg.range[i][0]) {
+            throw new Error(`Invalid range "${cfg.range[i][0]} -> ${cfg.range[i][1]}". Minimum value cannot exceed maximum.`)
+          }
+        }
+
+        this.METADATA.rules.unshift(new NGN.DATA.Rule(function (value) {
           for (let i = 0; i < cfg.range.length; i++) {
             let subrange = cfg.range[i]
-            let min = cfg.range[subrange][0]
-            let max = cfg.range[subrange][1]
 
-            if ((min !== null && min > value) || (max !== null && max < value)) {
+            // Make sure there are two elements for the range.
+            if (subrange.length !== 2) {
+              subrange = subrange[0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
+
+              if (subrange.length !== 2) {
+                throw new Error(`Invalid range: "${cfg.range[i]}"`)
+              }
+
+              // Validate both elements of the range
+              if (subrange[0].trim().toLowerCase() === 'null') {
+                subrange[0] = null
+              } else {
+                subrange[0] = NGN.forceNumber(subrange[0])
+              }
+
+              if (subrange[1].trim().toLowerCase() === 'null') {
+                subrange[1] = null
+              } else {
+                subrange[1] = NGN.forceNumber(subrange[1])
+              }
+            }
+
+            let min = subrange[0]
+            let max = subrange[1]
+
+            if ((min !== null && value < min) || (max !== null && value > max)) {
               return false
             }
           }
 
           return true
-        }))
-      } else {
-        /**
-         * @cfg {number} [min]
-         * The minimum accepted value.
-         */
-        if (NGN.objectHasAny(cfg, 'min', 'minimum')) {
-          this.METADATA.rules.unshift(new NGN.DATA.Rule((value) => {
-            return value >= NGN.coalesce(cfg.min, cfg.minimum)
-          }))
-        }
-
-        /**
-         * @cfg {number} [max]
-         * The maximum accepted value.
-         */
-        if (NGN.objectHasAny(cfg, 'max', 'maximum')) {
-          this.METADATA.rules.unshift(new NGN.DATA.Rule((value) => {
-            return value <= NGN.coalesce(cfg.max, cfg.maximum)
-          }))
-        }
+        }, 'Numeric Range'))
       }
     }
 
@@ -164,6 +277,7 @@ class NGNDataField extends NGN.EventEmitter {
      */
     if (NGN.objectHasAny(cfg, 'enum', 'enumeration')) {
       this.METADATA.ENUMERABLE_VALUES = new Set(NGN.forceArray(NGN.coalesce(cfg.enum, cfg.enumeration)))
+      this.METADATA.rules.push(new NGN.DATA.Rule((value) => this.METADATA.ENUMERABLE_VALUES.has(value), 'Enumerable Values'))
     }
 
     /**
@@ -171,7 +285,25 @@ class NGNDataField extends NGN.EventEmitter {
      * The type should be a JavaScript primitive, class, or constructor.
      * For example, `String`, `Number`, `Boolean`, `RegExp`, `Array`, or `Date`.
      */
-    this.METADATA.rules.unshift(new NGN.DATA.Rule(this.dataType))
+    this.METADATA.rules.unshift(
+      new NGN.DATA.Rule(
+        (value) => NGN.typeof(value) === NGN.typeof(this.METADATA.dataType),
+        `${this.type.toUpperCase()} Type Check`
+      )
+    )
+
+    if (this.METADATA.model) {
+      let events = Array.from(this.METADATA.EVENTS.values())
+      events.slice(events.indexOf('update'), 1)
+
+      this.on('update', (payload) => this.commitPayload(payload))
+
+      for (let i = 0; i < events.length; i++) {
+        this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
+      }
+
+      this.METADATA.model.emit('field.create', this)
+    }
   }
 
   /**
@@ -191,29 +323,7 @@ class NGNDataField extends NGN.EventEmitter {
   }
 
   set required (value) {
-    switch (NGN.typeof(value)) {
-      case 'boolean':
-        this.METADATA.required = value
-        return
-
-      case 'number':
-        this.METADATA.required = value === 0 ? false : true
-        return
-
-      case 'string':
-        value = value.trim().toLowerCase()
-
-        if (value === 'true') {
-          this.METADATA.required = true
-          return
-        } else if (value === 'false') {
-          this.METADATA.required = false
-          return
-        }
-
-      default:
-        throw new Error(`Must set a boolean value (received ${NGN.typeof(value)}).`)
-    }
+    this.METADATA.required = NGN.forceBoolean(value)
   }
 
   /**
@@ -232,12 +342,22 @@ class NGNDataField extends NGN.EventEmitter {
     return this.METADATA.hidden
   }
 
+  set hidden (value) {
+    let originallyHidden = this.hidden
+    let currentlyHidden = NGN.forceBoolean(value)
+
+    if (originallyHidden !== currentlyHidden) {
+      this.METADATA.hidden = currentlyHidden
+      this.emit(originallyHidden ? 'unhidden' : 'hidden')
+    }
+  }
+
   /**
    * @property {boolean} virtual
    * Indicates the field should be considered virtual.
    */
   get virtual () {
-    return this.METADATA.hidden
+    return this.METADATA.fieldType === 'virtual'
   }
 
   /**
@@ -248,16 +368,26 @@ class NGNDataField extends NGN.EventEmitter {
     return this.METADATA.isIdentifier
   }
 
+  get name () {
+    return this.METADATA.name
+  }
+
+  /**
+   * @property {Boolean}
+   * Indicates the model is new or does not exist according to the persistence store.
+   * @private
+   * @readonly
+   */
+  get isNew () {
+    return this.METADATA.IS_NEW
+  }
+
   /**
    * @property {Any} default
    * The default field value.
    */
-  get 'default' () {
+  get default () {
     return this.METADATA.default
-  }
-
-  set 'default' (value) {
-    this.METADATA.default = value
   }
 
   /**
@@ -265,42 +395,71 @@ class NGNDataField extends NGN.EventEmitter {
    * The value of the field.
    */
   get value () {
-    return NGN.coalesce(this.METADATA.raw, this.METADATA.default)
+    if (typeof this.METADATA.RAW !== 'symbol') {
+      return this.METADATA.RAW
+    }
+
+    return this.METADATA.default
   }
 
   set value (value) {
+    // Ignore changes when the value hasn't been modified.
+    if (value === this.value) {
+      return
+    }
+
+    // Attempt to auto-correct input when possible.
+    if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
+      value = this.autoCorrectValue(value)
+    }
+
     let change = {
-      old: this.raw,
+      old: this.METADATA.RAW,
       new: value
     }
 
     let priorValueIsValid = this.valid
 
-    this.METADATA.raw = value
+    this.METADATA.RAW = value
 
     // Notify when an invalid value is detected.
     if (!this.valid) {
       // If invalid values are explicitly prohibited, throw an error.
-      // The value is set before throwing the error because developers may
+      // The value is rolled back before throwing the error so developers may
       // catch the error and continue processing.
-      if (!this.allowInvalid) {
-        this.raw = change.old
-        throw new Error(`Invalid value (${value}) is not allowed.`)
+      if (!this.METADATA.allowInvalid) {
+        this.METADATA.RAW = change.old
+        throw new Error(`"${value}" did not pass the ${this.METADATA.violatedRule} rule.`)
+      } else {
+        change.reason = `"${value}" did not pass the ${this.METADATA.violatedRule} rule.`
+        NGN.WARN(change.reason)
       }
 
       this.emit('invalid', change)
-    } else if (priorValueIsValid) {
+    } else if (priorValueIsValid !== null && priorValueIsValid) {
       // If the field BECAME valid (compared to prior value),
       // emit an event.
       this.emit('valid', change)
     }
 
+    if (typeof this.METADATA.lastValue === 'symbol') {
+      this.METADATA.lastValue = value
+    }
+
     // Notify when the update is complete.
     this.emit('update', change)
 
-    // Mark unnecessary code for immediate garbage collection.
+    // Mark unnecessary code for garbage collection.
     priorValueIsValid = null
     change = null
+  }
+
+  get modified () {
+    if (typeof this.META.lastValue === 'symbol') {
+      return false
+    }
+
+    return this.METADATA.lastValue !== this.value
   }
 
   /**
@@ -308,16 +467,107 @@ class NGNDataField extends NGN.EventEmitter {
    * Indicates the field value is valid.
    */
   get valid () {
-    if (this.required && NGN.coalesce(value) !== null) {
+    if (this.required && NGN.coalesce(this.METADATA.RAW) === null) {
+      this.METADATA.violatedRule = 'Data Required'
+      NGN.WARN(`${this.name} is a required field.`)
       return false
     }
 
-    for (let rule in this.METADATA.validators) {
-      if (!this.METADATA.validators[rule](value)) {
-        return false
+    if (this.METADATA.rules.length > 0) {
+      for (let rule = 0; rule < this.METADATA.rules.length; rule++) {
+        if (!this.METADATA.rules[rule].test(this.METADATA.RAW)) {
+          this.METADATA.violatedRule = this.METADATA.rules[rule].name
+          return false
+        }
       }
     }
 
+    this.METADATA.violatedRule = null
+
     return true
+  }
+
+  get violatedRule () {
+    return NGN.coalesce(this.METADATA.violatedRule, 'None')
+  }
+
+  /**
+   * Hide the field.
+   */
+  hide () {
+    this.hidden = true
+  }
+
+  /**
+   * Unhide the field.
+   */
+  unhide () {
+    this.hidden = false
+  }
+
+  /**
+   * Do not throw errors whan a value is marked as invalid.
+   */
+  allowInvalid () {
+    this.METADATA.allowInvalid = true
+  }
+
+  /**
+   * Throw errors whan a value is marked as invalid.
+   */
+  disallowInvalid () {
+    this.METADATA.allowInvalid = false
+  }
+
+  /**
+   * Attempt to automatically correct a value according to the
+   * field's data type.
+   * @param  {Any} value
+   * The value to attempt to autocorrect.
+   * @return {Any}
+   * Returns the value after attempting to autocorrect the value.
+   */
+  autoCorrectValue (value) {
+    try {
+      switch (this.type) {
+        case 'number':
+          value = NGN.forceNumber(value)
+          break
+
+        case 'boolean':
+          value = NGN.forceBoolean(value)
+          break
+
+        case 'array':
+          value = NGN.forceArray(value)
+          break
+
+        case 'string':
+          value = value.toString()
+          break
+      }
+    } finally {
+      return value
+    }
+  }
+
+  // Submit the payload to the parent model (if applicable).
+  commitPayload (payload) {
+    if (this.METADATA.model) {
+      payload.action = 'update'
+      payload.join = true
+
+      this.increaseMaxListeners(3)
+      this.METADATA.model.emit(
+        [
+          'update',
+          `${payload.field}.update`,
+          `update.${payload.field}`
+        ],
+        payload
+      )
+
+      payload = null // Mark for garbage collection
+    }
   }
 }
