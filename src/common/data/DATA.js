@@ -1,5 +1,6 @@
 (function () {
   // [INCLUDE: ./Rule.js]
+  // [INCLUDE: ./RangeRule.js]
   // [INCLUDE: ./Field.js]
   // [INCLUDE: ./VirtualField.js]
   // [INCLUDE: ./Relationship.js]
@@ -23,6 +24,7 @@
 
   NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
     Rule: NGN.privateconst(NGNDataValidationRule),
+    RangeRule: NGN.privateconst(NGNDataRangeValidationRule),
     Field: NGN.const(NGNDataField),
     VirtualField: NGN.const(NGNVirtualDataField),
     Relationship: NGN.const(NgnRelationshipField),

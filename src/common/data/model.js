@@ -1,11 +1,11 @@
-'use strict'
+// [PARTIAL]
 
 /**
  * @class NGN.DATA.Model
  * Represents a data model/record.
  * @fires field.update
  * Fired when a datafield value is changed.
- * @fires field.create
+ * @fires field.create {NGN.DATA.Field}
  * Fired when a datafield is created.
  * @fires field.remove
  * Fired when a datafield is deleted.
@@ -20,7 +20,7 @@ class NGNDataModel extends NGN.EventEmitter {
 
     // A unique internal instance ID for referencing internal
     // data placeholders
-    const INSTANCE = Symbol('instance')
+    const INSTANCE = Symbol('model')
 
     // Create private attributes & data placeholders
     Object.defineProperties(this, {
@@ -30,11 +30,19 @@ class NGNDataModel extends NGN.EventEmitter {
        * internal readon-only reference.
        * @private
        */
-      OID: NGN.privateconst(Symbol('id')),
+      OID: NGN.privateconst(Symbol('model.id')),
 
-      METADATA: NGN.get(() => this[INSTANCE]),
+      // METADATA: NGN.get(() => this[INSTANCE]),
 
-      [INSTANCE]: NGN.privateconst({
+      METADATA: NGN.privateconst({
+        /**
+         * @cfg {String} [idAttribute='id']
+         * Setting this allows an attribute of the object to be used as the ID.
+         * For example, if an email is the ID of a user, this would be set to
+         * `email`.
+         */
+        idAttribute: NGN.privateconst(config.idAttribute || 'id'),
+
         /**
          * @cfg {object} fields
          * Represents the data fields of the model.
@@ -114,38 +122,85 @@ class NGNDataModel extends NGN.EventEmitter {
         ]),
 
         applyField: (field, cfg = null, suppressEvents = false) => {
+          // Prevent duplicate fields
           if (this.METADATA.knownFieldNames.has(field)) {
             return NGN.WARN(`Duplicate field "${field}" detected.`)
           }
 
+          // Prevent reserved words
+          if (this.hasOwnProperty(field) && field.toLowerCase() !== 'id') {
+            throw new ReservedWordError(`"${field}" cannot be used as a field name (reserved word).`)
+          }
+
+          // Add the field to the list
           this.METADATA.knownFieldNames.add(field)
 
+          // If the field config isn't already an NGN.DATA.Field, create it.
           if (!(cfg instanceof NGN.DATA.Field)) {
             if (cfg instanceof NGN.DATA.Store || cfg instanceof NGN.DATA.Model) {
+              if (this.METADATA.idAttribute === field) {
+                throw new InvalidConfigurationError(`"${field}" cannot be an ID. Relationship fields cannot be an identification attribute.`)
+              }
+
               this.METADATA.fields[field] = new NGN.DATA.Relationship({
                 record: cfg,
                 model: this
               })
             } else {
               switch (NGN.typeof(cfg)) {
+                // Custom config
                 case 'object':
+                  cfg.model = this
+                  cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
                   this.METADATA.fields[field] = new NGN.DATA.Field(cfg)
                   break
 
+                // Collection of models
                 case 'array':
-                  this.METADATA.fields[field] = this.METADATA.fields[field] = new NGN.DATA.Relationship({
-                    record: cfg,
-                    model: this
-                  })
+                  return this.applyField(field, cfg[0], suppressEvents)
 
+                // Type-based config.
                 default:
+                  if (NGN.isFn(cfg) || cfg === null) {
+                    this.METADATA.fields[field] = new NGN.DATA.Field({
+                      type: cfg,
+                      model: this
+                    })
+
+                    break
+                  }
+
                   this.METADATA.fields[field] = new NGN.DATA.Field({
-                    type: cfg
+                    type: NGN.isFn(cfg) ? cfg : String,
+                    identifier: NGN.isFn(cfg)
+                      ? false
+                      : NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field),
+                    model: this
                   })
 
                   break
               }
             }
+          } else if (cfg.model === null) {
+            cfg.identifier = cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+
+            this.METADATA.fields[field] = cfg
+            this.METADATA.fields[field].model = this
+          } else if (cfg.model === this) {
+            cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+
+            this.METADATA.fields[field] = cfg
+          } else {
+            return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
+          }
+
+          Object.defineProperty(this, field, {
+            get: () => this.METADATA.fields[field].value,
+            set: (value) => this.METADATA.fields[field].value = value
+          })
+
+          if (!suppressEvents) {
+            this.emit('field.create', this.METADATA.fields[field])
           }
         }
       })

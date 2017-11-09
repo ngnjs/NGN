@@ -1362,3 +1362,27 @@ NGN.createException({
     cause: 'A required dependency was not included, or it was not included in the correct sequence.'
   }
 })
+
+NGN.createException({
+  name: 'ReservedWordError',
+  type: 'ReservedWordError',
+  severity: 'critical',
+  message: 'An attempt to use a reserved word failed.',
+  category: 'programmer',
+  custom: {
+    help: 'Use an alternative word.',
+    cause: 'A word was used to define an attribute, method, field, or other element that already exists.'
+  }
+})
+
+NGN.createException({
+  name: 'InvalidConfigurationError',
+  type: 'InvalidConfigurationError',
+  severity: 'critical',
+  message: 'Invalid configuration.',
+  category: 'programmer',
+  custom: {
+    help: 'See the documentation for the proper configuration.',
+    cause: 'The configuration specified was marked as invalid or caused an error during instantiation.'
+  }
+})

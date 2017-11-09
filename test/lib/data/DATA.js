@@ -80,6 +80,159 @@ class NGNDataValidationRule {
 }
 
   // [PARTIAL]
+/**
+ * @class NGN.DATA.RangeRule
+ * A special rule to validate values within one or more ranges.
+ * Supports numeric ranges, date ranges, and simple string-based
+ * ranges (string length).
+ */
+class NGNDataRangeValidationRule extends NGNDataValidationRule {
+  /**
+   * Create a new range rule.
+   * @param {string} [name]
+   * An optional name for the rule. This can be useful when debugging data issues.
+   * @param {object} [scope=null]
+   * Apply a custom scope to the validation functions (applicable to custom methods only).
+   * @param {Array} [range]
+   * An enumeration of acceptable numeric ranges. For example, if
+   * the value must be between 5-10 or from 25-50, the configuration
+   * would look like:
+   *
+   * ```js
+   * range: [
+   *   [5, 10],
+   *   ['25-50']
+   * ]
+   * ```
+   *
+   * To accept anything below a certain number or anything over a certain
+   * number while also specifying one or more ranges, use a `null` value.
+   *
+   * For example:
+   *
+   * ```js
+   * range: [
+   *   [null, 0],
+   *   [5, 10],
+   *   ['25-50'],
+   *   [100, null]
+   * ]
+   * ```
+   *
+   * The aforementioned example would accept a value less than `zero`,
+   * between `5` and `10`, between `25` and `50`, or over `100`. Therefore,
+   * acceptable values could be `-7`, `7`, `25`, `42`,  `10000`, or anything
+   * else within the ranges. However, the values `3`, `19`, and `62` would
+   * all fail because they're outside the ranges.
+   */
+  constructor (name, scope, range = []) {
+    if (NGN.typeof(scope) === 'array') {
+      range = scope
+      scope = null
+    }
+
+    super(null, name, scope)
+
+    this.RULE.prepareRange = function (value) {
+      // If a simple range is specified (single array), format it for the rule processor.
+      if (value.length === 2 && NGN.typeof(value[0]) !== 'array' && NGN.typeof(value[1]) !== 'array') {
+        value = [value]
+      }
+
+      return value
+    }
+
+    // Initialize the range
+    this.RULE.range = new Set()
+    this.range = range
+
+    // Create the validation function.
+    this.RULE.validator = (value) => {
+      let range = Array.from(this.RULE.range.values())
+      for (let i = 0; i < range.length; i++) {
+        let subrange = range[i]
+
+        // Make sure there are two elements for the range.
+        if (subrange.length !== 2) {
+          subrange = subrange[0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
+
+          if (subrange.length !== 2) {
+            throw new Error(`Invalid range: "${this.RULE.range[i]}"`)
+          }
+
+          // Validate both elements of the range
+          if (subrange[0].trim().toLowerCase() === 'null') {
+            subrange[0] = null
+          } else {
+            subrange[0] = NGN.forceNumber(subrange[0])
+          }
+
+          if (subrange[1].trim().toLowerCase() === 'null') {
+            subrange[1] = null
+          } else {
+            subrange[1] = NGN.forceNumber(subrange[1])
+          }
+        }
+
+        let min = subrange[0]
+        let max = subrange[1]
+
+        if (NGN.typeof(value) === 'string') {
+          if ((min !== null && value.length < min) || (max !== null && value.length > max)) {
+            return false
+          }
+        } else if ((min !== null && value < min) || (max !== null && value > max)) {
+          return false
+        }
+      }
+
+      return true
+    }
+  }
+
+  get range () {
+    return this.RULE.range.values()
+  }
+
+  set range (value) {
+    this.RULE.range = new Set()
+    this.addRange(value)
+  }
+
+  /**
+   * Add a range to the rule.
+   * @param {array} value
+   * A range can be a single array, such as `[min, max]`. An array of arrays is
+   * also acceptable, such as `[[min1, max1], [min2, max2]]`.
+   */
+  addRange (value) {
+    value = this.RULE.prepareRange(value)
+
+    for (let i = 0; i < value.length; i++) {
+      if (value[i][0] !== null && value[i][1] !== null && value[i][1] < value[i][0]) {
+        throw new Error(`Invalid value "${value[i][0].toString()} -> ${value[i][1].toString()}". Minimum value cannot exceed maximum.`)
+      }
+
+      this.RULE.range.add(value[i])
+    }
+  }
+
+  /**
+   * Remove an existing range from the rule.
+   * @param {array} value
+   * A range can be a single array, such as `[min, max]`. An array of arrays is
+   * also acceptable, such as `[[min1, max1], [min2, max2]]`.
+   */
+  removeRange (value) {
+    value = this.RULE.prepareRange(value)
+
+    for (let i = 0; i < value.length; i++) {
+      this.RULE.range.delete(value[i])
+    }
+  }
+}
+
+  // [PARTIAL]
 
 /**
  * @class NGN.DATA.Field
@@ -108,6 +261,9 @@ class NGNDataValidationRule {
  * @fires rule.remove {NGN.DATA.Rule}
  * Triggered when a validation rule is removed. The rule is emitted
  * to event handlers.
+ * @fires keystatus.changed {boolean}
+ * Triggered when the key (identifier) status changes. The boolean
+ * payload indicates whether the field is considered an identifier.
  */
 class NGNDataField extends NGN.EventEmitter {
   /**
@@ -131,13 +287,13 @@ class NGNDataField extends NGN.EventEmitter {
 
     super(cfg)
 
-    const INSTANCE = Symbol('datafield')
+    // const INSTANCE = Symbol('datafield')
     const EMPTYDATA = Symbol('empty')
 
     Object.defineProperties(this, {
-      METADATA: NGN.get(() => this[INSTANCE]),
+      // METADATA: NGN.get(() => this[INSTANCE]),
 
-      [INSTANCE]: NGN.privateconst({
+      METADATA: NGN.privateconst({
         /**
          * @cfg {boolean} [required=false]
          * Indicates the value is required.
@@ -227,7 +383,7 @@ class NGNDataField extends NGN.EventEmitter {
          * @cfg {NGN.DATA.Model} [model]
          * Optionally specify the parent model.
          */
-        model: NGN.coalesce(cfg.model)
+        model: null
       })
     })
 
@@ -248,107 +404,14 @@ class NGNDataField extends NGN.EventEmitter {
       this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern, `Pattern Match (${cfg.pattern.toString()})`))
     }
 
-    if (this.METADATA.dataType === Number) {
-      /**
-       * @cfg {Array} [range]
-       * An enumeration of acceptable numeric ranges. For example, if
-       * the value must be between 5-10 or from 25-50, the configuration
-       * would look like:
-       *
-       * ```js
-       * range: [
-       *   [5, 10],
-       *   ['25-50']
-       * ]
-       * ```
-       *
-       * To accept anything below a certain number or anything over a certain
-       * number while also specifying one or more ranges, use a `null` value.
-       *
-       * For example:
-       *
-       * ```js
-       * range: [
-       *   [null, 0],
-       *   [5, 10],
-       *   ['25-50'],
-       *   [100, null]
-       * ]
-       * ```
-       *
-       * The aforementioned example would accept a value less than `zero`,
-       * between `5` and `10`, between `25` and `50`, or over `100`. Therefore,
-       * acceptable values could be `-7`, `7`, `25`, `42`,  `10000`, or anything
-       * else within the ranges. However, the values `3`, `19`, and `62` would
-       * all fail because they're outside the ranges.
-       */
-      if (cfg.hasOwnProperty('range')) {
-        if (cfg.range.length === 2 && NGN.typeof(cfg.range[0]) !== 'array' && NGN.typeof(cfg.range[1]) !== 'array') {
-          cfg.range = [cfg.range]
-        }
-      }
-
+    if (this.METADATA.dataType === Number || this.METADATA.dataType === Date || this.METADATA.dataType === String) {
       if (NGN.objectHasAny(cfg, 'min', 'minimum', 'max', 'maximum')) {
         cfg.range = NGN.forceArray(NGN.coalesce(cfg.range))
-        /**
-         * @cfg {number} [min]
-         * The minimum accepted value.
-         */
-        /**
-         * @cfg {number} [max]
-         * The maximum accepted value.
-         */
         cfg.range.push([NGN.coalesce(cfg.min, cfg.minimum), NGN.coalesce(cfg.max, cfg.maximum)])
       }
 
       if (cfg.hasOwnProperty('range')) {
-        // If a simple range is specified (single array), format it for the rule processor.
-        if (cfg.range.length === 2 && NGN.typeof(cfg.range[0]) !== 'array' && NGN.typeof(cfg.range[1]) !== 'array') {
-          cfg.range = [cfg.range]
-        }
-
-        for (let i = 0; i < cfg.range.length; i++) {
-          if (cfg.range[i][0] !== null && cfg.range[i][1] !== null && cfg.range[i][1] < cfg.range[i][0]) {
-            throw new Error(`Invalid range "${cfg.range[i][0]} -> ${cfg.range[i][1]}". Minimum value cannot exceed maximum.`)
-          }
-        }
-
-        this.METADATA.rules.unshift(new NGN.DATA.Rule(function (value) {
-          for (let i = 0; i < cfg.range.length; i++) {
-            let subrange = cfg.range[i]
-
-            // Make sure there are two elements for the range.
-            if (subrange.length !== 2) {
-              subrange = subrange[0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
-
-              if (subrange.length !== 2) {
-                throw new Error(`Invalid range: "${cfg.range[i]}"`)
-              }
-
-              // Validate both elements of the range
-              if (subrange[0].trim().toLowerCase() === 'null') {
-                subrange[0] = null
-              } else {
-                subrange[0] = NGN.forceNumber(subrange[0])
-              }
-
-              if (subrange[1].trim().toLowerCase() === 'null') {
-                subrange[1] = null
-              } else {
-                subrange[1] = NGN.forceNumber(subrange[1])
-              }
-            }
-
-            let min = subrange[0]
-            let max = subrange[1]
-
-            if ((min !== null && value < min) || (max !== null && value > max)) {
-              return false
-            }
-          }
-
-          return true
-        }, 'Numeric Range'))
+        this.METADATA.rules.unshift(new NGN.DATA.RangeRule('Numeric Range', cfg.range))
       }
     }
 
@@ -373,17 +436,42 @@ class NGNDataField extends NGN.EventEmitter {
       )
     )
 
-    if (this.METADATA.model) {
-      let events = Array.from(this.METADATA.EVENTS.values())
-      events.slice(events.indexOf('update'), 1)
+    if (NGN.coalesce(cfg.model) !== null) {
+      this.model = cfg.model
+    }
+  }
 
-      this.on('update', (payload) => this.commitPayload(payload))
+  /**
+   * @property {NGN.DATA.Model} model
+   * Represents the model/record the field is associated to.
+   * The model may be configured once, after which this property
+   * becomes read-only. This will also be read-only if #model is set
+   * to a valid value.
+   */
+  get model () {
+    return this.METADATA.model
+  }
 
-      for (let i = 0; i < events.length; i++) {
-        this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
+  set model (value) {
+    if (this.METADATA.model === null) {
+      if (value instanceof NGN.DATA.Model) {
+        this.METADATA.model = value
+
+        let events = Array.from(this.METADATA.EVENTS.values())
+        events.slice(events.indexOf('update'), 1)
+
+        this.on('update', (payload) => this.commitPayload(payload))
+
+        for (let i = 0; i < events.length; i++) {
+          this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
+        }
+
+        this.METADATA.model.emit('field.create', this)
+      } else {
+        NGN.WARN('Invalid model.')
       }
-
-      this.METADATA.model.emit('field.create', this)
+    } else {
+      NGN.WARN('Cannot set model multiple times.')
     }
   }
 
@@ -447,6 +535,15 @@ class NGNDataField extends NGN.EventEmitter {
    */
   get identifier () {
     return this.METADATA.isIdentifier
+  }
+
+  set identifier (value) {
+    value = NGN.forceBoolean(value)
+
+    if (value !== this.METADATA.isIdentifier) {
+      this.METADATA.isIdentifier = value
+      this.emit('keystatus.changed', value)
+    }
   }
 
   get name () {
@@ -568,6 +665,10 @@ class NGNDataField extends NGN.EventEmitter {
     return true
   }
 
+  /**
+   * Name of the rule which was violated.
+   * @return {string}
+   */
   get violatedRule () {
     return NGN.coalesce(this.METADATA.violatedRule, 'None')
   }
@@ -862,6 +963,7 @@ class NgnRelationshipField extends NGNDataField {
 
     this.METADATA.fieldType = 'join'
     this.METADATA.join = Symbol('relationship')
+    this.METADATA.isIdentifier = false
 
     /**
      * @cfg join {NGN.DATA.Store|NGN.DATA.Model[]}
@@ -1067,14 +1169,14 @@ class NgnRelationshipField extends NGNDataField {
   }
 }
 
-  'use strict'
+  // [PARTIAL]
 
 /**
  * @class NGN.DATA.Model
  * Represents a data model/record.
  * @fires field.update
  * Fired when a datafield value is changed.
- * @fires field.create
+ * @fires field.create {NGN.DATA.Field}
  * Fired when a datafield is created.
  * @fires field.remove
  * Fired when a datafield is deleted.
@@ -1089,7 +1191,7 @@ class NGNDataModel extends NGN.EventEmitter {
 
     // A unique internal instance ID for referencing internal
     // data placeholders
-    const INSTANCE = Symbol('instance')
+    const INSTANCE = Symbol('model')
 
     // Create private attributes & data placeholders
     Object.defineProperties(this, {
@@ -1099,11 +1201,19 @@ class NGNDataModel extends NGN.EventEmitter {
        * internal readon-only reference.
        * @private
        */
-      OID: NGN.privateconst(Symbol('id')),
+      OID: NGN.privateconst(Symbol('model.id')),
 
-      METADATA: NGN.get(() => this[INSTANCE]),
+      // METADATA: NGN.get(() => this[INSTANCE]),
 
-      [INSTANCE]: NGN.privateconst({
+      METADATA: NGN.privateconst({
+        /**
+         * @cfg {String} [idAttribute='id']
+         * Setting this allows an attribute of the object to be used as the ID.
+         * For example, if an email is the ID of a user, this would be set to
+         * `email`.
+         */
+        idAttribute: NGN.privateconst(config.idAttribute || 'id'),
+
         /**
          * @cfg {object} fields
          * Represents the data fields of the model.
@@ -1183,38 +1293,85 @@ class NGNDataModel extends NGN.EventEmitter {
         ]),
 
         applyField: (field, cfg = null, suppressEvents = false) => {
+          // Prevent duplicate fields
           if (this.METADATA.knownFieldNames.has(field)) {
             return NGN.WARN(`Duplicate field "${field}" detected.`)
           }
 
+          // Prevent reserved words
+          if (this.hasOwnProperty(field) && field.toLowerCase() !== 'id') {
+            throw new ReservedWordError(`"${field}" cannot be used as a field name (reserved word).`)
+          }
+
+          // Add the field to the list
           this.METADATA.knownFieldNames.add(field)
 
+          // If the field config isn't already an NGN.DATA.Field, create it.
           if (!(cfg instanceof NGN.DATA.Field)) {
             if (cfg instanceof NGN.DATA.Store || cfg instanceof NGN.DATA.Model) {
+              if (this.METADATA.idAttribute === field) {
+                throw new InvalidConfigurationError(`"${field}" cannot be an ID. Relationship fields cannot be an identification attribute.`)
+              }
+
               this.METADATA.fields[field] = new NGN.DATA.Relationship({
                 record: cfg,
                 model: this
               })
             } else {
               switch (NGN.typeof(cfg)) {
+                // Custom config
                 case 'object':
+                  cfg.model = this
+                  cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
                   this.METADATA.fields[field] = new NGN.DATA.Field(cfg)
                   break
 
+                // Collection of models
                 case 'array':
-                  this.METADATA.fields[field] = this.METADATA.fields[field] = new NGN.DATA.Relationship({
-                    record: cfg,
-                    model: this
-                  })
+                  return this.applyField(field, cfg[0], suppressEvents)
 
+                // Type-based config.
                 default:
+                  if (NGN.isFn(cfg) || cfg === null) {
+                    this.METADATA.fields[field] = new NGN.DATA.Field({
+                      type: cfg,
+                      model: this
+                    })
+
+                    break
+                  }
+
                   this.METADATA.fields[field] = new NGN.DATA.Field({
-                    type: cfg
+                    type: NGN.isFn(cfg) ? cfg : String,
+                    identifier: NGN.isFn(cfg)
+                      ? false
+                      : NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field),
+                    model: this
                   })
 
                   break
               }
             }
+          } else if (cfg.model === null) {
+            cfg.identifier = cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+
+            this.METADATA.fields[field] = cfg
+            this.METADATA.fields[field].model = this
+          } else if (cfg.model === this) {
+            cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+
+            this.METADATA.fields[field] = cfg
+          } else {
+            return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
+          }
+
+          Object.defineProperty(this, field, {
+            get: () => this.METADATA.fields[field].value,
+            set: (value) => this.METADATA.fields[field].value = value
+          })
+
+          if (!suppressEvents) {
+            this.emit('field.create', this.METADATA.fields[field])
           }
         }
       })
@@ -1566,6 +1723,7 @@ class NGNDataStore extends NGN.EventEmitter {
 
   NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
     Rule: NGN.privateconst(NGNDataValidationRule),
+    RangeRule: NGN.privateconst(NGNDataRangeValidationRule),
     Field: NGN.const(NGNDataField),
     VirtualField: NGN.const(NGNVirtualDataField),
     Relationship: NGN.const(NgnRelationshipField),

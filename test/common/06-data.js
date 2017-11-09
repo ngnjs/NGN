@@ -349,6 +349,61 @@ test('NGN.DATA.Model', function (t) {
   var p = new Person()
 
   t.ok(p !== undefined, 'Model instantiation works.')
+  t.ok(
+    p.METADATA.knownFieldNames.has('firstname')
+    && p.METADATA.knownFieldNames.has('lastname')
+    && p.METADATA.knownFieldNames.has('val')
+    && p.METADATA.knownFieldNames.has('testid')
+    && !p.METADATA.knownFieldNames.has('not_a_field'),
+    'Recognized all field names'
+  )
 
-  t.end()
+  var tasks = new TaskRunner()
+
+  tasks.add('Modify Record', function (next) {
+    p.once('field.update', function (change) {
+      t.ok(change.field === 'firstname', 'Event fired for data change.')
+      t.ok(!change.old, 'Old value recognized.')
+      t.ok(change.new === 'Corey', 'New value recognized.')
+
+      next()
+    })
+
+    p.firstname = 'Corey'
+  })
+
+  // tasks.add(function (next) {
+  //
+  // })
+  //
+  // tasks.add(function (next) {
+  //
+  // })
+  //
+  // tasks.add(function (next) {
+  //
+  // })
+  //
+  // tasks.add(function (next) {
+  //
+  // })
+  //
+  // tasks.add(function (next) {
+  //
+  // })
+  //
+  // tasks.add(function (next) {
+  //
+  // })
+  //
+  // tasks.add(function (next) {
+  //
+  // })
+
+  tasks.on('complete', function () {
+    console.log('done?')
+    t.end()
+  })
+
+  tasks.run(true)
 })

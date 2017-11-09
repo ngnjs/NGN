@@ -27,6 +27,9 @@
  * @fires rule.remove {NGN.DATA.Rule}
  * Triggered when a validation rule is removed. The rule is emitted
  * to event handlers.
+ * @fires keystatus.changed {boolean}
+ * Triggered when the key (identifier) status changes. The boolean
+ * payload indicates whether the field is considered an identifier.
  */
 class NGNDataField extends NGN.EventEmitter {
   /**
@@ -50,13 +53,13 @@ class NGNDataField extends NGN.EventEmitter {
 
     super(cfg)
 
-    const INSTANCE = Symbol('datafield')
+    // const INSTANCE = Symbol('datafield')
     const EMPTYDATA = Symbol('empty')
 
     Object.defineProperties(this, {
-      METADATA: NGN.get(() => this[INSTANCE]),
+      // METADATA: NGN.get(() => this[INSTANCE]),
 
-      [INSTANCE]: NGN.privateconst({
+      METADATA: NGN.privateconst({
         /**
          * @cfg {boolean} [required=false]
          * Indicates the value is required.
@@ -146,7 +149,7 @@ class NGNDataField extends NGN.EventEmitter {
          * @cfg {NGN.DATA.Model} [model]
          * Optionally specify the parent model.
          */
-        model: NGN.coalesce(cfg.model)
+        model: null
       })
     })
 
@@ -167,107 +170,14 @@ class NGNDataField extends NGN.EventEmitter {
       this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern, `Pattern Match (${cfg.pattern.toString()})`))
     }
 
-    if (this.METADATA.dataType === Number) {
-      /**
-       * @cfg {Array} [range]
-       * An enumeration of acceptable numeric ranges. For example, if
-       * the value must be between 5-10 or from 25-50, the configuration
-       * would look like:
-       *
-       * ```js
-       * range: [
-       *   [5, 10],
-       *   ['25-50']
-       * ]
-       * ```
-       *
-       * To accept anything below a certain number or anything over a certain
-       * number while also specifying one or more ranges, use a `null` value.
-       *
-       * For example:
-       *
-       * ```js
-       * range: [
-       *   [null, 0],
-       *   [5, 10],
-       *   ['25-50'],
-       *   [100, null]
-       * ]
-       * ```
-       *
-       * The aforementioned example would accept a value less than `zero`,
-       * between `5` and `10`, between `25` and `50`, or over `100`. Therefore,
-       * acceptable values could be `-7`, `7`, `25`, `42`,  `10000`, or anything
-       * else within the ranges. However, the values `3`, `19`, and `62` would
-       * all fail because they're outside the ranges.
-       */
-      if (cfg.hasOwnProperty('range')) {
-        if (cfg.range.length === 2 && NGN.typeof(cfg.range[0]) !== 'array' && NGN.typeof(cfg.range[1]) !== 'array') {
-          cfg.range = [cfg.range]
-        }
-      }
-
+    if (this.METADATA.dataType === Number || this.METADATA.dataType === Date || this.METADATA.dataType === String) {
       if (NGN.objectHasAny(cfg, 'min', 'minimum', 'max', 'maximum')) {
         cfg.range = NGN.forceArray(NGN.coalesce(cfg.range))
-        /**
-         * @cfg {number} [min]
-         * The minimum accepted value.
-         */
-        /**
-         * @cfg {number} [max]
-         * The maximum accepted value.
-         */
         cfg.range.push([NGN.coalesce(cfg.min, cfg.minimum), NGN.coalesce(cfg.max, cfg.maximum)])
       }
 
       if (cfg.hasOwnProperty('range')) {
-        // If a simple range is specified (single array), format it for the rule processor.
-        if (cfg.range.length === 2 && NGN.typeof(cfg.range[0]) !== 'array' && NGN.typeof(cfg.range[1]) !== 'array') {
-          cfg.range = [cfg.range]
-        }
-
-        for (let i = 0; i < cfg.range.length; i++) {
-          if (cfg.range[i][0] !== null && cfg.range[i][1] !== null && cfg.range[i][1] < cfg.range[i][0]) {
-            throw new Error(`Invalid range "${cfg.range[i][0]} -> ${cfg.range[i][1]}". Minimum value cannot exceed maximum.`)
-          }
-        }
-
-        this.METADATA.rules.unshift(new NGN.DATA.Rule(function (value) {
-          for (let i = 0; i < cfg.range.length; i++) {
-            let subrange = cfg.range[i]
-
-            // Make sure there are two elements for the range.
-            if (subrange.length !== 2) {
-              subrange = subrange[0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
-
-              if (subrange.length !== 2) {
-                throw new Error(`Invalid range: "${cfg.range[i]}"`)
-              }
-
-              // Validate both elements of the range
-              if (subrange[0].trim().toLowerCase() === 'null') {
-                subrange[0] = null
-              } else {
-                subrange[0] = NGN.forceNumber(subrange[0])
-              }
-
-              if (subrange[1].trim().toLowerCase() === 'null') {
-                subrange[1] = null
-              } else {
-                subrange[1] = NGN.forceNumber(subrange[1])
-              }
-            }
-
-            let min = subrange[0]
-            let max = subrange[1]
-
-            if ((min !== null && value < min) || (max !== null && value > max)) {
-              return false
-            }
-          }
-
-          return true
-        }, 'Numeric Range'))
+        this.METADATA.rules.unshift(new NGN.DATA.RangeRule('Numeric Range', cfg.range))
       }
     }
 
@@ -292,17 +202,42 @@ class NGNDataField extends NGN.EventEmitter {
       )
     )
 
-    if (this.METADATA.model) {
-      let events = Array.from(this.METADATA.EVENTS.values())
-      events.slice(events.indexOf('update'), 1)
+    if (NGN.coalesce(cfg.model) !== null) {
+      this.model = cfg.model
+    }
+  }
 
-      this.on('update', (payload) => this.commitPayload(payload))
+  /**
+   * @property {NGN.DATA.Model} model
+   * Represents the model/record the field is associated to.
+   * The model may be configured once, after which this property
+   * becomes read-only. This will also be read-only if #model is set
+   * to a valid value.
+   */
+  get model () {
+    return this.METADATA.model
+  }
 
-      for (let i = 0; i < events.length; i++) {
-        this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
+  set model (value) {
+    if (this.METADATA.model === null) {
+      if (value instanceof NGN.DATA.Model) {
+        this.METADATA.model = value
+
+        let events = Array.from(this.METADATA.EVENTS.values())
+        events.slice(events.indexOf('update'), 1)
+
+        this.on('update', (payload) => this.commitPayload(payload))
+
+        for (let i = 0; i < events.length; i++) {
+          this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
+        }
+
+        this.METADATA.model.emit('field.create', this)
+      } else {
+        NGN.WARN('Invalid model.')
       }
-
-      this.METADATA.model.emit('field.create', this)
+    } else {
+      NGN.WARN('Cannot set model multiple times.')
     }
   }
 
@@ -366,6 +301,15 @@ class NGNDataField extends NGN.EventEmitter {
    */
   get identifier () {
     return this.METADATA.isIdentifier
+  }
+
+  set identifier (value) {
+    value = NGN.forceBoolean(value)
+
+    if (value !== this.METADATA.isIdentifier) {
+      this.METADATA.isIdentifier = value
+      this.emit('keystatus.changed', value)
+    }
   }
 
   get name () {
@@ -487,6 +431,10 @@ class NGNDataField extends NGN.EventEmitter {
     return true
   }
 
+  /**
+   * Name of the rule which was violated.
+   * @return {string}
+   */
   get violatedRule () {
     return NGN.coalesce(this.METADATA.violatedRule, 'None')
   }

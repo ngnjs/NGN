@@ -60,6 +60,7 @@ class NgnRelationshipField extends NGNDataField {
 
     this.METADATA.fieldType = 'join'
     this.METADATA.join = Symbol('relationship')
+    this.METADATA.isIdentifier = false
 
     /**
      * @cfg join {NGN.DATA.Store|NGN.DATA.Model[]}
