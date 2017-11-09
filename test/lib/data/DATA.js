@@ -1370,6 +1370,8 @@ class NGNDataModel extends NGN.EventEmitter {
             set: (value) => this.METADATA.fields[field].value = value
           })
 
+          this.METADATA.fields[field].relay('*', this)
+
           if (!suppressEvents) {
             this.emit('field.create', this.METADATA.fields[field])
           }

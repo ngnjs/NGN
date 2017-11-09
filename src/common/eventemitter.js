@@ -25,12 +25,12 @@
     constructor () {
       super()
 
-      const INSTANCE = Symbol('instance')
+      // const INSTANCE = Symbol('instance')
 
       Object.defineProperties(this, {
-        META: NGN.get(() => this[INSTANCE]),
+        // META: NGN.get(() => this[INSTANCE]),
 
-        [INSTANCE]: NGN.privateconst({
+        META: NGN.privateconst({
           queued: {},
           collectionQueue: {},
           thresholdQueue: {},
@@ -351,6 +351,7 @@
          * `anotherEvent`, passing the payload object to `someEvent` and
          * `anotherEvent` subscribers simultaneously.
          *
+         * To forward an event to another EventEmitter, see #relay.
          * @param {String} sourceEvent
          * The event to subscribe to.
          * @param {String|Array} triggeredEvent
@@ -384,6 +385,60 @@
               this.off(eventName, listener)
             }
           }
+        }),
+
+        /**
+         * This relays an entire event to a different event emitter.
+         * For example:
+         *
+         * ```js
+         * let emitterA = new NGN.EventEmitter()
+         * let emitterB = new NGN.EventEmitter()
+         *
+         * emitterA.relay('my.event', emitterB)
+         *
+         * emitterB.on('my.event', () => { console.log('Emitter B heard the event!') })
+         *
+         * emitterA.emit('my.event') // Outputs "Emitter B heard the event!"
+         * ```
+         * @param  {[type]} eventName
+         * The name of the event to listen for.
+         * @param  {[type]} targetEmitter
+         * The emitter to relay the event to.
+         */
+        relay: NGN.const(function (eventName, targetEmitter) {
+          this.on(eventName, function () {
+            targetEmitter.emit(eventName, ...arguments)
+          })
+        }),
+
+        /**
+         * This relays an entire event to a different event emitter. This is
+         * the same as #relay, but the event handler is removed after the
+         * first invocation of the event.
+         *
+         * For example:
+         *
+         * ```js
+         * let emitterA = new NGN.EventEmitter()
+         * let emitterB = new NGN.EventEmitter()
+         *
+         * emitterA.relayOnce('my.event', emitterB)
+         *
+         * emitterB.on('my.event', () => { console.log('Emitter B heard the event!') })
+         *
+         * emitterA.emit('my.event') // Outputs "Emitter B heard the event!"
+         * emitterA.emit('my.event') // Does nothing
+         * ```
+         * @param  {[type]} eventName
+         * The name of the event to listen for.
+         * @param  {[type]} targetEmitter
+         * The emitter to relay the event to.
+         */
+        relayOnce: NGN.const(function (eventName, targetEmitter) {
+          this.once(eventName, function () {
+            targetEmitter.emit(eventName, ...arguments)
+          })
         }),
 
         /**
