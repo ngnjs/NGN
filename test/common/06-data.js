@@ -342,23 +342,32 @@ var meta = function () {
 }
 
 test('NGN.DATA.Model', function (t) {
-  var Person = new NGN.DATA.Model(meta())
-
-  t.ok(typeof Person === 'function', 'Model creation works.')
-
-  var p = new Person()
-
-  t.ok(p !== undefined, 'Model instantiation works.')
-  t.ok(
-    p.METADATA.knownFieldNames.has('firstname')
-    && p.METADATA.knownFieldNames.has('lastname')
-    && p.METADATA.knownFieldNames.has('val')
-    && p.METADATA.knownFieldNames.has('testid')
-    && !p.METADATA.knownFieldNames.has('not_a_field'),
-    'Recognized all field names'
-  )
-
   var tasks = new TaskRunner()
+  var Person
+  var p
+
+  tasks.add('Create model', function (next) {
+    Person = new NGN.DATA.Model(meta())
+    t.ok(typeof Person === 'function', 'Model creation works.')
+    next()
+  })
+
+  tasks.add('Create record', function (next) {
+    p = new Person()
+
+    t.ok(p !== undefined, 'Model instantiation works.')
+
+    t.ok(
+      p.METADATA.knownFieldNames.has('firstname') &&
+      p.METADATA.knownFieldNames.has('lastname') &&
+      p.METADATA.knownFieldNames.has('val') &&
+      p.METADATA.knownFieldNames.has('testid') &&
+      !p.METADATA.knownFieldNames.has('not_a_field'),
+      'Recognized all field names'
+    )
+
+    next()
+  })
 
   tasks.add('Modify Record', function (next) {
     p.once('field.update', function (change) {
@@ -372,8 +381,8 @@ test('NGN.DATA.Model', function (t) {
     p.firstname = 'Corey'
   })
 
-  // tasks.add(function (next) {
-  //
+  // tasks.add('test', function (next) {
+  //   next()
   // })
   //
   // tasks.add(function (next) {

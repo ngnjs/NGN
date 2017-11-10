@@ -30,11 +30,12 @@
       Object.defineProperties(this, {
         // META: NGN.get(() => this[INSTANCE]),
 
-        META: NGN.privateconst({
+        META: NGN.private({
           queued: {},
           collectionQueue: {},
           thresholdQueue: {},
-          defaultTTL: -1
+          defaultTTL: -1,
+          wildcardEvents: new Set()
         }),
 
         /**
@@ -89,8 +90,16 @@
             ttl = this.META.defaultTTL
           }
 
+          if (ttl === undefined) {
+            ttl = this.META.defaultTTL
+          }
+
           if (ttl > 0) {
             setTimeout(() => this.off(eventName, callback), ttl)
+          }
+
+          if (eventName.indexOf('*') >= 0) {
+            this.META.wildcardEvents.add(eventName)
           }
 
           if (prepend) {
@@ -129,14 +138,22 @@
             ttl = this.META.defaultTTL
           }
 
+          if (ttl === undefined) {
+            ttl = this.META.defaultTTL
+          }
+
           if (ttl > 0) {
             setTimeout(() => this.off(eventName, callback), ttl)
+          }
+
+          if (eventName.indexOf('*') >= 0) {
+            this.META.wildcardEvents.add(eventName)
           }
 
           if (prepend) {
             this.prependOnceListener(eventName, callback)
           } else {
-            super.once.apply(this, [eventName, callback])
+            super.once(eventName, this.wrapEventHandlerWithScope(eventName, callback))
           }
         }),
 
@@ -161,14 +178,23 @@
 
           let l = this.listeners(eventName)
 
-          if (l.indexOf(handlerFn) < 0) {
+          if (!NGN.isFn(handlerFn)) {
+            return this.clear(eventName)
+          }
+
+          let wrappedHandlerFn = this.wrapEventHandlerWithScope(eventName, handlerFn)
+
+          if (l.indexOf(wrappedHandlerFn) < 0) {
             for (let i = 0; i < l.length; i++) {
-              if (l[i].toString() === handlerFn.toString()) {
-                this.removeListener(eventName, l[i])
+              if (l[i].toString() === wrappedHandlerFn.toString()) {
+                this.META.wildcardEvents.delete(eventName)
+                // this.removeListener(eventName, handlerFn)
+                this.removeListener(eventName, l[i], false)
                 break
               }
             }
           } else {
+            this.META.wildcardEvents.delete(eventName)
             this.removeListener(eventName, handlerFn)
           }
         }),
@@ -182,10 +208,12 @@
           let events = NGN.slice(arguments)
 
           if (events.length === 0) {
+            this.META.wildcardEvents.clear()
             return this.removeAllListeners()
           }
 
           for (let i = 0; i < events.length; i++) {
+            this.META.wildcardEvents.delete(events[i])
             this.removeAllListeners(events[i])
           }
         }),
@@ -244,13 +272,9 @@
          *
          * NGN.BUS.emit('prefix.deep.nested.eventName') // <-- Outputs "event triggered"
          * ```
-         * @property {Function} [callback]
-         * A callback to run after the entire pool is registered. Receives
-         * a single {Object} argument containing all of the subscribers for
-         * each event registered within the pool.
          * @private
          */
-        pool: NGN.privateconst(function (prefix, group, callback) {
+        pool: NGN.privateconst(function (prefix, group) {
           if (typeof prefix !== 'string') {
             group = prefix
             prefix = ''
@@ -259,7 +283,7 @@
           let pool = {}
 
           for (let eventName in group) {
-            let topic = `${NGN.coalesceb(prefix, '')}${eventName}`
+            let topic = `${NGN.coalesce(prefix, '')}${eventName}`
 
             if (NGN.isFn(group[eventName])) {
               this.increaseMaxListeners()
@@ -270,10 +294,6 @@
             } else {
               NGN.WARN(`${topic} could not be pooled in the event emitter because it's value is not a function.`)
             }
-          }
-
-          if (NGN.isFn(callback)) {
-            callback(pool)
           }
         }),
 
@@ -307,7 +327,7 @@
           preventDefaultAction = NGN.coalesce(preventDefaultAction, false)
 
           return (e) => {
-            if (preventDefaultAction && NGN.isFn(e.preventDefault)) {
+            if (preventDefaultAction && !NGN.nodelike) {
               e.preventDefault()
             }
 
@@ -401,15 +421,25 @@
          *
          * emitterA.emit('my.event') // Outputs "Emitter B heard the event!"
          * ```
-         * @param  {[type]} eventName
+         * @param  {string} eventName
          * The name of the event to listen for.
-         * @param  {[type]} targetEmitter
+         * @param  {NGN.EventEmitter} targetEmitter
          * The emitter to relay the event to.
+         * @param {string} [prefix]
+         * An optional prefix to prepend to the eventName.
+         * @param {string} [postfix]
+         * An optional postfix to append to the eventName.
          */
-        relay: NGN.const(function (eventName, targetEmitter) {
-          this.on(eventName, function () {
-            targetEmitter.emit(eventName, ...arguments)
-          })
+        relay: NGN.const(function (eventName, targetEmitter, prefix = null, postfix = null) {
+          let eventNameList = NGN.forceArray(eventName)
+
+          for (let i = 0; i < eventNameList.length; i++) {
+            let eventName = eventNameList[i]
+
+            this.on(eventName, function () {
+              targetEmitter.emit(`${NGN.coalesce(prefix, '')}${this.event}${NGN.coalesce(postfix, '')}`, ...arguments)
+            })
+          }
         }),
 
         /**
@@ -430,15 +460,25 @@
          * emitterA.emit('my.event') // Outputs "Emitter B heard the event!"
          * emitterA.emit('my.event') // Does nothing
          * ```
-         * @param  {[type]} eventName
+         * @param  {string} eventName
          * The name of the event to listen for.
-         * @param  {[type]} targetEmitter
+         * @param  {NGN.EventEmitter} targetEmitter
          * The emitter to relay the event to.
+         * @param {string} [prefix]
+         * An optional prefix to prepend to the eventName.
+         * @param {string} [postfix]
+         * An optional postfix to append to the eventName.
          */
-        relayOnce: NGN.const(function (eventName, targetEmitter) {
-          this.once(eventName, function () {
-            targetEmitter.emit(eventName, ...arguments)
-          })
+        relayOnce: NGN.const(function (eventName, targetEmitter, prefix = null, postfix = null) {
+          let eventNameList = NGN.forceArray(eventName)
+
+          for (let i = 0; i < eventNameList.length; i++) {
+            let eventName = eventNameList[i]
+
+            this.once(eventName, function () {
+              targetEmitter.emit(`${NGN.coalesce(prefix, '')}${this.event}${NGN.coalesce(postfix, '')}`, ...arguments)
+            })
+          }
         }),
 
         /**
@@ -538,15 +578,16 @@
          * @private
          */
         getInternalCollectionId: NGN.privateconst(function (collection) {
-          let time = (new Date()).getTime().toString()
-          let rand = Math.random().toString()
-          let key = Object.keys(collection).length + 1
-
-          while (collection.hasOwnProperty(`${key.toString()}${time}${rand}`)) {
-            key++
-          }
-
-          return `${key.toString()}${time}${rand}`
+          return Symbol(collection)
+          // let time = (new Date()).getTime().toString()
+          // let rand = Math.random().toString()
+          // let key = Object.keys(collection).length + 1
+          //
+          // while (collection.hasOwnProperty(`${key.toString()}${time}${rand}`)) {
+          //   key++
+          // }
+          //
+          // return `${key.toString()}${time}${rand}`
         }),
 
         /**
@@ -746,7 +787,8 @@
             throw new Error('The threshold event name must be a string (received ' + (typeof thresholdEventName) + ')')
           }
 
-          let key = `${this.getInternalCollectionId(this.META.thresholdQueue)}${limit.toString()}`
+          // let key = `${this.getInternalCollectionId(this.META.thresholdQueue)}${limit.toString()}`
+          let key = this.getInternalCollectionId(this.META.thresholdQueue)
 
           this.META.thresholdQueue[key] = {}
 
@@ -812,8 +854,84 @@
               }
             }, 0)
           }
+        }),
+
+        /**
+         * An internal method to wrap node-based event handlers
+         * with the proper scope.
+         * @param {string} eventName
+         * The name of the event being handled.
+         * @param {function} handlerFn
+         * The handler function.
+         */
+        wrapEventHandlerWithScope: NGN.privateconst((name, fn) => {
+          if (!NGN.nodelike) {
+            return fn
+          }
+
+          const handlerFn = fn
+
+          return function () {
+            let args = arguments
+
+            if (typeof args[args.length - 1] === 'symbol') {
+              name = args[args.length - 1].toString().replace(/Symbol\(|\)/gi, '')
+              args = NGN.slice(args)
+              args.pop()
+            }
+
+            handlerFn.apply({ event: name }, args)
+          }
+        }),
+
+        /**
+         * An internal method to apply scope based on whether the handler
+         * is a Node-like "once" emitter or not.
+         * @param {string} eventName
+         * The name of the event being scoped.
+         * @param {function} handlerFn
+         * The handler function.
+         */
+        applyScope: NGN.privateconst((args) => {
+          if (NGN.nodelike && args.length > 1) {
+            if (args[args.length - 1].listener) {
+              args[args.length - 1].listener = this.wrapEventHandlerWithScope(
+                args[0],
+                args[args.length - 1].listener
+              )
+            } else {
+              args[args.length - 1] = this.wrapEventHandlerWithScope(
+                args[0],
+                args[args.length - 1]
+              )
+            }
+          }
         })
       })
+    }
+
+    // The following methods override the Node event emitter only when necessary.
+    prependListener () {
+      this.applyScope(arguments)
+      super.prependListener(...arguments)
+    }
+
+    prependOnceListener () {
+      this.applyScope(arguments)
+      super.prependOnceListener(...arguments)
+    }
+
+    addListener () {
+      this.applyScope(arguments)
+      super.addListener(...arguments)
+    }
+
+    removeListener () {
+      if (arguments[arguments.length - 1] !== true) {
+        this.applyScope(arguments)
+      }
+
+      super.removeListener(...arguments)
     }
 
     /**
@@ -827,15 +945,55 @@
      * An optional payload. This can be any number of additional arguments.
      */
     emit () {
+      // This catches non-string event names. NGN internally uses Symbols
+      // for the NGN.WARN/INFO/ERROR event names to prevent name collisions.
+      // This check provides support for these special events. These types
+      // of events will never have wildcards.
+      if (!arguments[0]) {
+        super.emit(...arguments)
+        return
+      }
+
       if (NGN.typeof(arguments[0]) === 'array') {
         let args = NGN.slice(arguments)
         let eventNames = args.shift()
 
         for (let i = 0; i < eventNames.length; i++) {
-          super.emit(eventNames[i], ...args)
+          this.emit(eventNames[i], ...args)
         }
       } else {
-        super.emit(...arguments)
+        /**
+         * The NGN browser-based event emitter supports wildcards natively, but
+         * Node.js does not. This adds simple wildcard support for Node. The
+         * only wildcard character supported at this time is `*`. This feature
+         * will check the event name for the existance of a wildcard. If a
+         * wilcard character is present, the internally-maintained list of
+         * wildcard events is checked to see if it's a known event. If none
+         * of these checks pass, the standard event emitter is used, otherwise
+         * special wildcard handling is used.
+         */
+        if (!NGN.nodelike || this.META.wildcardEvents.size === 0) {
+          super.emit(...arguments)
+        } else {
+          let iterator = this.META.wildcardEvents.values()
+          let currentEvent = iterator.next()
+          let args = NGN.slice(arguments)
+
+          args.shift()
+
+          while (!currentEvent.done) {
+            if (currentEvent.value !== arguments[0]) {
+              let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/gi, '.*'), 'g')
+
+              if (pattern.test(arguments[0])) {
+                super.emit(currentEvent.value, ...args, Symbol(arguments[0]))
+                break
+              }
+            }
+
+            currentEvent = iterator.next()
+          }
+        }
       }
     }
   }

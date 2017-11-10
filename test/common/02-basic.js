@@ -4,6 +4,10 @@ const test = require('tape')
 // otherwise the lib directory will not exist.
 
 require('../lib/core')
+require('../lib/eventemitter')
+require('../lib/net/NET')
+require('../lib/data/DATA')
+require('../lib/tasks/bootstrap')
 
 const isEnumerable = (obj, property) => {
   return Object.keys(obj).indexOf(property) >= 0

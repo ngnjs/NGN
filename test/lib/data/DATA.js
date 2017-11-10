@@ -592,7 +592,8 @@ class NGNDataField extends NGN.EventEmitter {
     }
 
     let change = {
-      old: this.METADATA.RAW,
+      field: this.METADATA.name,
+      old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
       new: value
     }
 
@@ -1314,6 +1315,7 @@ class NGNDataModel extends NGN.EventEmitter {
               }
 
               this.METADATA.fields[field] = new NGN.DATA.Relationship({
+                name: field,
                 record: cfg,
                 model: this
               })
@@ -1323,7 +1325,10 @@ class NGNDataModel extends NGN.EventEmitter {
                 case 'object':
                   cfg.model = this
                   cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+                  cfg.name = field
+
                   this.METADATA.fields[field] = new NGN.DATA.Field(cfg)
+
                   break
 
                 // Collection of models
@@ -1334,6 +1339,7 @@ class NGNDataModel extends NGN.EventEmitter {
                 default:
                   if (NGN.isFn(cfg) || cfg === null) {
                     this.METADATA.fields[field] = new NGN.DATA.Field({
+                      name: field,
                       type: cfg,
                       model: this
                     })
@@ -1342,6 +1348,7 @@ class NGNDataModel extends NGN.EventEmitter {
                   }
 
                   this.METADATA.fields[field] = new NGN.DATA.Field({
+                    name: field,
                     type: NGN.isFn(cfg) ? cfg : String,
                     identifier: NGN.isFn(cfg)
                       ? false
@@ -1353,6 +1360,7 @@ class NGNDataModel extends NGN.EventEmitter {
               }
             }
           } else if (cfg.model === null) {
+            cfg.name = field
             cfg.identifier = cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
 
             this.METADATA.fields[field] = cfg
@@ -1370,7 +1378,7 @@ class NGNDataModel extends NGN.EventEmitter {
             set: (value) => this.METADATA.fields[field].value = value
           })
 
-          this.METADATA.fields[field].relay('*', this)
+          this.METADATA.fields[field].relay('*', this, 'field.')
 
           if (!suppressEvents) {
             this.emit('field.create', this.METADATA.fields[field])

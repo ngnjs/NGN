@@ -358,7 +358,8 @@ class NGNDataField extends NGN.EventEmitter {
     }
 
     let change = {
-      old: this.METADATA.RAW,
+      field: this.METADATA.name,
+      old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
       new: value
     }
 

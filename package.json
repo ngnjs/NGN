@@ -7,7 +7,12 @@
     "test:build": "gulp test:clean && gulp test:build",
     "test:node": "npm run test:build && nyc tape ./test/common/*.js --coverage | tap-spec && standard --verbose | tap-nyc | snazzy && npm run cover",
     "test:browser": "npm run test:build && karma start karma.conf.js ",
+    "test:node:sanity": "npm run test:build && tape ./test/common/*-sanity.js | tap-spec && standard --verbose | tap-nyc | snazzy",
+    "test:node:basic": "npm run test:build && tape ./test/common/*-basic.js | tap-spec && standard --verbose | tap-nyc | snazzy",
+    "test:node:net": "npm run test:build && tape ./test/common/*-net.js | tap-spec && standard --verbose | tap-nyc | snazzy",
     "test:node:data": "npm run test:build && tape ./test/common/*-data.js | tap-spec && standard --verbose | tap-nyc | snazzy",
+    "test:node:events": "npm run test:build && tape ./test/common/*-event*.js | tap-spec && standard --verbose | tap-nyc | snazzy",
+    "test:node:tasks": "npm run test:build && tape ./test/common/*-tasks.js | tap-spec && standard --verbose | tap-nyc | snazzy",
     "coverage": "nyc tape ./test/common/*.js | tap-nyc",
     "coverage:report": "nyc report --reporter=html",
     "cover": "npm run coverage && npm run coverage:report"

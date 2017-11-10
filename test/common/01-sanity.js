@@ -6,6 +6,7 @@ const test = require('tape')
 require('../lib/core')
 require('../lib/eventemitter')
 require('../lib/net/NET')
+require('../lib/data/DATA')
 require('../lib/tasks/bootstrap')
 
 test('Namespace', (t) => {

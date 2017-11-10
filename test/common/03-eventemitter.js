@@ -92,7 +92,7 @@ test('NGN.EventEmitter Basic Events', function (t) {
     this.timeout(1000)
 
     let handlerFn = function (payload) {
-      t.fail('One-time event triggered even though it was removed.')
+      t.fail('One-time event triggered even though it was supposed to be removed.')
       next()
     }
 
@@ -127,9 +127,9 @@ test('NGN.EventEmitter Basic Events', function (t) {
   })
 
   tasks.add('pool()', function (next) {
-    this.timeout(1500)
+    NGN.BUS.clear()
 
-    let count = 0
+    var count = 0
 
     NGN.BUS.pool('test.', {
       a: function (payload) {
@@ -153,6 +153,78 @@ test('NGN.EventEmitter Basic Events', function (t) {
         next()
       }
     })
+
+    t.ok(NGN.BUS.eventNames().length === 3, 'Correct number of events added using a prefixed pool.')
+
+    NGN.BUS.emit('test.a')
+  })
+
+  tasks.add('pool() w/nesting', function (next) {
+    NGN.BUS.clear()
+
+    var count = 0
+
+    NGN.BUS.pool({
+      test: {
+        a: function (payload) {
+          count++
+
+          if (count === 2) {
+            t.pass('Handler triggered on unprefixed scoped event pool emissions.')
+            return NGN.BUS.emit('test.c')
+          }
+
+          NGN.BUS.emit('test.b')
+        },
+
+        b: function () {
+          NGN.BUS.emit('test.a')
+        },
+
+        c: function () {
+          t.pass('Handler triggered on pooled event emissions.')
+          NGN.BUS.clear()
+          next()
+        }
+      }
+    })
+
+    t.ok(NGN.BUS.eventNames().length === 3, 'Correct number of events added using a nested pool.')
+
+    NGN.BUS.emit('test.a')
+  })
+
+  tasks.add('pool() w/callback', function (next) {
+    NGN.BUS.clear()
+
+    var count = 0
+
+    NGN.BUS.pool({
+      test: {
+        a: function (payload) {
+          count++
+
+          if (count === 2) {
+            t.pass('Handler triggered on unprefixed scoped event pool emissions.')
+            return NGN.BUS.emit('test.c')
+          }
+
+          NGN.BUS.emit('test.b')
+        },
+
+        b: function () {
+          NGN.BUS.emit('test.a')
+        },
+
+        c: function () {
+          t.pass('Handler triggered on pooled event emissions.')
+          NGN.BUS.clear()
+          next()
+        }
+      }
+    })
+
+    t.ok(NGN.BUS.eventNames().length === 3, 'Correct number of events added using a nested pool.')
 
     NGN.BUS.emit('test.a')
   })
@@ -250,6 +322,47 @@ test('NGN.EventEmitter Basic Events', function (t) {
     NGN.BUS.delayEmit('c', 200)
   })
 
+  tasks.add('relay()', function (next) {
+    var ct = 0
+    var emitterA = new NGN.EventEmitter()
+    var emitterB = new NGN.EventEmitter()
+
+    emitterA.relay('event', emitterB, 'my.', '.name')
+
+    emitterB.on('my.event.name', function () {
+      ct += 1
+    })
+
+    emitterA.emit('event')
+    emitterA.emit('event')
+
+    setTimeout(function () {
+      t.ok(ct === 2, 'Relayed established from one event emitter to another.')
+      next()
+    }, 500)
+  })
+
+  tasks.add('relayOnce()', function (next) {
+    var ct = 0
+    var emitterA = new NGN.EventEmitter()
+    var emitterB = new NGN.EventEmitter()
+
+    emitterA.relayOnce('event', emitterB, 'my.', '.name')
+
+    emitterB.on('my.event.name', function () {
+      ct += 1
+    })
+
+    emitterA.emit('event')
+    emitterA.emit('event')
+    emitterA.emit('event')
+
+    setTimeout(function () {
+      t.ok(ct === 1, 'Relay only executed once.')
+      next()
+    }, 500)
+  })
+
   tasks.add('threshold()', function (next) {
     this.timeout(1000)
 
@@ -313,7 +426,7 @@ test('NGN.EventEmitter Basic Events', function (t) {
   tasks.run(true)
 })
 
-test('Multievent Capability', function (t) {
+test('Multievent Emission Capability', function (t) {
   NGN.BUS.clear()
 
   let ct = 0
@@ -335,7 +448,73 @@ test('Multievent Capability', function (t) {
   NGN.BUS.delayEmit('done', 300)
 })
 
-test('EventEmitter TTL Capability', function (t) {
+test('Multievent Handling Capability', function (t) {
+  NGN.BUS.clear()
+
+  let ct = 0
+
+  // The TTL and prepend arguments provided are unnecessary for
+  // testing, but are necessary for code-coverage.
+  NGN.BUS.on(['test.a', 'test.b'], function () {
+    ct += 1
+  }, 1000, true)
+
+  NGN.BUS.once('done', function () {
+    t.ok(ct === 2, 'The correct number of events were triggered.')
+    t.end()
+  })
+
+  NGN.BUS.emit('test.a')
+  NGN.BUS.emit('test.b')
+  NGN.BUS.delayEmit('done', 300)
+})
+
+test('Multievent Handling Capability (One-time events)', function (t) {
+  NGN.BUS.clear()
+
+  let ct = 0
+
+  // The TTL and prepend arguments provided are unnecessary for
+  // testing, but are necessary for code-coverage.
+  NGN.BUS.once(['test.a', 'test.b'], function () {
+    ct += 1
+  }, 1000, true)
+
+  NGN.BUS.once('done', function () {
+    t.ok(ct === 2, 'The correct number of events were triggered.')
+    t.end()
+  })
+
+  NGN.BUS.emit('test.a')
+  NGN.BUS.emit('test.b')
+  NGN.BUS.delayEmit('done', 300)
+})
+
+test('EventEmitter TTL Capability (All Events)', function (t) {
+  NGN.BUS.clear()
+  NGN.BUS.setTTL(0)
+
+  t.ok(NGN.BUS.META.defaultTTL === -1, 'Setting TTL to 0 fails')
+
+  NGN.BUS.setTTL(300)
+
+  let ct = 0
+
+  NGN.BUS.on('ttl.test', function () {
+    ct += 1
+  })
+
+  setTimeout(() => {
+    NGN.BUS.setTTL(-1)
+    t.ok(ct === 1, 'Successfully removed event handler after TTL elapsed.')
+    t.end()
+  }, 900)
+
+  NGN.BUS.emit('ttl.test')
+  NGN.BUS.delayEmit('ttl.test', 600)
+})
+
+test('EventEmitter TTL Capability (Individual Events)', function (t) {
   NGN.BUS.clear()
 
   let ct = 0
@@ -351,4 +530,62 @@ test('EventEmitter TTL Capability', function (t) {
 
   NGN.BUS.emit('ttl.test')
   NGN.BUS.delayEmit('ttl.test', 600)
+})
+
+test('Wilcard Support', function (t) {
+  NGN.BUS.clear()
+
+  var ct = 0
+
+  NGN.BUS.on('test.*', function () { ct += 1 })
+  NGN.BUS.once('testing.*', function () { ct += 1 })
+
+  t.ok(NGN.BUS.eventNames().length === 2, 'Correctly registered wildcard events.')
+
+  NGN.BUS.emit('test.a')
+  NGN.BUS.emit('test.b')
+  NGN.BUS.emit('testing.something')
+
+  setTimeout(function () {
+console.log(ct)    
+    t.ok(ct === 3, 'Fired the correct number of events.')
+    t.ok(NGN.BUS.eventNames().length === 1, 'Standard and adhoc events triggered and removed appropriately.')
+
+    NGN.BUS.off('test.*')
+    t.ok(NGN.BUS.eventNames().length === 0, 'Removed wildcard events successfully.')
+
+    t.end()
+  }, 500)
+})
+
+test('EventEmitter Special Cases', function (t) {
+  NGN.BUS.clear()
+
+  var handler = console.log('')
+
+  // Removing multiple events simultaneously
+  NGN.BUS.on('a', () => handler)
+  NGN.BUS.on('b', () => handler)
+
+  if (NGN.BUS.eventNames().length !== 2) {
+    t.fail('Failed to add all events.')
+  }
+
+  NGN.BUS.off(['a', 'b'])
+
+  t.ok(NGN.BUS.eventNames().length === 0, 'Successfully removed events via array (no handler).')
+
+  // Removing multiple events with the specified event handler
+  NGN.BUS.on('a.*', () => handler)
+  NGN.BUS.on('b.*', () => handler)
+
+  if (NGN.BUS.eventNames().length !== 2) {
+    t.fail('Failed to add all events.')
+  }
+
+  NGN.BUS.off(['a.*', 'b.*'], handler)
+
+  t.ok(NGN.BUS.eventNames().length === 0, 'Successfully removed events via array (with handler).')
+
+  t.end()
 })
