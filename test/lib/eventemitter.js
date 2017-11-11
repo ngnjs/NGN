@@ -354,7 +354,7 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
       if (NGN.typeof(event) === 'regexp' || event.indexOf('*') >= 0) {
         // Convert wildcard events to a regular expression.
         if (NGN.typeof(event) !== 'regexp') {
-          event = new RegExp(event.replace('*', '.*', 'gi'))
+          event = new RegExp(event.replace(/\./g, '\\.').replace(/\*/g, '.*'), 'g')
         }
         // If the event name matches the event, keep it.
         return event.test(eventName)
@@ -1344,7 +1344,7 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
 
           while (!currentEvent.done) {
             if (currentEvent.value !== arguments[0]) {
-              let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/gi, '.*'), 'g')
+              let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/g, '.*'), 'g')
 
               if (pattern.test(arguments[0])) {
                 super.emit(currentEvent.value, ...args, Symbol(arguments[0]))

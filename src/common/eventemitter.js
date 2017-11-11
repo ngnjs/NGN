@@ -983,7 +983,7 @@
 
           while (!currentEvent.done) {
             if (currentEvent.value !== arguments[0]) {
-              let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/gi, '.*'), 'g')
+              let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/g, '.*'), 'g')
 
               if (pattern.test(arguments[0])) {
                 super.emit(currentEvent.value, ...args, Symbol(arguments[0]))
