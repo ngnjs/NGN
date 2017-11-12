@@ -2,6 +2,289 @@
   // [PARTIAL]
 
 /**
+ * @class NGN.DATA.TransactionLog
+ * The transaction log is a history/changelog. It can be used to revert values
+ * to a prior state or (in limited cases) restore values.
+ *
+ * The transaction log is based on a commit log and cursor. The commit log
+ * is an ordered list of values. The cursor is a position within the log.
+ *
+ * **How it Works:**
+ *
+ * The most common purpose of a transaction log is to revert changes (undo).
+ * This is accomplished with the #rollback method.
+ *
+ * The #rollback method does not remove records, nor does the #advance.
+ * The methods repositions the log cursor. Only #commit activities actually
+ * modify the log.
+ *
+ * For example, a log containing 5 committed records will have the cursor set to
+ * the latest entry by default:
+ *
+ * ```
+ * [1, 2, 3, 4, 5]
+ *              ^
+ * ```
+ *
+ * Executing rollback(2) moves the cursor "back" two positions, from `5` to
+ * `3`.
+ *
+ * ```
+ * [1, 2, 3, 4, 5]
+ *        ^
+ * ```
+ *
+ * At this point, no records have been removed. It would still be
+ * possible to #advance the cursor forward to `4` or `5`. However; once a
+ * #commit is executed, all logs _after_ the cursor are removed before the new
+ * transaction is committed to the log.
+ *
+ * ```
+ * [1, 2, 3] // Commit removes [4, 5]
+ *        ^
+ *
+ * [1, 2, 3, 6] // Commit commits new entry and advances cursor.
+ *           ^
+ * ```
+ *
+ * It is also possible to immediately #flush the log without requiring a new
+ * #commit. This will immediately remove all log entries after the
+ * current cursor position.
+ */
+class NGNTransactionLog extends NGN.EventEmitter {
+  constructor () {
+    super()
+
+    Object.defineProperties(this, {
+      METADATA: NGN.private({
+        transaction: {},
+        changeOrder: [],
+        cursor: null
+      })
+    })
+  }
+
+  get length () {
+    return this.METADATA.changeOrder.length
+  }
+
+  /**
+   * @property {Symbol} cursor
+   * Returns the active cursor of the log.
+   */
+  get cursor () {
+    return this.METADATA.cursor
+  }
+
+  /**
+   * Add a new value to the transaction log.
+   * @param {Any} value
+   * The value to assign to the log (record).
+   * @return {Number}
+   * Returns the transaction number
+   * @fires log {Symbol}
+   * Fires a log event with the transaction ID (symbol) for reference.
+   */
+  commit (value) {
+    let id = Symbol()
+
+    this.METADATA.transaction[id] = [
+      new Date(),
+      value
+    ]
+
+    this.flush()
+
+    this.METADATA.changeOrder.push(id)
+    this.METADATA.cursor = id
+
+    this.emit('log', id, 'test')
+
+    return id
+  }
+
+  /**
+   * Return the entry for the specified commit ID.
+   * @param  {Symbol} id
+   * The transaction ID.
+   * @return {Object}
+   * Returns an object with `timestamp` and `value` keys.
+   */
+  getCommit (id = null) {
+    if (!this.METADATA.transaction.hasOwnProperty(id)) {
+      return undefined
+    }
+
+    return {
+      timestamp: this.METADATA.transaction[id][0],
+      value: this.METADATA.transaction[id][1]
+    }
+  }
+
+  /**
+   * Remove all transaction log entries from the current cursor onward.
+   */
+  flush () {
+    if (this.METADATA.cursor === null) {
+      return
+    }
+
+    let position = this.METADATA.changeOrder.indexOf(this.METADATA.cursor)
+
+    // If the whole log is cleared, reset it silently.
+    if (position === 0) {
+      return
+    }
+
+    let removedEntries = this.METADATA.changeOrder.splice(position + 1)
+
+    for (let i = 0; i < removedEntries.length; i++) {
+      delete this.METADATA.transaction[removedEntries[i]]
+    }
+
+    this.METADATA.cursor = this.METADATA.changeOrder[this.METADATA.changeOrder.length - 1]
+  }
+
+  /**
+   * Rollback the log to the specified index/cursor.
+   * @param  {Number|Symbol} [index=1]
+   * The index may be a number or a commit ID (symbol).
+   *
+   * **Specifying a number** will rollback the log by the specified number of
+   * commits. By default, the index is `1`, which is the equivalent of a simple
+   * "undo" operation. Specifying `2` would "undo" two operations. Values less
+   * than or equal to zero are ignored. Values greater than the total number of
+   * committed transactions trigger a reset.
+   *
+   * **Specifying a symbol** will rollback the log to the specified commit log
+   * (the symbol is the commit log ID).
+   * @fires rollback {Object}
+   * This fires a `rollback` event containing the active cursor.
+   * @return {Symbol}
+   * Returns the active cursor upon completion of rollback.
+   */
+  rollback (index = 1) {
+    // If the log is empty, ignore the rollback
+    if (this.METADATA.changeOrder.length === 0) {
+      return null
+    }
+
+    if (index >= this.METADATA.changeOrder.length) {
+      this.METADATA.cursor = this.METADATA.changeOrder[0]
+    } else {
+      // Make sure the index is a symbol
+      if (typeof index === 'number') {
+        if (index <= 0) {
+          return this.METADATA.cursor
+        }
+
+        let currentPosition = this.METADATA.changeOrder.indexOf(this.METADATA.cursor)
+        currentPosition -= index
+
+        if (currentPosition <= 0) {
+          return this.METADATA.changeOrder[0]
+        }
+
+        index = this.METADATA.changeOrder[currentPosition]
+      }
+
+      this.METADATA.cursor = index
+    }
+
+    this.emit('rollback', this.METADATA.cursor, null)
+
+    return this.METADATA.cursor
+  }
+
+  /**
+   * Advance the log to the specified index/cursor.
+   * @param  {Number|Symbol} [index=1]
+   * The index may be a number or a commit ID (symbol).
+   *
+   * **Specifying a number** will advance the log by the specified number of
+   * commits. By default, the index is `1`, which is the equivalent of a simple
+   * "redo" operation. Specifying `2` would "redo" two operations. Values less
+   * than or equal to zero are ignored. Values greater than the total number of
+   * committed transactions will advance the cursor to the last entry.
+   *
+   * **Specifying a symbol** will advance the log to the specified commit log
+   * record (the symbol is the commit log ID).
+   * @fires advance {Object}
+   * This fires a `advance` event containing the active cursor.
+   * @return {Symbol}
+   * Returns the active cursor upon completion of rollback.
+   */
+  advance (index = 1) {
+    // If the log is empty, ignore the rollback
+    if (this.METADATA.changeOrder.length === 0) {
+      return null
+    }
+
+    // Make sure the index is a symbol
+    if (typeof index === 'number') {
+      if (index <= 0) {
+        return this.METADATA.cursor
+      }
+
+      let currentPosition = this.METADATA.changeOrder.indexOf(this.METADATA.cursor)
+      currentPosition += index
+
+      if (currentPosition >= this.METADATA.changeOrder.length) {
+        currentPosition = this.METADATA.changeOrder.length - 1
+      }
+
+      index = this.METADATA.changeOrder[currentPosition]
+    }
+
+    this.METADATA.cursor = index
+
+    this.emit('advance', this.METADATA.cursor, null)
+
+    return index
+  }
+
+  /**
+   * Clear the transaction log.
+   */
+  reset (suppressEvents = false) {
+    this.METADATA.transaction = {}
+    this.METADATA.changeOrder = []
+    this.METADATA.cursor = null
+
+    if (!suppressEvents) {
+      this.emit('reset')
+    }
+  }
+
+  /**
+   * @property {Array} log
+   * Returns the entire log, in ascending historical order (oldest first).
+   * This may be a time-consuming operation if the log is large.
+   *
+   * **Example:**
+   *
+   * ```js
+   * [{
+   *   timestamp: Date,
+   *   value: 'some value'
+   * },{
+   *   timestamp: Date,
+   *   value: 'some other value'
+   * }]
+   */
+  get log () {
+    return this.METADATA.changeOrder.map(entry => {
+      return {
+        timestamp: this.METADATA.transaction[entry][0],
+        value: this.METADATA.transaction[entry][1]
+      }
+    })
+  }
+}
+
+  // [PARTIAL]
+
+/**
   * @class NGN.DATA.Rule
   * A data validation rule.
   * @param {String} field
@@ -31,9 +314,7 @@ class NGNDataValidationRule {
     const type = NGN.typeof(validation)
 
     Object.defineProperties(this, {
-      RULE: NGN.get(() => this[RULE_INSTANCE]),
-
-      [RULE_INSTANCE]: NGN.private({
+      RULE: NGN.private({
         type: type,
         validator: validation,
         name: NGN.coalesce(name, `Untitled ${type.toUpperCase()} Validation`),
@@ -135,8 +416,28 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
 
     this.RULE.prepareRange = function (value) {
       // If a simple range is specified (single array), format it for the rule processor.
-      if (value.length === 2 && NGN.typeof(value[0]) !== 'array' && NGN.typeof(value[1]) !== 'array') {
+      value = NGN.forceArray(value)
+
+      if (NGN.typeof(value[0]) !== 'array') {
         value = [value]
+      }
+
+      for (let i = 0; i < value.length; i++) {
+        if (value[i].length !== 2) {
+          if (NGN.typeof(value[i][0]) !== 'string') {
+            throw new Error(`Invalid range: "${value[i].toString()}"`)
+          }
+
+          value[i] = value[i][0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
+        }
+
+        if (NGN.typeof(value[i][0]) !== 'number') {
+          value[i][0] = NGN.coalesce(value[i][0], '').replace(/null|none|any/gi, '')
+        }
+
+        if (NGN.typeof(value[i][1]) !== 'number') {
+          value[i][1] = NGN.coalesce(value[i][1], '').replace(/null|none|any/gi, '')
+        }
       }
 
       return value
@@ -148,50 +449,27 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
 
     // Create the validation function.
     this.RULE.validator = (value) => {
-      let range = Array.from(this.RULE.range.values())
+      let isString = NGN.typeof(value) === 'string'
+      let range = this.range
+
       for (let i = 0; i < range.length; i++) {
-        let subrange = range[i]
+        let min = NGN.coalesceb(range[i][0], isString ? value.length : value)
+        let max = NGN.coalesceb(range[i][1], isString ? value.length : value)
 
-        // Make sure there are two elements for the range.
-        if (subrange.length !== 2) {
-          subrange = subrange[0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
-
-          if (subrange.length !== 2) {
-            throw new Error(`Invalid range: "${this.RULE.range[i]}"`)
-          }
-
-          // Validate both elements of the range
-          if (subrange[0].trim().toLowerCase() === 'null') {
-            subrange[0] = null
-          } else {
-            subrange[0] = NGN.forceNumber(subrange[0])
-          }
-
-          if (subrange[1].trim().toLowerCase() === 'null') {
-            subrange[1] = null
-          } else {
-            subrange[1] = NGN.forceNumber(subrange[1])
-          }
-        }
-
-        let min = subrange[0]
-        let max = subrange[1]
-
-        if (NGN.typeof(value) === 'string') {
-          if ((min !== null && value.length < min) || (max !== null && value.length > max)) {
-            return false
-          }
-        } else if ((min !== null && value < min) || (max !== null && value > max)) {
-          return false
+        if (
+          (isString && value.length >= min && value.length <= max) ||
+          (!isString && value >= min && value <= max)
+        ) {
+          return true
         }
       }
 
-      return true
+      return false
     }
   }
 
   get range () {
-    return this.RULE.range.values()
+    return Array.from(this.RULE.range.values())
   }
 
   set range (value) {
@@ -209,7 +487,7 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
     value = this.RULE.prepareRange(value)
 
     for (let i = 0; i < value.length; i++) {
-      if (value[i][0] !== null && value[i][1] !== null && value[i][1] < value[i][0]) {
+      if (NGN.coalesceb(value[i][0]) !== null && NGN.coalesceb(value[i][1]) !== null && value[i][1] < value[i][0]) {
         throw new Error(`Invalid value "${value[i][0].toString()} -> ${value[i][1].toString()}". Minimum value cannot exceed maximum.`)
       }
 
@@ -224,10 +502,15 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
    * also acceptable, such as `[[min1, max1], [min2, max2]]`.
    */
   removeRange (value) {
+    let range = this.range
     value = this.RULE.prepareRange(value)
 
     for (let i = 0; i < value.length; i++) {
-      this.RULE.range.delete(value[i])
+      for (let x = 0; x < range.length; x++) {
+        if (value[i].toString() === range[x].toString()) {
+          this.RULE.range.delete(range[x])
+        }
+      }
     }
   }
 }
@@ -380,10 +663,73 @@ class NGNDataField extends NGN.EventEmitter {
         ]),
 
         /**
+         * @cfg {boolean} [audit=false]
+         * Enable auditing to support #undo/#redo operations. This creates and
+         * manages a NGN.DATA.TransactionLog.
+         */
+        AUDITABLE: NGN.coalesce(cfg.audit, false),
+        AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
+
+        /**
          * @cfg {NGN.DATA.Model} [model]
          * Optionally specify the parent model.
          */
-        model: null
+        model: null,
+
+        setValue: (value, suppressEvents = false) => {
+          // Ignore changes when the value hasn't been modified.
+          if (value === this.value) {
+            return
+          }
+
+          // Attempt to auto-correct input when possible.
+          if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
+            value = this.autoCorrectValue(value)
+          }
+
+          let change = {
+            field: this.METADATA.name,
+            old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
+            new: value
+          }
+
+          let priorValueIsValid = this.valid
+
+          this.METADATA.RAW = value
+
+          // Notify when an invalid value is detected.
+          if (!this.valid) {
+            // If invalid values are explicitly prohibited, throw an error.
+            // The value is rolled back before throwing the error so developers may
+            // catch the error and continue processing.
+            if (!this.METADATA.allowInvalid) {
+              this.METADATA.RAW = change.old
+              throw new Error(`"${value}" did not pass the ${this.METADATA.violatedRule} rule.`)
+            } else {
+              change.reason = `"${value}" did not pass the ${this.METADATA.violatedRule} rule.`
+              NGN.WARN(change.reason)
+            }
+
+            this.emit('invalid', change)
+          } else if (!suppressEvents && priorValueIsValid !== null && priorValueIsValid) {
+            // If the field BECAME valid (compared to prior value),
+            // emit an event.
+            this.emit('valid', change)
+          }
+
+          if (typeof this.METADATA.lastValue === 'symbol') {
+            this.METADATA.lastValue = value
+          }
+
+          // Notify when the update is complete.
+          if (!suppressEvents) {
+            this.emit('update', change)
+          }
+
+          // Mark unnecessary code for garbage collection.
+          priorValueIsValid = null
+          change = null
+        }
       })
     })
 
@@ -438,6 +784,19 @@ class NGNDataField extends NGN.EventEmitter {
 
     if (NGN.coalesce(cfg.model) !== null) {
       this.model = cfg.model
+    }
+  }
+
+  get auditable () {
+    return this.METADATA.AUDITABLE
+  }
+
+  set auditable (value) {
+    value = NGN.forceBoolean(value)
+
+    if (value !== this.METADATA.AUDITABLE) {
+      this.METADATA.AUDITABLE = value
+      this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
     }
   }
 
@@ -581,56 +940,21 @@ class NGNDataField extends NGN.EventEmitter {
   }
 
   set value (value) {
-    // Ignore changes when the value hasn't been modified.
-    if (value === this.value) {
-      return
-    }
+    this.METADATA.setValue(value)
+  }
 
-    // Attempt to auto-correct input when possible.
-    if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
-      value = this.autoCorrectValue(value)
-    }
-
-    let change = {
-      field: this.METADATA.name,
-      old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
-      new: value
-    }
-
-    let priorValueIsValid = this.valid
-
-    this.METADATA.RAW = value
-
-    // Notify when an invalid value is detected.
-    if (!this.valid) {
-      // If invalid values are explicitly prohibited, throw an error.
-      // The value is rolled back before throwing the error so developers may
-      // catch the error and continue processing.
-      if (!this.METADATA.allowInvalid) {
-        this.METADATA.RAW = change.old
-        throw new Error(`"${value}" did not pass the ${this.METADATA.violatedRule} rule.`)
-      } else {
-        change.reason = `"${value}" did not pass the ${this.METADATA.violatedRule} rule.`
-        NGN.WARN(change.reason)
-      }
-
-      this.emit('invalid', change)
-    } else if (priorValueIsValid !== null && priorValueIsValid) {
-      // If the field BECAME valid (compared to prior value),
-      // emit an event.
-      this.emit('valid', change)
-    }
-
-    if (typeof this.METADATA.lastValue === 'symbol') {
-      this.METADATA.lastValue = value
-    }
-
-    // Notify when the update is complete.
-    this.emit('update', change)
-
-    // Mark unnecessary code for garbage collection.
-    priorValueIsValid = null
-    change = null
+  /**
+   * @property silentValue
+   * A write-only attribute to set the value without triggering an update event.
+   * This is designed primarily for use with live update proxies to prevent
+   * endless event loops.
+   * @param {any} value
+   * The new value of the field.
+   * @private
+   * @writeonly
+   */
+  set silentValue (value) {
+    this.METADATA.setValue(value, true)
   }
 
   get modified () {
@@ -816,6 +1140,7 @@ class NGNVirtualDataField extends NGNDataField {
 
     super(cfg)
 
+    this.METADATA.AUDITABLE = false
     this.METADATA.fieldType = 'virtual'
 
     /**
@@ -823,7 +1148,7 @@ class NGNVirtualDataField extends NGNDataField {
      * The model, store, or object that will be referenceable within the
      * virtual field #method. The model will be available in the `this` scope.
      */
-    this.METADATA.scope = NGN.coalesce(cfg.scope, this)
+    this.METADATA.scope = NGN.coalesce(cfg.scope, cfg.model, this)
 
     /**
      * @cfg {Function} method
@@ -836,6 +1161,15 @@ class NGNVirtualDataField extends NGNDataField {
     this.METADATA.virtualMethod = function () {
       return handlerFn.apply(me.METADATA.scope, ...arguments)
     }
+  }
+
+  get auditable () {
+    NGN.WARN('Virtual fields do not support the auditable property.')
+    return false
+  }
+
+  set auditable (value) {
+    NGN.WARN('Virtual fields do not support the auditable property.')
   }
 
   /**
@@ -953,7 +1287,7 @@ class NGNVirtualDataField extends NGNDataField {
  * - **0,1 => 1,N**: Zero-or-One to One-or-More
  * - ... write the rest in the guide...
  */
-class NgnRelationshipField extends NGNDataField {
+class NGNRelationshipField extends NGNDataField {
   constructor (cfg) {
     cfg = cfg || {}
 
@@ -1000,7 +1334,7 @@ class NgnRelationshipField extends NGNDataField {
      * ```js
      * let Pet = new NGN.DATA.Model(...)
      * let Kid = new NGN.DATA.Model(...)
-     * let Kids = new NGN.DATA.Model({
+     * let Kids = new NGN.DATA.Store({
      *   model: Kid
      * })
      *
@@ -1185,8 +1519,8 @@ class NgnRelationshipField extends NGNDataField {
  * Fired when an invalid value is detected in an data field.
  */
 class NGNDataModel extends NGN.EventEmitter {
-  constructor (config) {
-    config = config || {}
+  constructor (cfg) {
+    cfg = cfg || {}
 
     super()
 
@@ -1213,14 +1547,46 @@ class NGNDataModel extends NGN.EventEmitter {
          * For example, if an email is the ID of a user, this would be set to
          * `email`.
          */
-        idAttribute: NGN.privateconst(config.idAttribute || 'id'),
+        idAttribute: NGN.privateconst(cfg.idAttribute || 'id'),
 
         /**
          * @cfg {object} fields
-         * Represents the data fields of the model.
+         * A private object containing the data fields of the model.
+         * Each key contains the field name, while each value can be one of
+         * the following:
+         *
+         * - Primitive (String, Number, RegExp, Boolean)
+         * - Standard Type (Array, Object, Date)
+         * - Custom Class
+         * - NGN.DATA.Field
+         * - An NGN.DATA.Field configuration
+         * - `null` (Defaults to String primitive)
+         *
+         * ```js
+         * fields: {
+         *   a: String,
+         *   b: Date,
+         *   c: MyCustomClass,
+         *   d: new NGN.DATA.Field({
+         *     required: true,
+         *     type: String,
+         *     default: 'some default value'
+         *   }),
+         *   e: {
+         *     required: true,
+         *     type: String,
+         *     default: 'some default value'
+         *   },
+         *   f: null // Uses default field config (String)
+         * }
+         * ```
+         *
+         * Extensions of the NGN.DATA.Field are also supported,
+         * such as NGN.DATA.VirtualField and NGN.DATA.Relationship.
          */
-        fields: NGN.coalesce(config.fields),
+        fields: NGN.coalesce(cfg.fields),
         knownFieldNames: new Set(),
+        invalidFieldNames: new Set(),
 
         /**
          * @property {Object}
@@ -1228,13 +1594,13 @@ class NGNDataModel extends NGN.EventEmitter {
          * model. This only applies to the full model. Individual data fields
          * may have their own validators.
          */
-        validators: NGN.coalesce(config.rules, config.rule, config.validators, {}),
+        validators: NGN.coalesce(cfg.rules, cfg.rule, cfg.validators, {}),
 
         /**
          * @cfgproperty {boolean} [validation=true]
          * Toggle data validation using this.
          */
-        validation: NGN.coalesce(config.validation, true),
+        validation: NGN.coalesce(cfg.validation, true),
 
         /**
          * @cfg {boolean} [autoid=false]
@@ -1246,7 +1612,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * have a duplicate record, since the #id or #idAttribute will always
          * be unique.
          */
-        autoid: NGN.coalesce(config.autoid, false),
+        autoid: NGN.coalesce(cfg.autoid, false),
 
         IdentificationField: 'id',
         IdentificationValue: null,
@@ -1264,7 +1630,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * @fires expired
          * Triggered when the model/record expires.
          */
-        expiration: NGN.coalesce(config.expires),
+        expiration: NGN.coalesce(cfg.expires),
 
         // Holds a setTimeout method for expiration events.
         expirationTimeout: null,
@@ -1272,6 +1638,14 @@ class NGNDataModel extends NGN.EventEmitter {
         created: Date.now(),
         changelog: null,
         store: null,
+
+        /**
+         * @cfg {boolean} [audit=false]
+         * Enable auditing to support #undo/#redo operations. This creates and
+         * manages a NGN.DATA.TransactionLog.
+         */
+        AUDITABLE: NGN.coalesce(cfg.audit, false),
+        AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
 
         EVENTS: new Set([
           'field.update',
@@ -1335,9 +1709,19 @@ class NGNDataModel extends NGN.EventEmitter {
                 case 'array':
                   return this.applyField(field, cfg[0], suppressEvents)
 
-                // Type-based config.
+                // Type-based cfg.
                 default:
                   if (NGN.isFn(cfg) || cfg === null) {
+                    if (NGN.isFn(cfg) && ['string', 'number', 'boolean', 'number', 'symbol', 'regexp', 'date', 'array', 'object'].indexOf(NGN.typeof(cfg)) < 0) {
+                      this.METADATA.fields[field] = new NGN.DATA.VirtualField({
+                        name: field,
+                        model: this,
+                        method: cfg
+                      })
+
+                      break
+                    }
+
                     this.METADATA.fields[field] = new NGN.DATA.Field({
                       name: field,
                       type: cfg,
@@ -1373,17 +1757,24 @@ class NGNDataModel extends NGN.EventEmitter {
             return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
           }
 
+          this.METADATA.fields[field].auditable = this.METADATA.AUDITABLE
+
           Object.defineProperty(this, field, {
+            configurable: true,
             get: () => this.METADATA.fields[field].value,
             set: (value) => this.METADATA.fields[field].value = value
           })
 
+          // this.METADATA.fields[field].on('*', function () { console.log(this.event) })
           this.METADATA.fields[field].relay('*', this, 'field.')
 
           if (!suppressEvents) {
             this.emit('field.create', this.METADATA.fields[field])
           }
-        }
+        },
+
+        // Deprecations
+        setSilent: NGN.deprecate(this.setSilentFieldValue, 'setSilent has been deprecated. Use setSilentFieldValue instead.')
       })
     })
 
@@ -1492,6 +1883,73 @@ class NGNDataModel extends NGN.EventEmitter {
     } else {
       NGN.WARN(`Cannot set "${field}". Unrecognized field name.`)
     }
+  }
+
+  /**
+   * Add a data field after the initial model definition.
+   * @param {string} fieldname
+   * The name of the field.
+   * @param {NGN.DATA.Field|Object|Primitive} [fieldConfiguration=null]
+   * The field configuration (see cfg#fields for syntax).
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to prevent events from firing when the field is added.
+   */
+  addField (name, cfg = null, suppressEvents = false) {
+    if (name instanceof NGN.DATA.Field) {
+      cfg = name
+      name = cfg.name
+    } else if (typeof name !== 'string') {
+      throw new Error('Cannot add a non-string based field.')
+    }
+
+    this.METADATA.applyField(name, cfg, suppressEvents)
+  }
+
+  /**
+   * @method removeField
+   * Remove a field from the data model.
+   * @param {string} name
+   * Name of the field to remove.
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to prevent events from firing when the field is removed.
+   */
+  removeField (name, suppressEvents = false) {
+    if (this.METADATA.knownFieldNames.has(name)) {
+      let field = this.METADATA.fields[name]
+
+      delete this[name]
+      delete this.METADATA.fields[name] // eslint-disable-line no-undef
+
+      this.METADATA.knownFieldNames.delete(name)
+      this.METADATA.invalidFieldNames.delete(name)
+
+      // let change = {
+      //   action: 'delete',
+      //   field: field.name,
+      //   value: field,
+      //   join: field instanceof NGN.DATA.Relationship
+      // }
+
+      if (!suppressEvents) {
+        this.emit('field.remove', field)
+        // this.emit('changelog.append', change)
+      }
+    }
+  }
+
+  /**
+   * @method setSilent
+   * A method to set a field value without triggering an update event.
+   * This is designed primarily for use with live update proxies to prevent
+   * endless event loops.
+   * @param {string} fieldname
+   * The name of the #field to update.
+   * @param {any} value
+   * The new value of the field.
+   * @private
+   */
+  setSilentFieldValue(field, value) {
+    this.METADATA.fields[field].silentValue = value
   }
 }
 
@@ -1732,11 +2190,12 @@ class NGNDataStore extends NGN.EventEmitter {
   }
 
   NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
+    TransactionLog: NGN.const(NGNTransactionLog),
     Rule: NGN.privateconst(NGNDataValidationRule),
     RangeRule: NGN.privateconst(NGNDataRangeValidationRule),
     Field: NGN.const(NGNDataField),
     VirtualField: NGN.const(NGNVirtualDataField),
-    Relationship: NGN.const(NgnRelationshipField),
+    Relationship: NGN.const(NGNRelationshipField),
     Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
     Index: NGN.privateconst(NGNDataIndex),

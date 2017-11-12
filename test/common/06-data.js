@@ -11,7 +11,9 @@ require('../lib/data/DATA')
 
 test('Data Sanity Checks', function (t) {
   t.ok(typeof NGN.DATA === 'object', 'NGN.DATA exists as an object/namespace.')
+  t.ok(typeof NGN.DATA.TransactionLog === 'function', 'NGN.DATA.TransactionLog exists as a class.')
   t.ok(typeof NGN.DATA.Rule === 'function', 'NGN.DATA.Rule exists as a class.')
+  t.ok(typeof NGN.DATA.RangeRule === 'function', 'NGN.DATA.RangeRule exists as a class.')
   t.ok(typeof NGN.DATA.Field === 'function', 'NGN.DATA.Field exists as a class.')
   t.ok(typeof NGN.DATA.VirtualField === 'function', 'NGN.DATA.VirtualField exists as a class.')
   t.ok(typeof NGN.DATA.Relationship === 'function', 'NGN.DATA.Relationship exists as a class.')
@@ -20,6 +22,87 @@ test('Data Sanity Checks', function (t) {
   t.ok(typeof NGN.DATA.Index === 'function', 'NGN.DATA.Index exists as a class.')
   t.ok(typeof NGN.DATA.Store === 'function', 'NGN.DATA.Store exists as a class.')
   t.end()
+})
+
+test('NGN.DATA.TransactionLog', function (t) {
+  var log = new NGN.DATA.TransactionLog()
+
+  log.funnel(['advance', 'rollback', 'reset', 'log'], 'done')
+
+  t.ok(log.cursor === null, 'Initialize with null cursor.')
+  t.ok(log.getCommit() === undefined, 'Fails to return a commit when none exist.')
+
+  log.advance()
+  log.rollback()
+  t.ok(log.cursor === null, 'Advancing and rolling back on an empty log does nothing.')
+
+  var ida = log.commit('a')
+  t.ok(typeof ida === 'symbol', 'Committing an entry generates an ID.')
+  t.ok(log.getCommit(ida).value === 'a', 'Retrieving a record by ID returns a transaction object.')
+
+  var idb = log.commit('b')
+  var idc = log.commit('c')
+  var idd = log.commit('d')
+  var ide = log.commit('e')
+
+  t.ok(log.length === 5, 'Correct number of logs committed.')
+  t.ok(log.cursor === ide, 'Cursor successfully advances with each commit.')
+
+  log.rollback()
+  t.ok(log.cursor === idd, 'Default rollback moves cursor back one index.')
+
+  log.rollback(2)
+  t.ok(log.cursor === idb, 'Multistep rollback moves cursor back appropriately.')
+
+  log.once('advance', function (data) {
+    t.ok(typeof data === 'symbol', 'Advance event triggered with ID.')
+  })
+
+  log.once('log', function (data) {
+    t.ok(typeof data === 'symbol', 'Log event triggered with ID.')
+  })
+
+  log.once('rollback', function (data) {
+    t.ok(typeof data === 'symbol', 'Rollback event triggered with ID.')
+  })
+
+  log.advance()
+  t.ok(log.cursor === idc, 'Default advance moves cursor forward one index.')
+
+  log.advance(2)
+  t.ok(log.cursor === ide, 'Multistep advance moves cursor forward appropriately.')
+
+  log.rollback(-1)
+  t.ok(log.cursor === ide, 'Negative rollback ignored.')
+
+  log.advance(-1)
+  t.ok(log.cursor === ide, 'Negative advance ignored.')
+
+  log.rollback(10)
+  t.ok(log.cursor === ida, 'Rollback limited to beginning of log.')
+
+  log.advance(100)
+  t.ok(log.cursor === ide, 'Advance limited to end of log.')
+
+  log.rollback(2)
+  var idf = log.commit('f')
+
+  t.ok(log.length === 4, 'Committing after rollback contains correct number of entries.')
+  t.ok(log.cursor === idf, 'Commit returns latest cursor.')
+
+  log.rollback()
+  log.flush()
+  log.advance()
+  t.ok(log.length === 3 && log.cursor === idc, 'Flush removes correct entries.')
+
+  t.ok(log.log.length === 3, 'Correctly generates an array-based log/report.')
+
+  log.once('done', function () {
+    t.ok(log.length === 0, 'Reset clears the log.')
+    t.end()
+  })
+
+  log.reset()
 })
 
 test('NGN.DATA.Rule', function (t) {
@@ -60,6 +143,35 @@ test('NGN.DATA.Rule', function (t) {
   t.ok(rule.type === 'function', 'Correctly identifies custom function rule.')
   t.ok(rule.test('another test'), 'Valid value passes custom validation.')
   t.ok(!rule.test('bob'), 'Invalid value fails custom validation.')
+
+  t.end()
+})
+
+test('NGN.DATA.RangeRule', function (t) {
+  var rule = new NGN.DATA.RangeRule('rangetest', [
+    [null, -50],
+    [-10, -5],
+    [10, 20],
+    ['25->50'],
+    ['100->null']
+  ])
+
+  t.ok(rule.range.length === 5, 'Correct number of ranges created.')
+  t.ok(!rule.test(0), 'Number outside of range is flagged as invalid.')
+  t.ok(rule.test(150), 'Number within range is flagged as valid.')
+
+  rule.removeRange([null, -50])
+
+  t.ok(rule.range.length === 4, 'Correct number of ranges detected after removal.')
+  t.ok(!rule.test(-75), 'Test fails after validation range is removed.')
+
+  rule.addRange([-70, -60])
+  t.ok(rule.range.length === 5, 'Correct number of rules detected after adding new one.')
+  t.ok(rule.test(-65), 'Validation succeeds after new range is added.')
+
+  rule.range = [1, 5]
+  t.ok(rule.range.length === 1, 'Resetting the range yields correct number of ranges.')
+  t.ok(rule.test(3) && !rule.test(10), 'Correctly validates using new rule range.')
 
   t.end()
 })
@@ -238,7 +350,7 @@ test('NGN.DATA.Field (Number Field)', function (t) {
   t.ok(!field.valid, 'Number outside of range is flagged as invalid.')
 
   field.value = 150
-  t.ok(field.value, 'Number inside range is flagged as valid.')
+  t.ok(field.valid, 'Number inside range is flagged as valid.')
 
   field.value = '-3'
   t.ok(field.value === -3 && !field.valid, 'Autocorrected input yields appropriate result.')
@@ -332,7 +444,10 @@ var meta = function () {
         max: 20,
         default: 15
       },
-      testid: null
+      testid: null,
+      virtual: function () {
+        return 'test ' + this.val
+      }
     }
     // , dataMap: {
     //   firstname: 'gn',
@@ -362,9 +477,12 @@ test('NGN.DATA.Model', function (t) {
       p.METADATA.knownFieldNames.has('lastname') &&
       p.METADATA.knownFieldNames.has('val') &&
       p.METADATA.knownFieldNames.has('testid') &&
+      p.METADATA.knownFieldNames.has('virtual') &&
       !p.METADATA.knownFieldNames.has('not_a_field'),
       'Recognized all field names'
     )
+
+    t.ok(p.virtual === 'test 15', 'Virtual field successfully generated value.')
 
     next()
   })
@@ -381,18 +499,35 @@ test('NGN.DATA.Model', function (t) {
     p.firstname = 'Corey'
   })
 
-  // tasks.add('test', function (next) {
-  //   next()
-  // })
-  //
-  // tasks.add(function (next) {
-  //
-  // })
-  //
-  // tasks.add(function (next) {
-  //
-  // })
-  //
+  tasks.add('Field Creation', function (next) {
+    p.once('field.create', function (field) {
+      t.ok(field instanceof NGN.DATA.Field, 'Emitted the field in the payload.')
+      t.ok(field.name === 'middle', 'Proper field name recognized in emitted payload.')
+      t.ok(p.hasOwnProperty('middle'), 'Model contains new field as a getter/setter.')
+
+      next()
+    })
+
+    p.addField('middle')
+  })
+
+  tasks.add('Field Removal', function (next) {
+    p.once('field.remove', function (field) {
+      t.ok(field instanceof NGN.DATA.Field, 'Emitted the field in the payload.')
+      t.ok(field.name === 'middle', 'Proper field name recognized in emitted payload.')
+      t.ok(!p.hasOwnProperty('middle'), 'Model no longer contains field as a getter/setter.')
+
+      next()
+    })
+
+    p.removeField('middle')
+  })
+
+  tasks.add(function (next) {
+    next()
+    // Need to implement undo.
+  })
+
   // tasks.add(function (next) {
   //
   // })

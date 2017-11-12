@@ -13,8 +13,8 @@
  * Fired when an invalid value is detected in an data field.
  */
 class NGNDataModel extends NGN.EventEmitter {
-  constructor (config) {
-    config = config || {}
+  constructor (cfg) {
+    cfg = cfg || {}
 
     super()
 
@@ -41,14 +41,46 @@ class NGNDataModel extends NGN.EventEmitter {
          * For example, if an email is the ID of a user, this would be set to
          * `email`.
          */
-        idAttribute: NGN.privateconst(config.idAttribute || 'id'),
+        idAttribute: NGN.privateconst(cfg.idAttribute || 'id'),
 
         /**
          * @cfg {object} fields
-         * Represents the data fields of the model.
+         * A private object containing the data fields of the model.
+         * Each key contains the field name, while each value can be one of
+         * the following:
+         *
+         * - Primitive (String, Number, RegExp, Boolean)
+         * - Standard Type (Array, Object, Date)
+         * - Custom Class
+         * - NGN.DATA.Field
+         * - An NGN.DATA.Field configuration
+         * - `null` (Defaults to String primitive)
+         *
+         * ```js
+         * fields: {
+         *   a: String,
+         *   b: Date,
+         *   c: MyCustomClass,
+         *   d: new NGN.DATA.Field({
+         *     required: true,
+         *     type: String,
+         *     default: 'some default value'
+         *   }),
+         *   e: {
+         *     required: true,
+         *     type: String,
+         *     default: 'some default value'
+         *   },
+         *   f: null // Uses default field config (String)
+         * }
+         * ```
+         *
+         * Extensions of the NGN.DATA.Field are also supported,
+         * such as NGN.DATA.VirtualField and NGN.DATA.Relationship.
          */
-        fields: NGN.coalesce(config.fields),
+        fields: NGN.coalesce(cfg.fields),
         knownFieldNames: new Set(),
+        invalidFieldNames: new Set(),
 
         /**
          * @property {Object}
@@ -56,13 +88,13 @@ class NGNDataModel extends NGN.EventEmitter {
          * model. This only applies to the full model. Individual data fields
          * may have their own validators.
          */
-        validators: NGN.coalesce(config.rules, config.rule, config.validators, {}),
+        validators: NGN.coalesce(cfg.rules, cfg.rule, cfg.validators, {}),
 
         /**
          * @cfgproperty {boolean} [validation=true]
          * Toggle data validation using this.
          */
-        validation: NGN.coalesce(config.validation, true),
+        validation: NGN.coalesce(cfg.validation, true),
 
         /**
          * @cfg {boolean} [autoid=false]
@@ -74,7 +106,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * have a duplicate record, since the #id or #idAttribute will always
          * be unique.
          */
-        autoid: NGN.coalesce(config.autoid, false),
+        autoid: NGN.coalesce(cfg.autoid, false),
 
         IdentificationField: 'id',
         IdentificationValue: null,
@@ -92,7 +124,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * @fires expired
          * Triggered when the model/record expires.
          */
-        expiration: NGN.coalesce(config.expires),
+        expiration: NGN.coalesce(cfg.expires),
 
         // Holds a setTimeout method for expiration events.
         expirationTimeout: null,
@@ -100,6 +132,14 @@ class NGNDataModel extends NGN.EventEmitter {
         created: Date.now(),
         changelog: null,
         store: null,
+
+        /**
+         * @cfg {boolean} [audit=false]
+         * Enable auditing to support #undo/#redo operations. This creates and
+         * manages a NGN.DATA.TransactionLog.
+         */
+        AUDITABLE: NGN.coalesce(cfg.audit, false),
+        AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
 
         EVENTS: new Set([
           'field.update',
@@ -163,9 +203,19 @@ class NGNDataModel extends NGN.EventEmitter {
                 case 'array':
                   return this.applyField(field, cfg[0], suppressEvents)
 
-                // Type-based config.
+                // Type-based cfg.
                 default:
                   if (NGN.isFn(cfg) || cfg === null) {
+                    if (NGN.isFn(cfg) && ['string', 'number', 'boolean', 'number', 'symbol', 'regexp', 'date', 'array', 'object'].indexOf(NGN.typeof(cfg)) < 0) {
+                      this.METADATA.fields[field] = new NGN.DATA.VirtualField({
+                        name: field,
+                        model: this,
+                        method: cfg
+                      })
+
+                      break
+                    }
+
                     this.METADATA.fields[field] = new NGN.DATA.Field({
                       name: field,
                       type: cfg,
@@ -201,17 +251,24 @@ class NGNDataModel extends NGN.EventEmitter {
             return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
           }
 
+          this.METADATA.fields[field].auditable = this.METADATA.AUDITABLE
+
           Object.defineProperty(this, field, {
+            configurable: true,
             get: () => this.METADATA.fields[field].value,
             set: (value) => this.METADATA.fields[field].value = value
           })
 
+          // this.METADATA.fields[field].on('*', function () { console.log(this.event) })
           this.METADATA.fields[field].relay('*', this, 'field.')
 
           if (!suppressEvents) {
             this.emit('field.create', this.METADATA.fields[field])
           }
-        }
+        },
+
+        // Deprecations
+        setSilent: NGN.deprecate(this.setSilentFieldValue, 'setSilent has been deprecated. Use setSilentFieldValue instead.')
       })
     })
 
@@ -320,5 +377,72 @@ class NGNDataModel extends NGN.EventEmitter {
     } else {
       NGN.WARN(`Cannot set "${field}". Unrecognized field name.`)
     }
+  }
+
+  /**
+   * Add a data field after the initial model definition.
+   * @param {string} fieldname
+   * The name of the field.
+   * @param {NGN.DATA.Field|Object|Primitive} [fieldConfiguration=null]
+   * The field configuration (see cfg#fields for syntax).
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to prevent events from firing when the field is added.
+   */
+  addField (name, cfg = null, suppressEvents = false) {
+    if (name instanceof NGN.DATA.Field) {
+      cfg = name
+      name = cfg.name
+    } else if (typeof name !== 'string') {
+      throw new Error('Cannot add a non-string based field.')
+    }
+
+    this.METADATA.applyField(name, cfg, suppressEvents)
+  }
+
+  /**
+   * @method removeField
+   * Remove a field from the data model.
+   * @param {string} name
+   * Name of the field to remove.
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to prevent events from firing when the field is removed.
+   */
+  removeField (name, suppressEvents = false) {
+    if (this.METADATA.knownFieldNames.has(name)) {
+      let field = this.METADATA.fields[name]
+
+      delete this[name]
+      delete this.METADATA.fields[name] // eslint-disable-line no-undef
+
+      this.METADATA.knownFieldNames.delete(name)
+      this.METADATA.invalidFieldNames.delete(name)
+
+      // let change = {
+      //   action: 'delete',
+      //   field: field.name,
+      //   value: field,
+      //   join: field instanceof NGN.DATA.Relationship
+      // }
+
+      if (!suppressEvents) {
+        this.emit('field.remove', field)
+        // this.emit('changelog.append', change)
+      }
+    }
+  }
+
+  /**
+   * @method setSilent
+   * A method to set a field value without triggering an update event.
+   * This is designed primarily for use with live update proxies to prevent
+   * endless event loops.
+   * @param {string} fieldname
+   * The name of the #field to update.
+   * @param {any} value
+   * The new value of the field.
+   * @private
+   */
+  setSilentFieldValue(field, value) {
+    this.METADATA.fields[field].silentValue = value
   }
 }

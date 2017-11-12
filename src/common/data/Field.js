@@ -146,10 +146,73 @@ class NGNDataField extends NGN.EventEmitter {
         ]),
 
         /**
+         * @cfg {boolean} [audit=false]
+         * Enable auditing to support #undo/#redo operations. This creates and
+         * manages a NGN.DATA.TransactionLog.
+         */
+        AUDITABLE: NGN.coalesce(cfg.audit, false),
+        AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
+
+        /**
          * @cfg {NGN.DATA.Model} [model]
          * Optionally specify the parent model.
          */
-        model: null
+        model: null,
+
+        setValue: (value, suppressEvents = false) => {
+          // Ignore changes when the value hasn't been modified.
+          if (value === this.value) {
+            return
+          }
+
+          // Attempt to auto-correct input when possible.
+          if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
+            value = this.autoCorrectValue(value)
+          }
+
+          let change = {
+            field: this.METADATA.name,
+            old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
+            new: value
+          }
+
+          let priorValueIsValid = this.valid
+
+          this.METADATA.RAW = value
+
+          // Notify when an invalid value is detected.
+          if (!this.valid) {
+            // If invalid values are explicitly prohibited, throw an error.
+            // The value is rolled back before throwing the error so developers may
+            // catch the error and continue processing.
+            if (!this.METADATA.allowInvalid) {
+              this.METADATA.RAW = change.old
+              throw new Error(`"${value}" did not pass the ${this.METADATA.violatedRule} rule.`)
+            } else {
+              change.reason = `"${value}" did not pass the ${this.METADATA.violatedRule} rule.`
+              NGN.WARN(change.reason)
+            }
+
+            this.emit('invalid', change)
+          } else if (!suppressEvents && priorValueIsValid !== null && priorValueIsValid) {
+            // If the field BECAME valid (compared to prior value),
+            // emit an event.
+            this.emit('valid', change)
+          }
+
+          if (typeof this.METADATA.lastValue === 'symbol') {
+            this.METADATA.lastValue = value
+          }
+
+          // Notify when the update is complete.
+          if (!suppressEvents) {
+            this.emit('update', change)
+          }
+
+          // Mark unnecessary code for garbage collection.
+          priorValueIsValid = null
+          change = null
+        }
       })
     })
 
@@ -204,6 +267,19 @@ class NGNDataField extends NGN.EventEmitter {
 
     if (NGN.coalesce(cfg.model) !== null) {
       this.model = cfg.model
+    }
+  }
+
+  get auditable () {
+    return this.METADATA.AUDITABLE
+  }
+
+  set auditable (value) {
+    value = NGN.forceBoolean(value)
+
+    if (value !== this.METADATA.AUDITABLE) {
+      this.METADATA.AUDITABLE = value
+      this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
     }
   }
 
@@ -347,56 +423,21 @@ class NGNDataField extends NGN.EventEmitter {
   }
 
   set value (value) {
-    // Ignore changes when the value hasn't been modified.
-    if (value === this.value) {
-      return
-    }
+    this.METADATA.setValue(value)
+  }
 
-    // Attempt to auto-correct input when possible.
-    if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
-      value = this.autoCorrectValue(value)
-    }
-
-    let change = {
-      field: this.METADATA.name,
-      old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
-      new: value
-    }
-
-    let priorValueIsValid = this.valid
-
-    this.METADATA.RAW = value
-
-    // Notify when an invalid value is detected.
-    if (!this.valid) {
-      // If invalid values are explicitly prohibited, throw an error.
-      // The value is rolled back before throwing the error so developers may
-      // catch the error and continue processing.
-      if (!this.METADATA.allowInvalid) {
-        this.METADATA.RAW = change.old
-        throw new Error(`"${value}" did not pass the ${this.METADATA.violatedRule} rule.`)
-      } else {
-        change.reason = `"${value}" did not pass the ${this.METADATA.violatedRule} rule.`
-        NGN.WARN(change.reason)
-      }
-
-      this.emit('invalid', change)
-    } else if (priorValueIsValid !== null && priorValueIsValid) {
-      // If the field BECAME valid (compared to prior value),
-      // emit an event.
-      this.emit('valid', change)
-    }
-
-    if (typeof this.METADATA.lastValue === 'symbol') {
-      this.METADATA.lastValue = value
-    }
-
-    // Notify when the update is complete.
-    this.emit('update', change)
-
-    // Mark unnecessary code for garbage collection.
-    priorValueIsValid = null
-    change = null
+  /**
+   * @property silentValue
+   * A write-only attribute to set the value without triggering an update event.
+   * This is designed primarily for use with live update proxies to prevent
+   * endless event loops.
+   * @param {any} value
+   * The new value of the field.
+   * @private
+   * @writeonly
+   */
+  set silentValue (value) {
+    this.METADATA.setValue(value, true)
   }
 
   get modified () {

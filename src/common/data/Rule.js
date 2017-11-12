@@ -30,9 +30,7 @@ class NGNDataValidationRule {
     const type = NGN.typeof(validation)
 
     Object.defineProperties(this, {
-      RULE: NGN.get(() => this[RULE_INSTANCE]),
-
-      [RULE_INSTANCE]: NGN.private({
+      RULE: NGN.private({
         type: type,
         validator: validation,
         name: NGN.coalesce(name, `Untitled ${type.toUpperCase()} Validation`),

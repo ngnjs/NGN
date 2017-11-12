@@ -538,11 +538,10 @@ test('Wilcard Support', function (t) {
   var ct = 0
 
   NGN.BUS.on('test.*', function () {
-    console.log('test.* triggered by ', this.event)
     ct += 1
   })
+
   NGN.BUS.once('testing.*', function () {
-    console.log('testing.* triggered by ', this.event)
     ct += 1
   })
 
@@ -553,7 +552,6 @@ test('Wilcard Support', function (t) {
   NGN.BUS.emit('testing.something')
 
   setTimeout(function () {
-console.log(ct)
     t.ok(ct === 3, 'Fired the correct number of events.')
     t.ok(NGN.BUS.eventNames().length === 1, 'Standard and adhoc events triggered and removed appropriately.')
 

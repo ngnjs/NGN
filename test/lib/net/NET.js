@@ -632,7 +632,7 @@ class Request { // eslint-disable-line no-unused-vars
    * @property {string} password
    * It is possible to set a password for any basic authentication operations,
    * but it is not possible to read a password.
-   * @setonly
+   * @writeonly
    */
   set password (secret) {
     secret = NGN.coalesceb(secret)

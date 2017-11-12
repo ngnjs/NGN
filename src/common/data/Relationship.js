@@ -49,7 +49,7 @@
  * - **0,1 => 1,N**: Zero-or-One to One-or-More
  * - ... write the rest in the guide...
  */
-class NgnRelationshipField extends NGNDataField {
+class NGNRelationshipField extends NGNDataField {
   constructor (cfg) {
     cfg = cfg || {}
 
@@ -96,7 +96,7 @@ class NgnRelationshipField extends NGNDataField {
      * ```js
      * let Pet = new NGN.DATA.Model(...)
      * let Kid = new NGN.DATA.Model(...)
-     * let Kids = new NGN.DATA.Model({
+     * let Kids = new NGN.DATA.Store({
      *   model: Kid
      * })
      *

@@ -326,7 +326,7 @@ class TaskRunner extends NGN.EventEmitter {
    * This will execute each method one after the other. Each method must
    * complete before the next is started.
    */
-  process (sequential) {
+  process (sequential = false) {
     if (this.processing) {
       return NGN.WARN('Cannot start processing (already running). Please wait for this process to complete before calling process() again.')
     }

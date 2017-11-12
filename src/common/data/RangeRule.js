@@ -54,8 +54,28 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
 
     this.RULE.prepareRange = function (value) {
       // If a simple range is specified (single array), format it for the rule processor.
-      if (value.length === 2 && NGN.typeof(value[0]) !== 'array' && NGN.typeof(value[1]) !== 'array') {
+      value = NGN.forceArray(value)
+
+      if (NGN.typeof(value[0]) !== 'array') {
         value = [value]
+      }
+
+      for (let i = 0; i < value.length; i++) {
+        if (value[i].length !== 2) {
+          if (NGN.typeof(value[i][0]) !== 'string') {
+            throw new Error(`Invalid range: "${value[i].toString()}"`)
+          }
+
+          value[i] = value[i][0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
+        }
+
+        if (NGN.typeof(value[i][0]) !== 'number') {
+          value[i][0] = NGN.coalesce(value[i][0], '').replace(/null|none|any/gi, '')
+        }
+
+        if (NGN.typeof(value[i][1]) !== 'number') {
+          value[i][1] = NGN.coalesce(value[i][1], '').replace(/null|none|any/gi, '')
+        }
       }
 
       return value
@@ -67,50 +87,27 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
 
     // Create the validation function.
     this.RULE.validator = (value) => {
-      let range = Array.from(this.RULE.range.values())
+      let isString = NGN.typeof(value) === 'string'
+      let range = this.range
+
       for (let i = 0; i < range.length; i++) {
-        let subrange = range[i]
+        let min = NGN.coalesceb(range[i][0], isString ? value.length : value)
+        let max = NGN.coalesceb(range[i][1], isString ? value.length : value)
 
-        // Make sure there are two elements for the range.
-        if (subrange.length !== 2) {
-          subrange = subrange[0].replace(/[^0-9->]/gi, '').split(/->{1,100}/)
-
-          if (subrange.length !== 2) {
-            throw new Error(`Invalid range: "${this.RULE.range[i]}"`)
-          }
-
-          // Validate both elements of the range
-          if (subrange[0].trim().toLowerCase() === 'null') {
-            subrange[0] = null
-          } else {
-            subrange[0] = NGN.forceNumber(subrange[0])
-          }
-
-          if (subrange[1].trim().toLowerCase() === 'null') {
-            subrange[1] = null
-          } else {
-            subrange[1] = NGN.forceNumber(subrange[1])
-          }
-        }
-
-        let min = subrange[0]
-        let max = subrange[1]
-
-        if (NGN.typeof(value) === 'string') {
-          if ((min !== null && value.length < min) || (max !== null && value.length > max)) {
-            return false
-          }
-        } else if ((min !== null && value < min) || (max !== null && value > max)) {
-          return false
+        if (
+          (isString && value.length >= min && value.length <= max) ||
+          (!isString && value >= min && value <= max)
+        ) {
+          return true
         }
       }
 
-      return true
+      return false
     }
   }
 
   get range () {
-    return this.RULE.range.values()
+    return Array.from(this.RULE.range.values())
   }
 
   set range (value) {
@@ -128,7 +125,7 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
     value = this.RULE.prepareRange(value)
 
     for (let i = 0; i < value.length; i++) {
-      if (value[i][0] !== null && value[i][1] !== null && value[i][1] < value[i][0]) {
+      if (NGN.coalesceb(value[i][0]) !== null && NGN.coalesceb(value[i][1]) !== null && value[i][1] < value[i][0]) {
         throw new Error(`Invalid value "${value[i][0].toString()} -> ${value[i][1].toString()}". Minimum value cannot exceed maximum.`)
       }
 
@@ -143,10 +140,15 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
    * also acceptable, such as `[[min1, max1], [min2, max2]]`.
    */
   removeRange (value) {
+    let range = this.range
     value = this.RULE.prepareRange(value)
 
     for (let i = 0; i < value.length; i++) {
-      this.RULE.range.delete(value[i])
+      for (let x = 0; x < range.length; x++) {
+        if (value[i].toString() === range[x].toString()) {
+          this.RULE.range.delete(range[x])
+        }
+      }
     }
   }
 }

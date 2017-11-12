@@ -59,6 +59,7 @@ class NGNVirtualDataField extends NGNDataField {
 
     super(cfg)
 
+    this.METADATA.AUDITABLE = false
     this.METADATA.fieldType = 'virtual'
 
     /**
@@ -66,7 +67,7 @@ class NGNVirtualDataField extends NGNDataField {
      * The model, store, or object that will be referenceable within the
      * virtual field #method. The model will be available in the `this` scope.
      */
-    this.METADATA.scope = NGN.coalesce(cfg.scope, this)
+    this.METADATA.scope = NGN.coalesce(cfg.scope, cfg.model, this)
 
     /**
      * @cfg {Function} method
@@ -79,6 +80,15 @@ class NGNVirtualDataField extends NGNDataField {
     this.METADATA.virtualMethod = function () {
       return handlerFn.apply(me.METADATA.scope, ...arguments)
     }
+  }
+
+  get auditable () {
+    NGN.WARN('Virtual fields do not support the auditable property.')
+    return false
+  }
+
+  set auditable (value) {
+    NGN.WARN('Virtual fields do not support the auditable property.')
   }
 
   /**

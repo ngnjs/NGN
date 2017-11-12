@@ -1,4 +1,5 @@
 (function () {
+  // [INCLUDE: ./TransactionLog.js]
   // [INCLUDE: ./Rule.js]
   // [INCLUDE: ./RangeRule.js]
   // [INCLUDE: ./Field.js]
@@ -23,11 +24,12 @@
   }
 
   NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
+    TransactionLog: NGN.const(NGNTransactionLog),
     Rule: NGN.privateconst(NGNDataValidationRule),
     RangeRule: NGN.privateconst(NGNDataRangeValidationRule),
     Field: NGN.const(NGNDataField),
     VirtualField: NGN.const(NGNVirtualDataField),
-    Relationship: NGN.const(NgnRelationshipField),
+    Relationship: NGN.const(NGNRelationshipField),
     Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
     Index: NGN.privateconst(NGNDataIndex),

@@ -78,7 +78,7 @@
    * The likelihood of an ID collision, according to the original author (Jeff
    * Ward) is 1:3.26x10^15 (1 in 3.26 quadrillion). Results are generated between
    * approximately 105ms (Desktop) and 726ms (Android) as of May 2016.
-   * @return {[type]} [description]
+   * @return {string} [description]
    */
   GUID: NGN.const(function () {
     let lut = []
