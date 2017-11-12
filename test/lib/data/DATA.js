@@ -1542,6 +1542,13 @@ class NGNDataModel extends NGN.EventEmitter {
 
       METADATA: NGN.privateconst({
         /**
+         * @cfg {string} [name]
+         * A descriptive name for the model. This is typically used for
+         * debugging, logging, and (somtimes) data proxies.
+         */
+        name: NGN.coalesce(cfg.name, 'Untitled Model'),
+
+        /**
          * @cfg {String} [idAttribute='id']
          * Setting this allows an attribute of the object to be used as the ID.
          * For example, if an email is the ID of a user, this would be set to

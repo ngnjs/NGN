@@ -435,6 +435,7 @@ test('NGN.DATA.VirtualField', function (t) {
 // Common data
 var meta = function () {
   return {
+    name: 'metamodel',
     // idAttribute: 'testid',
     fields: {
       firstname: null,
@@ -471,6 +472,7 @@ test('NGN.DATA.Model', function (t) {
     p = new Person()
 
     t.ok(p !== undefined, 'Model instantiation works.')
+    t.ok(p.METADATA.name === 'metamodel', 'Model has a custom name.')
 
     t.ok(
       p.METADATA.knownFieldNames.has('firstname') &&
