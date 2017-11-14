@@ -53,12 +53,9 @@ class NGNDataField extends NGN.EventEmitter {
 
     super(cfg)
 
-    // const INSTANCE = Symbol('datafield')
     const EMPTYDATA = Symbol('empty')
 
     Object.defineProperties(this, {
-      // METADATA: NGN.get(() => this[INSTANCE]),
-
       METADATA: NGN.privateconst({
         /**
          * @cfg {boolean} [required=false]
@@ -99,6 +96,41 @@ class NGNDataField extends NGN.EventEmitter {
          * The field name.
          */
         name: NGN.coalesce(cfg.name),
+
+        /**
+         * @cfgproperty {string} [sourceName]
+         * A source name represents the physical name of an attribute as it
+         * would be recognized in a system of record. For example, a field
+         * named `firstname` may need to be written to disk/memory as `gn`
+         * (commonly used as shorthand for givenName in LDAP environments
+         * and relational databases).
+         *
+         * By specifying `firstname` as the field name and `gn` as the source
+         * name, the field will automatically map values from the source
+         * to model name and vice versa.
+         *
+         * For instance, a JSON input may look like:
+         *
+         * ```js
+         * {
+         *   "gn": "John",
+         *   "sn": "Doe"
+         * }
+         * ```
+         *
+         * When this data is applied to the field (or loaded in a
+         * NGN.DATA.Model), the field #value for `firstname` would be `John`.
+         * If the field #value is changed to `Jill` (i.e.
+         * `firstname.value = 'Jill'`), the resulting data set would look like:
+         *
+         * ```js
+         * {
+         *   "gn": "Jill",
+         *   "sn": "Doe"
+         * }
+         * ```
+         */
+        sourceName: NGN.coalesce(cfg.sourceName),
 
         /**
          * @cfg {any} default
@@ -151,7 +183,15 @@ class NGNDataField extends NGN.EventEmitter {
          * manages a NGN.DATA.TransactionLog.
          */
         AUDITABLE: NGN.coalesce(cfg.audit, false),
-        AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
+
+        /**
+         * @cfg {Number} [auditMaxEntries=20]
+         * The maximum number of historical records to maintain for the field.
+         * See NGN.DATA.TransactionLog#constructor for details.
+         */
+        AUDITLOG: NGN.coalesce(cfg.audit, false)
+          ? new NGN.DATA.TransactionLog(NGN.coalesce(cfg.auditMaxEntries, 10))
+          : null,
 
         /**
          * @cfg {NGN.DATA.Model} [model]
@@ -159,15 +199,16 @@ class NGNDataField extends NGN.EventEmitter {
          */
         model: null,
 
-        setValue: (value, suppressEvents = false) => {
-          // Ignore changes when the value hasn't been modified.
-          if (value === this.value) {
-            return
-          }
-
+        // Set the value using a configuration.
+        setValue: (value, suppressEvents = false, ignoreAudit = false) => {
           // Attempt to auto-correct input when possible.
           if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
             value = this.autoCorrectValue(value)
+          }
+
+          // Ignore changes when the value hasn't been modified.
+          if (value === this.value) {
+            return
           }
 
           let change = {
@@ -204,6 +245,12 @@ class NGNDataField extends NGN.EventEmitter {
             this.METADATA.lastValue = value
           }
 
+          // If auditing is enabled and not explicitly ignored by an internal
+          // operation, commit the change.
+          if (!ignoreAudit && !this.virtual && this.METADATA.AUDITABLE) {
+            change.cursor = this.METADATA.AUDITLOG.commit(this.METADATA.RAW)
+          }
+
           // Notify when the update is complete.
           if (!suppressEvents) {
             this.emit('update', change)
@@ -212,6 +259,26 @@ class NGNDataField extends NGN.EventEmitter {
           // Mark unnecessary code for garbage collection.
           priorValueIsValid = null
           change = null
+        },
+
+        // Submit the payload to the parent model (if applicable).
+        commitPayload: (payload) => {
+          if (this.METADATA.model) {
+            payload.action = 'update'
+            payload.join = true
+
+            this.increaseMaxListeners(3)
+            this.METADATA.model.emit(
+              [
+                'update',
+                `${payload.field}.update`,
+                `update.${payload.field}`
+              ],
+              payload
+            )
+
+            payload = null // Mark for garbage collection
+          }
         }
       })
     })
@@ -268,6 +335,10 @@ class NGNDataField extends NGN.EventEmitter {
     if (NGN.coalesce(cfg.model) !== null) {
       this.model = cfg.model
     }
+  }
+
+  get sourceName () {
+    return this.METADATA.sourceName
   }
 
   get auditable () {
@@ -474,11 +545,74 @@ class NGNDataField extends NGN.EventEmitter {
   }
 
   /**
+   * @property {String}
    * Name of the rule which was violated.
-   * @return {string}
    */
   get violatedRule () {
     return NGN.coalesce(this.METADATA.violatedRule, 'None')
+  }
+
+  /**
+   * @property {Array} changelog
+   * The changelog returns the underlying NGN.DATA.TransactionLog#log if
+   * auditing is available. The array will be empty if auditing is disabled.
+   */
+  get changelog () {
+    if (!this.METADATA.AUDITABLE) {
+      NGN.WARN(`The changelog for the ${this.name} field is empty because auditing is disabled.`)
+      return []
+    }
+
+    return this.METADATA.AUDITLOG.log
+  }
+
+  /**
+   * @method undo
+   * A rollback function to undo changes. This operation affects
+   * the changelog (transaction log). To "undo" an "undo", use #redo.
+   * @param {number} [OperationCount=1]
+   * The number of operations to "undo". Defaults to a single operation.
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to quietly update the value (prevents `update` event from
+   * firing).
+   */
+  undo (count = 1, suppressEvents = false) {
+    if (!this.METADATA.AUDITABLE) {
+      NGN.WARN(`The undo operation failed on the ${this.name} field because auditing is disabled.`)
+      return
+    }
+
+    let id = this.METADATA.AUDITLOG.rollback(count)
+
+    // Silently set the value to an older value.
+    this.METADATA.setValue(this.METADATA.AUDITLOG.getCommit(id).value, suppressEvents, true)
+  }
+
+  /**
+   * @method redo
+   * A function to reapply known changes. This operation affects
+   * the changelog (transaction log).
+   *
+   * The redo operation only works after an undo operation, but before a new
+   * value is committed to the transaction log. In other words, `undo -> redo`
+   * will work, but `undo -> update -> redo` will not. For details, see how
+   * the NGN.DATA.TransactionLog cursor system works.
+   * @param {number} [OperationCount=1]
+   * The number of operations to "undo". Defaults to a single operation.
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to quietly update the value (prevents `update` event from
+   * firing).
+   */
+  redo (count = 1, suppressEvents = false) {
+    if (!this.METADATA.AUDITABLE) {
+      NGN.WARN(`The redo operation failed on the ${this.name} field because auditing is disabled.`)
+      return
+    }
+
+    let id = this.METADATA.AUDITLOG.advance(count)
+
+    // Silently set the value to a newer value.
+    this.METADATA.setValue(this.METADATA.AUDITLOG.getCommit(id).value, suppressEvents, true)
   }
 
   /**
@@ -538,26 +672,6 @@ class NGNDataField extends NGN.EventEmitter {
       }
     } finally {
       return value
-    }
-  }
-
-  // Submit the payload to the parent model (if applicable).
-  commitPayload (payload) {
-    if (this.METADATA.model) {
-      payload.action = 'update'
-      payload.join = true
-
-      this.increaseMaxListeners(3)
-      this.METADATA.model.emit(
-        [
-          'update',
-          `${payload.field}.update`,
-          `update.${payload.field}`
-        ],
-        payload
-      )
-
-      payload = null // Mark for garbage collection
     }
   }
 }

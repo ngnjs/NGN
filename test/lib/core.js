@@ -249,13 +249,7 @@ Object.defineProperties(NGN, {
 
   LEDGER_EVENT: NGN.define(false, false, false, (EVENT) => {
     return function () {
-      let args = NGN.slice(arguments)
-
-      if (arguments.length > 0) {
-        args[0] = EVENT
-
-        NGN.BUS.emit.apply(NGN.BUS, args)
-      }
+      NGN.BUS.emit(EVENT, ...arguments)
     }
   })
 })

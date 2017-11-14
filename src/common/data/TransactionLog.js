@@ -51,14 +51,21 @@
  * current cursor position.
  */
 class NGNTransactionLog extends NGN.EventEmitter {
-  constructor () {
+  /**
+   * Create a new transaction log.
+   * @param  {number} [maxEntryCount=10]
+   * The maximum number of entries to keep in the log. Set this to `-1` to keep
+   * an unlimited number of logs.
+   */
+  constructor (maxEntryCount) {
     super()
 
     Object.defineProperties(this, {
       METADATA: NGN.private({
         transaction: {},
         changeOrder: [],
-        cursor: null
+        cursor: null,
+        max: NGN.coalesce(maxEntryCount, 10)
       })
     })
   }
@@ -69,10 +76,42 @@ class NGNTransactionLog extends NGN.EventEmitter {
 
   /**
    * @property {Symbol} cursor
-   * Returns the active cursor of the log.
+   * The active cursor of the log.
    */
   get cursor () {
     return this.METADATA.cursor
+  }
+
+  set cursor (value) {
+    if (!this.METADATA.transaction.hasOwnProperty(value)) {
+      throw new Error('Cannot set cursor for transaction log (does not exist).')
+    }
+
+    this.METADATA.cursor = value
+  }
+
+  /**
+   * @property {any} currentValue
+   * Returns the value at the current cursor position.
+   */
+  get currentValue () {
+    if (this.METADATA.cursor === null) {
+      return undefined
+    }
+
+    return this.getCommit(this.METADATA.cursor).value
+  }
+
+  /**
+   * @property {Number}
+   * The index of the log entry at the current cursor position.
+   */
+  get cursorIndex () {
+    if (this.METADATA.cursor === null) {
+      return undefined
+    }
+
+    return this.METADATA.changeOrder.indexOf(this.METADATA.cursor)
   }
 
   /**
@@ -85,7 +124,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id = Symbol()
+    let id = Symbol(value.toString())
 
     this.METADATA.transaction[id] = [
       new Date(),
@@ -97,8 +136,13 @@ class NGNTransactionLog extends NGN.EventEmitter {
     this.METADATA.changeOrder.push(id)
     this.METADATA.cursor = id
 
-    this.emit('log', id, 'test')
+    if (this.METADATA.max > 0 && this.METADATA.changeOrder.length > this.METADATA.max) {
+      let removedId = this.METADATA.changeOrder.shift()
+      delete this.METADATA.transaction[removedId]
+    }
 
+    this.emit('log', id, null)
+console.log('Committed', value)
     return id
   }
 
@@ -239,7 +283,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
 
     this.emit('advance', this.METADATA.cursor, null)
 
-    return index
+    return this.METADATA.cursor
   }
 
   /**

@@ -32,8 +32,6 @@ class NGNDataModel extends NGN.EventEmitter {
        */
       OID: NGN.privateconst(Symbol('model.id')),
 
-      // METADATA: NGN.get(() => this[INSTANCE]),
-
       METADATA: NGN.privateconst({
         /**
          * @cfg {string} [name]
@@ -48,7 +46,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * For example, if an email is the ID of a user, this would be set to
          * `email`.
          */
-        idAttribute: NGN.privateconst(cfg.idAttribute || 'id'),
+        idAttribute: NGN.privateconst(NGN.coalesce(cfg.idField, cfg.idAttribute) || 'id'),
 
         /**
          * @cfg {object} fields
@@ -88,6 +86,7 @@ class NGNDataModel extends NGN.EventEmitter {
         fields: NGN.coalesce(cfg.fields),
         knownFieldNames: new Set(),
         invalidFieldNames: new Set(),
+        auditFieldNames: NGN.coalesce(cfg.audit, false) ? new Set() : null,
 
         /**
          * @property {Object}
@@ -147,6 +146,11 @@ class NGNDataModel extends NGN.EventEmitter {
          */
         AUDITABLE: NGN.coalesce(cfg.audit, false),
         AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
+        AUDIT_HANDLER: (change) => {
+          if (change.hasOwnProperty('cursor')) {
+            this.METADATA.AUDITLOG.commit(this.METADATA.getAuditMap())
+          }
+        },
 
         EVENTS: new Set([
           'field.update',
@@ -168,6 +172,16 @@ class NGNDataModel extends NGN.EventEmitter {
           'load'
         ]),
 
+        /**
+         * An internal method used to apply field definitions to the model.
+         * @param  {string} fieldname
+         * Name of the field (as applied to the model).
+         * @param  {NGN.DATA.Field|Object|Primitive} [cfg=null]
+         * The configuration to apply. See #addField for details.
+         * @param  {Boolean} [suppressEvents=false]
+         * Optionally suppress the `field.create` event.
+         * @private
+         */
         applyField: (field, cfg = null, suppressEvents = false) => {
           // Prevent duplicate fields
           if (this.METADATA.knownFieldNames.has(field)) {
@@ -258,7 +272,13 @@ class NGNDataModel extends NGN.EventEmitter {
             return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
           }
 
-          this.METADATA.fields[field].auditable = this.METADATA.AUDITABLE
+          // Enable auditing if necessary.
+          if (this.METADATA.AUDITABLE) {
+            if (this.METADATA.fields[field].fieldType !== 'virtual') {
+              this.METADATA.fields[field].auditable = true
+              this.METADATA.auditFieldNames.add(field)
+            }
+          }
 
           Object.defineProperty(this, field, {
             configurable: true,
@@ -272,6 +292,56 @@ class NGNDataModel extends NGN.EventEmitter {
           if (!suppressEvents) {
             this.emit('field.create', this.METADATA.fields[field])
           }
+        },
+
+        /**
+         * An internal helper method for applying changes to the model.
+         * @param  {String} [type='undo']
+         * This can be `undo` or `redo`.
+         * @param  {Number} [count=1]
+         * The number of cursor indexes to shift
+         * @param  {Boolean} [suppressEvents=false]
+         * Indicates events should be suppressed.
+         * @private
+         */
+        applyChange: (type = 'undo', count = 1, suppressEvents = false) => {
+          if (!this.METADATA.AUDITABLE) {
+            NGN.WARN(`The ${type} operation failed on the ${this.name} model because auditing is disabled.`)
+            return
+          }
+
+          this.METADATA.AUDITLOG[type === 'undo' ? 'rollback' : 'advance'](count)
+
+          let data = this.METADATA.AUDITLOG.currentValue
+
+          if (data) {
+            this.METADATA.auditFieldNames.forEach(fieldname => {
+              let field = this.METADATA.fields[fieldname]
+              let log = field.METADATA.AUDITLOG
+
+              if (log.cursor !== data[fieldname]) {
+                log.cursor = data[fieldname]
+                field.METADATA.setValue(log.currentValue, suppressEvents, true)
+              }
+            })
+          }
+        },
+
+        /**
+         * Generates a key/value representation of the model where
+         * each key represents an auditable field and each value is the
+         * transaction cursor ID.
+         * @return {Object}
+         * @private
+         */
+        getAuditMap: () => {
+          let map = {}
+
+          this.METADATA.auditFieldNames.forEach(field => {
+            map[field] = this.METADATA.fields[field].METADATA.AUDITLOG.cursor
+          })
+
+          return map
         },
 
         // Deprecations
@@ -302,6 +372,34 @@ class NGNDataModel extends NGN.EventEmitter {
         // Configure a data field for each configuration.
         this.METADATA.applyField(name, this.METADATA.fields[name], true)
       }
+    }
+
+    // Track Changes (if auditing enabled)
+    if (this.METADATA.AUDITABLE) {
+      this.on('field.update', this.METADATA.AUDIT_HANDLER)
+    }
+  }
+
+  set auditable (value) {
+    value = NGN.forceBoolean(value)
+
+    if (value !== this.METADATA.AUDITABLE) {
+      this.METADATA.AUDITABLE = value
+      this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
+      this.METADATA.auditFieldNames = value ? new Set() : null
+
+      // Set each field to an auditable state (or not).
+      this.METADATA.knownFieldNames.forEach(fieldname => {
+        if (!this.METADATA.fields[fieldname].virtual) {
+          this.METADATA.fields[fieldname].auditable = value
+
+          if (value) {
+            this.METADATA.auditFieldNames.add(fieldname)
+          } else {
+            this.METADATA.auditFieldNames.delete(fieldname)
+          }
+        }
+      })
     }
   }
 
@@ -335,6 +433,49 @@ class NGNDataModel extends NGN.EventEmitter {
    */
   get createDate () {
     return this.METADATA.created
+  }
+
+  get data () {
+    return this.serializeFields()
+  }
+
+  serializeFields (ignoreID = false, ignoreVirtualFields = true) {
+    if (this.METADATA.knownFieldNames.size === 0) {
+      return {}
+    }
+
+    let fieldname = this.knownFieldNames.keys()
+    let result = {}
+
+    while (!fieldname.next().done) {
+      let field = this.METADATA.fields[fieldname.value]
+
+      // Ignore unserializable fields
+      if (
+        field.value === undefined ||
+        (ignoreID && fieldname.value === this.idAttribute) ||
+        (!field.virtual || (!ignoreVirtualFields && field.virtual))
+      ) {
+        break
+      }
+
+      // Do not serialize hidden values or virtuals
+      if (!field.hidden) {
+        switch (NGN.typeof(field.value)) {
+          case 'array':
+          case 'object':
+            result[fieldname.value] = NGN.DATA.UTILITY.serialize(field.value)
+            break
+
+          default:
+            result[fieldname.value] = field.value
+        }
+      }
+    }
+  }
+
+  serialize () {
+    return NGN.deprecate(this.serializeFields, 'serialize is now serializeFields. Use NGN.DATA.UTILITY.serialize for generic object serialization.')
   }
 
   /**
@@ -451,5 +592,38 @@ class NGNDataModel extends NGN.EventEmitter {
    */
   setSilentFieldValue(field, value) {
     this.METADATA.fields[field].silentValue = value
+  }
+
+  /**
+   * @method undo
+   * A rollback function to undo changes. This operation affects
+   * the changelog (transaction log). To "undo" an "undo", use #redo.
+   * @param {number} [OperationCount=1]
+   * The number of operations to "undo". Defaults to a single operation.
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to quietly update the value (prevents `update` event from
+   * firing).
+   */
+  undo (count = 1, suppressEvents = false) {
+    this.METADATA.applyChange('undo', ...arguments)
+  }
+
+  /**
+   * @method redo
+   * A function to reapply known changes. This operation affects
+   * the changelog (transaction log).
+   *
+   * The redo operation only works after an undo operation, but before a new
+   * value is committed to the transaction log. In other words, `undo -> redo`
+   * will work, but `undo -> update -> redo` will not. For details, see how
+   * the NGN.DATA.TransactionLog cursor system works.
+   * @param {number} [OperationCount=1]
+   * The number of operations to "undo". Defaults to a single operation.
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to quietly update the value (prevents `update` event from
+   * firing).
+   */
+  redo (count = 1, suppressEvents = false) {
+    this.METADATA.applyChange('redo', ...arguments)
   }
 }

@@ -50,17 +50,118 @@
  * - ... write the rest in the guide...
  */
 class NGNRelationshipField extends NGNDataField {
-  constructor (cfg) {
-    cfg = cfg || {}
+  constructor (cfg = {}) {
+    let type = NGN.typeof(cfg.join)
+
+    // Assure valid configuration
+    if (!cfg.join) {
+      throw new InvalidConfigurationError('Missing "join" configuration property.')
+    } else if (
+      ['model', 'store'].indexOf(type) < 0 &&
+      (
+        type !== 'array' ||
+        NGN.typeof(cfg.join[0]) !== 'model'
+      )
+    ) {
+      throw new InvalidConfigurationError(`The join specified is not a valid NGN.DATA.Model, NGN.DATA.Store, or collection. It is a ${NGN.typeof(cfg.join)}"`)
+    }
 
     // Create optional cardinality validations
 
     // Initialize
+    cfg.identifier = false
     super(cfg)
 
     this.METADATA.fieldType = 'join'
     this.METADATA.join = Symbol('relationship')
-    this.METADATA.isIdentifier = false
+
+    delete this.METADATA.AUDITLOG
+
+    // Apply event monitoring to the #record.
+    this.METADATA.applyMonitor = () => {
+      if (this.METADATA.manner === 'model') {
+        // Model Event Relay
+        this.METADATA.join.pool('field.', {
+          create: this.METADATA.commonModelEventHandler('field.create'),
+          update: this.METADATA.commonModelEventHandler('field.update'),
+          remove: this.METADATA.commonModelEventHandler('field.remove'),
+          invalid: (data) => {
+            this.emit(['invalid', `invalid.${this.METADATA.name}.${data.field}`])
+          },
+          valid: (data) => {
+            this.emit(['valid', `valid.${this.METADATA.name}.${data.field}`])
+          }
+        })
+      //   this.METADATA.join.pool('field.', {
+      //     create: this.METADATA.commonModelEventHandler('field.create'),
+      //     update: this.METADATA.commonModelEventHandler('field.update'),
+      //     remove: this.METADATA.commonModelEventHandler('field.remove'),
+      //     invalid: (data) => {
+      //       this.emit(['invalid', `invalid.${this.name}.${data.field}`])
+      //     },
+      //     valid: (data) => {
+      //       this.emit(['valid', `valid.${this.name}.${data.field}`])
+      //     }
+      //   })
+      // } else {
+      //   // Store Event Relay
+      //   this.METADATA.join.pool('record.', {
+      //     create: this.METADATA.commonStoreEventHandler('record.create'),
+      //     update: this.METADATA.commonStoreEventHandler('record.update'),
+      //     remove: this.METADATA.commonStoreEventHandler('record.remove'),
+      //     invalid: (data) => {
+      //       this.emit('invalid', `invalid.${this.name}.${data.field}`)
+      //     },
+      //     valid: (data) => {
+      //       this.emit('valid', `valid.${this.name}.${data.field}`)
+      //     }
+      //   })
+      }
+    }
+
+    // Event handling for nested models.
+    this.METADATA.commonModelEventHandler = (type) => {
+      const me = this
+
+      return function (change) {
+        me.METADATA.commitPayload({
+          field: `${me.name}.${change.field}`,
+          old: NGN.coalesce(change.old),
+          new: NGN.coalesce(change.new),
+          join: true,
+          originalEvent: {
+            event: this.event,
+            record: me.METADATA.record
+          }
+        })
+      }
+    }
+
+    // Event handling for nested stores.
+    this.METADATA.commonStoreEventHandler = (type) => {
+      const me = this
+
+      return function (record, change) {
+        let old = change ? NGN.coalesce(change.old) : me.data
+
+        if (this.event === 'record.create') {
+          old.pop()
+        } else if (this.event === 'record.delete') {
+          old.push(record.data)
+        }
+
+        me.METADATA.commitPayload({
+          field:  me.name + (change ? `.${change.field}` : ''),
+          old: change ? NGN.coalesce(change.old) : old,
+          new: change ? NGN.coalesce(change.new) : me.data,
+          join: true,
+          originalEvent: {
+            event: this.event,
+            record: record
+          }
+        })
+      }
+    }
 
     /**
      * @cfg join {NGN.DATA.Store|NGN.DATA.Model[]}
@@ -114,7 +215,8 @@ class NGNRelationshipField extends NGNDataField {
      * to help understand real data relationships. In this case, it is easy to
      * infer that a person may have zero or more pets.
      */
-    this.record = NGN.coalesce(cfg.record)
+    this.value = NGN.coalesce(cfg.join)
+    this.auditable = NGN.coalesce(cfg.audit, false)
   }
 
   /**
@@ -147,39 +249,44 @@ class NGNRelationshipField extends NGNDataField {
     return NGN.coalesce(this.METADATA.manner, 'unknown')
   }
 
+  get value () {
+    return this.METADATA.join
+  }
+
   // Override the default value setter
   set value (value) {
     // Short-circuit if the value hasn't changed.
     let currentValue = this.METADATA.join
+
     if (currentValue === value) {
       return
     }
 
-    if (NGN.typeof(value) === 'array') {
+    let type = NGN.typeof(value)
+
+    if (type === 'array') {
       if (value.length !== 1) {
-        throw new Error(`${name} cannot refer to an empty data store/model collection. A record must be provided.`)
+        throw new Error(`${this.METADATA.name} cannot refer to an empty data store/model collection. A record must be provided.`)
       }
 
-      this.METADATA.manner = value[0] instanceof NGN.DATA.Store ? 'store' : 'collection'
-      this.METADATA.join = this.METADATA.manner === 'store'
-        ? value[0]
-        : new NGN.DATA.Store({
-          model: value[0]
-        })
-    } else if (this.METADATA.join instanceof NGN.DATA.Entity) {
-      this.METADATA.manner = 'model'
+      this.METADATA.manner = 'store'
+      value = new NGN.DATA.Store({
+        model: value[0]
+      })
+    } else if (['model', 'store'].indexOf(type) >= 0) {
+      this.METADATA.manner = type
     } else {
-      NGN.ERROR(`The "${name}" relationship has an invalid record type. Only instances of NGN.DATA.Store, NGN.DATA.Model, or [NGN.DATA.Model] are supported." .`)
-      throw new Error(`Invalid record configuration for ${name} field.`)
+      NGN.ERROR(`The "${this.METADATA.name}" relationship has an invalid record type. Only instances of NGN.DATA.Store, NGN.DATA.Model, or [NGN.DATA.Model] are supported." .`)
+      throw new InvalidConfigurationError(`Invalid record configuration for "${this.METADATA.name}" field.`)
     }
 
     if (this.manner === 'unknown') {
       throw new Error('Cannot set a relationship field to anything other than an NGN.DATA.Store, NGN.DATA.Model, or an array of NGN.DATA.Model collections. (Unknown manner of relationship)')
     }
 
-    this.METADATA.join = value
-
-    this.applyMonitor()
+    this.METADATA.join = type === 'model' ? new value() : value
+    this.auditable = this.METADATA.AUDITABLE
+    this.METADATA.applyMonitor()
 
     // Notify listeners of change
     if (typeof currentValue === 'symbol') {
@@ -190,78 +297,35 @@ class NGNRelationshipField extends NGNDataField {
     }
   }
 
-  /**
-   * Apply event monitoring to the #record.
-   */
-  applyMonitor () {
-    if (this.manner === 'model') {
-      // Model Event Relay
-      this.METADATA.join.pool('field.', {
-        create: this.commonModelEventHandler('field.create'),
-        update: this.commonModelEventHandler('field.update'),
-        remove: this.commonModelEventHandler('field.remove'),
-        invalid: (data) => {
-          this.emit(['invalid', `invalid.${this.name}.${data.field}`])
-        },
-        valid: (data) => {
-          this.emit(['valid', `valid.${this.name}.${data.field}`])
-        }
-      })
-    } else {
-      // Store Event Relay
-      this.raw.pool('record.', {
-        create: this.commonStoreEventHandler('record.create'),
-        update: this.commonStoreEventHandler('record.update'),
-        remove: this.commonStoreEventHandler('record.remove'),
-        invalid: (data) => {
-          this.emit('invalid', `invalid.${this.name}.${data.field}`)
-        },
-        valid: (data) => {
-          this.emit('valid', `valid.${this.name}.${data.field}`)
+  set auditable (value) {
+    value = NGN.forceBoolean(value)
+
+    if (value !== this.METADATA.AUDITABLE || (value && !this.METADATA.AUDITLOG)) {
+      this.METADATA.AUDITABLE = value
+      // this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
+      this.METADATA.join.auditable = value
+
+      delete this.METADATA.AUDITLOG
+
+      Object.defineProperty(this.METADATA, 'AUDITLOG', {
+        get: () => {
+          return this.METADATA.join.METADATA.AUDITLOG
         }
       })
     }
   }
 
-  commonStoreEventHandler (type) {
-    const me = this
-
-    return function (record, change) {
-      let old = change ? NGN.coalesce(change.old) : me.data
-
-      if (this.event === 'record.create') {
-        old.pop()
-      } else if (this.event === 'record.delete') {
-        old.push(record.data)
-      }
-
-      me.commitPayload({
-        field:  me.name + (change ? `.${change.field}` : ''),
-        old: change ? NGN.coalesce(change.old) : old,
-        new: change ? NGN.coalesce(change.new) : me.data,
-        join: true,
-        originalEvent: {
-          event: this.event,
-          record: record
-        }
-      })
+  // Override the default undo
+  undo () {
+    if (this.METADATA.manner === 'model') {
+console.log('UNDO--------')      
+      this.METADATA.join.undo(...arguments)
     }
   }
 
-  commonModelEventHandler (type) {
-    const me = this
-
-    return function (change) {
-      me.commitPayload({
-        field: `${me.name}.${change.field}`,
-        old: NGN.coalesce(change.old),
-        new: NGN.coalesce(change.new),
-        join: true,
-        originalEvent: {
-          event: this.event,
-          record: me.METADATA.record
-        }
-      })
+  redo () {
+    if (this.METADATA.manner === 'model') {
+      this.METADATA.join.redo(...arguments)
     }
   }
 }

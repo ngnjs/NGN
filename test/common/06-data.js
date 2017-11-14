@@ -11,6 +11,7 @@ require('../lib/data/DATA')
 
 test('Data Sanity Checks', function (t) {
   t.ok(typeof NGN.DATA === 'object', 'NGN.DATA exists as an object/namespace.')
+  t.ok(typeof NGN.DATA.UTILITY === 'function', 'NGN.DATA.UTILITY exists as singleton class.')
   t.ok(typeof NGN.DATA.TransactionLog === 'function', 'NGN.DATA.TransactionLog exists as a class.')
   t.ok(typeof NGN.DATA.Rule === 'function', 'NGN.DATA.Rule exists as a class.')
   t.ok(typeof NGN.DATA.RangeRule === 'function', 'NGN.DATA.RangeRule exists as a class.')
@@ -21,6 +22,32 @@ test('Data Sanity Checks', function (t) {
   t.ok(typeof NGN.DATA.Model === 'function', 'NGN.DATA.Model exists as a class.')
   t.ok(typeof NGN.DATA.Index === 'function', 'NGN.DATA.Index exists as a class.')
   t.ok(typeof NGN.DATA.Store === 'function', 'NGN.DATA.Store exists as a class.')
+  t.end()
+})
+
+test('NGN.DATA.UTILITY', function (t) {
+  var data = {
+    a: 1,
+    b: true,
+    c: 'three'
+  }
+
+  t.ok(NGN.DATA.UTILITY.checksum(data) === 1627578237, 'Checksum calculates for an object.')
+
+  var uuid = NGN.DATA.UTILITY.UUID()
+  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(uuid), 'UUID() returns a properly formatted identifier.')
+
+  var guid = NGN.DATA.UTILITY.GUID()
+  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(guid), 'GUID() returns a properly formatted identifier.')
+
+  let originalData = data
+
+  data[Symbol('test')] = 'symbol'
+  data.fn = function () {}
+  data = NGN.DATA.UTILITY.serialize(data)
+
+  t.ok(JSON.stringify(data) === JSON.stringify(originalData), 'Serialization returns an object stripped of functions.')
+
   t.end()
 })
 
@@ -50,6 +77,8 @@ test('NGN.DATA.TransactionLog', function (t) {
 
   log.rollback()
   t.ok(log.cursor === idd, 'Default rollback moves cursor back one index.')
+  t.ok(log.cursorIndex === 3, 'Proper cursor index number retrieved.')
+  t.ok(log.currentValue === 'd', 'Proper cursor value returned for currentValue.')
 
   log.rollback(2)
   t.ok(log.cursor === idb, 'Multistep rollback moves cursor back appropriately.')
@@ -99,6 +128,18 @@ test('NGN.DATA.TransactionLog', function (t) {
 
   log.once('done', function () {
     t.ok(log.length === 0, 'Reset clears the log.')
+
+    log = new NGN.DATA.TransactionLog(3)
+
+    log.commit('aa')
+    log.commit('bb')
+    let idcc = log.commit('cc')
+    log.commit('dd')
+    log.commit('ee')
+    log.rollback(10)
+
+    t.ok(log.cursor === idcc, 'Max entries supported with LIFO pattern.')
+
     t.end()
   })
 
@@ -410,6 +451,44 @@ test('NGN.DATA.Field (Number Field)', function (t) {
   t.end()
 })
 
+test('NGN.DATA.Field Basic Auditing (Changelog)', function (t) {
+  var field = new NGN.DATA.Field({
+    name: 'test',
+    audit: true
+  })
+
+  field.value = 'a'
+  field.value = 'b'
+  field.value = 'c'
+  field.value = 'd'
+  field.value = 'e'
+
+  field.undo()
+  t.ok(field.value === 'd', 'Basic undo rolls back one change.')
+
+  field.redo()
+  t.ok(field.value === 'e', 'Basic redo advances one change.')
+
+  field.undo(3)
+  t.ok(field.value === 'b', 'Multistep rollback quietly updates value.')
+
+  field.redo(3)
+  t.ok(field.value === 'e', 'Multistep redo quietly updates value.')
+
+  field.undo(2)
+  field.value = 'f'
+  t.ok(field.METADATA.AUDITLOG.length === 4, 'Correctly truncated newer values.')
+  t.ok(field.METADATA.AUDITLOG.currentValue === 'f', 'Correctly advanced cursor.')
+
+  field.undo()
+  t.ok(field.value === 'c', 'Correctly reverted value after committing change.')
+
+  field.redo(10)
+  t.ok(field.value === 'f', 'Correctly advanced value after committing change.')
+
+  t.end()
+})
+
 test('NGN.DATA.VirtualField', function (t) {
   var field = new NGN.DATA.VirtualField({
     scope: {
@@ -436,7 +515,8 @@ test('NGN.DATA.VirtualField', function (t) {
 var meta = function () {
   return {
     name: 'metamodel',
-    // idAttribute: 'testid',
+    idField: 'testid',
+
     fields: {
       firstname: null,
       lastname: null,
@@ -456,6 +536,30 @@ var meta = function () {
     // }
   }
 }
+
+// test('NGN.DATA.Relationship (Single Model)', function (t) {
+//   var Model = new NGN.DATA.Model(meta())
+//   var field = new NGN.DATA.Relationship({
+//     audit: true,
+//     name: 'test',
+//     join: Model
+//   })
+//
+//   field.METADATA.AUDITLOG.on('log', id => console.log(id))
+//
+//   t.ok(field.value instanceof NGN.DATA.Entity, 'Correctly returns the nested model.')
+//
+//   field.value.firstname = 'John'
+//   field.value.lastname = 'Doe'
+//
+//   field.value.firstname = 'Jill'
+//
+//   field.undo()
+// console.log(field.value.firstname, field.value.lastname)
+//   t.ok(field.value.lastname === null, 'Undo operation yields prior value.')
+//
+//   t.end()
+// })
 
 test('NGN.DATA.Model', function (t) {
   var tasks = new TaskRunner()
@@ -525,13 +629,13 @@ test('NGN.DATA.Model', function (t) {
     p.removeField('middle')
   })
 
-  tasks.add(function (next) {
+  tasks.add('Data Serialization', function (next) {
+    console.log(p)
     next()
-    // Need to implement undo.
   })
 
   // tasks.add(function (next) {
-  //
+  //   // Need to implement undo.
   // })
   //
   // tasks.add(function (next) {
@@ -546,10 +650,43 @@ test('NGN.DATA.Model', function (t) {
   //
   // })
 
-  tasks.on('complete', function () {
-    console.log('done?')
-    t.end()
-  })
+  tasks.on('complete', t.end)
 
   tasks.run(true)
+})
+
+test('NGN.DATA.Model Data Field Auditing (Changelog)', function (t) {
+  var config = meta()
+  config.audit = true
+
+  var Model = new NGN.DATA.Model(config)
+  var m = new Model()
+
+  m.firstname = 'John'
+  m.lastname = 'Doe'
+  m.val = 17
+  m.id = '12345'
+
+  m.firstname = 'Jill'
+  m.lastname = 'Rey'
+
+  m.undo()
+  t.ok(m.firstname === 'Jill' && m.lastname === 'Doe', 'Undo rolls back a single change.')
+
+  m.undo()
+  t.ok(m.firstname === 'John' && m.lastname === 'Doe', 'Second undo rolls back another change (different fields).')
+
+  m.redo(2)
+  t.ok(m.firstname === 'Jill' && m.lastname === 'Rey', 'Redo advances the transaction log forward.')
+
+  m.undo(2)
+  m.firstname = 'Billy'
+  m.lastname = 'Bob'
+  m.undo(2)
+  t.ok(m.firstname === 'John' && m.lastname === 'Doe', 'Rollback limited to start of transaction log.')
+
+  m.redo(10)
+  t.ok(m.firstname === 'Billy' && m.lastname === 'Bob', 'Transaction log rewritten at appropriate location.')
+
+  t.end()
 })

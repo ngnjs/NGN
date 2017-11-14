@@ -1,4 +1,5 @@
 (function () {
+  // [INCLUDE: ./Utility.js]
   // [INCLUDE: ./TransactionLog.js]
   // [INCLUDE: ./Rule.js]
   // [INCLUDE: ./RangeRule.js]
@@ -24,6 +25,8 @@
   }
 
   NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
+    UTILITY: NGN.const(Utility),
+    util: NGN.deprecate(Utility, 'NGN.DATA.util is now NGN.DATA.UTILITY'),
     TransactionLog: NGN.const(NGNTransactionLog),
     Rule: NGN.privateconst(NGNDataValidationRule),
     RangeRule: NGN.privateconst(NGNDataRangeValidationRule),
