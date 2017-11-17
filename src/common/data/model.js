@@ -457,6 +457,37 @@ class NGNDataModel extends NGN.EventEmitter {
   }
 
   /**
+   * @property {Array} changelog
+   * The changelog returns the underlying NGN.DATA.TransactionLog#log if
+   * auditing is available. The array will be empty if auditing is disabled.
+   */
+  get changelog () {
+    return this.METADATA.AUDITLOG.log.map(entry => {
+      let result = {
+        timestamp: entry.timestamp,
+        activeCursor: entry.activeCursor,
+        value: {}
+      }
+
+      let data = entry.value
+      let field = Object.keys(data)
+
+      for (let i = 0; i < field.length; i++) {
+        if (typeof data[field[i]] === 'symbol') {
+          result.value[field[i]] = NGN.coalesce(
+            this.METADATA.fields[field[i]].METADATA.AUDITLOG.getCommit(data[field[i]]).value,
+            this.METADATA.fields[field[i]].default
+          )
+        } else {
+          result.value[field[i]] = NGN.coalesce(this.METADATA.fields[field[i]].default)
+        }
+      }
+
+      return result
+    })
+  }
+
+  /**
    * @property {Number} createDate
    * The date/time when the model is created.
    */
@@ -468,39 +499,47 @@ class NGNDataModel extends NGN.EventEmitter {
     return this.serializeFields()
   }
 
+  get representation () {
+    return this.serializeFields(false, false)
+  }
+
   serializeFields (ignoreID = false, ignoreVirtualFields = true) {
     if (this.METADATA.knownFieldNames.size === 0) {
       return {}
     }
 
-    let fieldname = this.knownFieldNames.keys()
+    let fields = this.METADATA.knownFieldNames.keys()
     let result = {}
+    let fieldname = fields.next()
 
-    while (!fieldname.next().done) {
+    while (!fieldname.done) {
       let field = this.METADATA.fields[fieldname.value]
 
       // Ignore unserializable fields
-      if (
+      if ((
+
         field.value === undefined ||
         (ignoreID && fieldname.value === this.idAttribute) ||
         (!field.virtual || (!ignoreVirtualFields && field.virtual))
-      ) {
-        break
-      }
+      )) {
+        // Do not serialize hidden values or virtuals
+        if (!field.hidden) {
+          switch (NGN.typeof(field.value)) {
+            case 'array':
+            case 'object':
+              result[fieldname.value] = NGN.DATA.UTILITY.serialize(field.value)
+              break
 
-      // Do not serialize hidden values or virtuals
-      if (!field.hidden) {
-        switch (NGN.typeof(field.value)) {
-          case 'array':
-          case 'object':
-            result[fieldname.value] = NGN.DATA.UTILITY.serialize(field.value)
-            break
-
-          default:
-            result[fieldname.value] = field.value
+            default:
+              result[fieldname.value] = field.value
+          }
         }
       }
+
+      fieldname = fields.next()
     }
+
+    return result
   }
 
   serialize () {
@@ -632,10 +671,6 @@ class NGNDataModel extends NGN.EventEmitter {
    */
   setSilentFieldValue(field, value) {
     this.METADATA.fields[field].silentValue = value
-  }
-
-  get changelog () {
-    return this.METADATA.AUDITLOG.log
   }
 
   /**

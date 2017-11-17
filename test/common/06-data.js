@@ -576,6 +576,8 @@ test('NGN.DATA.Relationship (Single Model)', function (t) {
   field.redo(2)
   t.ok(field.value.firstname === 'Jill' && field.value.lastname === 'Doe', 'Multiple redo operation yields appropriate value.')
 
+  t.ok(field.value.changelog.length === 3, 'Proper changelog length.')
+
   t.end()
 })
 
@@ -650,10 +652,11 @@ test('NGN.DATA.Model', function (t) {
     p.removeField('middle')
   })
 
-  // tasks.add('Data Serialization', function (next) {
-  //   console.log(p)
-  //   next()
-  // })
+  tasks.add('Data Serialization', function (next) {
+    console.log(p.data)
+    console.log(p.representation)
+    next()
+  })
 
   // tasks.add(function (next) {
   //   // Need to implement undo.
