@@ -321,6 +321,8 @@ test('NGN.typeof', function (t) {
   t.ok(NGN.typeof({}) === 'object', 'NGN.typeof recognizes objects.')
   t.ok(NGN.typeof(EmptyFn) === 'emptyfn', 'NGN.typeof recognizes unique function names as types.')
   t.ok(NGN.typeof([]) === 'array', 'NGN.typeof recognizes arrays.')
+  t.ok(NGN.typeof(null) === 'null', 'NGN.typeof recognizes null.')
+  t.ok(NGN.typeof() === 'undefined', 'NGN.typeof recognizes undefined.')
 
   function myFn () {}
   t.ok(NGN.typeof(myFn) === 'myfn', 'NGN.typeof recognizes custom function names.')

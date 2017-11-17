@@ -83,7 +83,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
   }
 
   set cursor (value) {
-    if (!this.METADATA.transaction.hasOwnProperty(value)) {
+    if (value !== null && !this.METADATA.transaction.hasOwnProperty(value)) {
       throw new Error('Cannot set cursor for transaction log (does not exist).')
     }
 
@@ -124,7 +124,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id = Symbol(value.toString())
+    let id = typeof value === 'symbol' ? Symbol('generic.commit') : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
 
     this.METADATA.transaction[id] = [
       new Date(),
@@ -141,8 +141,8 @@ class NGNTransactionLog extends NGN.EventEmitter {
       delete this.METADATA.transaction[removedId]
     }
 
-    this.emit('log', id, null)
-console.log('Committed', value)
+    this.emit('commit', id, null)
+
     return id
   }
 
@@ -212,6 +212,11 @@ console.log('Committed', value)
       return null
     }
 
+    if (typeof index === 'symbol') {
+      this.cursor = index
+      return index
+    }
+
     if (index >= this.METADATA.changeOrder.length) {
       this.METADATA.cursor = this.METADATA.changeOrder[0]
     } else {
@@ -225,7 +230,7 @@ console.log('Committed', value)
         currentPosition -= index
 
         if (currentPosition <= 0) {
-          return this.METADATA.changeOrder[0]
+          currentPosition = 0
         }
 
         index = this.METADATA.changeOrder[currentPosition]
@@ -319,7 +324,8 @@ console.log('Committed', value)
     return this.METADATA.changeOrder.map(entry => {
       return {
         timestamp: this.METADATA.transaction[entry][0],
-        value: this.METADATA.transaction[entry][1]
+        value: this.METADATA.transaction[entry][1],
+        activeCursor: this.METADATA.cursor === entry
       }
     })
   }

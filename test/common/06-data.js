@@ -32,6 +32,27 @@ test('NGN.DATA.UTILITY', function (t) {
     c: 'three'
   }
 
+  var originalData = Object.assign({}, data)
+
+  data[Symbol('test')] = 'symbol'
+  data.fn = function () {}
+  data = NGN.DATA.UTILITY.serialize(data)
+
+  t.ok(JSON.stringify(data) === JSON.stringify(originalData), 'Serialization returns an object stripped of functions.')
+
+  data.d = /^s.*/
+  originalData.d = '/^s.*/'
+
+  t.ok(JSON.stringify(NGN.DATA.UTILITY.serialize(data)) === JSON.stringify(originalData), 'Serialization returns an object with proper RegEx conversion (to string).')
+
+  var dt = new Date(2000, 0, 1, 0, 0, 0)
+
+  data.d = dt
+  originalData.d = dt.toISOString()
+  t.ok(JSON.stringify(NGN.DATA.UTILITY.serialize(data)) === JSON.stringify(originalData), 'Serialization returns an object with proper date conversion (to ISO string).')
+
+  delete data.d
+
   t.ok(NGN.DATA.UTILITY.checksum(data) === 1627578237, 'Checksum calculates for an object.')
 
   var uuid = NGN.DATA.UTILITY.UUID()
@@ -40,21 +61,13 @@ test('NGN.DATA.UTILITY', function (t) {
   var guid = NGN.DATA.UTILITY.GUID()
   t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(guid), 'GUID() returns a properly formatted identifier.')
 
-  let originalData = data
-
-  data[Symbol('test')] = 'symbol'
-  data.fn = function () {}
-  data = NGN.DATA.UTILITY.serialize(data)
-
-  t.ok(JSON.stringify(data) === JSON.stringify(originalData), 'Serialization returns an object stripped of functions.')
-
   t.end()
 })
 
 test('NGN.DATA.TransactionLog', function (t) {
   var log = new NGN.DATA.TransactionLog()
 
-  log.funnel(['advance', 'rollback', 'reset', 'log'], 'done')
+  log.funnel(['advance', 'rollback', 'reset', 'commit'], 'done')
 
   t.ok(log.cursor === null, 'Initialize with null cursor.')
   t.ok(log.getCommit() === undefined, 'Fails to return a commit when none exist.')
@@ -87,7 +100,7 @@ test('NGN.DATA.TransactionLog', function (t) {
     t.ok(typeof data === 'symbol', 'Advance event triggered with ID.')
   })
 
-  log.once('log', function (data) {
+  log.once('commit', function (data) {
     t.ok(typeof data === 'symbol', 'Log event triggered with ID.')
   })
 
@@ -537,29 +550,34 @@ var meta = function () {
   }
 }
 
-// test('NGN.DATA.Relationship (Single Model)', function (t) {
-//   var Model = new NGN.DATA.Model(meta())
-//   var field = new NGN.DATA.Relationship({
-//     audit: true,
-//     name: 'test',
-//     join: Model
-//   })
-//
-//   field.METADATA.AUDITLOG.on('log', id => console.log(id))
-//
-//   t.ok(field.value instanceof NGN.DATA.Entity, 'Correctly returns the nested model.')
-//
-//   field.value.firstname = 'John'
-//   field.value.lastname = 'Doe'
-//
-//   field.value.firstname = 'Jill'
-//
-//   field.undo()
-// console.log(field.value.firstname, field.value.lastname)
-//   t.ok(field.value.lastname === null, 'Undo operation yields prior value.')
-//
-//   t.end()
-// })
+test('NGN.DATA.Relationship (Single Model)', function (t) {
+  var Model = new NGN.DATA.Model(meta())
+  var field = new NGN.DATA.Relationship({
+    audit: true,
+    name: 'test',
+    join: Model
+  })
+
+  t.ok(field.value instanceof NGN.DATA.Entity, 'Correctly returns the nested model.')
+
+  field.value.firstname = 'John'
+  field.value.lastname = 'Doe'
+  field.value.firstname = 'Jill'
+
+  field.undo()
+  t.ok(field.value.firstname === 'John' && field.value.lastname === 'Doe', 'Undo operation yields prior value.')
+
+  field.redo()
+  t.ok(field.value.firstname === 'Jill' && field.value.lastname === 'Doe', 'Redo operation yields next value.')
+
+  field.undo(2)
+  t.ok(field.value.firstname === 'John' && field.value.lastname === null, 'Multiple undo operation yields appropriate value.')
+
+  field.redo(2)
+  t.ok(field.value.firstname === 'Jill' && field.value.lastname === 'Doe', 'Multiple redo operation yields appropriate value.')
+
+  t.end()
+})
 
 test('NGN.DATA.Model', function (t) {
   var tasks = new TaskRunner()
@@ -588,6 +606,9 @@ test('NGN.DATA.Model', function (t) {
       'Recognized all field names'
     )
 
+    t.ok(p.getField('firstname').type === 'string', 'Properly unconfigured field as string.')
+    t.ok(p.getField('val').type === 'number', 'Autoidentify data type.')
+
     t.ok(p.virtual === 'test 15', 'Virtual field successfully generated value.')
 
     next()
@@ -595,7 +616,7 @@ test('NGN.DATA.Model', function (t) {
 
   tasks.add('Modify Record', function (next) {
     p.once('field.update', function (change) {
-      t.ok(change.field === 'firstname', 'Event fired for data change.')
+      t.ok(change.field.name === 'firstname', 'Event fired for data change.')
       t.ok(!change.old, 'Old value recognized.')
       t.ok(change.new === 'Corey', 'New value recognized.')
 
@@ -629,10 +650,10 @@ test('NGN.DATA.Model', function (t) {
     p.removeField('middle')
   })
 
-  tasks.add('Data Serialization', function (next) {
-    console.log(p)
-    next()
-  })
+  // tasks.add('Data Serialization', function (next) {
+  //   console.log(p)
+  //   next()
+  // })
 
   // tasks.add(function (next) {
   //   // Need to implement undo.
@@ -689,4 +710,28 @@ test('NGN.DATA.Model Data Field Auditing (Changelog)', function (t) {
   t.ok(m.firstname === 'Billy' && m.lastname === 'Bob', 'Transaction log rewritten at appropriate location.')
 
   t.end()
+})
+
+test('NGN.DATA.Model Virtual Field Caching', function (t) {
+  var Model = new NGN.DATA.Model(meta())
+  var model = new Model()
+
+  t.ok(model.METADATA.fields.virtual.METADATA.caching === true, 'Caching enabled by default.')
+  t.ok(model.METADATA.fields.virtual.METADATA.cachedValue === model.METADATA.fields.virtual.METADATA.CACHEKEY, 'Cache is empty before first reference to virtual field.')
+
+  var throwAway = model.virtual
+  t.ok(throwAway === 'test 15' && model.METADATA.fields.virtual.METADATA.cachedValue === 'test 15', 'Cache is set after first reference to virtual field.')
+
+  // Wait for cache.clear event to complete the test.
+  model.funnelOnce(['field.cache.clear', 'done'], 'end.test')
+  model.once('end.test', function () {
+    t.pass('cache.clear event triggered.')
+    t.end()
+  })
+
+  model.val = 11
+  t.ok(model.virtual === 'test 11', 'Successfully cleared cache and returned updated value.')
+  t.ok(model.METADATA.fields.virtual.METADATA.cachedValue === 'test 11', 'Updated cache value.')
+
+  model.emit('done')
 })

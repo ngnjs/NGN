@@ -35,6 +35,9 @@
  *   return YearsApart(new Date(), this.dateOfBirth)
  * })
  * ```
+ * @fires cache.clear {NGN.DATA.VirtualField}
+ * Fired whenever the cache is cleared. The field is passed as the only argument
+ * to event handler functions.
  */
 class NGNVirtualDataField extends NGNDataField {
   constructor (cfg) {
@@ -63,6 +66,22 @@ class NGNVirtualDataField extends NGNDataField {
     this.METADATA.fieldType = 'virtual'
 
     /**
+     * @cfg {boolean} [cache=true]
+     * By default, virtual fields _associated with a model_ will cache results
+     * to prevent unnecessary function calls. The cache is cleared whenever a
+     * local data field is modified.
+     *
+     * Caching can substantially reduce processing time in large data sets
+     * by calling methods less often. In most use cases, it will provide a
+     * substantial performance gain. However; since virtual fields can also
+     * leverage variables and methods that are not a part of the data model,
+     * caching may prevent the value from updating as expected. While this case
+     * may occur less often, it can occur. If you suspect caching is interfering
+     * with a virtual field value, it can be disabled by setting this to `false`.
+     */
+    this.METADATA.caching = NGN.coalesce(cfg.cache, true)
+
+    /**
      * @cfg {NGN.DATA.Model|NGN.DATA.Store|Object} scope
      * The model, store, or object that will be referenceable within the
      * virtual field #method. The model will be available in the `this` scope.
@@ -79,6 +98,58 @@ class NGNVirtualDataField extends NGNDataField {
 
     this.METADATA.virtualMethod = function () {
       return handlerFn.apply(me.METADATA.scope, ...arguments)
+    }
+
+    // Add smart-cache support
+    this.METADATA.CACHEKEY = Symbol('no.cache')
+    this.METADATA.cachedValue = this.METADATA.CACHEKEY
+
+    // Only add caching support if a model is associated
+    if (this.METADATA.caching && this.model) {
+      // Create a method for identifying which local data fields
+      // need to be monitored (for caching)
+      const localFieldPattern = /this(\.(.[^\W]+)|\[['"]{1}(.*)+['"]{1}\])/g
+
+      // Returns a Set of fieldnames used in the virtual function.
+      let monitoredFields = new Set()
+      let content = handlerFn.toString()
+      let iterator = localFieldPattern.exec(content)
+
+      while (iterator !== null) {
+        let field = NGN.coalesce(iterator[2], iterator[3])
+
+        if (this.model.METADATA.knownFieldNames.has(field)) {
+          monitoredFields.add(field)
+        }
+
+        content = content.replace(localFieldPattern, '')
+        iterator = localFieldPattern.exec(content)
+      }
+
+      this.model.pool('field.', {
+        update: (change) => {
+          if (monitoredFields.has(change.field.name)) {
+            this.METADATA.cachedValue = this.METADATA.CACHEKEY
+            this.emit('cache.clear', this)
+          }
+        },
+
+        remove: (field) => {
+          if (monitoredFields.has(field.name)) {
+            this.METADATA.cachedValue = this.METADATA.CACHEKEY
+            this.emit('cache.clear', this)
+            NGN.ERROR(`The ${this.name} virtual field uses the ${field.name} field, which was removed. This virtual field may no longer work.`)
+          }
+        },
+
+        create: (field) => {
+          if (monitoredFields.has(field.name)) {
+            this.METADATA.cachedValue = this.METADATA.CACHEKEY
+            this.emit('cache.clear', this)
+            NGN.INFO(`The ${this.name} virtual field uses the ${field.name} field, which was added.`)
+          }
+        }
+      })
     }
   }
 
@@ -97,6 +168,15 @@ class NGNVirtualDataField extends NGNDataField {
    * be _set_ to a synchronous function that returns a value.
    */
   get value () {
+    if (this.METADATA.caching) {
+      if (this.METADATA.cachedValue !== this.METADATA.CACHEKEY) {
+        return this.METADATA.cachedValue
+      } else {
+        this.METADATA.cachedValue = this.METADATA.virtualMethod()
+        return this.METADATA.cachedValue
+      }
+    }
+
     return this.METADATA.virtualMethod()
   }
 

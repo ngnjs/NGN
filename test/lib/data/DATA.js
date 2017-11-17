@@ -41,7 +41,7 @@ class Utility {
    */
   static checksum (str) {
     if (typeof str === 'object') {
-      str = JSON.stringify(str)
+      str = JSON.stringify(this.serialize(str))
     }
 
     if (!crcTable) {
@@ -124,9 +124,11 @@ class Utility {
     }
 
     // Force an object for parsing
+    let SERIALIZED_ARRAY_DATA = Symbol('array.data')
+
     if (NGN.typeof(data) === 'array') {
       data = {
-        SERIALIZED_ARRAY_DATA: data
+        [SERIALIZED_ARRAY_DATA]: data
       }
     }
 
@@ -155,16 +157,16 @@ class Utility {
             break
 
           case 'date':
-            Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toUTCString()))
-
-            break
-
-          case 'regexp':
-            Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))
+            Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toISOString()))
 
             break
 
           case 'symbol':
+            if (SERIALIZED_ARRAY_DATA === attribute[i]) {
+              break
+            }
+
+          case 'regexp':
             Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))
 
             break
@@ -178,7 +180,7 @@ class Utility {
       }
     }
 
-    return result.SERIALIZED_ARRAY_DATA !== undefined ? result.SERIALIZED_ARRAY_DATA : result
+    return result[SERIALIZED_ARRAY_DATA] !== undefined ? result[SERIALIZED_ARRAY_DATA] : result
   }
 }
 
@@ -343,7 +345,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
   }
 
   set cursor (value) {
-    if (!this.METADATA.transaction.hasOwnProperty(value)) {
+    if (value !== null && !this.METADATA.transaction.hasOwnProperty(value)) {
       throw new Error('Cannot set cursor for transaction log (does not exist).')
     }
 
@@ -384,7 +386,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id = Symbol(value.toString())
+    let id = typeof value === 'symbol' ? Symbol('generic.commit') : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
 
     this.METADATA.transaction[id] = [
       new Date(),
@@ -401,8 +403,8 @@ class NGNTransactionLog extends NGN.EventEmitter {
       delete this.METADATA.transaction[removedId]
     }
 
-    this.emit('log', id, null)
-console.log('Committed', value)
+    this.emit('commit', id, null)
+
     return id
   }
 
@@ -472,6 +474,11 @@ console.log('Committed', value)
       return null
     }
 
+    if (typeof index === 'symbol') {
+      this.cursor = index
+      return index
+    }
+
     if (index >= this.METADATA.changeOrder.length) {
       this.METADATA.cursor = this.METADATA.changeOrder[0]
     } else {
@@ -485,7 +492,7 @@ console.log('Committed', value)
         currentPosition -= index
 
         if (currentPosition <= 0) {
-          return this.METADATA.changeOrder[0]
+          currentPosition = 0
         }
 
         index = this.METADATA.changeOrder[currentPosition]
@@ -579,7 +586,8 @@ console.log('Committed', value)
     return this.METADATA.changeOrder.map(entry => {
       return {
         timestamp: this.METADATA.transaction[entry][0],
-        value: this.METADATA.transaction[entry][1]
+        value: this.METADATA.transaction[entry][1],
+        activeCursor: this.METADATA.cursor === entry
       }
     })
   }
@@ -871,6 +879,47 @@ class NGNDataField extends NGN.EventEmitter {
       throw new Error('Invalid data field configuration. Pattern must be a valid JavaScript regular expression (RegExp).')
     }
 
+    if (cfg.type === undefined) {
+      if (cfg.default) {
+        switch (NGN.typeof(cfg.default)) {
+          case 'number':
+            cfg.type = Number
+            break
+
+          case 'regexp':
+            cfg.type = RegExp
+            break
+
+          case 'boolean':
+            cfg.type = Boolean
+            break
+
+          case 'symbol':
+            cfg.type = Symbol
+            break
+
+          case 'date':
+            cfg.type = Date
+            break
+
+          case 'array':
+            cfg.type = Array
+            break
+
+          case 'object':
+            cfg.type = Object
+            break
+
+          case 'function':
+            cfg.type = cfg.default
+            break
+
+          default:
+            cfg.type = String
+        }
+      }
+    }
+
     super(cfg)
 
     const EMPTYDATA = Symbol('empty')
@@ -994,7 +1043,7 @@ class NGNDataField extends NGN.EventEmitter {
           'invalid',
           'valid',
           'rule.add',
-          'rule.remove',
+          'rule.remove'
         ]),
 
         /**
@@ -1032,7 +1081,7 @@ class NGNDataField extends NGN.EventEmitter {
           }
 
           let change = {
-            field: this.METADATA.name,
+            field: this,
             old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
             new: value
           }
@@ -1171,6 +1220,7 @@ class NGNDataField extends NGN.EventEmitter {
     if (value !== this.METADATA.AUDITABLE) {
       this.METADATA.AUDITABLE = value
       this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
+      this.METADATA.AUDITLOG.relay('*', this, 'transaction.')
     }
   }
 
@@ -1187,7 +1237,7 @@ class NGNDataField extends NGN.EventEmitter {
 
   set model (value) {
     if (this.METADATA.model === null) {
-      if (value instanceof NGN.DATA.Model) {
+      if (value instanceof NGN.DATA.Entity) {
         this.METADATA.model = value
 
         let events = Array.from(this.METADATA.EVENTS.values())
@@ -1198,8 +1248,6 @@ class NGNDataField extends NGN.EventEmitter {
         for (let i = 0; i < events.length; i++) {
           this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
         }
-
-        this.METADATA.model.emit('field.create', this)
       } else {
         NGN.WARN('Invalid model.')
       }
@@ -1533,6 +1581,9 @@ class NGNDataField extends NGN.EventEmitter {
  *   return YearsApart(new Date(), this.dateOfBirth)
  * })
  * ```
+ * @fires cache.clear {NGN.DATA.VirtualField}
+ * Fired whenever the cache is cleared. The field is passed as the only argument
+ * to event handler functions.
  */
 class NGNVirtualDataField extends NGNDataField {
   constructor (cfg) {
@@ -1561,6 +1612,22 @@ class NGNVirtualDataField extends NGNDataField {
     this.METADATA.fieldType = 'virtual'
 
     /**
+     * @cfg {boolean} [cache=true]
+     * By default, virtual fields _associated with a model_ will cache results
+     * to prevent unnecessary function calls. The cache is cleared whenever a
+     * local data field is modified.
+     *
+     * Caching can substantially reduce processing time in large data sets
+     * by calling methods less often. In most use cases, it will provide a
+     * substantial performance gain. However; since virtual fields can also
+     * leverage variables and methods that are not a part of the data model,
+     * caching may prevent the value from updating as expected. While this case
+     * may occur less often, it can occur. If you suspect caching is interfering
+     * with a virtual field value, it can be disabled by setting this to `false`.
+     */
+    this.METADATA.caching = NGN.coalesce(cfg.cache, true)
+
+    /**
      * @cfg {NGN.DATA.Model|NGN.DATA.Store|Object} scope
      * The model, store, or object that will be referenceable within the
      * virtual field #method. The model will be available in the `this` scope.
@@ -1577,6 +1644,58 @@ class NGNVirtualDataField extends NGNDataField {
 
     this.METADATA.virtualMethod = function () {
       return handlerFn.apply(me.METADATA.scope, ...arguments)
+    }
+
+    // Add smart-cache support
+    this.METADATA.CACHEKEY = Symbol('no.cache')
+    this.METADATA.cachedValue = this.METADATA.CACHEKEY
+
+    // Only add caching support if a model is associated
+    if (this.METADATA.caching && this.model) {
+      // Create a method for identifying which local data fields
+      // need to be monitored (for caching)
+      const localFieldPattern = /this(\.(.[^\W]+)|\[['"]{1}(.*)+['"]{1}\])/g
+
+      // Returns a Set of fieldnames used in the virtual function.
+      let monitoredFields = new Set()
+      let content = handlerFn.toString()
+      let iterator = localFieldPattern.exec(content)
+
+      while (iterator !== null) {
+        let field = NGN.coalesce(iterator[2], iterator[3])
+
+        if (this.model.METADATA.knownFieldNames.has(field)) {
+          monitoredFields.add(field)
+        }
+
+        content = content.replace(localFieldPattern, '')
+        iterator = localFieldPattern.exec(content)
+      }
+
+      this.model.pool('field.', {
+        update: (change) => {
+          if (monitoredFields.has(change.field.name)) {
+            this.METADATA.cachedValue = this.METADATA.CACHEKEY
+            this.emit('cache.clear', this)
+          }
+        },
+
+        remove: (field) => {
+          if (monitoredFields.has(field.name)) {
+            this.METADATA.cachedValue = this.METADATA.CACHEKEY
+            this.emit('cache.clear', this)
+            NGN.ERROR(`The ${this.name} virtual field uses the ${field.name} field, which was removed. This virtual field may no longer work.`)
+          }
+        },
+
+        create: (field) => {
+          if (monitoredFields.has(field.name)) {
+            this.METADATA.cachedValue = this.METADATA.CACHEKEY
+            this.emit('cache.clear', this)
+            NGN.INFO(`The ${this.name} virtual field uses the ${field.name} field, which was added.`)
+          }
+        }
+      })
     }
   }
 
@@ -1595,6 +1714,15 @@ class NGNVirtualDataField extends NGNDataField {
    * be _set_ to a synchronous function that returns a value.
    */
   get value () {
+    if (this.METADATA.caching) {
+      if (this.METADATA.cachedValue !== this.METADATA.CACHEKEY) {
+        return this.METADATA.cachedValue
+      } else {
+        this.METADATA.cachedValue = this.METADATA.virtualMethod()
+        return this.METADATA.cachedValue
+      }
+    }
+
     return this.METADATA.virtualMethod()
   }
 
@@ -1730,8 +1858,6 @@ class NGNRelationshipField extends NGNDataField {
     this.METADATA.fieldType = 'join'
     this.METADATA.join = Symbol('relationship')
 
-    delete this.METADATA.AUDITLOG
-
     // Apply event monitoring to the #record.
     this.METADATA.applyMonitor = () => {
       if (this.METADATA.manner === 'model') {
@@ -1818,6 +1944,13 @@ class NGNRelationshipField extends NGNDataField {
       }
     }
 
+    // const commitPayload = this.METADATA.commitPayload
+    //
+    // this.METADATA.commitPayload = (payload) => {
+    //   console.log('HERE')
+    //   commitPayload(...arguments)
+    // }
+
     /**
      * @cfg join {NGN.DATA.Store|NGN.DATA.Model[]}
      * A relationship to another model/store is defined by a join.
@@ -1871,6 +2004,7 @@ class NGNRelationshipField extends NGNDataField {
      * infer that a person may have zero or more pets.
      */
     this.value = NGN.coalesce(cfg.join)
+    this.METADATA.AUDITABLE = false
     this.auditable = NGN.coalesce(cfg.audit, false)
   }
 
@@ -1955,25 +2089,27 @@ class NGNRelationshipField extends NGNDataField {
   set auditable (value) {
     value = NGN.forceBoolean(value)
 
-    if (value !== this.METADATA.AUDITABLE || (value && !this.METADATA.AUDITLOG)) {
+    if (value !== this.METADATA.AUDITABLE) {
       this.METADATA.AUDITABLE = value
-      // this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
       this.METADATA.join.auditable = value
 
-      delete this.METADATA.AUDITLOG
+//       this.METADATA.join.on('field.update', (change) => {
+// console.log('HERE')
+//         this.METADATA.AUDITLOG.commit(this.METADATA.join.METADATA.getAuditMap())
+//       })
+      // delete this.METADATA.AUDITLOG
 
-      Object.defineProperty(this.METADATA, 'AUDITLOG', {
-        get: () => {
-          return this.METADATA.join.METADATA.AUDITLOG
-        }
-      })
+      // Object.defineProperty(this.METADATA, 'AUDITLOG', {
+      //   get: () => {
+      //     return this.METADATA.join.METADATA.AUDITLOG
+      //   }
+      // })
     }
   }
 
   // Override the default undo
   undo () {
     if (this.METADATA.manner === 'model') {
-console.log('UNDO--------')      
       this.METADATA.join.undo(...arguments)
     }
   }
@@ -2005,9 +2141,7 @@ class NGNDataModel extends NGN.EventEmitter {
 
     super()
 
-    // A unique internal instance ID for referencing internal
-    // data placeholders
-    const INSTANCE = Symbol('model')
+    const me = this
 
     // Create private attributes & data placeholders
     Object.defineProperties(this, {
@@ -2033,7 +2167,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * For example, if an email is the ID of a user, this would be set to
          * `email`.
          */
-        idAttribute: NGN.privateconst(NGN.coalesce(cfg.idField, cfg.idAttribute) || 'id'),
+        idAttribute: NGN.coalesce(cfg.idField, cfg.idAttribute) || 'id',
 
         /**
          * @cfg {object} fields
@@ -2133,9 +2267,9 @@ class NGNDataModel extends NGN.EventEmitter {
          */
         AUDITABLE: NGN.coalesce(cfg.audit, false),
         AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
-        AUDIT_HANDLER: (change) => {
+        AUDIT_HANDLER: function (change) {
           if (change.hasOwnProperty('cursor')) {
-            this.METADATA.AUDITLOG.commit(this.METADATA.getAuditMap())
+            me.METADATA.AUDITLOG.commit(me.METADATA.getAuditMap())
           }
         },
 
@@ -2179,9 +2313,6 @@ class NGNDataModel extends NGN.EventEmitter {
           if (this.hasOwnProperty(field) && field.toLowerCase() !== 'id') {
             throw new ReservedWordError(`"${field}" cannot be used as a field name (reserved word).`)
           }
-
-          // Add the field to the list
-          this.METADATA.knownFieldNames.add(field)
 
           // If the field config isn't already an NGN.DATA.Field, create it.
           if (!(cfg instanceof NGN.DATA.Field)) {
@@ -2259,6 +2390,14 @@ class NGNDataModel extends NGN.EventEmitter {
             return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
           }
 
+          // Add a direct reference to the model.
+          Object.defineProperty(this, field, {
+            enumerable: true,
+            configurable: true,
+            get: () => this.METADATA.fields[field].value,
+            set: (value) => this.METADATA.fields[field].value = value
+          })
+
           // Enable auditing if necessary.
           if (this.METADATA.AUDITABLE) {
             if (this.METADATA.fields[field].fieldType !== 'virtual') {
@@ -2267,11 +2406,8 @@ class NGNDataModel extends NGN.EventEmitter {
             }
           }
 
-          Object.defineProperty(this, field, {
-            configurable: true,
-            get: () => this.METADATA.fields[field].value,
-            set: (value) => this.METADATA.fields[field].value = value
-          })
+          // Add the field to the list
+          this.METADATA.knownFieldNames.add(field)
 
           // this.METADATA.fields[field].on('*', function () { console.log(this.event) })
           this.METADATA.fields[field].relay('*', this, 'field.')
@@ -2307,8 +2443,13 @@ class NGNDataModel extends NGN.EventEmitter {
               let log = field.METADATA.AUDITLOG
 
               if (log.cursor !== data[fieldname]) {
-                log.cursor = data[fieldname]
-                field.METADATA.setValue(log.currentValue, suppressEvents, true)
+                if (typeof data[fieldname] === 'symbol') {
+                  log.cursor = data[fieldname]
+                } else {
+                  log.cursor = null
+                }
+
+                field.METADATA.setValue(NGN.coalesce(log.currentValue, field.default), suppressEvents, true)
               }
             })
           }
@@ -2330,6 +2471,23 @@ class NGNDataModel extends NGN.EventEmitter {
 
           return map
         },
+
+        /**
+         * Restore the model to a specific audit map (i.e. historical state
+         * of multiple fields).
+         * @param {Object} map
+         * The audit map to restore.
+         */
+        // restore: (map) => {
+        //   let keys = Object.keys(map)
+        //
+        //   for (let i = 0; i < keys.length; i++) {
+        //     if (this.METADATA.knownFieldNames.has(keys[i]) && typeof map[keys[i]] === 'symbol') {
+        //       console.log('Has', keys[i])
+        //
+        //     }
+        //   }
+        // },
 
         // Deprecations
         setSilent: NGN.deprecate(this.setSilentFieldValue, 'setSilent has been deprecated. Use setSilentFieldValue instead.')
@@ -2382,11 +2540,18 @@ class NGNDataModel extends NGN.EventEmitter {
 
           if (value) {
             this.METADATA.auditFieldNames.add(fieldname)
-          } else {
-            this.METADATA.auditFieldNames.delete(fieldname)
           }
         }
       })
+
+      if (value) {
+        this.on('field.transaction.*', (id) => {
+          this.METADATA.AUDIT_HANDLER({ cursor: id })
+        })
+      } else {
+        this.METADATA.auditFieldNames.clear()
+        this.off('field.transaction.*')
+      }
     }
   }
 
@@ -2544,13 +2709,13 @@ class NGNDataModel extends NGN.EventEmitter {
    */
   removeField (name, suppressEvents = false) {
     if (this.METADATA.knownFieldNames.has(name)) {
-      let field = this.METADATA.fields[name]
+      this.METADATA.knownFieldNames.delete(name)
+      this.METADATA.invalidFieldNames.delete(name)
+
+      const field = this.METADATA.fields[name]
 
       delete this[name]
       delete this.METADATA.fields[name] // eslint-disable-line no-undef
-
-      this.METADATA.knownFieldNames.delete(name)
-      this.METADATA.invalidFieldNames.delete(name)
 
       // let change = {
       //   action: 'delete',
@@ -2567,6 +2732,17 @@ class NGNDataModel extends NGN.EventEmitter {
   }
 
   /**
+   * Returns the NGN.DATA.Field object for the specified field.
+   * @param  {string} fieldName
+   * Name of the field to retrieve.
+   * @return {NGN.DATA.Field}
+   * The raw field.
+   */
+  getField (name) {
+    return this.METADATA.fields[name]
+  }
+
+  /**
    * @method setSilent
    * A method to set a field value without triggering an update event.
    * This is designed primarily for use with live update proxies to prevent
@@ -2579,6 +2755,10 @@ class NGNDataModel extends NGN.EventEmitter {
    */
   setSilentFieldValue(field, value) {
     this.METADATA.fields[field].silentValue = value
+  }
+
+  get changelog () {
+    return this.METADATA.AUDITLOG.log
   }
 
   /**

@@ -40,7 +40,7 @@ class Utility {
    */
   static checksum (str) {
     if (typeof str === 'object') {
-      str = JSON.stringify(str)
+      str = JSON.stringify(this.serialize(str))
     }
 
     if (!crcTable) {
@@ -123,9 +123,11 @@ class Utility {
     }
 
     // Force an object for parsing
+    let SERIALIZED_ARRAY_DATA = Symbol('array.data')
+
     if (NGN.typeof(data) === 'array') {
       data = {
-        SERIALIZED_ARRAY_DATA: data
+        [SERIALIZED_ARRAY_DATA]: data
       }
     }
 
@@ -154,16 +156,16 @@ class Utility {
             break
 
           case 'date':
-            Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toUTCString()))
-
-            break
-
-          case 'regexp':
-            Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))
+            Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toISOString()))
 
             break
 
           case 'symbol':
+            if (SERIALIZED_ARRAY_DATA === attribute[i]) {
+              break
+            }
+
+          case 'regexp':
             Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))
 
             break
@@ -177,7 +179,7 @@ class Utility {
       }
     }
 
-    return result.SERIALIZED_ARRAY_DATA !== undefined ? result.SERIALIZED_ARRAY_DATA : result
+    return result[SERIALIZED_ARRAY_DATA] !== undefined ? result[SERIALIZED_ARRAY_DATA] : result
   }
 }
 

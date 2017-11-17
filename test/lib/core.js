@@ -514,7 +514,7 @@ Object.defineProperties(NGN, {
    * The array with unique records.
    * @private
    */
-  dedupe: NGN.private((array) => {
+  dedupe: NGN.const((array) => {
     let matches = []
 
     // This is more performant than array.filter in most cases.
@@ -538,6 +538,12 @@ Object.defineProperties(NGN, {
    * Returns the type (all lower case).
    */
   typeof: NGN.const((el) => {
+    if (el === undefined) {
+      return 'undefined'
+    } else if (el === null) {
+      return 'null'
+    }
+
     let value = Object.prototype.toString.call(el).split(' ')[1].replace(/[^A-Za-z]/gi, '').toLowerCase()
 
     if (value === 'function') {
@@ -566,7 +572,7 @@ Object.defineProperties(NGN, {
     * The value being forced to be an array.
     * @private
     */
-  forceArray: NGN.private((value) => {
+  forceArray: NGN.const((value) => {
     if (value === null) {
       return []
     }
@@ -595,7 +601,7 @@ Object.defineProperties(NGN, {
    * The value being forced to be a boolean.
    * @private
    */
-  forceBoolean: NGN.private((value) => {
+  forceBoolean: NGN.const((value) => {
     switch (NGN.typeof(value)) {
       case 'boolean':
         return value
@@ -651,7 +657,7 @@ Object.defineProperties(NGN, {
    * the numeric value. When a radix is supplied, `parseInt` is used.
    * @private
    */
-  forceNumber: NGN.private((value, radix = null) => {
+  forceNumber: NGN.const((value, radix = null) => {
     try {
       switch (NGN.typeof(value)) {
         case 'boolean':
@@ -993,7 +999,7 @@ Object.defineProperties(NGN, {
    * The object to check.
    * @return {Boolean}
    */
-  objectHasAll: NGN.private(function () {
+  objectHasAll: NGN.const(function () {
     let properties = Object.keys(arguments[0])
 
     for (let i = 1; i < arguments.length; i++) {
@@ -1026,7 +1032,7 @@ Object.defineProperties(NGN, {
    * The object to check.
    * @return {Boolean}
    */
-  objectHasAny: NGN.private(function () {
+  objectHasAny: NGN.const(function () {
     let properties = Object.keys(arguments[0])
 
     for (let i = 1; i < arguments.length; i++) {
@@ -1061,7 +1067,7 @@ Object.defineProperties(NGN, {
    * The object to check.
    * @return {Boolean}
    */
-  objectHasExactly: NGN.private(function () {
+  objectHasExactly: NGN.const(function () {
     // If there are missing properties, it's not an exact match.
     if (this.getObjectMissingPropertyNames(arguments[0]).length !== 0) {
       return false
@@ -1095,7 +1101,7 @@ Object.defineProperties(NGN, {
    * error if the object is missing any properties.
    * @throws Error
    */
-  objectRequires: NGN.private(function () {
+  objectRequires: NGN.const(function () {
     let check = this.objectHasAll(...arguments)
 
     if (!check) {

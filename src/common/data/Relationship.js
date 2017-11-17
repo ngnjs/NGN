@@ -75,8 +75,6 @@ class NGNRelationshipField extends NGNDataField {
     this.METADATA.fieldType = 'join'
     this.METADATA.join = Symbol('relationship')
 
-    delete this.METADATA.AUDITLOG
-
     // Apply event monitoring to the #record.
     this.METADATA.applyMonitor = () => {
       if (this.METADATA.manner === 'model') {
@@ -163,6 +161,13 @@ class NGNRelationshipField extends NGNDataField {
       }
     }
 
+    // const commitPayload = this.METADATA.commitPayload
+    //
+    // this.METADATA.commitPayload = (payload) => {
+    //   console.log('HERE')
+    //   commitPayload(...arguments)
+    // }
+
     /**
      * @cfg join {NGN.DATA.Store|NGN.DATA.Model[]}
      * A relationship to another model/store is defined by a join.
@@ -216,6 +221,7 @@ class NGNRelationshipField extends NGNDataField {
      * infer that a person may have zero or more pets.
      */
     this.value = NGN.coalesce(cfg.join)
+    this.METADATA.AUDITABLE = false
     this.auditable = NGN.coalesce(cfg.audit, false)
   }
 
@@ -300,25 +306,27 @@ class NGNRelationshipField extends NGNDataField {
   set auditable (value) {
     value = NGN.forceBoolean(value)
 
-    if (value !== this.METADATA.AUDITABLE || (value && !this.METADATA.AUDITLOG)) {
+    if (value !== this.METADATA.AUDITABLE) {
       this.METADATA.AUDITABLE = value
-      // this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
       this.METADATA.join.auditable = value
 
-      delete this.METADATA.AUDITLOG
+//       this.METADATA.join.on('field.update', (change) => {
+// console.log('HERE')
+//         this.METADATA.AUDITLOG.commit(this.METADATA.join.METADATA.getAuditMap())
+//       })
+      // delete this.METADATA.AUDITLOG
 
-      Object.defineProperty(this.METADATA, 'AUDITLOG', {
-        get: () => {
-          return this.METADATA.join.METADATA.AUDITLOG
-        }
-      })
+      // Object.defineProperty(this.METADATA, 'AUDITLOG', {
+      //   get: () => {
+      //     return this.METADATA.join.METADATA.AUDITLOG
+      //   }
+      // })
     }
   }
 
   // Override the default undo
   undo () {
     if (this.METADATA.manner === 'model') {
-console.log('UNDO--------')      
       this.METADATA.join.undo(...arguments)
     }
   }

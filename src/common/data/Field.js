@@ -51,6 +51,47 @@ class NGNDataField extends NGN.EventEmitter {
       throw new Error('Invalid data field configuration. Pattern must be a valid JavaScript regular expression (RegExp).')
     }
 
+    if (cfg.type === undefined) {
+      if (cfg.default) {
+        switch (NGN.typeof(cfg.default)) {
+          case 'number':
+            cfg.type = Number
+            break
+
+          case 'regexp':
+            cfg.type = RegExp
+            break
+
+          case 'boolean':
+            cfg.type = Boolean
+            break
+
+          case 'symbol':
+            cfg.type = Symbol
+            break
+
+          case 'date':
+            cfg.type = Date
+            break
+
+          case 'array':
+            cfg.type = Array
+            break
+
+          case 'object':
+            cfg.type = Object
+            break
+
+          case 'function':
+            cfg.type = cfg.default
+            break
+
+          default:
+            cfg.type = String
+        }
+      }
+    }
+
     super(cfg)
 
     const EMPTYDATA = Symbol('empty')
@@ -174,7 +215,7 @@ class NGNDataField extends NGN.EventEmitter {
           'invalid',
           'valid',
           'rule.add',
-          'rule.remove',
+          'rule.remove'
         ]),
 
         /**
@@ -212,7 +253,7 @@ class NGNDataField extends NGN.EventEmitter {
           }
 
           let change = {
-            field: this.METADATA.name,
+            field: this,
             old: typeof this.METADATA.RAW === 'symbol' ? undefined : this.METADATA.RAW,
             new: value
           }
@@ -351,6 +392,7 @@ class NGNDataField extends NGN.EventEmitter {
     if (value !== this.METADATA.AUDITABLE) {
       this.METADATA.AUDITABLE = value
       this.METADATA.AUDITLOG = value ? new NGN.DATA.TransactionLog() : null
+      this.METADATA.AUDITLOG.relay('*', this, 'transaction.')
     }
   }
 
@@ -367,7 +409,7 @@ class NGNDataField extends NGN.EventEmitter {
 
   set model (value) {
     if (this.METADATA.model === null) {
-      if (value instanceof NGN.DATA.Model) {
+      if (value instanceof NGN.DATA.Entity) {
         this.METADATA.model = value
 
         let events = Array.from(this.METADATA.EVENTS.values())
@@ -378,8 +420,6 @@ class NGNDataField extends NGN.EventEmitter {
         for (let i = 0; i < events.length; i++) {
           this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
         }
-
-        this.METADATA.model.emit('field.create', this)
       } else {
         NGN.WARN('Invalid model.')
       }
