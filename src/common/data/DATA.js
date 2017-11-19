@@ -6,6 +6,7 @@
   // [INCLUDE: ./Field.js]
   // [INCLUDE: ./VirtualField.js]
   // [INCLUDE: ./Relationship.js]
+  // [INCLUDE: ./FieldMap.js]
   // [INCLUDE: ./Model.js]
   // [INCLUDE: ./Index.js]
   // [INCLUDE: ./Store.js]
@@ -33,6 +34,7 @@
     Field: NGN.const(NGNDataField),
     VirtualField: NGN.const(NGNVirtualDataField),
     Relationship: NGN.const(NGNRelationshipField),
+    FieldMap: NGN.privateconst(NGNDataFieldMap),
     Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
     Index: NGN.privateconst(NGNDataIndex),

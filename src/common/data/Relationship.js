@@ -295,7 +295,7 @@ class NGNRelationshipField extends NGNDataField {
     this.METADATA.applyMonitor()
 
     // Notify listeners of change
-    if (typeof currentValue === 'symbol') {
+    if (typeof currentValue !== 'symbol') {
       this.emit('update', {
         old: currentValue,
         new: value
@@ -309,18 +309,6 @@ class NGNRelationshipField extends NGNDataField {
     if (value !== this.METADATA.AUDITABLE) {
       this.METADATA.AUDITABLE = value
       this.METADATA.join.auditable = value
-
-//       this.METADATA.join.on('field.update', (change) => {
-// console.log('HERE')
-//         this.METADATA.AUDITLOG.commit(this.METADATA.join.METADATA.getAuditMap())
-//       })
-      // delete this.METADATA.AUDITLOG
-
-      // Object.defineProperty(this.METADATA, 'AUDITLOG', {
-      //   get: () => {
-      //     return this.METADATA.join.METADATA.AUDITLOG
-      //   }
-      // })
     }
   }
 

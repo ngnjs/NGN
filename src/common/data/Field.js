@@ -203,6 +203,36 @@ class NGNDataField extends NGN.EventEmitter {
          */
         allowInvalid: NGN.coalesce(cfg.allowInvalid, true),
 
+        /**
+         * @cfg {function} transformer
+         * A synchronous transformation function will be applied each time
+         * the field value is set. This can be used to modify data _before_ it
+         * is stored as a field value. The returned value from the function
+         * will be the new value of the field.
+         *
+         * The transformation function will receive the input as it's only
+         * aregument. For example:
+         *
+         * ```js
+         * let field = new NGN.DATA.Field({
+         *   name: 'testfield',
+         *   transformer: function (input) {
+         *     return input + '_test'
+         *   }
+         * })
+         *
+         * field.value = 'a'
+         *
+         * console.log(field.value) // Outputs "a_test"
+         * ```
+         *
+         * **Transformations can affect performance.** In small data sets,
+         * transformations are typically negligible, only adding a few
+         * milliseconds to processing time. This may affect large data sets,
+         * particularly data stores using defauly bulk recod loading.
+         */
+        TRANSFORM: NGN.coalesce(cfg.transformer),
+
         RAWDATAPLACEHOLDER: EMPTYDATA,
         RAW: EMPTYDATA,
         ENUMERABLE_VALUES: null,
@@ -242,6 +272,11 @@ class NGNDataField extends NGN.EventEmitter {
 
         // Set the value using a configuration.
         setValue: (value, suppressEvents = false, ignoreAudit = false) => {
+          // Preprocessing (transform input)
+          if (this.METADATA.TRANSFORM !== null && NGN.isFn(this.METADATA.TRANSFORM)) {
+            value = this.METADATA.TRANSFORM.call(this, value)
+          }
+
           // Attempt to auto-correct input when possible.
           if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
             value = this.autoCorrectValue(value)
@@ -324,6 +359,7 @@ class NGNDataField extends NGN.EventEmitter {
       })
     })
 
+    // Apply common rules
     if (NGN.typeof(this.METADATA.rules) !== 'array') {
       this.METADATA.rules = NGN.forceArray(this.METADATA.rules)
     }
@@ -373,6 +409,7 @@ class NGNDataField extends NGN.EventEmitter {
       )
     )
 
+    // Associate a model if one is defined.
     if (NGN.coalesce(cfg.model) !== null) {
       this.model = cfg.model
     }

@@ -16,6 +16,11 @@ class NGNDataModel extends NGN.EventEmitter {
   constructor (cfg) {
     cfg = cfg || {}
 
+    if (cfg.dataMap) {
+      cfg.map = cfg.dataMap
+      NGN.WARN('"dataMap" is deprecated. Use "map" instead.')
+    }
+
     super()
 
     const me = this
@@ -134,7 +139,6 @@ class NGNDataModel extends NGN.EventEmitter {
         expirationTimeout: null,
 
         created: Date.now(),
-        changelog: null,
         store: null,
 
         /**
@@ -368,6 +372,35 @@ class NGNDataModel extends NGN.EventEmitter {
 
         // Deprecations
         setSilent: NGN.deprecate(this.setSilentFieldValue, 'setSilent has been deprecated. Use setSilentFieldValue instead.')
+      }),
+
+      /**
+       * @cfgproperty {object} fieldmap
+       * An object mapping model attribute names to data storage field names.
+       *
+       * _Example_
+       * ```
+       * {
+       *   ModelFieldName: 'inputName',
+       *   father: 'dad',
+       *	 email: 'eml',
+       *	 image: 'img',
+       *	 displayName: 'dn',
+       *	 firstName: 'gn',
+       *	 lastName: 'sn',
+       *	 middleName: 'mn',
+       *	 gender: 'sex',
+       *	 dob: 'bd'
+       * }
+       * ```
+       */
+      DATAMAP: NGN.get(() => {
+        return NGN.coalesce(
+          cfg.map,
+          this.METADATA.store instanceof NGN.DATA.Store
+            ? this.METADATA.store.map
+            : null
+        )
       })
     })
 

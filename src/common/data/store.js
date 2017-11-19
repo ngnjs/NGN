@@ -25,7 +25,7 @@ class NGNDataStore extends NGN.EventEmitter {
        * A descriptive name for the store. This is typically used for
        * debugging, logging, and (somtimes) data proxies.
        */
-      name: NGN.coalesce(cfg.name, 'Untitled Store'),
+      name: NGN.const(NGN.coalesce(cfg.name, 'Untitled Store')),
 
       METADATA: NGN.private({
         /**

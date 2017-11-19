@@ -1,6 +1,112 @@
 (function () {
   // [PARTIAL]
 
+// Difference Utilities
+// Addition: ['+', path, value]
+// Deletion: ['-', path, oldValue]
+// Modified: ['m', path, oldValue, newValue]
+class ObjectDiff {
+  static compare (lhs, rhs, path = []) {
+    let differences = []
+    let ltype = NGN.typeof(lhs)
+    let rtype = NGN.typeof(rhs)
+
+    // If the comparators aren't the same type, then
+    // it is a replacement. This is identified as
+    // removal of one object and creation of the other.
+    if (ltype !== rtype) {
+      return [
+        ['m', path, lhs, rhs],
+      ]
+    }
+console.log('Diffing:', ltype, lhs, rhs, 'PATH', path.join('.'))
+    switch (ltype) {
+      // case 'function':
+      //   if (lhs.toString() !== rhs.toString()) {
+      //     return ['m', path, lhs, rhs]
+      //   }
+      //
+      //   return []
+
+      case 'object':
+        let keys = Object.keys(lhs)
+        // let relativePath
+
+        // Compare left to right for modifications and removals
+        for (let i = 0; i < keys.length; i++) {
+          // Reset the relative path
+          let relativePath = Object.assign([], path)
+
+          relativePath.push(keys[i])
+
+          if (!rhs.hasOwnProperty(keys[i])) {
+            // If no right hand argument exists, it was removed.
+            differences.push(['-', relativePath, lhs[keys[i]]])
+          } else if (NGN.typeof(lhs[keys[i]]) === 'object') {
+            // Recursively compare objects
+            differences = differences.concat(this.compare(lhs[keys[i]], rhs[keys[i]], relativePath))
+          } else if (lhs[keys[i]] !== rhs[keys[i]]) {
+            if (NGN.typeof(lhs[keys[i]]) === 'array' && NGN.typeof(rhs[keys[i]]) === 'array') {
+              // If the keys contain arrays, re-run the comparison.
+              differences = differences.concat(this.compare(lhs[keys[i]], rhs[keys[i]], relativePath))
+            } else {
+              // If the comparators exist but are different, a
+              // modification ocurred.
+              differences.push(['m', relativePath, lhs[keys[i]], rhs[keys[i]]])
+            }
+          }
+        }
+
+        // Compare right to left for additions
+        keys = Object.keys(lhs)
+        keys.unshift(rhs)
+        keys = NGN.getObjectExtraneousPropertyNames.apply(this, keys)
+
+        for (let i = 0; i < keys.length; i++) {
+          // Reset the relative path
+          let relativePath = Object.assign([], path)
+          relativePath.push(keys[i])
+
+          differences.push(['+', relativePath, rhs[keys[i]]])
+        }
+
+        break
+
+      case 'array':
+        differences = this.compareArray(lhs, rhs)
+
+        break
+
+      case 'string':
+        console.log('TO DO: Add String Diff')
+
+      default:
+        if (lhs !== rhs) {
+          if (NGN.typeof(lhs) !== 'undefined' && NGN.typeof(rhs) === 'undefined') {
+            differences.push(['-', path, lhs])
+          } else if (NGN.typeof(lhs) === 'undefined' && NGN.typeof(rhs) !== 'undefined') {
+            differences.push(['+', path, rhs])
+          } else {
+            differences.push(['m', path, lhs, rhs])
+          }
+        }
+    }
+
+    return differences
+  }
+
+  compareArray (lhs, rhs) {
+    // if (lhs === rhs) {
+      return []
+    // }
+    //
+    // for (let i = 0; i < lhs.length; i++) {
+    //   if (false) {}
+    // }
+  }
+}
+
+
 // CRC table for checksum (cached)
 let crcTable = null
 
@@ -31,6 +137,10 @@ const makeCRCTable = function () {
  * A utility library of functions relevant to data management.
  */
 class Utility {
+  static diff () {
+    return ObjectDiff.compare(...arguments)
+  }
+
   /**
    * @method checksum
    * Create the checksum of the specified string.
@@ -1031,6 +1141,36 @@ class NGNDataField extends NGN.EventEmitter {
          */
         allowInvalid: NGN.coalesce(cfg.allowInvalid, true),
 
+        /**
+         * @cfg {function} transformer
+         * A synchronous transformation function will be applied each time
+         * the field value is set. This can be used to modify data _before_ it
+         * is stored as a field value. The returned value from the function
+         * will be the new value of the field.
+         *
+         * The transformation function will receive the input as it's only
+         * aregument. For example:
+         *
+         * ```js
+         * let field = new NGN.DATA.Field({
+         *   name: 'testfield',
+         *   transformer: function (input) {
+         *     return input + '_test'
+         *   }
+         * })
+         *
+         * field.value = 'a'
+         *
+         * console.log(field.value) // Outputs "a_test"
+         * ```
+         *
+         * **Transformations can affect performance.** In small data sets,
+         * transformations are typically negligible, only adding a few
+         * milliseconds to processing time. This may affect large data sets,
+         * particularly data stores using defauly bulk recod loading.
+         */
+        TRANSFORM: NGN.coalesce(cfg.transformer),
+
         RAWDATAPLACEHOLDER: EMPTYDATA,
         RAW: EMPTYDATA,
         ENUMERABLE_VALUES: null,
@@ -1070,6 +1210,11 @@ class NGNDataField extends NGN.EventEmitter {
 
         // Set the value using a configuration.
         setValue: (value, suppressEvents = false, ignoreAudit = false) => {
+          // Preprocessing (transform input)
+          if (this.METADATA.TRANSFORM !== null && NGN.isFn(this.METADATA.TRANSFORM)) {
+            value = this.METADATA.TRANSFORM.call(this, value)
+          }
+
           // Attempt to auto-correct input when possible.
           if (this.METADATA.autocorrectInput && this.type !== NGN.typeof(value)) {
             value = this.autoCorrectValue(value)
@@ -1152,6 +1297,7 @@ class NGNDataField extends NGN.EventEmitter {
       })
     })
 
+    // Apply common rules
     if (NGN.typeof(this.METADATA.rules) !== 'array') {
       this.METADATA.rules = NGN.forceArray(this.METADATA.rules)
     }
@@ -1201,6 +1347,7 @@ class NGNDataField extends NGN.EventEmitter {
       )
     )
 
+    // Associate a model if one is defined.
     if (NGN.coalesce(cfg.model) !== null) {
       this.model = cfg.model
     }
@@ -2078,7 +2225,7 @@ class NGNRelationshipField extends NGNDataField {
     this.METADATA.applyMonitor()
 
     // Notify listeners of change
-    if (typeof currentValue === 'symbol') {
+    if (typeof currentValue !== 'symbol') {
       this.emit('update', {
         old: currentValue,
         new: value
@@ -2092,18 +2239,6 @@ class NGNRelationshipField extends NGNDataField {
     if (value !== this.METADATA.AUDITABLE) {
       this.METADATA.AUDITABLE = value
       this.METADATA.join.auditable = value
-
-//       this.METADATA.join.on('field.update', (change) => {
-// console.log('HERE')
-//         this.METADATA.AUDITLOG.commit(this.METADATA.join.METADATA.getAuditMap())
-//       })
-      // delete this.METADATA.AUDITLOG
-
-      // Object.defineProperty(this.METADATA, 'AUDITLOG', {
-      //   get: () => {
-      //     return this.METADATA.join.METADATA.AUDITLOG
-      //   }
-      // })
     }
   }
 
@@ -2124,6 +2259,162 @@ class NGNRelationshipField extends NGNDataField {
   // [PARTIAL]
 
 /**
+ * @class NGN.DATA.FieldMap
+ * A field map is a special data transformer that maps field names (keys)
+ * to a different format. Consider the following field map:
+ *
+ * ```js
+ * let fieldMap = new NGN.DATA.FieldMap({
+ *   father: 'pa',
+ *   mother: 'ma',
+ *   brother: 'bro',
+ *   sister: 'sis'
+ * })
+ * ```
+ *
+ * The map above reads as "the `father` field is also known as `pa`",
+ * "the `mother` field is also known as `ma`", etc.
+ *
+ * The following transformation is possible:
+ *
+ * ```js
+ * let result = fieldMap.apply({
+ *   pa: 'John',
+ *   ma: 'Jill',
+ *   bro: 'Joe',
+ *   sis: 'Jane'
+ * })
+ *
+ * console.log(result)
+ * ```
+ *
+ * _yields:_
+ *
+ * ```sh
+ * {
+ *   father: 'John'
+ *   mother: 'Jill',
+ *   brother: 'Joe',
+ *   sister: 'Jane'
+ * }
+ * ```
+ *
+ * It is also possible to reverse field names:
+ *
+ * ```js
+ * let result = fieldMap.applyReverse({
+ *   father: 'John'
+ *   mother: 'Jill',
+ *   brother: 'Joe',
+ *   sister: 'Jane'
+ * })
+ *
+ * console.log(result)
+ * ```
+ *
+ * _yields:_
+ *
+ * ```sh
+ * {
+ *   pa: 'John',
+ *   ma: 'Jill',
+ *   bro: 'Joe',
+ *   sis: 'Jane'
+ * }
+ * ```
+ *
+ * This class is designed to assist with reading and writing data
+ * to NGN.DATA.Model and NGN.DATA.Store instances.
+ * @private
+ */
+class NGNDataFieldMap {
+  constructor (cfg = {}) {
+    Object.defineProperties(this, {
+      originalSource: NGN.privateconst(cfg),
+      sourceMap: NGN.private(null),
+      reverseMap: NGN.private(null),
+      applyData: NGN.privateconst((map = 'map', data) => {
+        if (NGN.typeof(data) !== 'object') {
+          return data
+        }
+
+        let keys = Object.keys(data)
+        map = map === 'map' ? this.inverse : this.map
+
+        for (let i = 0; i < keys.length; i++) {
+          if (map.hasOwnProperty(keys[i])) {
+            data[map[keys[i]]] = data[keys[i]]
+            delete data[keys[i]]
+          }
+        }
+
+        return data
+      })
+    })
+  }
+
+  /**
+   * @property {object} map
+   * A reference to the data mapping object.
+   */
+  get map () {
+    if (this.reverseMap === null) {
+      let keys = Object.keys(this.originalSource)
+
+      this.sourceMap = {}
+
+      for (let i = 0; i < keys.length; i++) {
+        if (NGN.typeof(keys[i]) === 'string' && NGN.typeof(this.originalSource[keys[i]]) === 'string') {
+          this.sourceMap[keys[i]] = this.originalSource[keys[i]]
+        }
+      }
+    }
+
+    return this.sourceMap
+  }
+
+  /**
+   * @property {object} inverse
+   * A reference to the inversed data map.
+   */
+  get inverse () {
+    if (this.reverseMap === null) {
+      let keys = Object.keys(this.sourceMap)
+
+      this.reverseMap = {}
+
+      for (let i = 0; i < keys.length; i++) {
+        if (NGN.typeof(keys[i]) === 'string' && NGN.typeof(this.originalSource[keys[i]]) === 'string') {
+          this.reverseMap[this.originalSource[keys[i]]] = keys[i]
+        }
+      }
+    }
+
+    return this.reverseMap
+  }
+
+  /**
+   * Apply the map to an object.
+   * @param  {object} data
+   * @return {object}
+   */
+  apply (data) {
+    return this.applyData('map', data)
+  }
+
+  /**
+   * Apply the inversed map to an object.
+   * @param  {object} data
+   * @return {object}
+   */
+  applyInverse (data) {
+    return this.applyData('reverse', data)
+  }
+}
+
+  // [PARTIAL]
+
+/**
  * @class NGN.DATA.Model
  * Represents a data model/record.
  * @fires field.update
@@ -2138,6 +2429,11 @@ class NGNRelationshipField extends NGNDataField {
 class NGNDataModel extends NGN.EventEmitter {
   constructor (cfg) {
     cfg = cfg || {}
+
+    if (cfg.dataMap) {
+      cfg.map = cfg.dataMap
+      NGN.WARN('"dataMap" is deprecated. Use "map" instead.')
+    }
 
     super()
 
@@ -2257,7 +2553,6 @@ class NGNDataModel extends NGN.EventEmitter {
         expirationTimeout: null,
 
         created: Date.now(),
-        changelog: null,
         store: null,
 
         /**
@@ -2491,6 +2786,35 @@ class NGNDataModel extends NGN.EventEmitter {
 
         // Deprecations
         setSilent: NGN.deprecate(this.setSilentFieldValue, 'setSilent has been deprecated. Use setSilentFieldValue instead.')
+      }),
+
+      /**
+       * @cfgproperty {object} fieldmap
+       * An object mapping model attribute names to data storage field names.
+       *
+       * _Example_
+       * ```
+       * {
+       *   ModelFieldName: 'inputName',
+       *   father: 'dad',
+       *	 email: 'eml',
+       *	 image: 'img',
+       *	 displayName: 'dn',
+       *	 firstName: 'gn',
+       *	 lastName: 'sn',
+       *	 middleName: 'mn',
+       *	 gender: 'sex',
+       *	 dob: 'bd'
+       * }
+       * ```
+       */
+      DATAMAP: NGN.get(() => {
+        return NGN.coalesce(
+          cfg.map,
+          this.METADATA.store instanceof NGN.DATA.Store
+            ? this.METADATA.store.map
+            : null
+        )
       })
     })
 
@@ -3056,7 +3380,7 @@ class NGNDataStore extends NGN.EventEmitter {
        * A descriptive name for the store. This is typically used for
        * debugging, logging, and (somtimes) data proxies.
        */
-      name: NGN.coalesce(cfg.name, 'Untitled Store'),
+      name: NGN.const(NGN.coalesce(cfg.name, 'Untitled Store')),
 
       METADATA: NGN.private({
         /**
@@ -3135,6 +3459,7 @@ class NGNDataStore extends NGN.EventEmitter {
     Field: NGN.const(NGNDataField),
     VirtualField: NGN.const(NGNVirtualDataField),
     Relationship: NGN.const(NGNRelationshipField),
+    FieldMap: NGN.privateconst(NGNDataFieldMap),
     Entity: NGN.privateconst(NGNDataModel),
     Model: NGN.const(NGNModel),
     Index: NGN.privateconst(NGNDataIndex),

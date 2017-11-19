@@ -1,41 +1,8 @@
+// Addition: ['+', path, value]
+// Deletion: ['-', path, oldValue]
+// Modified: ['m', path, oldValue, newValue]
 class ObjectDiff {
-  constructor (lhs = null) {
-    Object.defineProperties(this, {
-      lhs: NGN.private(null),
-
-      META: NGN.privateconst({
-        add: (path, value) => {
-          return ['+', path, value]
-        },
-
-        remove: (path) => {
-          return ['-', path]
-        },
-
-        change: (path, oldValue, newValue) => {
-          return ['m', path, oldValue, newValue]
-        }
-      })
-    })
-
-    this.base = lhs
-  }
-
-  // Set the lefthand side of the comparator.
-  set base (value) {
-    if (NGN.typeof(value) === 'regexp') {
-      this.lhs = value.toString()
-    } else {
-      this.lhs = value
-    }
-  }
-
-  // Identify the data type of the lefthand side of the comparator
-  get type () {
-    return NGN.typeof(this.lhs)
-  }
-
-  compare (lhs, rhs, path = []) {
+  static compare (lhs, rhs, path = []) {
     let differences = []
     let ltype = NGN.typeof(lhs)
     let rtype = NGN.typeof(rhs)
@@ -48,21 +15,32 @@ class ObjectDiff {
         ['m', path, lhs, rhs],
       ]
     }
-
+console.log('Diffing:', ltype, lhs, rhs, 'PATH', path.join('.'))
     switch (ltype) {
+      // case 'function':
+      //   if (lhs.toString() !== rhs.toString()) {
+      //     return ['m', path, lhs, rhs]
+      //   }
+      //
+      //   return []
+
       case 'object':
         let keys = Object.keys(lhs)
-        let relativePath
+        // let relativePath
 
-        // Compare left to right
+        // Compare left to right for modifications and removals
         for (let i = 0; i < keys.length; i++) {
           // Reset the relative path
-          relativePath = path
+          let relativePath = Object.assign([], path)
+
           relativePath.push(keys[i])
 
-          if (!rhs[keys[i]]) {
+          if (!rhs.hasOwnProperty(keys[i])) {
             // If no right hand argument exists, it was removed.
-            differences.push(['-', relativePath, rhs[keys[i]]])
+            differences.push(['-', relativePath, lhs[keys[i]]])
+          } else if (NGN.typeof(lhs[keys[i]]) === 'object') {
+            // Recursively compare objects
+            differences = differences.concat(this.compare(lhs[keys[i]], rhs[keys[i]], relativePath))
           } else if (lhs[keys[i]] !== rhs[keys[i]]) {
             if (NGN.typeof(lhs[keys[i]]) === 'array' && NGN.typeof(rhs[keys[i]]) === 'array') {
               // If the keys contain arrays, re-run the comparison.
@@ -76,12 +54,13 @@ class ObjectDiff {
         }
 
         // Compare right to left for additions
-        keys.unshift(lhs)
+        keys = Object.keys(lhs)
+        keys.unshift(rhs)
         keys = NGN.getObjectExtraneousPropertyNames.apply(this, keys)
 
-        for (i = 0; i < keys.length; i++) {
+        for (let i = 0; i < keys.length; i++) {
           // Reset the relative path
-          relativePath = path
+          let relativePath = Object.assign([], path)
           relativePath.push(keys[i])
 
           differences.push(['+', relativePath, rhs[keys[i]]])
@@ -108,11 +87,17 @@ class ObjectDiff {
           }
         }
     }
+
+    return differences
   }
 
-  compareArray (lhs, rhs, index = 0) {
-    for (let i = 0; i < lhs.length; i++) {
-      if (false) {}
-    }
+  compareArray (lhs, rhs) {
+    // if (lhs === rhs) {
+      return []
+    // }
+    //
+    // for (let i = 0; i < lhs.length; i++) {
+    //   if (false) {}
+    // }
   }
 }

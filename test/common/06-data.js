@@ -18,6 +18,7 @@ test('Data Sanity Checks', function (t) {
   t.ok(typeof NGN.DATA.Field === 'function', 'NGN.DATA.Field exists as a class.')
   t.ok(typeof NGN.DATA.VirtualField === 'function', 'NGN.DATA.VirtualField exists as a class.')
   t.ok(typeof NGN.DATA.Relationship === 'function', 'NGN.DATA.Relationship exists as a class.')
+  t.ok(typeof NGN.DATA.FieldMap === 'function', 'NGN.DATA.FieldMap exists as a class.')
   t.ok(typeof NGN.DATA.Entity === 'function', 'NGN.DATA.Entity exists as a class.')
   t.ok(typeof NGN.DATA.Model === 'function', 'NGN.DATA.Model exists as a class.')
   t.ok(typeof NGN.DATA.Index === 'function', 'NGN.DATA.Index exists as a class.')
@@ -32,6 +33,7 @@ test('NGN.DATA.UTILITY', function (t) {
     c: 'three'
   }
 
+  // Data Serialization
   var originalData = Object.assign({}, data)
 
   data[Symbol('test')] = 'symbol'
@@ -53,13 +55,39 @@ test('NGN.DATA.UTILITY', function (t) {
 
   delete data.d
 
+  // Checksum Creation
   t.ok(NGN.DATA.UTILITY.checksum(data) === 1627578237, 'Checksum calculates for an object.')
 
-  var uuid = NGN.DATA.UTILITY.UUID()
-  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(uuid), 'UUID() returns a properly formatted identifier.')
+  // UUID
+  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(NGN.DATA.UTILITY.UUID()), 'UUID() returns a properly formatted identifier.')
 
-  var guid = NGN.DATA.UTILITY.GUID()
-  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(guid), 'GUID() returns a properly formatted identifier.')
+  // GUID
+  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(NGN.DATA.UTILITY.GUID()), 'GUID() returns a properly formatted identifier.')
+
+  // Data Diffing
+  var left = {
+    a: 1,
+    b: true,
+    c: 'three',
+    nested: {
+      element: 'is here',
+      and: 'here'
+    }
+  }
+
+  var right = {
+    a: 1,
+    b: false,
+    nested: {
+      element: 'is here',
+      and: 'there'
+    },
+    x: {
+      y: 'new value'
+    }
+  }
+
+  console.log(NGN.DATA.UTILITY.diff(left, right))
 
   t.end()
 })
@@ -502,6 +530,23 @@ test('NGN.DATA.Field Basic Auditing (Changelog)', function (t) {
   t.end()
 })
 
+test('NGN.DATA.Field Transformations', function (t) {
+  var field = new NGN.DATA.Field({
+    name: 'testfield',
+    default: 'none',
+    transformer: function (input) {
+      return input + '_test'
+    }
+  })
+
+  t.ok(field.value === 'none', 'Transformation does not affect default value.')
+
+  field.value = 'a'
+  t.ok(field.value === 'a_test', 'Transformation successfully applied to input.')
+
+  t.end()
+})
+
 test('NGN.DATA.VirtualField', function (t) {
   var field = new NGN.DATA.VirtualField({
     scope: {
@@ -715,6 +760,65 @@ test('NGN.DATA.Model Data Field Auditing (Changelog)', function (t) {
   t.end()
 })
 
+test('NGN.DATA.Model Field Mapping', function (t) {
+  // TODO: Convert this to use the DiffEngine instead of JSON.stringify comparison
+  var map = {
+    father: 'pa',
+    mother: 'ma',
+    brother: 'bro',
+    sister: 'sis',
+    invalid: function () {}
+  }
+
+  var inverse = {
+    pa: 'father',
+    ma: 'mother',
+    bro: 'brother',
+    sis: 'sister'
+  }
+
+  var fieldMap = new NGN.DATA.FieldMap(map)
+
+  delete map.invalid
+
+  t.ok(JSON.stringify(fieldMap.map) === JSON.stringify(map), 'Map created while removing invalid items.')
+  t.ok(JSON.stringify(fieldMap.inverse) === JSON.stringify(inverse), 'Inverse map created while removing invalid items.')
+
+  var result = fieldMap.apply({
+    pa: 'John',
+    ma: 'Jill',
+    bro: 'Joe',
+    sis: 'Jane'
+  })
+
+  var expectedResult = {
+    father: 'John',
+    mother: 'Jill',
+    brother: 'Joe',
+    sister: 'Jane'
+  }
+
+  t.ok(JSON.stringify(result) === JSON.stringify(expectedResult), 'Applied map to data correctly.')
+
+  result = fieldMap.applyInverse({
+    father: 'John',
+    mother: 'Jill',
+    brother: 'Joe',
+    sister: 'Jane'
+  })
+
+  var expectedInvertedResult = {
+    pa: 'John',
+    ma: 'Jill',
+    bro: 'Joe',
+    sis: 'Jane'
+  }
+
+  t.ok(JSON.stringify(result) === JSON.stringify(expectedInvertedResult), 'Applied inverted map to data correctly.')
+
+  t.end()
+})
+
 test('NGN.DATA.Model Virtual Field Caching', function (t) {
   var Model = new NGN.DATA.Model(meta())
   var model = new Model()
@@ -738,3 +842,38 @@ test('NGN.DATA.Model Virtual Field Caching', function (t) {
 
   model.emit('done')
 })
+
+// test('NGN.DATA.Store', function (t) {
+//
+// })
+
+// test('NGN.DATA.Relationship (Multi-Model)', function (t) {
+//   var Model = new NGN.DATA.Model(meta())
+//   var field = new NGN.DATA.Relationship({
+//     audit: true,
+//     name: 'test',
+//     join: [Model]
+//   })
+//
+//   t.ok(field.value instanceof NGN.DATA.Store, 'Correctly returns the nested store.')
+//
+//   // field.value.firstname = 'John'
+//   // field.value.lastname = 'Doe'
+//   // field.value.firstname = 'Jill'
+//   //
+//   // field.undo()
+//   // t.ok(field.value.firstname === 'John' && field.value.lastname === 'Doe', 'Undo operation yields prior value.')
+//   //
+//   // field.redo()
+//   // t.ok(field.value.firstname === 'Jill' && field.value.lastname === 'Doe', 'Redo operation yields next value.')
+//   //
+//   // field.undo(2)
+//   // t.ok(field.value.firstname === 'John' && field.value.lastname === null, 'Multiple undo operation yields appropriate value.')
+//   //
+//   // field.redo(2)
+//   // t.ok(field.value.firstname === 'Jill' && field.value.lastname === 'Doe', 'Multiple redo operation yields appropriate value.')
+//   //
+//   // t.ok(field.value.changelog.length === 3, 'Proper changelog length.')
+//
+//   t.end()
+// })

@@ -1,5 +1,8 @@
 // [PARTIAL]
 
+// Difference Utilities
+// [INCLUDE: ./DiffEngine.js]
+
 // CRC table for checksum (cached)
 let crcTable = null
 
@@ -30,6 +33,10 @@ const makeCRCTable = function () {
  * A utility library of functions relevant to data management.
  */
 class Utility {
+  static diff () {
+    return ObjectDiff.compare(...arguments)
+  }
+
   /**
    * @method checksum
    * Create the checksum of the specified string.
