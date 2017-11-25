@@ -104,6 +104,161 @@ console.log('Diffing:', ltype, lhs, rhs, 'PATH', path.join('.'))
     //   if (false) {}
     // }
   }
+
+  static arraysHaveMatchByRef (array1, array2, len1, len2) {
+    for (let index1 = 0; index1 < len1; index1++) {
+      let val1 = array1[index1]
+
+      for (let index2 = 0; index2 < len2; index2++) {
+        let val2 = array2[index2]
+
+        if (index1 !== index2 && val1 === val2) {
+          return true
+        }
+      }
+    }
+  }
+
+  static matchItems (array1, array2, index1, index2, context) {
+    let value1 = array1[index1]
+    let value2 = array2[index2]
+
+    if (value1 === value2) {
+      return true
+    }
+
+    if (typeof value1 !== 'object' || typeof value2 !== 'object') {
+      return false
+    }
+
+    let objectHash = context.objectHash
+
+    if (!objectHash) {
+      // no way to match objects was provided, try match by position
+      return context.matchByPosition && index1 === index2
+    }
+
+    let hash1
+    let hash2
+
+    if (typeof index1 === 'number') {
+      context.hashCache1 = NGN.forceArray(context.hashCache1)
+      hash1 = context.hashCache1[index1]
+
+      if (typeof hash1 === 'undefined') {
+        context.hashCache1[index1] = hash1 = objectHash(value1, index1)
+      }
+    } else {
+      hash1 = objectHash(value1)
+    }
+
+    if (typeof hash1 === 'undefined') {
+      return false
+    }
+
+    if (typeof index2 === 'number') {
+      context.hashCache2 = NGN.forceArray(context.hashCache2)
+      hash2 = context.hashCache2[index2]
+
+      if (typeof hash2 === 'undefined') {
+        context.hashCache2[index2] = hash2 = objectHash(value2, index2)
+      }
+    } else {
+      hash2 = objectHash(value2)
+    }
+
+    if (typeof hash2 === 'undefined') {
+      return false
+    }
+
+    return hash1 === hash2
+  }
+
+  /*
+   * LCS implementation that supports arrays or strings
+   * reference: http://en.wikipedia.org/wiki/Longest_common_subsequence_problem
+   * This code abstracted from Benjamín Eidelman's JSONDiffPatch (MIT).
+   */
+  static lcsDefaultMatch (array1, array2, index1, index2) {
+    return array1[index1] === array2[index2]
+  }
+
+  static lcsLengthMatrix (array1, array2, match, context) {
+    let len1 = array1.length
+    let len2 = array2.length
+    let x
+    let y
+
+    // initialize empty matrix of len1+1 x len2+1
+    let matrix = [len1 + 1]
+
+    for (x = 0; x < len1 + 1; x++) {
+      matrix[x] = [len2 + 1]
+
+      for (y = 0; y < len2 + 1; y++) {
+        matrix[x][y] = 0
+      }
+    }
+
+    matrix.match = match
+
+    // save sequence lengths for each coordinate
+    for (x = 1; x < len1 + 1; x++) {
+      for (y = 1; y < len2 + 1; y++) {
+        if (match(array1, array2, x - 1, y - 1, context)) {
+          matrix[x][y] = matrix[x - 1][y - 1] + 1
+        } else {
+          matrix[x][y] = Math.max(matrix[x - 1][y], matrix[x][y - 1])
+        }
+      }
+    }
+
+    return matrix
+  };
+
+  static lcsBacktrack (matrix, array1, array2, index1, index2, context) {
+    if (index1 === 0 || index2 === 0) {
+      return {
+        sequence: [],
+        indices1: [],
+        indices2: []
+      }
+    }
+
+    if (matrix.match(array1, array2, index1 - 1, index2 - 1, context)) {
+      let subsequence = backtrack(matrix, array1, array2, index1 - 1, index2 - 1, context)
+
+      subsequence.sequence.push(array1[index1 - 1])
+      subsequence.indices1.push(index1 - 1)
+      subsequence.indices2.push(index2 - 1)
+
+      return subsequence
+    }
+
+    if (matrix[index1][index2 - 1] > matrix[index1 - 1][index2]) {
+      return backtrack(matrix, array1, array2, index1, index2 - 1, context)
+    } else {
+      return backtrack(matrix, array1, array2, index1 - 1, index2, context)
+    }
+  };
+
+  static lcsGet (array1, array2, match, context) {
+    context = context || {}
+
+    let matrix = lengthMatrix(array1, array2, match || defaultMatch, context)
+    let result = backtrack(matrix, array1, array2, array1.length, array2.length, context)
+
+    if (typeof array1 === 'string' && typeof array2 === 'string') {
+      result.sequence = result.sequence.join('')
+    }
+
+    return result
+  }
+}
+
+
+class LCS {
+
 }
 
 
@@ -496,7 +651,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id = typeof value === 'symbol' ? Symbol('generic.commit') : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
+    let id= typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
 
     this.METADATA.transaction[id] = [
       new Date(),
@@ -1387,14 +1542,14 @@ class NGNDataField extends NGN.EventEmitter {
       if (value instanceof NGN.DATA.Entity) {
         this.METADATA.model = value
 
-        let events = Array.from(this.METADATA.EVENTS.values())
-        events.slice(events.indexOf('update'), 1)
-
-        this.on('update', (payload) => this.commitPayload(payload))
-
-        for (let i = 0; i < events.length; i++) {
-          this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
-        }
+        // let events = Array.from(this.METADATA.EVENTS.values())
+        // events.splice(events.indexOf('update'), 1)
+        //
+        this.on('update', (payload) => this.METADATA.commitPayload(payload))
+        //
+        // for (let i = 0; i < events.length; i++) {
+        //   this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
+        // }
       } else {
         NGN.WARN('Invalid model.')
       }
@@ -1541,7 +1696,7 @@ class NGNDataField extends NGN.EventEmitter {
   get valid () {
     if (this.required && NGN.coalesce(this.METADATA.RAW) === null) {
       this.METADATA.violatedRule = 'Data Required'
-      NGN.WARN(`${this.name} is a required field.`)
+      NGN.WARN(`${this.METADATA.name} is a required field.`)
       return false
     }
 
@@ -1819,9 +1974,9 @@ class NGNVirtualDataField extends NGNDataField {
         iterator = localFieldPattern.exec(content)
       }
 
-      this.model.pool('field.', {
+      this.METADATA.model.pool('field.', {
         update: (change) => {
-          if (monitoredFields.has(change.field.name)) {
+          if (change.field && monitoredFields.has(change.field.name)) {
             this.METADATA.cachedValue = this.METADATA.CACHEKEY
             this.emit('cache.clear', this)
           }
@@ -2560,10 +2715,11 @@ class NGNDataModel extends NGN.EventEmitter {
          * Enable auditing to support #undo/#redo operations. This creates and
          * manages a NGN.DATA.TransactionLog.
          */
-        AUDITABLE: NGN.coalesce(cfg.audit, false),
+        AUDITABLE: false,
         AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
         AUDIT_HANDLER: function (change) {
           if (change.hasOwnProperty('cursor')) {
+console.log('COMMITTED', me.METADATA.getAuditMap())
             me.METADATA.AUDITLOG.commit(me.METADATA.getAuditMap())
           }
         },
@@ -2704,7 +2860,6 @@ class NGNDataModel extends NGN.EventEmitter {
           // Add the field to the list
           this.METADATA.knownFieldNames.add(field)
 
-          // this.METADATA.fields[field].on('*', function () { console.log(this.event) })
           this.METADATA.fields[field].relay('*', this, 'field.')
 
           if (!suppressEvents) {
@@ -2843,10 +2998,7 @@ class NGNDataModel extends NGN.EventEmitter {
       }
     }
 
-    // Track Changes (if auditing enabled)
-    if (this.METADATA.AUDITABLE) {
-      this.on('field.update', this.METADATA.AUDIT_HANDLER)
-    }
+    this.auditable = NGN.coalesce(cfg.audit, false)
   }
 
   set auditable (value) {
@@ -2869,11 +3021,13 @@ class NGNDataModel extends NGN.EventEmitter {
       })
 
       if (value) {
+        // Track Changes (if auditing enabled)
         this.on('field.transaction.*', (id) => {
           this.METADATA.AUDIT_HANDLER({ cursor: id })
         })
       } else {
         this.METADATA.auditFieldNames.clear()
+
         this.off('field.transaction.*')
       }
     }

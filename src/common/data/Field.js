@@ -449,14 +449,14 @@ class NGNDataField extends NGN.EventEmitter {
       if (value instanceof NGN.DATA.Entity) {
         this.METADATA.model = value
 
-        let events = Array.from(this.METADATA.EVENTS.values())
-        events.slice(events.indexOf('update'), 1)
-
-        this.on('update', (payload) => this.commitPayload(payload))
-
-        for (let i = 0; i < events.length; i++) {
-          this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
-        }
+        // let events = Array.from(this.METADATA.EVENTS.values())
+        // events.splice(events.indexOf('update'), 1)
+        //
+        this.on('update', (payload) => this.METADATA.commitPayload(payload))
+        //
+        // for (let i = 0; i < events.length; i++) {
+        //   this.on(events[i], () => this.METADATA.model.emit(`field.${events[i]}`, ...arguments))
+        // }
       } else {
         NGN.WARN('Invalid model.')
       }
@@ -603,7 +603,7 @@ class NGNDataField extends NGN.EventEmitter {
   get valid () {
     if (this.required && NGN.coalesce(this.METADATA.RAW) === null) {
       this.METADATA.violatedRule = 'Data Required'
-      NGN.WARN(`${this.name} is a required field.`)
+      NGN.WARN(`${this.METADATA.name} is a required field.`)
       return false
     }
 

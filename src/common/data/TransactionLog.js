@@ -124,7 +124,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id = typeof value === 'symbol' ? Symbol('generic.commit') : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
+    let id= typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
 
     this.METADATA.transaction[id] = [
       new Date(),

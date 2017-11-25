@@ -146,10 +146,11 @@ class NGNDataModel extends NGN.EventEmitter {
          * Enable auditing to support #undo/#redo operations. This creates and
          * manages a NGN.DATA.TransactionLog.
          */
-        AUDITABLE: NGN.coalesce(cfg.audit, false),
+        AUDITABLE: false,
         AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
         AUDIT_HANDLER: function (change) {
           if (change.hasOwnProperty('cursor')) {
+console.log('COMMITTED', me.METADATA.getAuditMap())
             me.METADATA.AUDITLOG.commit(me.METADATA.getAuditMap())
           }
         },
@@ -290,7 +291,6 @@ class NGNDataModel extends NGN.EventEmitter {
           // Add the field to the list
           this.METADATA.knownFieldNames.add(field)
 
-          // this.METADATA.fields[field].on('*', function () { console.log(this.event) })
           this.METADATA.fields[field].relay('*', this, 'field.')
 
           if (!suppressEvents) {
@@ -429,10 +429,7 @@ class NGNDataModel extends NGN.EventEmitter {
       }
     }
 
-    // Track Changes (if auditing enabled)
-    if (this.METADATA.AUDITABLE) {
-      this.on('field.update', this.METADATA.AUDIT_HANDLER)
-    }
+    this.auditable = NGN.coalesce(cfg.audit, false)
   }
 
   set auditable (value) {
@@ -455,11 +452,13 @@ class NGNDataModel extends NGN.EventEmitter {
       })
 
       if (value) {
+        // Track Changes (if auditing enabled)
         this.on('field.transaction.*', (id) => {
           this.METADATA.AUDIT_HANDLER({ cursor: id })
         })
       } else {
         this.METADATA.auditFieldNames.clear()
+
         this.off('field.transaction.*')
       }
     }

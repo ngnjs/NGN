@@ -85,8 +85,16 @@ var getFiles = function () {
     return 'test/lib/' + path
   })
 
+  // Run all tests by default
+  let testfiles = 'test/common/*.js'
+
+  // Only run the requested test set
+  if (process.argv.indexOf('--test') > 1) {
+    testfiles = 'test/common/*-' + process.argv[process.argv.indexOf('--test') + 1] + '.js'
+  }
+
   return files.concat([
-    'test/common/*.js',
+    testfiles,
     'test/test.html'
   ])
 }

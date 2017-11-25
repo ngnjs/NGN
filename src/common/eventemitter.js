@@ -58,106 +58,6 @@
         }),
 
         /**
-         * @method on
-         * Create a new event handler for the specified event.
-         * @param  {string|string[]|object} eventName
-         * Name of the event to listen for.
-         * If an object is passed, this method will automatically setup a #pool.
-         * @param  {function} handler
-         * The method responsible for responding to the event.
-         * This is ignored if eventName is an object.
-         * @param {number} [TTL]
-         * Time-To-Live is the number of milliseconds before the event handler
-         * is automatically removed. This is useful for automatically cleaning
-         * up limited-life event handlers.
-         * @param {boolean} [prepend=false]
-         * When set to `true`, the event is added to the beginning of
-         * the processing list instead of the end.
-         * This is ignored if eventName is an object.
-         */
-        on: NGN.public((eventName, callback, ttl, prepend = false) => {
-          switch (NGN.typeof(eventName)) {
-            case 'array':
-              for (let i = 0; i < eventName.length; i++) {
-                this.on(eventName[i], callback, prepend)
-              }
-
-              return
-          }
-
-          if (NGN.typeof(ttl) === 'boolean') {
-            prepend = ttl
-            ttl = this.META.defaultTTL
-          }
-
-          if (ttl === undefined) {
-            ttl = this.META.defaultTTL
-          }
-
-          if (ttl > 0) {
-            setTimeout(() => this.off(eventName, callback), ttl)
-          }
-
-          if (eventName.indexOf('*') >= 0) {
-            this.META.wildcardEvents.add(eventName)
-          }
-
-          if (prepend) {
-            this.prependListener(eventName, callback)
-          } else {
-            this.addListener(eventName, callback)
-          }
-        }),
-
-        /**
-         * @method once
-         * Create a new event handler for the specified event. The
-         * handler will be removed immediately after it is executed. This
-         * effectively listens for an event to happen once and only once
-         * before the handler is destroyed.
-         * @param  {string} eventName
-         * Name of the event to listen for.
-         * @param  {Function} handler
-         * The method responsible for responding to the event.
-         * @param {boolean} [prepend=false]
-         * When set to `true`, the event is added to the beginning of
-         * the processing list instead of the end.
-         */
-        once: NGN.public((eventName, callback, ttl, prepend) => {
-          switch (NGN.typeof(eventName)) {
-            case 'array':
-              for (let i = 0; i < eventName.length; i++) {
-                this.once(eventName[i], callback, prepend)
-              }
-
-              return
-          }
-
-          if (NGN.typeof(ttl) === 'boolean') {
-            prepend = ttl
-            ttl = this.META.defaultTTL
-          }
-
-          if (ttl === undefined) {
-            ttl = this.META.defaultTTL
-          }
-
-          if (ttl > 0) {
-            setTimeout(() => this.off(eventName, callback), ttl)
-          }
-
-          if (eventName.indexOf('*') >= 0) {
-            this.META.wildcardEvents.add(eventName)
-          }
-
-          if (prepend) {
-            this.prependOnceListener(eventName, callback)
-          } else {
-            super.once(eventName, this.wrapEventHandlerWithScope(eventName, callback))
-          }
-        }),
-
-        /**
          * @alias off
          * Remove an event handler. If no handler is specified, all handlers for
          * the specified event will be removed.
@@ -437,7 +337,15 @@
             let eventName = eventNameList[i]
 
             this.on(eventName, function () {
-              targetEmitter.emit(`${NGN.coalesce(prefix, '')}${this.event}${NGN.coalesce(postfix, '')}`, ...arguments)
+              if (NGN.typeof(this.event) === 'symbol') {
+                if (prefix !== null || postfix !== null) {
+                  NGN.INFO('Cannot relay a symbol-based event with a prefix/postfix.')
+                }
+
+                targetEmitter.emit(...arguments)
+              } else {
+                targetEmitter.emit(`${NGN.coalesce(prefix, '')}${this.event}${NGN.coalesce(postfix, '')}`, ...arguments)
+              }
             })
           }
         }),
@@ -476,7 +384,15 @@
             let eventName = eventNameList[i]
 
             this.once(eventName, function () {
-              targetEmitter.emit(`${NGN.coalesce(prefix, '')}${this.event}${NGN.coalesce(postfix, '')}`, ...arguments)
+              if (NGN.typeof(this.event) === 'symbol') {
+                if (prefix !== null || postfix !== null) {
+                  NGN.INFO('Cannot relay a symbol-based event with a prefix/postfix.')
+                }
+
+                targetEmitter.emit(...arguments)
+              } else {
+                targetEmitter.emit(`${NGN.coalesce(prefix, '')}${this.event}${NGN.coalesce(postfix, '')}`, ...arguments)
+              }
             })
           }
         }),
@@ -910,6 +826,92 @@
       })
     }
 
+    // Internal method used to hadle TTL and wildcard management.
+    eventHandler (eventName, callback, ttl, prepend = false) {
+      if (NGN.typeof(ttl) === 'boolean') {
+        prepend = ttl
+        ttl = this.META.defaultTTL
+      }
+
+      if (ttl === undefined) {
+        ttl = this.META.defaultTTL
+      }
+
+      if (ttl > 0) {
+        setTimeout(() => this.off(eventName, callback), ttl)
+      }
+
+      if (eventName.indexOf('*') >= 0) {
+        this.META.wildcardEvents.add(eventName)
+      }
+
+      return prepend
+    }
+
+    /**
+     * @method on
+     * Create a new event handler for the specified event.
+     * @param  {string|string[]|object} eventName
+     * Name of the event to listen for.
+     * If an object is passed, this method will automatically setup a #pool.
+     * @param  {function} handler
+     * The method responsible for responding to the event.
+     * This is ignored if eventName is an object.
+     * @param {number} [TTL]
+     * Time-To-Live is the number of milliseconds before the event handler
+     * is automatically removed. This is useful for automatically cleaning
+     * up limited-life event handlers.
+     * @param {boolean} [prepend=false]
+     * When set to `true`, the event is added to the beginning of
+     * the processing list instead of the end.
+     * This is ignored if eventName is an object.
+     */
+    on (eventName, callback, ttl, prepend = false) {
+      if (NGN.typeof(eventName) === 'array') {
+        for (let i = 0; i < eventName.length; i++) {
+          this.on(eventName[i], callback, ttl, prepend)
+        }
+
+        return
+      }
+
+      if (this.eventHandler(...arguments)) {
+        this.prependListener(eventName, callback)
+      } else {
+        this.addListener(eventName, callback)
+      }
+    }
+
+    /**
+     * @method once
+     * Create a new event handler for the specified event. The
+     * handler will be removed immediately after it is executed. This
+     * effectively listens for an event to happen once and only once
+     * before the handler is destroyed.
+     * @param  {string} eventName
+     * Name of the event to listen for.
+     * @param  {Function} handler
+     * The method responsible for responding to the event.
+     * @param {boolean} [prepend=false]
+     * When set to `true`, the event is added to the beginning of
+     * the processing list instead of the end.
+     */
+    once (eventName, callback, ttl, prepend = false) {
+      if (NGN.typeof(eventName) === 'array') {
+        for (let i = 0; i < eventName.length; i++) {
+          this.once(eventName[i], callback, ttl, prepend)
+        }
+
+        return
+      }
+
+      if (this.eventHandler(...arguments)) {
+        this.prependOnceListener(eventName, callback)
+      } else {
+        super.once(eventName, this.wrapEventHandlerWithScope(eventName, callback))
+      }
+    }
+
     // The following methods override the Node event emitter only when necessary.
     prependListener () {
       this.applyScope(arguments)
@@ -945,15 +947,6 @@
      * An optional payload. This can be any number of additional arguments.
      */
     emit () {
-      // This catches non-string event names. NGN internally uses Symbols
-      // for the NGN.WARN/INFO/ERROR event names to prevent name collisions.
-      // This check provides support for these special events. These types
-      // of events will never have wildcards.
-      if (!arguments[0]) {
-        super.emit(...arguments)
-        return
-      }
-
       if (NGN.typeof(arguments[0]) === 'array') {
         let args = NGN.slice(arguments)
         let eventNames = args.shift()
@@ -961,39 +954,46 @@
         for (let i = 0; i < eventNames.length; i++) {
           this.emit(eventNames[i], ...args)
         }
-      } else {
-        /**
-         * The NGN browser-based event emitter supports wildcards natively, but
-         * Node.js does not. This adds simple wildcard support for Node. The
-         * only wildcard character supported at this time is `*`. This feature
-         * will check the event name for the existance of a wildcard. If a
-         * wilcard character is present, the internally-maintained list of
-         * wildcard events is checked to see if it's a known event. If none
-         * of these checks pass, the standard event emitter is used, otherwise
-         * special wildcard handling is used.
-         */
-        if (!NGN.nodelike || this.META.wildcardEvents.size === 0) {
-          super.emit(...arguments)
-        } else {
-          let iterator = this.META.wildcardEvents.values()
-          let currentEvent = iterator.next()
-          let args = NGN.slice(arguments)
 
-          args.shift()
+        return
+      }
 
-          while (!currentEvent.done) {
-            if (currentEvent.value !== arguments[0]) {
-              let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/g, '.*'), 'g')
+      // This catches non-string event names. NGN internally uses Symbols
+      // for the NGN.WARN/INFO/ERROR event names to prevent name collisions.
+      // This check provides support for these special events. These types
+      // of events will never have wildcards.
+      if (!NGN.nodelike || !arguments[0] || this.META.wildcardEvents.size === 0) {
+        super.emit(...arguments)
+        return
+      }
 
-              if (pattern.test(arguments[0])) {
-                super.emit(currentEvent.value, ...args, Symbol(arguments[0]))
-                break
-              }
-            }
+      /**
+       * The NGN browser-based event emitter supports wildcards natively, but
+       * Node.js does not. This adds simple wildcard support for Node. The
+       * only wildcard character supported at this time is `*`. This feature
+       * will check the event name for the existance of a wildcard. If a
+       * wilcard character is present, the internally-maintained list of
+       * wildcard events is checked to see if it's a known event. If none
+       * of these checks pass, the standard event emitter is used, otherwise
+       * special wildcard handling is used.
+       */
+      let iterator = this.META.wildcardEvents.values()
+      let currentEvent = null
+      let args = NGN.slice(arguments)
 
-            currentEvent = iterator.next()
+      args.shift()
+
+      while (currentEvent === null || !currentEvent.done) {
+        if (currentEvent !== null && currentEvent.value !== arguments[0]) {
+          let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/g, '.*'), 'g')
+
+          if (pattern.test(arguments[0])) {
+            super.emit(currentEvent.value, ...args, typeof arguments[0] !== 'symbol' ? Symbol(arguments[0]) : arguments[0])
+            break
           }
         }
+
+        currentEvent = iterator.next()
       }
     }
   }

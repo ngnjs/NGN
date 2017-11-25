@@ -126,9 +126,9 @@ class NGNVirtualDataField extends NGNDataField {
         iterator = localFieldPattern.exec(content)
       }
 
-      this.model.pool('field.', {
+      this.METADATA.model.pool('field.', {
         update: (change) => {
-          if (monitoredFields.has(change.field.name)) {
+          if (change.field && monitoredFields.has(change.field.name)) {
             this.METADATA.cachedValue = this.METADATA.CACHEKEY
             this.emit('cache.clear', this)
           }

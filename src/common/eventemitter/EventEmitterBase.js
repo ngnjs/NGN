@@ -303,15 +303,18 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
 
         while (adhocEvent.length > 0) {
           let fn = adhocEvent.pop()
+
           scope.handler = fn
+
           fn.apply(scope, args)
         }
       }
 
       // Regular event handling
       let handler = this.handlers[events[name]]
+
       if (handler) {
-        for (let fn in handler) {
+        for (let fn = 0; fn < handler.length; fn++) {
           scope.handler = handler[fn]
           handler[fn].apply(scope, args)
         }
