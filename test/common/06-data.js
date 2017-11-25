@@ -626,6 +626,65 @@ test('NGN.DATA.Relationship (Single Model)', function (t) {
   t.end()
 })
 
+test('NGN.DATA.Model Field Mapping', function (t) {
+  // TODO: Convert this to use the DiffEngine instead of JSON.stringify comparison
+  var map = {
+    father: 'pa',
+    mother: 'ma',
+    brother: 'bro',
+    sister: 'sis',
+    invalid: function () {}
+  }
+
+  var inverse = {
+    pa: 'father',
+    ma: 'mother',
+    bro: 'brother',
+    sis: 'sister'
+  }
+
+  var fieldMap = new NGN.DATA.FieldMap(map)
+
+  delete map.invalid
+
+  t.ok(JSON.stringify(fieldMap.map) === JSON.stringify(map), 'Map created while removing invalid items.')
+  t.ok(JSON.stringify(fieldMap.inverse) === JSON.stringify(inverse), 'Inverse map created while removing invalid items.')
+
+  var result = fieldMap.applyMap({
+    pa: 'John',
+    ma: 'Jill',
+    bro: 'Joe',
+    sis: 'Jane'
+  })
+
+  var expectedResult = {
+    father: 'John',
+    mother: 'Jill',
+    brother: 'Joe',
+    sister: 'Jane'
+  }
+
+  t.ok(JSON.stringify(result) === JSON.stringify(expectedResult), 'Applied map to data correctly.')
+
+  result = fieldMap.applyInverseMap({
+    father: 'John',
+    mother: 'Jill',
+    brother: 'Joe',
+    sister: 'Jane'
+  })
+
+  var expectedInvertedResult = {
+    pa: 'John',
+    ma: 'Jill',
+    bro: 'Joe',
+    sis: 'Jane'
+  }
+
+  t.ok(JSON.stringify(result) === JSON.stringify(expectedInvertedResult), 'Applied inverted map to data correctly.')
+
+  t.end()
+})
+
 test('NGN.DATA.Model', function (t) {
   var tasks = new TaskRunner()
   var Person
@@ -698,8 +757,42 @@ test('NGN.DATA.Model', function (t) {
   })
 
   tasks.add('Data Serialization', function (next) {
-    console.log(p.data)
-    console.log(p.representation)
+    t.ok(JSON.stringify(p.data) === '{"firstname":"Corey","lastname":null,"val":15,"testid":null}')
+    t.ok(JSON.stringify(p.representation) === '{"firstname":"Corey","lastname":null,"val":15,"testid":null,"virtual":"test 15"}')
+
+    next()
+  })
+
+  tasks.add('Field Mapping', function (next) {
+    var cfg = meta()
+
+    cfg.map = {
+      firstname: 'gn',
+      lastname: 'sn',
+      testid: 'someid',
+      invalid: function () {}
+    }
+
+    var Person = new NGN.DATA.Model(cfg)
+    var p = new Person({
+      gn: 'Joe',
+      sn: 'Dirt',
+      value: 17,
+      val: 16
+    })
+
+    t.ok(
+      p.firstname === 'Joe' &&
+      p.lastname === 'Dirt',
+      'Successfully loaded data using field mapping'
+    )
+    t.ok(p.val === 16, 'Skipped invalid mapping and used raw value.')
+
+    t.ok(JSON.stringify(p.data) === '{"val":16,"gn":"Joe","sn":"Dirt","someid":null}', 'Serialized output respects inverse data mappings.')
+    t.ok(JSON.stringify(p.unmappedData) === '{"firstname":"Joe","lastname":"Dirt","val":16,"testid":null}', 'Serialized unmapped output respects model fields.')
+    t.ok(JSON.stringify(p.representation) === '{"val":16,"virtual":"test 16","gn":"Joe","sn":"Dirt","someid":null}', 'Serialized representation output respects inverse data mappings.')
+    t.ok(JSON.stringify(p.unmappedRepresentation) === '{"firstname":"Joe","lastname":"Dirt","val":16,"testid":null,"virtual":"test 16"}', 'Serialized unmapped representation output respects model fields.')
+
     next()
   })
 
@@ -707,9 +800,7 @@ test('NGN.DATA.Model', function (t) {
   //   // Need to implement undo.
   // })
   //
-  // tasks.add(function (next) {
-  //
-  // })
+
   //
   // tasks.add(function (next) {
   //
@@ -756,65 +847,6 @@ test('NGN.DATA.Model Data Field Auditing (Changelog)', function (t) {
 
   m.redo(10)
   t.ok(m.firstname === 'Billy' && m.lastname === 'Bob', 'Transaction log rewritten at appropriate location.')
-
-  t.end()
-})
-
-test('NGN.DATA.Model Field Mapping', function (t) {
-  // TODO: Convert this to use the DiffEngine instead of JSON.stringify comparison
-  var map = {
-    father: 'pa',
-    mother: 'ma',
-    brother: 'bro',
-    sister: 'sis',
-    invalid: function () {}
-  }
-
-  var inverse = {
-    pa: 'father',
-    ma: 'mother',
-    bro: 'brother',
-    sis: 'sister'
-  }
-
-  var fieldMap = new NGN.DATA.FieldMap(map)
-
-  delete map.invalid
-
-  t.ok(JSON.stringify(fieldMap.map) === JSON.stringify(map), 'Map created while removing invalid items.')
-  t.ok(JSON.stringify(fieldMap.inverse) === JSON.stringify(inverse), 'Inverse map created while removing invalid items.')
-
-  var result = fieldMap.apply({
-    pa: 'John',
-    ma: 'Jill',
-    bro: 'Joe',
-    sis: 'Jane'
-  })
-
-  var expectedResult = {
-    father: 'John',
-    mother: 'Jill',
-    brother: 'Joe',
-    sister: 'Jane'
-  }
-
-  t.ok(JSON.stringify(result) === JSON.stringify(expectedResult), 'Applied map to data correctly.')
-
-  result = fieldMap.applyInverse({
-    father: 'John',
-    mother: 'Jill',
-    brother: 'Joe',
-    sister: 'Jane'
-  })
-
-  var expectedInvertedResult = {
-    pa: 'John',
-    ma: 'Jill',
-    bro: 'Joe',
-    sis: 'Jane'
-  }
-
-  t.ok(JSON.stringify(result) === JSON.stringify(expectedInvertedResult), 'Applied inverted map to data correctly.')
 
   t.end()
 })

@@ -100,7 +100,7 @@ class NGNDataFieldMap {
    * A reference to the data mapping object.
    */
   get map () {
-    if (this.reverseMap === null) {
+    if (this.sourceMap === null) {
       let keys = Object.keys(this.originalSource)
 
       this.sourceMap = {}
@@ -121,7 +121,7 @@ class NGNDataFieldMap {
    */
   get inverse () {
     if (this.reverseMap === null) {
-      let keys = Object.keys(this.sourceMap)
+      let keys = Object.keys(this.originalSource)
 
       this.reverseMap = {}
 
@@ -140,7 +140,7 @@ class NGNDataFieldMap {
    * @param  {object} data
    * @return {object}
    */
-  apply (data) {
+  applyMap (data) {
     return this.applyData('map', data)
   }
 
@@ -149,7 +149,7 @@ class NGNDataFieldMap {
    * @param  {object} data
    * @return {object}
    */
-  applyInverse (data) {
+  applyInverseMap (data) {
     return this.applyData('reverse', data)
   }
 }

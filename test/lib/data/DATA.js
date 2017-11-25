@@ -1232,6 +1232,13 @@ class NGNDataField extends NGN.EventEmitter {
         name: NGN.coalesce(cfg.name),
 
         /**
+         * @cfgproperty {string} description
+         * This is a metadata field, primarily used for documentation
+         * or schema generation purposes.
+         */
+        description: NGN.coalesce(cfg.description, `${NGN.typeof(cfg.type)} field`),
+
+        /**
          * @cfgproperty {string} [sourceName]
          * A source name represents the physical name of an attribute as it
          * would be recognized in a system of record. For example, a field
@@ -2513,7 +2520,7 @@ class NGNDataFieldMap {
    * A reference to the data mapping object.
    */
   get map () {
-    if (this.reverseMap === null) {
+    if (this.sourceMap === null) {
       let keys = Object.keys(this.originalSource)
 
       this.sourceMap = {}
@@ -2534,7 +2541,7 @@ class NGNDataFieldMap {
    */
   get inverse () {
     if (this.reverseMap === null) {
-      let keys = Object.keys(this.sourceMap)
+      let keys = Object.keys(this.originalSource)
 
       this.reverseMap = {}
 
@@ -2553,7 +2560,7 @@ class NGNDataFieldMap {
    * @param  {object} data
    * @return {object}
    */
-  apply (data) {
+  applyMap (data) {
     return this.applyData('map', data)
   }
 
@@ -2562,7 +2569,7 @@ class NGNDataFieldMap {
    * @param  {object} data
    * @return {object}
    */
-  applyInverse (data) {
+  applyInverseMap (data) {
     return this.applyData('reverse', data)
   }
 }
@@ -2719,7 +2726,6 @@ class NGNDataModel extends NGN.EventEmitter {
         AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
         AUDIT_HANDLER: function (change) {
           if (change.hasOwnProperty('cursor')) {
-console.log('COMMITTED', me.METADATA.getAuditMap())
             me.METADATA.AUDITLOG.commit(me.METADATA.getAuditMap())
           }
         },
@@ -2940,38 +2946,46 @@ console.log('COMMITTED', me.METADATA.getAuditMap())
         // },
 
         // Deprecations
-        setSilent: NGN.deprecate(this.setSilentFieldValue, 'setSilent has been deprecated. Use setSilentFieldValue instead.')
+        setSilent: NGN.deprecate(this.setSilentFieldValue, 'setSilent has been deprecated. Use setSilentFieldValue instead.'),
+
+        /**
+         * @cfgproperty {object} fieldmap
+         * An object mapping model attribute names to data storage field names.
+         *
+         * _Example_
+         * ```
+         * {
+         *   ModelFieldName: 'inputName',
+         *   father: 'dad',
+         *	 email: 'eml',
+         *	 image: 'img',
+         *	 displayName: 'dn',
+         *	 firstName: 'gn',
+         *	 lastName: 'sn',
+         *	 middleName: 'mn',
+         *	 gender: 'sex',
+         *	 dob: 'bd'
+         * }
+         * ```
+         */
+        DATAMAP: null
       }),
 
-      /**
-       * @cfgproperty {object} fieldmap
-       * An object mapping model attribute names to data storage field names.
-       *
-       * _Example_
-       * ```
-       * {
-       *   ModelFieldName: 'inputName',
-       *   father: 'dad',
-       *	 email: 'eml',
-       *	 image: 'img',
-       *	 displayName: 'dn',
-       *	 firstName: 'gn',
-       *	 lastName: 'sn',
-       *	 middleName: 'mn',
-       *	 gender: 'sex',
-       *	 dob: 'bd'
-       * }
-       * ```
-       */
-      DATAMAP: NGN.get(() => {
+      MAP: NGN.get(() => {
         return NGN.coalesce(
-          cfg.map,
+          this.METADATA.DATAMAP,
           this.METADATA.store instanceof NGN.DATA.Store
             ? this.METADATA.store.map
             : null
         )
       })
     })
+
+    if (cfg.map instanceof NGN.DATA.FieldMap){
+      this.METADATA.DATAMAP = cfg.map
+    } else if (NGN.typeof(cfg.map) === 'object') {
+      this.METADATA.DATAMAP = new NGN.DATA.FieldMap(cfg.map)
+    }
 
     // Bubble events to the BUS
     // for (let i = 0; i < this.METADATA.EVENTS.length; i++) {
@@ -3096,11 +3110,46 @@ console.log('COMMITTED', me.METADATA.getAuditMap())
     return this.METADATA.created
   }
 
+  /**
+   * @property {object} data
+   * A serialized version of the data represented by the model. This
+   * only includes non-virtual fields. See #representation to use
+   * a representation of data containing virtual fields.
+   */
   get data () {
+    if (this.MAP) {
+      return this.MAP.applyInverseMap(this.serializeFields())
+    }
+
     return this.serializeFields()
   }
 
+  /**
+   * @property {object} unmappedData
+   * Returns #data _without applying_ the data #map.
+   */
+  get unmappedData () {
+    return this.serializeFields()
+  }
+
+  /**
+   * @property {object} representation
+   * A serialized version of the data represented by the model. This
+   * includes virtual fields. See #data to use just the raw values.
+   */
   get representation () {
+    if (this.MAP) {
+      return this.MAP.applyInverseMap(this.serializeFields(false, false))
+    }
+
+    return this.serializeFields(false, false)
+  }
+
+  /**
+   * @property {object} unmappedRepresentation
+   * Returns #representation _without applying_ the data #map.
+   */
+  get unmappedRepresentation () {
     return this.serializeFields(false, false)
   }
 
@@ -3305,6 +3354,36 @@ console.log('COMMITTED', me.METADATA.getAuditMap())
    */
   redo (count = 1, suppressEvents = false) {
     this.METADATA.applyChange('redo', ...arguments)
+  }
+
+  /**
+   * @method load
+   * Load a data record.
+   * @param {object} data
+   * The data to apply to the model.
+   * @param {boolean} [suppressEvents=true]
+   * Do not emit a change event when the data is loaded.
+   */
+  load (data, suppressEvents = true) {
+    if (this.MAP) {
+      data = this.MAP.applyMap(data)
+    }
+
+    let keys = Object.keys(data)
+
+    for (let i = 0; i < keys.length; i++) {
+      if (this.METADATA.knownFieldNames.has(keys[i])) {
+        this.METADATA.fields[keys[i]].METADATA.setValue(data[keys[i]], suppressEvents)
+      } else {
+        NGN.WARN(`Failed to load ${keys[i]} field of ${this.name} model. "${keys[i]}" is not a recognized field.`)
+      }
+    }
+
+    if (!suppressEvents) {
+      this.emit('load')
+    }
+
+    return this
   }
 }
 

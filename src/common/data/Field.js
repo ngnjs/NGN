@@ -139,6 +139,13 @@ class NGNDataField extends NGN.EventEmitter {
         name: NGN.coalesce(cfg.name),
 
         /**
+         * @cfgproperty {string} description
+         * This is a metadata field, primarily used for documentation
+         * or schema generation purposes.
+         */
+        description: NGN.coalesce(cfg.description, `${NGN.typeof(cfg.type)} field`),
+
+        /**
          * @cfgproperty {string} [sourceName]
          * A source name represents the physical name of an attribute as it
          * would be recognized in a system of record. For example, a field
