@@ -829,6 +829,21 @@ test('NGN.DATA.Model', function (t) {
     next()
   })
 
+  tasks.add('Automatic ID (Ignore)', function (next) {
+    var cfg = meta()
+
+    cfg.autoid = true
+
+    var AutoModel = new NGN.DATA.Model(cfg)
+    var instance = new AutoModel({
+      testid: 'test'
+    })
+
+    t.ok(instance.id === 'test', 'Recognize ID when it is explicitly set (ignore autoID)')
+
+    next()
+  })
+
   // tasks.add(function (next) {
   //   // Need to implement undo.
   // })
