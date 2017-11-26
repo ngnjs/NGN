@@ -539,7 +539,7 @@ class NGNDataField extends NGN.EventEmitter {
 
     if (value !== this.METADATA.isIdentifier) {
       this.METADATA.isIdentifier = value
-      this.emit('keystatus.changed', value)
+      this.emit('keystatus.changed', this)
     }
   }
 
@@ -562,6 +562,10 @@ class NGNDataField extends NGN.EventEmitter {
    * The default field value.
    */
   get default () {
+    if (this.isIdentifier) {
+      return NGN.coalesce(this.METADATA.autoid, this.METADATA.default)
+    }
+
     return this.METADATA.default
   }
 

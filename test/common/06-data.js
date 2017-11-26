@@ -766,7 +766,7 @@ test('NGN.DATA.Model', function (t) {
   tasks.add('Field Mapping', function (next) {
     var cfg = meta()
 
-    cfg.map = {
+    cfg.fieldmap = {
       firstname: 'gn',
       lastname: 'sn',
       testid: 'someid',
@@ -796,15 +796,45 @@ test('NGN.DATA.Model', function (t) {
     next()
   })
 
+  tasks.add('Automatic ID (Basic)', function (next) {
+    var cfg = meta()
+
+    delete cfg.idField
+    delete cfg.fields.testid
+
+    cfg.autoid = true
+
+    var AutoModel = new NGN.DATA.Model(cfg)
+    var instance = new AutoModel()
+    var id = instance.id
+
+    t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(id), 'UUID generated for ID automatically.')
+
+    id = instance.id
+    t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(id), 'UUID remains consistend on each request.')
+
+    next()
+  })
+
+  tasks.add('Automatic ID (Custom Field)', function (next) {
+    var cfg = meta()
+
+    cfg.autoid = true
+
+    var AutoModel = new NGN.DATA.Model(cfg)
+    var instance = new AutoModel()
+
+    t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(instance.testid), 'UUID generated for custom ID field automatically.')
+
+    next()
+  })
+
   // tasks.add(function (next) {
   //   // Need to implement undo.
   // })
   //
 
   //
-  // tasks.add(function (next) {
-  //
-  // })
   //
   // tasks.add(function (next) {
   //

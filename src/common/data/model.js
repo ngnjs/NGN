@@ -17,8 +17,13 @@ class NGNDataModel extends NGN.EventEmitter {
     cfg = cfg || {}
 
     if (cfg.dataMap) {
-      cfg.map = cfg.dataMap
+      cfg.fieldmap = cfg.dataMap
       NGN.WARN('"dataMap" is deprecated. Use "map" instead.')
+    }
+
+    if (cfg.idAttribute) {
+      cfg.IdentificationField = cfg.idAttribute
+      NGN.WARN('"idAttribute" is deprecated. Use "IdentificationField" instead.')
     }
 
     super()
@@ -42,14 +47,6 @@ class NGNDataModel extends NGN.EventEmitter {
          * debugging, logging, and (somtimes) data proxies.
          */
         name: NGN.coalesce(cfg.name, 'Untitled Model'),
-
-        /**
-         * @cfg {String} [idAttribute='id']
-         * Setting this allows an attribute of the object to be used as the ID.
-         * For example, if an email is the ID of a user, this would be set to
-         * `email`.
-         */
-        idAttribute: NGN.coalesce(cfg.idField, cfg.idAttribute) || 'id',
 
         /**
          * @cfg {object} fields
@@ -107,18 +104,22 @@ class NGNDataModel extends NGN.EventEmitter {
 
         /**
          * @cfg {boolean} [autoid=false]
-         * If the NGN.DATA.Model#idAttribute/id is not provided for a record,
-         * unique ID will be automatically generated for it. This means there
-         * will not be a `null` ID.
+         * If the NGN.DATA.Model#IdentificationField/id is not provided for a record,
+         * a unique ID will be automatically generated for it.
          *
          * An NGN.DATA.Store using a model with this set to `true` will never
-         * have a duplicate record, since the #id or #idAttribute will always
+         * have a duplicate record, since the #id or #IdentificationField will always
          * be unique.
          */
         autoid: NGN.coalesce(cfg.autoid, false),
 
-        IdentificationField: 'id',
-        IdentificationValue: null,
+        /**
+         * @cfg {String} [IdentificationField='id']
+         * Setting this allows an attribute of the object to be used as the ID.
+         * For example, if an email is the ID of a user, this would be set to
+         * `email`.
+         */
+        IdentificationField: NGN.coalesce(cfg.IdentificationField, cfg.idField, 'id'),
 
         /**
          * @cfgproperty {Date|Number} [expires]
@@ -198,7 +199,7 @@ class NGNDataModel extends NGN.EventEmitter {
           // If the field config isn't already an NGN.DATA.Field, create it.
           if (!(cfg instanceof NGN.DATA.Field)) {
             if (cfg instanceof NGN.DATA.Store || cfg instanceof NGN.DATA.Model) {
-              if (this.METADATA.idAttribute === field) {
+              if (this.METADATA.IdentificationField === field) {
                 throw new InvalidConfigurationError(`"${field}" cannot be an ID. Relationship fields cannot be an identification attribute.`)
               }
 
@@ -212,7 +213,7 @@ class NGNDataModel extends NGN.EventEmitter {
                 // Custom config
                 case 'object':
                   cfg.model = this
-                  cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+                  cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
                   cfg.name = field
 
                   this.METADATA.fields[field] = new NGN.DATA.Field(cfg)
@@ -229,6 +230,7 @@ class NGNDataModel extends NGN.EventEmitter {
                     if (NGN.isFn(cfg) && ['string', 'number', 'boolean', 'number', 'symbol', 'regexp', 'date', 'array', 'object'].indexOf(NGN.typeof(cfg)) < 0) {
                       this.METADATA.fields[field] = new NGN.DATA.VirtualField({
                         name: field,
+                        identifier: this.METADATA.IdentificationField === field,
                         model: this,
                         method: cfg
                       })
@@ -239,6 +241,7 @@ class NGNDataModel extends NGN.EventEmitter {
                     this.METADATA.fields[field] = new NGN.DATA.Field({
                       name: field,
                       type: cfg,
+                      identifier: this.METADATA.IdentificationField === field,
                       model: this
                     })
 
@@ -250,7 +253,7 @@ class NGNDataModel extends NGN.EventEmitter {
                     type: NGN.isFn(cfg) ? cfg : String,
                     identifier: NGN.isFn(cfg)
                       ? false
-                      : NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field),
+                      : NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field),
                     model: this
                   })
 
@@ -259,12 +262,12 @@ class NGNDataModel extends NGN.EventEmitter {
             }
           } else if (cfg.model === null) {
             cfg.name = field
-            cfg.identifier = cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+            cfg.identifier = cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
 
             this.METADATA.fields[field] = cfg
             this.METADATA.fields[field].model = this
           } else if (cfg.model === this) {
-            cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.idAttribute === field)
+            cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
 
             this.METADATA.fields[field] = cfg
           } else {
@@ -275,8 +278,8 @@ class NGNDataModel extends NGN.EventEmitter {
           Object.defineProperty(this, field, {
             enumerable: true,
             configurable: true,
-            get: () => this.METADATA.fields[field].value,
-            set: (value) => this.METADATA.fields[field].value = value
+            get: () => this.get(field),
+            set: (value) => this.set(field, value)
           })
 
           // Enable auditing if necessary.
@@ -295,6 +298,8 @@ class NGNDataModel extends NGN.EventEmitter {
           if (!suppressEvents) {
             this.emit('field.create', this.METADATA.fields[field])
           }
+
+          return this.METADATA.fields[field]
         },
 
         /**
@@ -405,10 +410,10 @@ class NGNDataModel extends NGN.EventEmitter {
       })
     })
 
-    if (cfg.map instanceof NGN.DATA.FieldMap){
-      this.METADATA.DATAMAP = cfg.map
-    } else if (NGN.typeof(cfg.map) === 'object') {
-      this.METADATA.DATAMAP = new NGN.DATA.FieldMap(cfg.map)
+    if (cfg.fieldmap instanceof NGN.DATA.FieldMap){
+      this.METADATA.DATAMAP = cfg.fieldmap
+    } else if (NGN.typeof(cfg.fieldmap) === 'object') {
+      this.METADATA.DATAMAP = new NGN.DATA.FieldMap(cfg.fieldmap)
     }
 
     // Bubble events to the BUS
@@ -436,6 +441,28 @@ class NGNDataModel extends NGN.EventEmitter {
       }
     }
 
+    // Apply automatic ID's when applicable
+    if (this.METADATA.autoid) {
+      let autoIdValue = null
+
+      Object.defineProperty(this.METADATA, 'IdentificationValue', NGN.get(() => {
+        if (autoIdValue === null) {
+          autoIdValue = NGN.DATA.UTILITY.UUID()
+        }
+
+        return autoIdValue
+      }))
+
+      // if (this.METADATA.IdentificationField !== null) {
+      //   let field = this.getField(this.METADATA.IdentificationField)
+      //
+      //   if (!field.METADATA.default) {
+      //     field.METADATA.default =
+      //   }
+      // }
+    }
+
+    // Apply auditing if configured
     this.auditable = NGN.coalesce(cfg.audit, false)
   }
 
@@ -476,7 +503,7 @@ class NGNDataModel extends NGN.EventEmitter {
    * @return {string}
    */
   get id () {
-    return this.get(this.IdentificationField)
+    return this.get(this.METADATA.IdentificationField)
   }
 
   set id (value) {
@@ -593,7 +620,7 @@ class NGNDataModel extends NGN.EventEmitter {
       if ((
 
         field.value === undefined ||
-        (ignoreID && fieldname.value === this.idAttribute) ||
+        (ignoreID && fieldname.value === this.IdentificationField) ||
         (!field.virtual || (!ignoreVirtualFields && field.virtual))
       )) {
         // Do not serialize hidden values or virtuals
@@ -638,12 +665,20 @@ class NGNDataModel extends NGN.EventEmitter {
    * Returns the value of the field.
    */
   get (field) {
-    if (field === 'id' || field === 'ID') {
-      field = this.METADATA.IdentificationValue
+    if (field === 'id' || field === 'ID' || field === this.METADATA.IdentificationField) {
+      field = this.METADATA.IdentificationField
+
+      if (this.METADATA.autoid) {
+        if (!this.METADATA.knownFieldNames.has(field)) {
+          return this.METADATA.IdentificationValue
+        } else {
+          return NGN.coalesce(this.METADATA.fields[field].value, this.METADATA.IdentificationValue)
+        }
+      }
     }
 
     if (this.METADATA.knownFieldNames.has(field)) {
-      return this[field]
+      return this.METADATA.fields[field].value
     } else {
       NGN.WARN(`Cannot get "${field}". The field is not part of the model.`)
       return undefined
@@ -663,7 +698,7 @@ class NGNDataModel extends NGN.EventEmitter {
     }
 
     if (this.METADATA.knownFieldNames.has(field)) {
-      this[field] = value
+      this.METADATA.fields[field].value = value
     } else {
       NGN.WARN(`Cannot set "${field}". Unrecognized field name.`)
     }
@@ -729,6 +764,10 @@ class NGNDataModel extends NGN.EventEmitter {
    * The raw field.
    */
   getField (name) {
+    if (name.toLowerCase() === 'id' && !this.METADATA.fields.hasOwnProperty(name) && this.METADATA.fields.hasOwnProperty(this.METADATA.IdentificationField)) {
+      return this.METADATA.fields[this.METADATA.IdentificationField]
+    }
+
     return this.METADATA.fields[name]
   }
 
