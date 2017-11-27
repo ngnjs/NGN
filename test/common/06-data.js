@@ -845,13 +845,6 @@ test('NGN.DATA.Model', function (t) {
   })
 
   // tasks.add(function (next) {
-  //   // Need to implement undo.
-  // })
-  //
-
-  //
-  //
-  // tasks.add(function (next) {
   //
   // })
 
@@ -920,9 +913,18 @@ test('NGN.DATA.Model Virtual Field Caching', function (t) {
   model.emit('done')
 })
 
-// test('NGN.DATA.Store', function (t) {
-//
-// })
+test('NGN.DATA.Store', function (t) {
+  var MetaModel = new NGN.DATA.Model(meta())
+  var GoodStore = new NGN.DATA.Store(MetaModel)
+
+  t.ok(GoodStore.name === 'Untitled Data Store', 'Correctly named store.')
+
+  t.throws(function () {
+    var BadStore = new NGN.DATA.Store() // eslint-disable-line no-unused-vars
+  }, 'An invalid or missing configuration throws an error.')
+
+  t.end()
+})
 
 // test('NGN.DATA.Relationship (Multi-Model)', function (t) {
 //   var Model = new NGN.DATA.Model(meta())
