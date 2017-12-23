@@ -593,3 +593,22 @@ test('EventEmitter Special Cases', function (t) {
 
   t.end()
 })
+
+test('NGN.BUS Special Events', function (t) {
+  NGN.BUS.on(NGN.WARNING_EVENT, function () {
+    t.pass('NGN.WARNING_EVENT recognized')
+    NGN.INFO('message')
+  })
+
+  NGN.BUS.on(NGN.INFO_EVENT, function () {
+    t.pass('NGN.INFO_EVENT recognized')
+    NGN.ERROR('message')
+  })
+
+  NGN.BUS.on(NGN.ERROR_EVENT, function () {
+    t.pass('NGN.ERROR_EVENT recognized')
+    t.end()
+  })
+
+  NGN.WARN('message')
+})

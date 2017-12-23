@@ -28,7 +28,13 @@
  * @private
  */
 class NGNDataIndex extends NGN.EventEmitter {
-  constructor () {
+  /**
+   * Create a new data index.
+   * @param  {String} [name='Untitled Index']
+   * Optional name for index. This is useful for debugging when multiple
+   * indexes exist.
+   */
+  constructor (name = 'Untitled Index') {
     super()
 
     Object.defineProperties(this, {
@@ -39,18 +45,19 @@ class NGNDataIndex extends NGN.EventEmitter {
 
       // Private data attributes
       uniqueValues: NGN.private(new Set()),
-      knownRecords: NGN.private([]) // Linked list of Sets
+      knownRecords: NGN.private([]), // Linked list of Sets
+      name: NGN.const(name)
     })
 
     // Bubble up private events when applicable
-    let me = this
+    const me = this
     this.on([
       this.CREATE_EVENT,
       this.REMOVE_EVENT,
       this.UPDATE_EVENT
     ], function (oid, value, suppressEvent = false) {
       if (!suppressEvent) {
-        me.emit(Symbol.keyFor(this.event).split('-')[0], oid)
+        me.emit(this.event.toString().replace(/^Symbol\(|\)$/g, ''), oid)
       }
     })
 
@@ -73,7 +80,7 @@ class NGNDataIndex extends NGN.EventEmitter {
    * @param {any} value
    * The value of the model/record indexed field.
    * @param {Symbol} oid
-   * The record's object ID (NGN.DATA.Model#oid)
+   * The record's object ID (NGN.DATA.Model#OID)
    */
   add (value, oid, suppressEvent = false) {
     let valueIndex = -1
@@ -81,7 +88,7 @@ class NGNDataIndex extends NGN.EventEmitter {
     // Create or identify the index of the unique value
     if (!this.uniqueValues.has(value)) {
       this.uniqueValues.add(value)
-      this.knownRecords.push([new Set()])
+      this.knownRecords.push(new Set())
       valueIndex += this.uniqueValues.size
     } else {
       valueIndex = this.indexOf(value)
@@ -95,11 +102,11 @@ class NGNDataIndex extends NGN.EventEmitter {
   /**
    * Remove a record from the index.
    * @param  {Symbol} oid
-   * The record's object ID (NGN.DATA.Model#oid)
+   * The record's object ID (NGN.DATA.Model#OID)
    * @param  {any} [value=undefined]
    * When specified, the field value will be used to identify
    * the index value. Specifying this value will make the remove
-   * operation faster.
+   * operation faster (uses introspection).
    */
   remove (oid, value, suppressEvent = false) {
     // If a value is specified, attempt to lookup the OID by value.
@@ -113,6 +120,8 @@ class NGNDataIndex extends NGN.EventEmitter {
           return
         }
       }
+
+      NGN.WARN(`Index value "${value}" not found in index.`)
     }
 
     // Iterate through all index values to remove the OID (slow)
@@ -120,6 +129,8 @@ class NGNDataIndex extends NGN.EventEmitter {
     for (let i = 0; i < this.knownRecords.length; i++) {
       if (this.knownRecords[i].delete(oid) && !removed) {
         removed = true
+        value = Array.from(this.uniqueValues.values())[i]
+        break
       }
     }
 
@@ -138,7 +149,7 @@ class NGNDataIndex extends NGN.EventEmitter {
   update (oid, oldValue, newValue, suppressEvent = false) {
     if (oldValue !== newValue) {
       this.remove(oid, oldValue, true)
-      this.add(oid, newValue, true)
+      this.add(newValue, oid, true)
       this.emit(this.UPDATE_EVENT, oid, null, suppressEvent)
     }
   }
@@ -153,12 +164,12 @@ class NGNDataIndex extends NGN.EventEmitter {
   }
 
   /**
-   * Retrive the index number of known records for the
+   * Retrieve the index number of known records for the
    * specified value.
    * @private
    * @param  {any} value
    * The unique value for which records are known.
-   * @return {numeric}
+   * @return {[numeric]}
    * The 0-based index of known records. Returns `-1` if no
    * index exists.
    */
@@ -183,16 +194,16 @@ class NGNDataIndex extends NGN.EventEmitter {
   /**
    * Get the list of records for the given value.
    * @param  {any} value [description]
-   * @return {[Symbol]}
+   * @return {[Array]}
    * The array contains NGN.DATA.Model#oid values.
    */
   recordsFor (value) {
     let index = this.recordsOf(value)
 
-    if (index === 0) {
+    if (index === null || index.size === 0) {
       return []
     }
 
-    return index.values()
+    return Array.from(index.values())
   }
 }

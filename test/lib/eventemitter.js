@@ -298,6 +298,10 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
     const eventName = args.shift()
     const events = this.getAllEvents(eventName)
 
+    if (typeof eventName === 'symbol') {
+      events.push(eventName)
+    }
+
     let scope = {
       event: eventName
     }
@@ -460,25 +464,6 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
           } else {
             this.META.wildcardEvents.delete(eventName)
             this.removeListener(eventName, handlerFn)
-          }
-        }),
-
-        /**
-         * @alias clear
-         * Remove all event handlers from the EventEmitter (both regular and adhoc).
-         * This is a shortcut for #removeAllListeners.
-         */
-        clear: NGN.public(function () {
-          let events = NGN.slice(arguments)
-
-          if (events.length === 0) {
-            this.META.wildcardEvents.clear()
-            return this.removeAllListeners()
-          }
-
-          for (let i = 0; i < events.length; i++) {
-            this.META.wildcardEvents.delete(events[i])
-            this.removeAllListeners(events[i])
           }
         }),
 
@@ -1190,7 +1175,26 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
       })
     }
 
-    // Internal method used to hadle TTL and wildcard management.
+    /**
+     * @alias clear
+     * Remove all event handlers from the EventEmitter (both regular and adhoc).
+     * This is a shortcut for #removeAllListeners.
+     */
+    clear () {
+      let events = NGN.slice(arguments)
+
+      if (events.length === 0) {
+        this.META.wildcardEvents.clear()
+        return this.removeAllListeners()
+      }
+
+      for (let i = 0; i < events.length; i++) {
+        this.META.wildcardEvents.delete(events[i])
+        this.removeAllListeners(events[i])
+      }
+    }
+
+    // Internal method used to handle TTL and wildcard management.
     eventHandler (eventName, callback, ttl, prepend = false) {
       if (NGN.typeof(ttl) === 'boolean') {
         prepend = ttl
@@ -1205,7 +1209,7 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
         setTimeout(() => this.off(eventName, callback), ttl)
       }
 
-      if (eventName.indexOf('*') >= 0) {
+      if (typeof eventName === 'string' && eventName.indexOf('*') >= 0) {
         this.META.wildcardEvents.add(eventName)
       }
 
@@ -1327,6 +1331,12 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
       // This check provides support for these special events. These types
       // of events will never have wildcards.
       if (!NGN.nodelike || !arguments[0] || this.META.wildcardEvents.size === 0) {
+        super.emit(...arguments)
+        return
+      }
+
+      if (NGN.nodelike && typeof arguments[0] === 'symbol') {
+console.log(arguments[0])
         super.emit(...arguments)
         return
       }

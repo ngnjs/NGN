@@ -290,6 +290,10 @@ class EventEmitterBase { // eslint-disable-line no-unused-vars
     const eventName = args.shift()
     const events = this.getAllEvents(eventName)
 
+    if (typeof eventName === 'symbol') {
+      events.push(eventName)
+    }
+
     let scope = {
       event: eventName
     }

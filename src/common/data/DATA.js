@@ -11,16 +11,22 @@
   // [INCLUDE: ./Index.js]
   // [INCLUDE: ./Store.js]
 
-  let NGNModel = function (cfg) {
-    const Model = function (data) {
-      let model = new NGNDataModel(cfg)
+  const NGNDataModel = function (cfg) {
+    if (NGN.typeof(cfg) !== 'object') {
+      throw new Error('Model must be configured.')
+    }
+
+    let Model = function (data) {
+      let Entity = new NGN.DATA.Entity(cfg)
 
       if (data) {
-        model.load(data)
+        Entity.load(data)
       }
 
-      return model
+      return Entity
     }
+
+    Object.defineProperty(Model.prototype, 'CONFIGURATION', NGN.const(cfg))
 
     return Model
   }
@@ -35,8 +41,8 @@
     VirtualField: NGN.const(NGNVirtualDataField),
     Relationship: NGN.const(NGNRelationshipField),
     FieldMap: NGN.privateconst(NGNDataFieldMap),
-    Entity: NGN.privateconst(NGNDataModel),
-    Model: NGN.const(NGNModel),
+    Model: NGN.const(NGNDataModel),
+    Entity: NGN.privateconst(NGNDataEntity),
     Index: NGN.privateconst(NGNDataIndex),
     Store: NGN.const(NGNDataStore)
   })))

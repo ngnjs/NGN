@@ -2579,7 +2579,7 @@ class NGNDataFieldMap {
 }
 
   // [PARTIAL]
-
+NGN.global.test = 0
 /**
  * @class NGN.DATA.Model
  * Represents a data model/record.
@@ -2592,9 +2592,11 @@ class NGNDataFieldMap {
  * @fires field.invalid
  * Fired when an invalid value is detected in an data field.
  */
-class NGNDataModel extends NGN.EventEmitter {
+class NGNDataEntity extends NGN.EventEmitter {
   constructor (cfg) {
-    cfg = cfg || {}
+    cfg = NGN.coalesce(cfg, {})
+
+    super()
 
     if (cfg.dataMap) {
       cfg.fieldmap = cfg.dataMap
@@ -2605,8 +2607,6 @@ class NGNDataModel extends NGN.EventEmitter {
       cfg.IdentificationField = cfg.idAttribute
       NGN.WARN('"idAttribute" is deprecated. Use "IdentificationField" instead.')
     }
-
-    super()
 
     const me = this
 
@@ -2663,7 +2663,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * Extensions of the NGN.DATA.Field are also supported,
          * such as NGN.DATA.VirtualField and NGN.DATA.Relationship.
          */
-        fields: NGN.coalesce(cfg.fields),
+        fields: Object.assign({}, NGN.coalesce(cfg.fields, {})),
         knownFieldNames: new Set(),
         invalidFieldNames: new Set(),
         auditFieldNames: NGN.coalesce(cfg.audit, false) ? new Set() : null,
@@ -2759,13 +2759,13 @@ class NGNDataModel extends NGN.EventEmitter {
          * An internal method used to apply field definitions to the model.
          * @param  {string} fieldname
          * Name of the field (as applied to the model).
-         * @param  {NGN.DATA.Field|Object|Primitive} [cfg=null]
+         * @param  {NGN.DATA.Field|Object|Primitive} [fieldConfiguration=null]
          * The configuration to apply. See #addField for details.
          * @param  {Boolean} [suppressEvents=false]
          * Optionally suppress the `field.create` event.
          * @private
          */
-        applyField: (field, cfg = null, suppressEvents = false) => {
+        applyField: (field, fieldcfg = null, suppressEvents = false) => {
           // Prevent duplicate fields
           if (this.METADATA.knownFieldNames.has(field)) {
             return NGN.WARN(`Duplicate field "${field}" detected.`)
@@ -2777,42 +2777,42 @@ class NGNDataModel extends NGN.EventEmitter {
           }
 
           // If the field config isn't already an NGN.DATA.Field, create it.
-          if (!(cfg instanceof NGN.DATA.Field)) {
-            if (cfg instanceof NGN.DATA.Store || cfg instanceof NGN.DATA.Model) {
+          if (!(fieldcfg instanceof NGN.DATA.Field)) {
+            if (fieldcfg instanceof NGN.DATA.Store || fieldcfg instanceof NGN.DATA.Model) {
               if (this.METADATA.IdentificationField === field) {
-                throw new InvalidConfigurationError(`"${field}" cannot be an ID. Relationship fields cannot be an identification attribute.`)
+                throw new InvalidConfigurationError(`"${field}" cannot be an ID. Relationship fields cannot be an identification field/attribute.`)
               }
 
               this.METADATA.fields[field] = new NGN.DATA.Relationship({
                 name: field,
-                record: cfg,
+                record: fieldcfg,
                 model: this
               })
             } else {
-              switch (NGN.typeof(cfg)) {
+              switch (NGN.typeof(fieldcfg)) {
                 // Custom config
                 case 'object':
-                  cfg.model = this
-                  cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
-                  cfg.name = field
+                  fieldcfg.model = this
+                  fieldcfg.identifier = NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field)
+                  fieldcfg.name = field
 
-                  this.METADATA.fields[field] = new NGN.DATA.Field(cfg)
+                  this.METADATA.fields[field] = new NGN.DATA.Field(fieldcfg)
 
                   break
 
                 // Collection of models
                 case 'array':
-                  return this.applyField(field, cfg[0], suppressEvents)
+                  return this.applyField(field, fieldcfg[0], suppressEvents)
 
                 // Type-based cfg.
                 default:
-                  if (NGN.isFn(cfg) || cfg === null) {
-                    if (NGN.isFn(cfg) && ['string', 'number', 'boolean', 'number', 'symbol', 'regexp', 'date', 'array', 'object'].indexOf(NGN.typeof(cfg)) < 0) {
+                  if (NGN.isFn(fieldcfg) || fieldcfg === null) {
+                    if (NGN.isFn(fieldcfg) && ['string', 'number', 'boolean', 'number', 'symbol', 'regexp', 'date', 'array', 'object'].indexOf(NGN.typeof(fieldcfg)) < 0) {
                       this.METADATA.fields[field] = new NGN.DATA.VirtualField({
                         name: field,
                         identifier: this.METADATA.IdentificationField === field,
                         model: this,
-                        method: cfg
+                        method: fieldcfg
                       })
 
                       break
@@ -2820,7 +2820,7 @@ class NGNDataModel extends NGN.EventEmitter {
 
                     this.METADATA.fields[field] = new NGN.DATA.Field({
                       name: field,
-                      type: cfg,
+                      type: fieldcfg,
                       identifier: this.METADATA.IdentificationField === field,
                       model: this
                     })
@@ -2830,28 +2830,28 @@ class NGNDataModel extends NGN.EventEmitter {
 
                   this.METADATA.fields[field] = new NGN.DATA.Field({
                     name: field,
-                    type: NGN.isFn(cfg) ? cfg : String,
-                    identifier: NGN.isFn(cfg)
+                    type: NGN.isFn(fieldcfg) ? fieldcfg : String,
+                    identifier: NGN.isFn(fieldcfg)
                       ? false
-                      : NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field),
+                      : NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field),
                     model: this
                   })
 
                   break
               }
             }
-          } else if (cfg.model === null) {
-            cfg.name = field
-            cfg.identifier = cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
+          } else if (fieldcfg.model === null) {
+            fieldcfg.name = field
+            fieldcfg.identifier = fieldcfg.identifier = NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field)
 
-            this.METADATA.fields[field] = cfg
+            this.METADATA.fields[field] = fieldcfg
             this.METADATA.fields[field].model = this
-          } else if (cfg.model === this) {
-            cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
+          } else if (fieldcfg.model === this) {
+            fieldcfg.identifier = NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field)
 
-            this.METADATA.fields[field] = cfg
-          } else {
-            return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
+            this.METADATA.fields[field] = fieldcfg
+          } else if (!(fieldcfg instanceof NGN.DATA.Field)) {
+            return NGN.WARN(`The "${fieldcfg.name}" field cannot be applied because model is already specified.`)
           }
 
           // Add a direct reference to the model.
@@ -2997,16 +2997,7 @@ class NGNDataModel extends NGN.EventEmitter {
     }
 
     // Bubble events to the BUS
-    // for (let i = 0; i < this.METADATA.EVENTS.length; i++) {
-    //   this.on(this.METADATA.EVENTS[i], function () {
-    //     let args = NGN.slice(arguments)
-    //
-    //     args.push(this)
-    //     args.unshift(this.METADATA.EVENTS[i])
-    //
-    //     NGN.BUS.emit.apply(NGN.BUS, args)
-    //   })
-    // }
+    // this.relay('*', NGN.BUS, 'record.')
 
     // Add data fields.
     let fields = Object.keys(this.METADATA.fields)
@@ -3032,18 +3023,25 @@ class NGNDataModel extends NGN.EventEmitter {
 
         return autoIdValue
       }))
-
-      // if (this.METADATA.IdentificationField !== null) {
-      //   let field = this.getField(this.METADATA.IdentificationField)
-      //
-      //   if (!field.METADATA.default) {
-      //     field.METADATA.default =
-      //   }
-      // }
     }
 
     // Apply auditing if configured
     this.auditable = NGN.coalesce(cfg.audit, false)
+
+    // Clear any cached checksums when the model changes.
+    this.on(['field.update', 'field.create', 'field.delete', 'field.hidden', 'field.unhidden'], () => {
+      if (this.METADATA.checksum) {
+        this.METADATA.checksum = null
+      }
+    })
+  }
+
+  get countz () {
+    return this.counted
+  }
+
+  get name () {
+    return this.METADATA.name
   }
 
   set auditable (value) {
@@ -3152,7 +3150,9 @@ class NGNDataModel extends NGN.EventEmitter {
       return this.MAP.applyInverseMap(this.serializeFields())
     }
 
-    return this.serializeFields()
+    let d =  this.serializeFields()
+    d.test = this.countz
+    return d
   }
 
   /**
@@ -3182,6 +3182,20 @@ class NGNDataModel extends NGN.EventEmitter {
    */
   get unmappedRepresentation () {
     return this.serializeFields(false, false)
+  }
+
+  /**
+   * @property {string} checksum
+   * The checksum is a unique "fingerprint" of the data stored in the model.
+   * Please note that generating a checksum for an individual record is
+   * usually a quick operation, but generating large quantities of checksums
+   * simultaneously/sequentially can be computationally expensive. On average,
+   * a checksum takes 3-125ms to generate.
+   */
+  get checksum () {
+    this.METADATA.checksum = NGN.coalesce(this.METADATA.checksum, NGN.DATA.UTILITY.checksum(JSON.stringify(this.data)))
+
+    return this.METADATA.checksum
   }
 
   serializeFields (ignoreID = false, ignoreVirtualFields = true) {
@@ -3293,15 +3307,15 @@ class NGNDataModel extends NGN.EventEmitter {
    * @param {boolean} [suppressEvents=false]
    * Set to `true` to prevent events from firing when the field is added.
    */
-  addField (name, cfg = null, suppressEvents = false) {
+  addField (name, fieldConfiguration = null, suppressEvents = false) {
     if (name instanceof NGN.DATA.Field) {
-      cfg = name
-      name = cfg.name
+      fieldConfiguration = name
+      name = fieldConfiguration.name
     } else if (typeof name !== 'string') {
       throw new Error('Cannot add a non-string based field.')
     }
 
-    this.METADATA.applyField(name, cfg, suppressEvents)
+    this.METADATA.applyField(name, fieldConfiguration, suppressEvents)
   }
 
   /**
@@ -3404,10 +3418,10 @@ class NGNDataModel extends NGN.EventEmitter {
    * Load a data record.
    * @param {object} data
    * The data to apply to the model.
-   * @param {boolean} [suppressEvents=true]
+   * @param {boolean} [suppressEvents=false]
    * Do not emit a change event when the data is loaded.
    */
-  load (data, suppressEvents = true) {
+  load (data, suppressEvents = false) {
     if (this.MAP) {
       data = this.MAP.applyMap(data)
     }
@@ -3427,6 +3441,14 @@ class NGNDataModel extends NGN.EventEmitter {
     }
 
     return this
+  }
+
+  next () {
+    // TODO: Get the next record in the data set.
+  }
+
+  previous () {
+    // TODO: Get the previous record in the data set.
   }
 }
 
@@ -3460,7 +3482,13 @@ class NGNDataModel extends NGN.EventEmitter {
  * @private
  */
 class NGNDataIndex extends NGN.EventEmitter {
-  constructor () {
+  /**
+   * Create a new data index.
+   * @param  {String} [name='Untitled Index']
+   * Optional name for index. This is useful for debugging when multiple
+   * indexes exist.
+   */
+  constructor (name = 'Untitled Index') {
     super()
 
     Object.defineProperties(this, {
@@ -3471,18 +3499,19 @@ class NGNDataIndex extends NGN.EventEmitter {
 
       // Private data attributes
       uniqueValues: NGN.private(new Set()),
-      knownRecords: NGN.private([]) // Linked list of Sets
+      knownRecords: NGN.private([]), // Linked list of Sets
+      name: NGN.const(name)
     })
 
     // Bubble up private events when applicable
-    let me = this
+    const me = this
     this.on([
       this.CREATE_EVENT,
       this.REMOVE_EVENT,
       this.UPDATE_EVENT
     ], function (oid, value, suppressEvent = false) {
       if (!suppressEvent) {
-        me.emit(Symbol.keyFor(this.event).split('-')[0], oid)
+        me.emit(this.event.toString().replace(/^Symbol\(|\)$/g, ''), oid)
       }
     })
 
@@ -3505,7 +3534,7 @@ class NGNDataIndex extends NGN.EventEmitter {
    * @param {any} value
    * The value of the model/record indexed field.
    * @param {Symbol} oid
-   * The record's object ID (NGN.DATA.Model#oid)
+   * The record's object ID (NGN.DATA.Model#OID)
    */
   add (value, oid, suppressEvent = false) {
     let valueIndex = -1
@@ -3513,7 +3542,7 @@ class NGNDataIndex extends NGN.EventEmitter {
     // Create or identify the index of the unique value
     if (!this.uniqueValues.has(value)) {
       this.uniqueValues.add(value)
-      this.knownRecords.push([new Set()])
+      this.knownRecords.push(new Set())
       valueIndex += this.uniqueValues.size
     } else {
       valueIndex = this.indexOf(value)
@@ -3527,11 +3556,11 @@ class NGNDataIndex extends NGN.EventEmitter {
   /**
    * Remove a record from the index.
    * @param  {Symbol} oid
-   * The record's object ID (NGN.DATA.Model#oid)
+   * The record's object ID (NGN.DATA.Model#OID)
    * @param  {any} [value=undefined]
    * When specified, the field value will be used to identify
    * the index value. Specifying this value will make the remove
-   * operation faster.
+   * operation faster (uses introspection).
    */
   remove (oid, value, suppressEvent = false) {
     // If a value is specified, attempt to lookup the OID by value.
@@ -3545,6 +3574,8 @@ class NGNDataIndex extends NGN.EventEmitter {
           return
         }
       }
+
+      NGN.WARN(`Index value "${value}" not found in index.`)
     }
 
     // Iterate through all index values to remove the OID (slow)
@@ -3552,6 +3583,8 @@ class NGNDataIndex extends NGN.EventEmitter {
     for (let i = 0; i < this.knownRecords.length; i++) {
       if (this.knownRecords[i].delete(oid) && !removed) {
         removed = true
+        value = Array.from(this.uniqueValues.values())[i]
+        break
       }
     }
 
@@ -3570,7 +3603,7 @@ class NGNDataIndex extends NGN.EventEmitter {
   update (oid, oldValue, newValue, suppressEvent = false) {
     if (oldValue !== newValue) {
       this.remove(oid, oldValue, true)
-      this.add(oid, newValue, true)
+      this.add(newValue, oid, true)
       this.emit(this.UPDATE_EVENT, oid, null, suppressEvent)
     }
   }
@@ -3585,12 +3618,12 @@ class NGNDataIndex extends NGN.EventEmitter {
   }
 
   /**
-   * Retrive the index number of known records for the
+   * Retrieve the index number of known records for the
    * specified value.
    * @private
    * @param  {any} value
    * The unique value for which records are known.
-   * @return {numeric}
+   * @return {[numeric]}
    * The 0-based index of known records. Returns `-1` if no
    * index exists.
    */
@@ -3615,17 +3648,17 @@ class NGNDataIndex extends NGN.EventEmitter {
   /**
    * Get the list of records for the given value.
    * @param  {any} value [description]
-   * @return {[Symbol]}
+   * @return {[Array]}
    * The array contains NGN.DATA.Model#oid values.
    */
   recordsFor (value) {
     let index = this.recordsOf(value)
 
-    if (index === 0) {
+    if (index === null || index.size === 0) {
       return []
     }
 
-    return index.values()
+    return Array.from(index.values())
   }
 }
 
@@ -3663,7 +3696,9 @@ class NGNDataStore extends NGN.EventEmitter {
       throw new InvalidConfigurationError('Missing or invalid "model" configuration property.')
     }
 
-    super(cfg)
+    super()
+
+    const me = this
 
     Object.defineProperties(this, {
       /**
@@ -3674,11 +3709,14 @@ class NGNDataStore extends NGN.EventEmitter {
       name: NGN.const(NGN.coalesce(cfg.name, 'Untitled Data Store')),
 
       METADATA: NGN.private({
+        // Holds the models/records
+        records: [],
+
         /**
          * @cfgproperty {NGN.DATA.Model} model
          * An NGN Data Model to which data records conform.
          */
-        model: cfg.model,
+        Model: NGN.coalesce(cfg.model),
 
         /**
          * @cfg {boolean} [allowDuplicates=true]
@@ -3695,7 +3733,7 @@ class NGNDataStore extends NGN.EventEmitter {
          * to the naked eye. However; if an application experiences slow data
          * load or processing times, setting this to `false` may help.
          */
-        allowDuplicates: NGN.public(NGN.coalesce(cfg.allowDuplicates, true)),
+        allowDuplicates: NGN.coalesce(cfg.allowDuplicates, true),
 
         /**
          * @cfg {boolean} [errorOnDuplicate=false]
@@ -3703,13 +3741,26 @@ class NGNDataStore extends NGN.EventEmitter {
          * If this is not set, it will default to the value of #allowDuplicates.
          * If #allowDuplicates is not defined either, this will be `true`
          */
-        errorOnDuplicate: NGN.const(NGN.coalesce(cfg.errorOnDuplicate, cfg.allowDuplicates, true)),
+        errorOnDuplicate: NGN.coalesce(cfg.errorOnDuplicate, cfg.allowDuplicates, false),
+
+        /**
+         * @cfg {boolean} [allowInvalid=true]
+         * Allow invalid records to be added to the store.
+         */
+        allowInvalid: NGN.coalesce(cfg.allowInvalid, true),
+
+        /**
+         * @cfg {boolean} [errorOnInvalid=false]
+         * Set to `true` to throw an error when an attempt is made to add an
+         * invalid record.
+         */
+        errorOnInvalid: NGN.coalesce(cfg.errorOnInvalid, cfg.allowInvalid, false),
 
         /**
          * @cfgproperty {boolean} [autoRemoveExpiredRecords=true]
          * When set to `true`, the store will automatically delete expired records.
          */
-        autoRemoveExpiredRecords: NGN.privateconst(NGN.coalesce(cfg.autoRemoveExpiredRecords, true)),
+        autoRemoveExpiredRecords: NGN.coalesce(cfg.autoRemoveExpiredRecords, true),
 
         /**
          * @cfg {boolean} [softDelete=false]
@@ -3756,14 +3807,16 @@ class NGNDataStore extends NGN.EventEmitter {
          * from memory after 10 seconds (because `softDeleteTtl` is set to 10000
          * milliseconds).
          */
-        softDelete: NGN.privateconst(NGN.coalesce(cfg.softDelete, false)),
+        softDelete: NGN.coalesce(cfg.softDelete, false),
 
         /**
          * @cfg {number} [softDeleteTtl=-1]
          * This is the number of milliseconds the store waits before purging a
          * soft-deleted record from memory. `-1` = Infinite (no TTL).
          */
-        softDeleteTtl: NGN.private(NGN.coalesce(cfg.softDeleteTtl, -1)),
+        softDeleteTtl: NGN.coalesce(cfg.softDeleteTtl, -1),
+
+        // ARCHIVE contains soft deleted records
 
         /**
          * @cfg {Number} [FIFO=-1]
@@ -3781,7 +3834,7 @@ class NGNDataStore extends NGN.EventEmitter {
          * #insertBefore, or #insertAfter. FIFO is applied _after_ the record
          * is added to the store but _before_ it is moved to the desired index.
          */
-        fifo: NGN.private(NGN.coalesce(cfg.FIFO, -1)),
+        fifo: NGN.coalesce(cfg.FIFO, -1),
 
         /**
          * @cfg {Number} [LIFO=-1]
@@ -3805,7 +3858,7 @@ class NGNDataStore extends NGN.EventEmitter {
          * #insertBefore, or #insertAfter. LIFO is applied _after_ the record
          * is added to the store but _before_ it is moved to the desired index.
          */
-        lifo: NGN.private(NGN.coalesce(cfg.LIFO, -1)),
+        lifo: NGN.coalesce(cfg.LIFO, -1),
 
         /**
          * @cfg {Number} [maxRecords=-1]
@@ -3813,7 +3866,7 @@ class NGNDataStore extends NGN.EventEmitter {
          * Attempting to add a record to the store beyond it's maximum will throw
          * an error.
          */
-        maxRecords: NGN.private(NGN.coalesce(cfg.maxRecords, -1)),
+        maxRecords: NGN.coalesce(cfg.maxRecords, -1),
 
         /**
          * @cfg {Number} [minRecords=0]
@@ -3822,7 +3875,29 @@ class NGNDataStore extends NGN.EventEmitter {
          * Attempting to remove a record below the store's minimum will throw
          * an error.
          */
-        minRecords: NGN.private(NGN.coalesce(cfg.minRecords, 0)),
+        minRecords: NGN.coalesce(cfg.minRecords, 0),
+
+        /**
+         * @cfgproperty {object} fieldmap
+         * An object mapping model attribute names to data storage field names.
+         *
+         * _Example_
+         * ```
+         * {
+         *   ModelFieldName: 'inputName',
+         *   father: 'dad',
+         *	 email: 'eml',
+         *	 image: 'img',
+         *	 displayName: 'dn',
+         *	 firstName: 'gn',
+         *	 lastName: 'sn',
+         *	 middleName: 'mn',
+         *	 gender: 'sex',
+         *	 dob: 'bd'
+         * }
+         * ```
+         */
+        MAP: NGN.coalesce(cfg.fieldmap),
 
         EVENTS: new Set([
           'record.duplicate',
@@ -3852,9 +3927,71 @@ class NGNDataStore extends NGN.EventEmitter {
           if (change.hasOwnProperty('cursor')) {
             this.METADATA.AUDITLOG.commit(this.METADATA.getAuditMap())
           }
+        },
+
+        // The first and last indexes are maintained to determine which active
+        // record is considered first/last. Sometimes data is filtered out,
+        // so the first/last active record is not guaranteed to represent the
+        // first/last actual record. These indexes are maintained to prevent
+        // unnecessary iteration in large data sets.
+        FIRSTRECORDINDEX: 0,
+        LASTRECORDINDEX: 0,
+
+        /**
+         * @cfg {array} [index]
+         * An array of #model fields that will be indexed.
+         * See NGN.DATA.Index for details.
+         */
+        INDEX: null
+      }),
+
+      PRIVATE: NGN.privateconst({
+        // A private indexing method
+        INDEX: function (record, delta) {
+          if (typeof this.event === 'symbol') {
+            switch (this.event) {
+              case me.PRIVATE.EVENT.CREATE_RECORD:
+                me.METADATA.INDEXFIELDS.forEach(field => me.METADATA.INDEX[field].add(record[field], record.OID))
+                break
+
+              case me.PRIVATE.EVENT.DELETE_RECORD:
+                me.METADATA.INDEXFIELDS.forEach(field => me.METADATA.INDEX[field].remove(record.OID, record[field]))
+                break
+
+              case me.PRIVATE.EVENT.LOAD_RECORDS:
+                for (let i = 0; i < me.METADATA.records.length; i++) {
+                  me.METADATA.INDEXFIELDS.forEach(field => me.METADATA.INDEX[field].add(me.METADATA.records[i][field], me.METADATA.records[i].OID))
+                }
+                break
+            }
+          } else {
+            switch (this.event) {
+              case 'record.update':
+                if (me.METADATA.INDEXFIELDS.has(delta.field.name)) {
+                  me.METADATA.INDEX[delta.field.name].update(record.OID, delta.old, delta.new)
+                }
+                break
+
+              case 'clear':
+                me.METADATA.INDEXFIELDS.forEach(field => me.METADATA.INDEX[field].reset())
+                break
+            }
+          }
+        },
+
+        // Contains a map of records
+        RECORDMAP: new Map(),
+
+        // Internal events
+        EVENT: {
+          CREATE_RECORD: Symbol('private.record.create'),
+          DELETE_RECORD: Symbol('private.record.delete'),
+          LOAD_RECORDS: Symbol('private.records.load')
         }
       })
     })
+
+    Object.freeze(this.PRIVATE.EVENT)
 
     // Support LIFO (Last In First Out) & FIFO(First In First Out)
     if (this.METADATA.lifo > 0 && this.METADATA.fifo > 0) {
@@ -3868,6 +4005,14 @@ class NGNDataStore extends NGN.EventEmitter {
     } else {
       this.METADATA.minRecords = this.METADATA.minRecords < 0 ? 0 : this.METADATA.minRecords
     }
+
+    // Bubble events to the BUS
+    // this.relay('*', NGN.BUS, 'store.')
+
+    // Configure Indices
+    if (NGN.coalesce(cfg.index) && NGN.typeof(this.METADATA.Model.prototype.CONFIGURATION.fields) === 'object') {
+      this.createIndex(cfg.index)
+    }
   }
 
   /**
@@ -3878,6 +4023,85 @@ class NGNDataStore extends NGN.EventEmitter {
    */
   get snapshots () {
     return NGN.coalesce(this.snapshotarchive, [])
+  }
+
+  // Deprecation notice
+  get history () {
+    NGN.WARN('history is deprecated. Use NGN.DATA.Store#changelog instead.')
+    return this.changelog
+  }
+
+  // Deprecation notice
+  get recordCount () {
+    NGN.WARN('recordCount is deprecated. Use NGN.DATA.Store#count instead.')
+    return this.length
+  }
+
+  /**
+   * @property {number} count
+   * The total number of **active** records contained in the store.
+   * Active records are any records that aren't filtered out.
+   */
+  get size () {
+    // TODO: Total number of active records (excluding filtered)
+  }
+
+  /**
+   * @property {number} length
+   * The total number of records contained in the store.
+   * This value does not include any soft-deleted/volatile records.
+   */
+  get length () {
+    return this.METADATA.records.length
+  }
+
+  /**
+   * @property {NGN.DATA.Model} first
+   * Return the first active record in the store. Returns `null`
+   * if the store is empty.
+   */
+  get first () {
+    return NGN.coalesce(this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
+  }
+
+  /**
+   * @property {NGN.DATA.Model} last
+   * Return the last active record in the store. Returns `null`
+   * if the store is empty.
+   */
+  get last () {
+    return NGN.coalesce(this.METADATA.records[this.METADATA.LASTRECORDINDEX])
+  }
+
+  /**
+   * @property {object} data
+   * A serialized version of the data represented by the store. This
+   * only includes non-virtual fields. See #representation to use
+   * a representation of data containing virtual fields.
+   */
+  get data () {
+    const result = []
+
+    for (let i = 0; i < this.METADATA.records.length; i++) {
+      result.push(this.METADATA.records[i].data)
+    }
+
+    return result
+  }
+
+  /**
+   * @property {array} representation
+   * The complete and unfiltered underlying representation dataset
+   * (data + virtuals of each model).
+   */
+  get representation () {
+    let result = []
+
+    for (let i = 0; i < this.METADATA.records.length; i++) {
+      result.push(this.METADATA.records[i].representation)
+    }
+
+    return result
   }
 
   get auditable () {
@@ -3894,19 +4118,376 @@ class NGNDataStore extends NGN.EventEmitter {
   }
 
   get model () {
-    return this.METADATA.model
+    return this.METADATA.Model
   }
 
-  set model (value) {
-    if (value !== this.METADATA.model) {
-      if (NGN.typeof(value) !== 'model') {
-        throw new InvalidConfigurationError(`"${this.name}" model could not be set because the value is ${NGN.typeof(value)} (requires NGN.DATA.Model).`)
+  // set model (value) {
+  //   if (value !== this.METADATA.Model) {
+  //     if (NGN.typeof(value) !== 'model') {
+  //       throw new InvalidConfigurationError(`"${this.name}" model could not be set because the value is a ${NGN.typeof(value)} type (requires NGN.DATA.Model).`)
+  //     }
+  //
+  //     this.METADATA.Model = value
+  //   }
+  // }
+
+  /**
+   * @method add
+   * Append a data record to the store. This adds the record to the end of the list.
+   * @param {NGN.DATA.Model|object} data
+   * Accepts an existing NGN Data Model or a JSON object.
+   * If a JSON object is supplied, it will be applied to
+   * the data model specified in #model.
+   * @param {boolean} [suppressEvents=false]
+   * Set this to `true` to prevent the `record.create` event
+   * from firing.
+   * @return {NGN.DATA.Model}
+   * Returns the new record.
+   */
+  add (data, suppressEvents = false) {
+    // Support array input
+    if (NGN.typeof(data) === 'array') {
+      let result = []
+
+      for (let i = 0; i < data.length; i++) {
+        result.push(this.add(data[i]))
       }
 
-      this.METADATA.model = value
+      return result
+    }
+
+    // Prevent creation if it will exceed maximum record count.
+    if (this.METADATA.maxRecords > 0 && this.METADATA.records.length + 1 > this.METADATA.maxRecords) {
+      throw new Error('Maximum record count exceeded.')
+    }
+
+    if (!(data instanceof this.METADATA.Model)) {
+      // Force a data model
+      if (NGN.typeof(data) === 'string') {
+        data = JSON.parse(data)
+      }
+
+      if (typeof data !== 'object') {
+        throw new Error(`${NGN.typeof(data)} is an invalid data type (must be an object conforming to the ${this.METADATA.Model.name} field configuration).`)
+      }
+    } else {
+      data = data.data
+    }
+
+    const record = new this.METADATA.Model(data)
+
+    if (!(record instanceof NGNDataEntity)) {
+      throw new Error(`Only a NGN.DATA.Model or JSON object may be used in NGN.DATA.Store#add. Received a "${NGN.typeof(data)}" value.`)
+    }
+
+    // Prevent invalid record addition (if configured)
+    if (!this.METADATA.allowInvalid && !record.valid) {
+      NGN.WARN(`An attempt to add invalid data to the "${this.name}" store was prevented. The following fields are invalid: ${Array.from(record.METADATA.invalidFieldNames.keys()).join(', ')}`)
+
+      if (!suppressEvents) {
+        this.emit('record.invalid', record)
+      }
+
+      if (this.METADATA.errorOnInvalid) {
+        throw new Error(`Invalid data cannot be added to the "${this.name}" store.`)
+      }
+    }
+
+    // If duplicates are prevented, check the new data.
+    if (!this.METADATA.allowDuplicates) {
+      for (let i = 0; i < this.METADATA.records.length; i++) {
+        if (this.METADATA.records[i].checksum === record.checksum) {
+          NGN.WARN(`An attempt to add a duplicate record to the "${this.name}" store was prevented.`)
+
+          if (!suppressEvents) {
+            this.emit('record.duplicate', record)
+          }
+
+          if (this.METADATA.errorOnDuplicate) {
+            throw new Error(`Duplicate records are not allowed in the "${this.name}" data store.`)
+          }
+
+          break
+        }
+      }
+    }
+
+    // Handle special record count processing (LIFO/FIFO support)
+    if (this.METADATA.lifo > 0 && this.METADATA.records.length + 1 > this.METADATA.lifo) {
+      this.remove(this.METADATA.records.length - 1, suppressEvents)
+    } else if (this.METADATA.fifo > 0 && this.METADATA.records.length + 1 > this.METADATA.fifo) {
+      this.remove(0, suppressEvents)
+    }
+
+    // Relay model events to this store.
+    // record.relay('*', this, 'record.')
+    record.on('*', function () {
+      switch (this.event) {
+        // case 'field.update':
+        // case 'field.delete':
+        //   // TODO: Update indices
+        //   return
+
+        case 'field.invalid':
+        case 'field.valid':
+          return this.emit(this.event.replace('field.', 'record.'), record)
+
+        case 'expired':
+          // TODO: Handle expiration
+          return
+      }
+    })
+
+    // Indexing is handled in an internal event handler
+    this.METADATA.records.push(record)
+
+    // Add the record to the map for efficient retrievel by OID
+    this.PRIVATE.RECORDMAP.set(record.OID, this.METADATA.records.length - 1)
+
+    // TODO: Apply filters to new record before identifying the last record.
+    this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
+
+    this.emit(this.PRIVATE.EVENT.CREATE_RECORD, record)
+
+    if (!suppressEvents) {
+      this.emit('record.create', record)
+    }
+
+    return record
+  }
+
+  /**
+   * @method remove
+   * Remove a record.
+   * @param {NGN.DATA.Model|number} data
+   * Accepts an existing NGN Data Model or index number.
+   * Using a model is slower than using an index number.
+   * @fires record.delete
+   * The record delete event sends 2 arguments to handler methods:
+   * `record` and `index`. The record refers to the model that was
+   * removed. The `index` refers to the position of the record within
+   * the store's data list. **NOTICE** the `index` refers to where
+   * the record _used to be_.
+   * @returns {NGN.DATA.Model}
+   * Returns the data model that was just removed. If a model
+   * is unavailable (i.e. remove didn't find the specified record),
+   * this will return `null`.
+   */
+  remove (record, suppressEvents = false) {
+    // if (NGN.typeof(record) === 'array') {
+    //   let result = []
+    //
+    //   for (let i = 0; i < record.length; i++) {
+    //     if (NGN.typeof(record[i]) !== 'number') {
+    //
+    //     }
+    //
+    //     result.push(this.remove(record[i]))
+    //   }
+    //
+    //   return result
+    // }
+    //
+    // let removedRecord = []
+    // let dataIndex
+    //
+    // // Prevent removal if it will exceed minimum record count.
+    // if (this.minRecords > 0 && this._data.length - 1 < this.minRecords) {
+    //   throw new Error('Minimum record count not met.')
+    // }
+    //
+    // if (typeof data === 'number') {
+    //   dataIndex = data
+    // } else if (data && data.checksum && data.checksum !== null || data instanceof NGN.DATA.Model) {
+    //   dataIndex = this.indexOf(data)
+    // } else {
+    //   let m = new this.model(data, true) // eslint-disable-line new-cap
+    //   dataIndex = this._data.findIndex(function (el) {
+    //     return el.checksum === m.checksum
+    //   })
+    // }
+    //
+    // // If no record is found, the operation fails.
+    // if (dataIndex < 0) {
+    //   throw new Error('Record removal failed (record not found at index ' + (dataIndex || '').toString() + ').')
+    // }
+    //
+    // this._data[dataIndex].isDestroyed = true
+    //
+    // removedRecord = this._data.splice(dataIndex, 1)
+    //
+    // removedRecord.isDestroyed = true
+    //
+    // if (removedRecord.length > 0) {
+    //   removedRecord = removedRecord[0]
+    //   this.unapplyIndices(dataIndex)
+    //
+    //   if (this.softDelete) {
+    //     if (this.softDeleteTtl >= 0) {
+    //       const checksum = removedRecord.checksum
+    //       removedRecord.once('expired', () => {
+    //         this.purgeDeletedRecord(checksum)
+    //       })
+    //
+    //       removedRecord.expires = this.softDeleteTtl
+    //     }
+    //
+    //     this._softarchive.push(removedRecord)
+    //   }
+    //
+    //   if (!this._loading) {
+    //     let i = this._created.indexOf(removedRecord)
+    //     if (i >= 0) {
+    //       i >= 0 && this._created.splice(i, 1)
+    //     } else if (this._deleted.indexOf(removedRecord) < 0) {
+    //       this._deleted.push(removedRecord)
+    //     }
+    //   }
+    //
+    //   if (!NGN.coalesce(suppressEvents, false)) {
+    //     this.emit('record.delete', removedRecord, dataIndex)
+    //   }
+    //
+    //   return removedRecord
+    // }
+    //
+    //
+    // this.emit(this.PRIVATE.EVENT.DELETE_RECORD, record)
+    //
+    //
+    // return null
+  }
+
+  /**
+   * Create a new index on the store.
+   * @param  {string} field
+   * The name of the field to index.
+   * @fires index.create
+   * Triggered when an index is created. The name of field is passed
+   * as the only argument.
+   */
+  createIndex (field) {
+    // Support multiple indexes
+    if (NGN.typeof(field) === 'array') {
+      for (let i = 0; i < field.length; i++) {
+        this.createIndex(field[i])
+      }
+
+      return
+    }
+
+    // Make sure index fields are known to the store
+    if (!this.METADATA.INDEXFIELDS) {
+      this.METADATA.INDEXFIELDS = new Set()
+
+      // this.on('record.*', this.PRIVATE.INDEX)
+      this.on([
+        this.PRIVATE.EVENT.CREATE_RECORD,
+        this.PRIVATE.EVENT.DELETE_RECORD,
+        this.PRIVATE.EVENT.LOAD_RECORDS
+      ], this.PRIVATE.INDEX)
+    }
+
+    // In an index already exists, ignore it.
+    if (this.METADATA.INDEXFIELDS.has(field)) {
+      return
+    }
+
+    // Guarantee the existance of the index list
+    this.METADATA.INDEX = NGN.coalesce(this.METADATA.INDEX, {})
+
+    let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+    if (metaconfig.fields && metaconfig.fields.hasOwnProperty(field)) {
+      if (metaconfig.fields[field] !== null) {
+        if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(metaconfig.fields[field])) >= 0) {
+          throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
+        } else if (NGN.typeof(metaconfig.fields[field]) === 'object') {
+          if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(NGN.coalesce(metaconfig.fields[field].type))) >= 0) {
+            throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
+          }
+        }
+      }
+
+      this.METADATA.INDEXFIELDS.add(field)
+      this.METADATA.INDEX[field] = new NGN.DATA.Index(`${field.toUpperCase()} INDEX`)
+
+      // Apply to any existing records
+      if (this.METADATA.records.length > 0) {
+        this.PRIVATE.apply({ event: 'load' })
+      }
+
+      this.emit('index.created', field)
+    } else {
+      throw new Error(`Cannot create index for unrecognized field "${field}".`)
     }
   }
 
+  /**
+   * Returns the index number of the model. If the same
+   * model exists more than once (duplicate records), only
+   * the first index is returned.
+   * @param  {NGN.DATA.Model} model
+   * The model/record to retrieve an index number for.
+   * @return {number}
+   * The zero-based index number of the model.
+   */
+  indexOf (model) {
+
+  }
+
+  /**
+   * Retrieve a record by index number (0-based, like an array).
+   * @param  {number} [index=0]
+   * The index of the record to retrieve.
+   */
+  getRecord (index = 0) {
+    return this.METADATA.records[index]
+  }
+
+  /**
+   * @method clear
+   * Removes all data.
+   * @param {boolean} [purgeSoftDelete=true]
+   * Purge soft deleted records from memory.
+   * @param {boolean} [suppressEvents=false]
+   * Set to `true` to prevent events from triggering when this method is run.
+   * @fires clear
+   * Fired when all data is removed
+   */
+  clear (purge = true, suppressEvents = false) {
+    if (this.METADATA.ARCHIVE) {
+      if (!purge) {
+        this.METADATA.ARCHIVE = this.records
+      } else {
+        delete this.METADATA.ARCHIVE
+      }
+    }
+
+    this.METADATA.records = []
+
+    // TODO: Update indexes
+
+    if (!suppressEvents) {
+      this.emit('clear')
+    }
+  }
+
+  /**
+   * A special method to clear events from the underlying event emitter.
+   * This exists because #clear has a special meaning in a data store (removing
+   * all data records vs removing all events).
+   * @private
+   */
+  clearEvents () {
+    super.clear(...arguments)
+  }
+
+  /**
+   * Replace a model.
+   * @deprecated 2.0.0
+   * @param  {NGN.DATA.Model} newModel
+   * The new model.
+   */
   replaceModel (newModel) {
     NGN.deprecate(
       () => this.model = newModel,
@@ -3967,19 +4548,29 @@ class NGNDataStore extends NGN.EventEmitter {
   clearSnapshots () {
     this.snapshotarchive = null
   }
+
+  load (data) {
+    // this.emit(this.PRIVATE.EVENT.LOAD_RECORDS)
+  }
 }
 
 
-  let NGNModel = function (cfg) {
-    const Model = function (data) {
-      let model = new NGNDataModel(cfg)
+  const NGNDataModel = function (cfg) {
+    if (NGN.typeof(cfg) !== 'object') {
+      throw new Error('Model must be configured.')
+    }
+
+    let Model = function (data) {
+      let Entity = new NGN.DATA.Entity(cfg)
 
       if (data) {
-        model.load(data)
+        Entity.load(data)
       }
 
-      return model
+      return Entity
     }
+
+    Object.defineProperty(Model.prototype, 'CONFIGURATION', NGN.const(cfg))
 
     return Model
   }
@@ -3994,8 +4585,8 @@ class NGNDataStore extends NGN.EventEmitter {
     VirtualField: NGN.const(NGNVirtualDataField),
     Relationship: NGN.const(NGNRelationshipField),
     FieldMap: NGN.privateconst(NGNDataFieldMap),
-    Entity: NGN.privateconst(NGNDataModel),
-    Model: NGN.const(NGNModel),
+    Model: NGN.const(NGNDataModel),
+    Entity: NGN.privateconst(NGNDataEntity),
     Index: NGN.privateconst(NGNDataIndex),
     Store: NGN.const(NGNDataStore)
   })))

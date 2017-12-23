@@ -1,5 +1,5 @@
 // [PARTIAL]
-
+NGN.global.test = 0
 /**
  * @class NGN.DATA.Model
  * Represents a data model/record.
@@ -12,9 +12,11 @@
  * @fires field.invalid
  * Fired when an invalid value is detected in an data field.
  */
-class NGNDataModel extends NGN.EventEmitter {
+class NGNDataEntity extends NGN.EventEmitter {
   constructor (cfg) {
-    cfg = cfg || {}
+    cfg = NGN.coalesce(cfg, {})
+
+    super()
 
     if (cfg.dataMap) {
       cfg.fieldmap = cfg.dataMap
@@ -25,8 +27,6 @@ class NGNDataModel extends NGN.EventEmitter {
       cfg.IdentificationField = cfg.idAttribute
       NGN.WARN('"idAttribute" is deprecated. Use "IdentificationField" instead.')
     }
-
-    super()
 
     const me = this
 
@@ -83,7 +83,7 @@ class NGNDataModel extends NGN.EventEmitter {
          * Extensions of the NGN.DATA.Field are also supported,
          * such as NGN.DATA.VirtualField and NGN.DATA.Relationship.
          */
-        fields: NGN.coalesce(cfg.fields),
+        fields: Object.assign({}, NGN.coalesce(cfg.fields, {})),
         knownFieldNames: new Set(),
         invalidFieldNames: new Set(),
         auditFieldNames: NGN.coalesce(cfg.audit, false) ? new Set() : null,
@@ -179,13 +179,13 @@ class NGNDataModel extends NGN.EventEmitter {
          * An internal method used to apply field definitions to the model.
          * @param  {string} fieldname
          * Name of the field (as applied to the model).
-         * @param  {NGN.DATA.Field|Object|Primitive} [cfg=null]
+         * @param  {NGN.DATA.Field|Object|Primitive} [fieldConfiguration=null]
          * The configuration to apply. See #addField for details.
          * @param  {Boolean} [suppressEvents=false]
          * Optionally suppress the `field.create` event.
          * @private
          */
-        applyField: (field, cfg = null, suppressEvents = false) => {
+        applyField: (field, fieldcfg = null, suppressEvents = false) => {
           // Prevent duplicate fields
           if (this.METADATA.knownFieldNames.has(field)) {
             return NGN.WARN(`Duplicate field "${field}" detected.`)
@@ -197,42 +197,42 @@ class NGNDataModel extends NGN.EventEmitter {
           }
 
           // If the field config isn't already an NGN.DATA.Field, create it.
-          if (!(cfg instanceof NGN.DATA.Field)) {
-            if (cfg instanceof NGN.DATA.Store || cfg instanceof NGN.DATA.Model) {
+          if (!(fieldcfg instanceof NGN.DATA.Field)) {
+            if (fieldcfg instanceof NGN.DATA.Store || fieldcfg instanceof NGN.DATA.Model) {
               if (this.METADATA.IdentificationField === field) {
-                throw new InvalidConfigurationError(`"${field}" cannot be an ID. Relationship fields cannot be an identification attribute.`)
+                throw new InvalidConfigurationError(`"${field}" cannot be an ID. Relationship fields cannot be an identification field/attribute.`)
               }
 
               this.METADATA.fields[field] = new NGN.DATA.Relationship({
                 name: field,
-                record: cfg,
+                record: fieldcfg,
                 model: this
               })
             } else {
-              switch (NGN.typeof(cfg)) {
+              switch (NGN.typeof(fieldcfg)) {
                 // Custom config
                 case 'object':
-                  cfg.model = this
-                  cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
-                  cfg.name = field
+                  fieldcfg.model = this
+                  fieldcfg.identifier = NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field)
+                  fieldcfg.name = field
 
-                  this.METADATA.fields[field] = new NGN.DATA.Field(cfg)
+                  this.METADATA.fields[field] = new NGN.DATA.Field(fieldcfg)
 
                   break
 
                 // Collection of models
                 case 'array':
-                  return this.applyField(field, cfg[0], suppressEvents)
+                  return this.applyField(field, fieldcfg[0], suppressEvents)
 
                 // Type-based cfg.
                 default:
-                  if (NGN.isFn(cfg) || cfg === null) {
-                    if (NGN.isFn(cfg) && ['string', 'number', 'boolean', 'number', 'symbol', 'regexp', 'date', 'array', 'object'].indexOf(NGN.typeof(cfg)) < 0) {
+                  if (NGN.isFn(fieldcfg) || fieldcfg === null) {
+                    if (NGN.isFn(fieldcfg) && ['string', 'number', 'boolean', 'number', 'symbol', 'regexp', 'date', 'array', 'object'].indexOf(NGN.typeof(fieldcfg)) < 0) {
                       this.METADATA.fields[field] = new NGN.DATA.VirtualField({
                         name: field,
                         identifier: this.METADATA.IdentificationField === field,
                         model: this,
-                        method: cfg
+                        method: fieldcfg
                       })
 
                       break
@@ -240,7 +240,7 @@ class NGNDataModel extends NGN.EventEmitter {
 
                     this.METADATA.fields[field] = new NGN.DATA.Field({
                       name: field,
-                      type: cfg,
+                      type: fieldcfg,
                       identifier: this.METADATA.IdentificationField === field,
                       model: this
                     })
@@ -250,28 +250,28 @@ class NGNDataModel extends NGN.EventEmitter {
 
                   this.METADATA.fields[field] = new NGN.DATA.Field({
                     name: field,
-                    type: NGN.isFn(cfg) ? cfg : String,
-                    identifier: NGN.isFn(cfg)
+                    type: NGN.isFn(fieldcfg) ? fieldcfg : String,
+                    identifier: NGN.isFn(fieldcfg)
                       ? false
-                      : NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field),
+                      : NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field),
                     model: this
                   })
 
                   break
               }
             }
-          } else if (cfg.model === null) {
-            cfg.name = field
-            cfg.identifier = cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
+          } else if (fieldcfg.model === null) {
+            fieldcfg.name = field
+            fieldcfg.identifier = fieldcfg.identifier = NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field)
 
-            this.METADATA.fields[field] = cfg
+            this.METADATA.fields[field] = fieldcfg
             this.METADATA.fields[field].model = this
-          } else if (cfg.model === this) {
-            cfg.identifier = NGN.coalesce(cfg.identifier, this.METADATA.IdentificationField === field)
+          } else if (fieldcfg.model === this) {
+            fieldcfg.identifier = NGN.coalesce(fieldcfg.identifier, this.METADATA.IdentificationField === field)
 
-            this.METADATA.fields[field] = cfg
-          } else {
-            return NGN.WARN(`The "${cfg.name}" field cannot be applied because a model is already specified.`)
+            this.METADATA.fields[field] = fieldcfg
+          } else if (!(fieldcfg instanceof NGN.DATA.Field)) {
+            return NGN.WARN(`The "${fieldcfg.name}" field cannot be applied because model is already specified.`)
           }
 
           // Add a direct reference to the model.
@@ -417,16 +417,7 @@ class NGNDataModel extends NGN.EventEmitter {
     }
 
     // Bubble events to the BUS
-    // for (let i = 0; i < this.METADATA.EVENTS.length; i++) {
-    //   this.on(this.METADATA.EVENTS[i], function () {
-    //     let args = NGN.slice(arguments)
-    //
-    //     args.push(this)
-    //     args.unshift(this.METADATA.EVENTS[i])
-    //
-    //     NGN.BUS.emit.apply(NGN.BUS, args)
-    //   })
-    // }
+    // this.relay('*', NGN.BUS, 'record.')
 
     // Add data fields.
     let fields = Object.keys(this.METADATA.fields)
@@ -452,18 +443,25 @@ class NGNDataModel extends NGN.EventEmitter {
 
         return autoIdValue
       }))
-
-      // if (this.METADATA.IdentificationField !== null) {
-      //   let field = this.getField(this.METADATA.IdentificationField)
-      //
-      //   if (!field.METADATA.default) {
-      //     field.METADATA.default =
-      //   }
-      // }
     }
 
     // Apply auditing if configured
     this.auditable = NGN.coalesce(cfg.audit, false)
+
+    // Clear any cached checksums when the model changes.
+    this.on(['field.update', 'field.create', 'field.delete', 'field.hidden', 'field.unhidden'], () => {
+      if (this.METADATA.checksum) {
+        this.METADATA.checksum = null
+      }
+    })
+  }
+
+  get countz () {
+    return this.counted
+  }
+
+  get name () {
+    return this.METADATA.name
   }
 
   set auditable (value) {
@@ -572,7 +570,9 @@ class NGNDataModel extends NGN.EventEmitter {
       return this.MAP.applyInverseMap(this.serializeFields())
     }
 
-    return this.serializeFields()
+    let d =  this.serializeFields()
+    d.test = this.countz
+    return d
   }
 
   /**
@@ -602,6 +602,20 @@ class NGNDataModel extends NGN.EventEmitter {
    */
   get unmappedRepresentation () {
     return this.serializeFields(false, false)
+  }
+
+  /**
+   * @property {string} checksum
+   * The checksum is a unique "fingerprint" of the data stored in the model.
+   * Please note that generating a checksum for an individual record is
+   * usually a quick operation, but generating large quantities of checksums
+   * simultaneously/sequentially can be computationally expensive. On average,
+   * a checksum takes 3-125ms to generate.
+   */
+  get checksum () {
+    this.METADATA.checksum = NGN.coalesce(this.METADATA.checksum, NGN.DATA.UTILITY.checksum(JSON.stringify(this.data)))
+
+    return this.METADATA.checksum
   }
 
   serializeFields (ignoreID = false, ignoreVirtualFields = true) {
@@ -713,15 +727,15 @@ class NGNDataModel extends NGN.EventEmitter {
    * @param {boolean} [suppressEvents=false]
    * Set to `true` to prevent events from firing when the field is added.
    */
-  addField (name, cfg = null, suppressEvents = false) {
+  addField (name, fieldConfiguration = null, suppressEvents = false) {
     if (name instanceof NGN.DATA.Field) {
-      cfg = name
-      name = cfg.name
+      fieldConfiguration = name
+      name = fieldConfiguration.name
     } else if (typeof name !== 'string') {
       throw new Error('Cannot add a non-string based field.')
     }
 
-    this.METADATA.applyField(name, cfg, suppressEvents)
+    this.METADATA.applyField(name, fieldConfiguration, suppressEvents)
   }
 
   /**
@@ -824,10 +838,10 @@ class NGNDataModel extends NGN.EventEmitter {
    * Load a data record.
    * @param {object} data
    * The data to apply to the model.
-   * @param {boolean} [suppressEvents=true]
+   * @param {boolean} [suppressEvents=false]
    * Do not emit a change event when the data is loaded.
    */
-  load (data, suppressEvents = true) {
+  load (data, suppressEvents = false) {
     if (this.MAP) {
       data = this.MAP.applyMap(data)
     }
@@ -847,5 +861,13 @@ class NGNDataModel extends NGN.EventEmitter {
     }
 
     return this
+  }
+
+  next () {
+    // TODO: Get the next record in the data set.
+  }
+
+  previous () {
+    // TODO: Get the previous record in the data set.
   }
 }
