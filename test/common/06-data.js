@@ -10,7 +10,7 @@ require('../lib/tasks/bootstrap')
 require('../lib/data/DATA')
 
 NGN.BUS.on(NGN.WARNING_EVENT, function (msg) {
-  console.log('\n\n\n\n:::WARNING:::\n', msg)
+  console.log('\n\n\n\n:::WARNING:::', msg)
 })
 
 test('Data Sanity Checks', function (t) {
@@ -938,12 +938,29 @@ test('NGN.DATA.Index', function (t) {
     'Identifies the appropriate records.'
   )
 
+  t.ok(
+    index.keys.length === 3 &&
+    index.keys[0] === 'John' &&
+    index.keys[1] === 'Jill' &&
+    index.keys[2] === 'Jake',
+    'Identifies unique keys correctly.'
+  )
+
   index.update(records[0].OID, 'John', 'Johnny')
   t.ok(
     index.recordsFor('John').length === 1 &&
     index.recordsFor('Johnny').length === 1 &&
     records[records.length - 1].OID === indexes[1],
     'Update index with new value.'
+  )
+
+  t.ok(
+    index.keys.length === 4 &&
+    index.keys[0] === 'John' &&
+    index.keys[3] === 'Johnny' &&
+    index.keys[1] === 'Jill' &&
+    index.keys[2] === 'Jake',
+    'Updates unique keys correctly.'
   )
 
   index.remove(records[0].OID, 'Johnny')
@@ -954,111 +971,141 @@ test('NGN.DATA.Index', function (t) {
 
   index.reset()
   t.ok(index.uniqueValues.size === 0, 'Reset empties the index.')
+  t.ok(index.keys.length === 0, 'No unique keys remain after reset.')
 
   t.end()
 })
 
-// test('NGN.DATA.Store Basic Functionality', function (t) {
-//   var MetaModel = new NGN.DATA.Model(meta())
-//   var GoodStore = new NGN.DATA.Store({
-//     model: MetaModel
-//   })
-//
-//   t.ok(GoodStore.name === 'Untitled Data Store', 'Correctly named store.')
-//
-//   t.throws(function () {
-//     var BadStore = new NGN.DATA.Store() // eslint-disable-line no-unused-vars
-//   }, 'An invalid or missing configuration throws an error.')
-//
-//   var tasks = new TaskRunner()
-//
-//   tasks.add('Add records', function (next) {
-//     var record = GoodStore.add({
-//       firstname: 'John',
-//       lastname: 'Doe'
-//     })
-//
-//     t.ok(GoodStore.length === 1, 'Record added.')
-//     t.ok(record.firstname === 'John', 'Added record accurately represents the stored data.')
-//
-//     GoodStore.add({
-//       firstname: 'Jill',
-//       lastname: 'Doe'
-//     })
-//
-//     var record2 = GoodStore.add({
-//       firstname: 'Jake',
-//       lastname: 'Doe'
-//     })
-//
-//     t.ok(record === GoodStore.first, 'First accessor returns the first record within the store.')
-//     t.ok(record2 === GoodStore.last, 'Last accessor returns the last record within the store.')
-//     t.ok(GoodStore.last.firstname === 'Jake', 'Last accessor returns proper values.')
-//     t.ok(GoodStore.first.firstname === 'John', 'First accessor returns proper values.')
-//     t.ok(GoodStore.length === 3, 'Correct number of records identified.')
-//
-//     next()
-//   })
-//
-//   tasks.add('Clear store.', function (next) {
-//     GoodStore.clear()
-//
-//     t.ok(GoodStore.length === 0, 'Cleared store of all records.')
-//
-//     next()
-//   })
-//
-//   tasks.add('Add multiple records simultaneously.', function (next) {
-//     GoodStore.add([{
-//       firstname: 'John',
-//       lastname: 'Doe'
-//     }, {
-//       firstname: 'Jill',
-//       lastname: 'Doe'
-//     }, {
-//       firstname: 'Jake',
-//       lastname: 'Doe'
-//     }, {
-//       firstname: 'Jean',
-//       lastname: 'Doe'
-//     }])
-//
-//     t.ok(GoodStore.length === 4, 'Added array of records.')
-//     t.ok(
-//       GoodStore.getRecord(0).firstname === 'John' &&
-//       GoodStore.getRecord(1).firstname === 'Jill' &&
-//       GoodStore.getRecord(2).firstname === 'Jake' &&
-//       GoodStore.getRecord(3).firstname === 'Jean',
-//       'Proper records recognized when added in bulk.'
-//     )
-//
-//     next()
-//   })
-//
-//   tasks.on('complete', t.end)
-//   tasks.run(true)
-// })
-
-test('NGN.DATA.Store Indexing', function (t) {
+test('NGN.DATA.Store Basic Functionality', function (t) {
   var MetaModel = new NGN.DATA.Model(meta())
-  var Store = new NGN.DATA.Store({
-    model: MetaModel,
-    index: ['firstname', 'lastname']
+  var GoodStore = new NGN.DATA.Store({
+    model: MetaModel
   })
 
-  t.ok(Store.METADATA.INDEXFIELDS.size === 2, 'Indexes applied to store.')
+  t.ok(GoodStore.name === 'Untitled Data Store', 'Correctly named store.')
 
-  Store.add([
-    { firstname: 'John', lastname: 'Doe' },
-    { firstname: 'Jill', lastname: 'Doe' },
-    { firstname: 'Jake', lastname: 'Doe' },
-    { firstname: 'John', lastname: 'Dearborn' }
-  ])
+  t.throws(function () {
+    var BadStore = new NGN.DATA.Store() // eslint-disable-line no-unused-vars
+  }, 'An invalid or missing configuration throws an error.')
 
-  console.log(Store.METADATA.INDEX['lastname'].recordsFor('Doe'))
+  var tasks = new TaskRunner()
 
-  t.end()
+  tasks.add('Add records', function (next) {
+    var record = GoodStore.add({
+      firstname: 'John',
+      lastname: 'Doe'
+    })
+
+    t.ok(GoodStore.length === 1, 'Record added.')
+    t.ok(record.firstname === 'John', 'Added record accurately represents the stored data.')
+
+    GoodStore.add({
+      firstname: 'Jill',
+      lastname: 'Doe'
+    })
+
+    var record2 = GoodStore.add({
+      firstname: 'Jake',
+      lastname: 'Doe'
+    })
+
+    t.ok(record === GoodStore.first, 'First accessor returns the first record within the store.')
+    t.ok(record2 === GoodStore.last, 'Last accessor returns the last record within the store.')
+    t.ok(GoodStore.last.firstname === 'Jake', 'Last accessor returns proper values.')
+    t.ok(GoodStore.first.firstname === 'John', 'First accessor returns proper values.')
+    t.ok(GoodStore.length === 3, 'Correct number of records identified.')
+
+    next()
+  })
+
+  tasks.add('Remove records', function (next) {
+    var removedRecord = GoodStore.remove(0)
+
+    t.ok(GoodStore.length === 3, 'Store record manifest is unaffected upon remove by index.')
+    t.ok(GoodStore.size === 2, 'Active record count is decremented upon remove by index.')
+    t.ok(removedRecord.firstname === 'John', 'Correctly returns the removed record when removing by index.')
+    t.ok(GoodStore.first.firstname === 'Jill', 'Removing the first record automatically moves the first index cursor forward.')
+    t.ok(GoodStore.last.firstname === 'Jake', 'Removing the first record does not affect the last index cursor.')
+
+    removedRecord = GoodStore.remove(GoodStore.last)
+    t.ok(GoodStore.length === 3, 'Store record manifest is unaffected upon remove by model.')
+    t.ok(GoodStore.size === 1, 'Active record count is decremented upon remove by model.')
+    t.ok(removedRecord.firstname === 'Jake', 'Correctly returns the removed record when removing by model.')
+    t.ok(GoodStore.first.firstname === 'Jill', 'Removing the last record automatically moves the first index cursor forward.')
+    t.ok(GoodStore.last.firstname === 'Jill', 'Removing the last record does not affect the last index cursor.')
+
+    t.ok(GoodStore.remove(2) === null, 'Removal fails when passing an invalid index.')
+
+    next()
+  })
+
+  tasks.add('Clear store.', function (next) {
+    GoodStore.clear()
+
+    t.ok(GoodStore.length === 0, 'Cleared store of all records.')
+
+    next()
+  })
+
+  tasks.add('Add multiple records simultaneously.', function (next) {
+    GoodStore.add([{
+      firstname: 'John',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jill',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jake',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jean',
+      lastname: 'Doe'
+    }])
+
+    t.ok(GoodStore.length === 4, 'Added array of records.')
+    t.ok(
+      GoodStore.getRecord(0).firstname === 'John' &&
+      GoodStore.getRecord(1).firstname === 'Jill' &&
+      GoodStore.getRecord(2).firstname === 'Jake' &&
+      GoodStore.getRecord(3).firstname === 'Jean',
+      'Proper records recognized when added in bulk.'
+    )
+
+    next()
+  })
+
+  tasks.on('complete', t.end)
+  tasks.run(true)
 })
+
+// test('NGN.DATA.Store Indexing', function (t) {
+//   var MetaModel = new NGN.DATA.Model(meta())
+//   var Store = new NGN.DATA.Store({
+//     model: MetaModel,
+//     index: ['firstname', 'lastname']
+//   })
+//
+//   t.ok(Store.METADATA.INDEXFIELDS.size === 2, 'Indexes applied to store.')
+//
+//   Store.add([
+//     { firstname: 'John', lastname: 'Doe' },
+//     { firstname: 'Jill', lastname: 'Doe' },
+//     { firstname: 'Jake', lastname: 'Doe' },
+//     { firstname: 'John', lastname: 'Dearborn' }
+//   ])
+//
+//   var records = Store.getIndexRecords('lastname', 'Doe')
+//
+//   t.ok(
+//     records.length === 3 &&
+//     records[0].firstname === 'John' &&
+//     records[1].firstname === 'Jill' &&
+//     records[2].firstname === 'Jake',
+//     'Indexed records retrieved successfully.'
+//   )
+//
+//   t.end()
+// })
 
 // test('NGN.DATA.Relationship (Multi-Model)', function (t) {
 //   var Model = new NGN.DATA.Model(meta())

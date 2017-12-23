@@ -188,80 +188,82 @@ class Utility {
 
     return result[SERIALIZED_ARRAY_DATA] !== undefined ? result[SERIALIZED_ARRAY_DATA] : result
   }
-}
 
-// /**
-//  * @method objectByteSize
-//  * Calculates the _estimated_ size (in bytes) of primitive key/value objects,
-//  * meaning those that do not contain functions, accessors (getters/setters),
-//  * or other attributes other than `String`, `Number`, or `Boolean` values.
-//  * NGN treats dates as `String` values.
-//  *
-//  * JavaScript engines differ in how they manage memory, but most do not
-//  * calculate the size of functions. If a value of type `function` is found in
-//  * the object, NGN will calculate the size of it's `String` representation.
-//  * This is a weak measure of function size since most JavaScript engines
-//  * do not expose enough realtime heap data to know calculate with accuracy at
-//  * any given point in time.
-//  *
-//  * This method attempts to implement similar principles to C's `sizeOf` method.
-//  *
-//  * Consider this method to provide a **best guess based on the data we have
-//  * available**.
-//  *
-//  * @param {Object} object
-//  * The primitive key/value object upon which the bytesize estimation will be made.
-//  * @param {Boolean} [ignoreFunctionEstimate=false]
-//  * By default, NGN will calculate the `String` representation of any functions
-//  * it encounters in the key/value object. Setting this to `true` will prevent
-//  * this behavior, effectively using a `0` to calculate function size.
-//  */
-// objectByteSize: NGN.const(function (obj, ignore=false) {
-//   switch (typeof obj) {
-//     case 'string':
-//       return obj.length * 2
-//
-//     case 'boolean':
-//       return 4
-//
-//     case 'number':
-//       return 8
-//
-//     case 'function':
-//       if (!ignore) {
-//         return obj.toString().length * 2
-//       }
-//
-//       return 0
-//   }
-//
-//   let list = []
-//   let stack = [obj]
-//   let bytes = 0
-//
-//   while (stack.length) {
-//     let value = stack.pop()
-//
-//     if (typeof value === 'object') {
-//       if (list.indexOf(value) < 0) {
-//         list.push(value)
-//
-//         // If the object is not an array, add key sizes
-//         const isArray = !Array.isArray(value)
-//
-//         for (let key in value) {
-//           if (!isArray) {
-//             bytes += (2 * key.length) + NGN.DATA.util(value[key])
-//             stack.push(value[key])
-//           } else {
-//
-//           }
-//         }
-//       }
-//     } else {
-//       bytes += NGN.DATA.util.objectByteSize(value)
-//     }
-//   }
-//
-//   return bytes
-// })
+  // /**
+  //  * @method objectByteSize
+  //  * Calculates the _estimated_ size (in bytes) of primitive key/value objects,
+  //  * meaning those that do not contain functions, accessors (getters/setters),
+  //  * or other attributes other than `String`, `Number`, or `Boolean` values.
+  //  * NGN treats dates as `String` values.
+  //  *
+  //  * JavaScript engines differ in how they manage memory, but most do not
+  //  * calculate the size of functions. If a value of type `function` is found in
+  //  * the object, NGN will calculate the size of it's `String` representation.
+  //  * This is a weak measure of function size since most JavaScript engines
+  //  * do not expose enough realtime heap data to know calculate with accuracy at
+  //  * any given point in time.
+  //  *
+  //  * This method attempts to implement similar principles to C's `sizeOf` method.
+  //  *
+  //  * Consider this method to provide a **best guess based on the available data**.
+  //  *
+  //  * @param {Object} object
+  //  * The primitive key/value object upon which the bytesize estimation will be made.
+  //  * @param {Boolean} [ignoreFunctionEstimate=false]
+  //  * By default, NGN will calculate the `String` representation of any functions
+  //  * it encounters in the key/value object. Setting this to `true` will prevent
+  //  * this behavior, effectively using a `0` to calculate function size.
+  //  */
+  // static objectByteSize (obj, ignore=false) {
+  //   switch (typeof obj) {
+  //     case null:
+  //       return 4
+  //
+  //     case 'string':
+  //       return obj.length * 2
+  //
+  //     case 'boolean':
+  //       return 4
+  //
+  //     case 'number':
+  //       return 8
+  //
+  //     case 'function':
+  //       if (!ignore) {
+  //         return obj.toString().length * 2
+  //       }
+  //
+  //       return 0
+  //   }
+  //
+  //   let list = []
+  //   let stack = [obj]
+  //   let bytes = 0
+  //
+  //   while (stack.length) {
+  //     let value = stack.pop()
+  //
+  //     if (typeof value === 'object') {
+  //       if (list.indexOf(value) < 0) {
+  //         list.push(value)
+  //
+  //         // If the object is not an array, add key sizes
+  //         const isArray = !Array.isArray(value)
+  //
+  //         for (let key in value) {
+  //           if (!isArray) {
+  //             bytes += (2 * key.length) + NGN.DATA.util(value[key])
+  //             stack.push(value[key])
+  //           } else {
+  //
+  //           }
+  //         }
+  //       }
+  //     } else {
+  //       bytes += NGN.DATA.UTILITY.objectByteSize(value)
+  //     }
+  //   }
+  //
+  //   return bytes
+  // }
+}

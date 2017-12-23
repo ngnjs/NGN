@@ -817,6 +817,20 @@
 
       if (events.length === 0) {
         this.META.wildcardEvents.clear()
+
+        let symbolEvents = []
+
+        if (NGN.nodelike) {
+          symbolEvents = Object.getOwnPropertySymbols(this._events)
+        } else {
+          symbolEvents = Object.getOwnPropertySymbols(this.adhoc)
+          symbolEvents = symbolEvents.concat(Object.getOwnPropertySymbols(this.handlers))
+        }
+
+        for (let i = 0; i < symbolEvents.length; i++) {
+          this.removeAllListeners(symbolEvents[i])
+        }
+
         return this.removeAllListeners()
       }
 
@@ -968,7 +982,6 @@
       }
 
       if (NGN.nodelike && typeof arguments[0] === 'symbol') {
-console.log(arguments[0])
         super.emit(...arguments)
         return
       }

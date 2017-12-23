@@ -75,6 +75,14 @@ class NGNDataIndex extends NGN.EventEmitter {
     })
   }
 
+  get keys () {
+    if (this.uniqueValues.size === 0) {
+      return []
+    }
+
+    return Array.from(this.uniqueValues.values())
+  }
+
   /**
    * Add a field/value to the index.
    * @param {any} value
@@ -193,9 +201,10 @@ class NGNDataIndex extends NGN.EventEmitter {
 
   /**
    * Get the list of records for the given value.
-   * @param  {any} value [description]
-   * @return {[Array]}
-   * The array contains NGN.DATA.Model#oid values.
+   * @param  {any} [value]
+   * The value of the index to lookup the index by.
+   * @return {array}
+   * The array contains OID reference values (records).
    */
   recordsFor (value) {
     let index = this.recordsOf(value)

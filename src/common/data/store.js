@@ -281,6 +281,7 @@ class NGNDataStore extends NGN.EventEmitter {
         INDEX: null
       }),
 
+      // Internal attributes that should not be extended.
       PRIVATE: NGN.privateconst({
         // A private indexing method
         INDEX: function (record, delta) {
@@ -315,8 +316,14 @@ class NGNDataStore extends NGN.EventEmitter {
           }
         },
 
-        // Contains a map of records
+        // Contains a map of all records
         RECORDMAP: new Map(),
+
+        // A reference to active records
+        ACTIVERECORDMAP: null,
+
+        // A reference to filtered records (non-active/non-deleted)
+        FILTEREDRECORDMAP: null,
 
         // Internal events
         EVENT: {
@@ -324,9 +331,32 @@ class NGNDataStore extends NGN.EventEmitter {
           DELETE_RECORD: Symbol('private.record.delete'),
           LOAD_RECORDS: Symbol('private.records.load')
         }
+      }),
+
+      // Create a convenience alias to the remove method.
+      delete: NGN.const(NGN.deprecate(this.remove, 'Store.delete is not a valid method. Use Store.remove instead.'))
+    })
+
+    // Create a smart reference to record lists
+    Object.defineProperties(this.PRIVATE, {
+      ACTIVERECORDS: NGN.get(() => {
+        if (this.PRIVATE.ACTIVERECORDMAP === null) {
+          return this.PRIVATE.RECORDMAP
+        }
+
+        return this.PRIVATE.ACTIVERECORDMAP
+      }),
+
+      FILTEREDRECORDS: NGN.get(() => {
+        if (this.PRIVATE.FILTEREDRECORDMAP === null) {
+          return this.PRIVATE.RECORDMAP
+        }
+
+        return this.PRIVATE.FILTEREDRECORDMAP
       })
     })
 
+    // Disallow modification of internal events
     Object.freeze(this.PRIVATE.EVENT)
 
     // Support LIFO (Last In First Out) & FIFO(First In First Out)
@@ -369,8 +399,8 @@ class NGNDataStore extends NGN.EventEmitter {
 
   // Deprecation notice
   get recordCount () {
-    NGN.WARN('recordCount is deprecated. Use NGN.DATA.Store#count instead.')
-    return this.length
+    NGN.WARN('recordCount is deprecated. Use NGN.DATA.Store#size instead.')
+    return this.size
   }
 
   /**
@@ -379,7 +409,7 @@ class NGNDataStore extends NGN.EventEmitter {
    * Active records are any records that aren't filtered out.
    */
   get size () {
-    // TODO: Total number of active records (excluding filtered)
+    return this.PRIVATE.ACTIVERECORDS.size
   }
 
   /**
@@ -417,10 +447,13 @@ class NGNDataStore extends NGN.EventEmitter {
    */
   get data () {
     const result = []
+    const recordList = this.PRIVATE.ACTIVERECORDS
 
-    for (let i = 0; i < this.METADATA.records.length; i++) {
-      result.push(this.METADATA.records[i].data)
-    }
+    recordList.forEach(index => {
+      if (this.METADATA.records[index] !== null) {
+        result.push(this.METADATA.records[index].data)
+      }
+    })
 
     return result
   }
@@ -431,11 +464,14 @@ class NGNDataStore extends NGN.EventEmitter {
    * (data + virtuals of each model).
    */
   get representation () {
-    let result = []
+    const result = []
+    const recordList = this.PRIVATE.ACTIVERECORDS
 
-    for (let i = 0; i < this.METADATA.records.length; i++) {
-      result.push(this.METADATA.records[i].representation)
-    }
+    recordList.forEach(index => {
+      if (this.METADATA.records[index] !== null) {
+        result.push(this.METADATA.records[index].representation)
+      }
+    })
 
     return result
   }
@@ -595,9 +631,11 @@ class NGNDataStore extends NGN.EventEmitter {
   /**
    * @method remove
    * Remove a record.
-   * @param {NGN.DATA.Model|number} data
+   * @param {NGN.DATA.Model|number|Symbol} record
    * Accepts an existing NGN Data Model or index number.
    * Using a model is slower than using an index number.
+   * This may also be the NGN.DATA.Model#OID value (for
+   * advanced use cases).
    * @fires record.delete
    * The record delete event sends 2 arguments to handler methods:
    * `record` and `index`. The record refers to the model that was
@@ -610,88 +648,154 @@ class NGNDataStore extends NGN.EventEmitter {
    * this will return `null`.
    */
   remove (record, suppressEvents = false) {
-    // if (NGN.typeof(record) === 'array') {
-    //   let result = []
-    //
-    //   for (let i = 0; i < record.length; i++) {
-    //     if (NGN.typeof(record[i]) !== 'number') {
-    //
-    //     }
-    //
-    //     result.push(this.remove(record[i]))
-    //   }
-    //
-    //   return result
-    // }
-    //
-    // let removedRecord = []
-    // let dataIndex
-    //
-    // // Prevent removal if it will exceed minimum record count.
-    // if (this.minRecords > 0 && this._data.length - 1 < this.minRecords) {
-    //   throw new Error('Minimum record count not met.')
-    // }
-    //
-    // if (typeof data === 'number') {
-    //   dataIndex = data
-    // } else if (data && data.checksum && data.checksum !== null || data instanceof NGN.DATA.Model) {
-    //   dataIndex = this.indexOf(data)
-    // } else {
-    //   let m = new this.model(data, true) // eslint-disable-line new-cap
-    //   dataIndex = this._data.findIndex(function (el) {
-    //     return el.checksum === m.checksum
-    //   })
-    // }
-    //
-    // // If no record is found, the operation fails.
-    // if (dataIndex < 0) {
-    //   throw new Error('Record removal failed (record not found at index ' + (dataIndex || '').toString() + ').')
-    // }
-    //
-    // this._data[dataIndex].isDestroyed = true
-    //
-    // removedRecord = this._data.splice(dataIndex, 1)
-    //
-    // removedRecord.isDestroyed = true
-    //
-    // if (removedRecord.length > 0) {
-    //   removedRecord = removedRecord[0]
-    //   this.unapplyIndices(dataIndex)
-    //
-    //   if (this.softDelete) {
-    //     if (this.softDeleteTtl >= 0) {
-    //       const checksum = removedRecord.checksum
-    //       removedRecord.once('expired', () => {
-    //         this.purgeDeletedRecord(checksum)
-    //       })
-    //
-    //       removedRecord.expires = this.softDeleteTtl
-    //     }
-    //
-    //     this._softarchive.push(removedRecord)
-    //   }
-    //
-    //   if (!this._loading) {
-    //     let i = this._created.indexOf(removedRecord)
-    //     if (i >= 0) {
-    //       i >= 0 && this._created.splice(i, 1)
-    //     } else if (this._deleted.indexOf(removedRecord) < 0) {
-    //       this._deleted.push(removedRecord)
-    //     }
-    //   }
-    //
-    //   if (!NGN.coalesce(suppressEvents, false)) {
-    //     this.emit('record.delete', removedRecord, dataIndex)
-    //   }
-    //
-    //   return removedRecord
-    // }
-    //
-    //
-    // this.emit(this.PRIVATE.EVENT.DELETE_RECORD, record)
-    //
-    //
-    // return null
+    // Short-circuit processing if there are no records.
+    if (this.METADATA.records.length === 0) {
+      NGN.INFO(`Store.remove() called "${this.name}" store, which contains no records.`)
+      return
+    }
+
+    // Support removal of simultaneously removing multiple records
+    if (NGN.typeof(record) === 'array') {
+      let result = []
+
+      for (let i = 0; i < record.length; i++) {
+        result.push(this.remove(record[i]))
+      }
+
+      return result
+    }
+
+    // Prevent removal if it will exceed minimum record count.
+    if (this.minRecords > 0 && this.METADATA.records.length - 1 < this.minRecords) {
+      throw new Error('Removing this record would violate the minimum record count.')
+    }
+
+    // Identify which record will be removed.
+    let index
+
+    switch (NGN.typeof(record)) {
+      case 'number':
+        if (record < 0) {
+          NGN.ERROR(`Record removal failed (record not found at index ${(record || 'undefined').toString()}).`)
+          return null
+        }
+
+        index = record
+
+        break
+
+      // The default case comes before the symbol case specifically
+      // so the record can be converted to an OID value (for use with
+      // the RECORDMAP lookup).
+      default:
+        if (!(record instanceof NGN.DATA.Entity)) {
+          NGN.ERROR('Invalid record value passed to Store.remove() method.')
+          return null
+        }
+
+        record = record.OID
+
+      case 'symbol':
+        index = this.PRIVATE.ACTIVERECORDS.get(record)
+
+        if (!index) {
+          NGN.ERROR(`Record removal failed. Record OID not found ("${record.toString()}").`)
+          return null
+        }
+
+        break
+    }
+
+    // If nothing has been deleted yet, create an active record map.
+    // The active record map contains Model OID values with a reference
+    // to the actual record index.
+    if (this.PRIVATE.ACTIVERECORDMAP === null) {
+      // Copy the record map to initialize the active records
+      this.PRIVATE.ACTIVERECORDMAP = new Map(this.PRIVATE.RECORDMAP)
+    }
+
+    // Identify the record to be removed.
+    const removedRecord = this.METADATA.records[index]
+
+    // If the record isn't among the active records, do not remove it.
+    if (removedRecord === null) {
+      NGN.WARN('Specified record does not exist.')
+      return null
+    }
+
+    let activeIndex = this.PRIVATE.ACTIVERECORDS.get(removedRecord.OID)
+
+    if (isNaN(activeIndex)) {
+      NGN.WARN(`Record not found for "${removedRecord.OID.toString()}".`)
+      return null
+    }
+
+    this.PRIVATE.ACTIVERECORDS.delete(removedRecord.OID)
+
+    // If the store is configured to soft-delete,
+    // don't actually remove it until it expires.
+    if (this.METADATA.softDelete) {
+      if (this.METADATA.softDeleteTtl >= 0) {
+        removedRecord.once('expired', () => {
+          this.METADATA.records[this.PRIVATE.RECORDMAP.get(removedRecord.OID)] = null
+          this.PRIVATE.RECORDMAP.set(removedRecord.OID, null)
+
+          if (!suppressEvents) {
+            this.emit('record.purge', removedRecord)
+          }
+        })
+
+        removedRecord.expires = this.METADATA.softDeleteTtl
+      }
+    } else {
+      this.METADATA.records[this.PRIVATE.RECORDMAP.get(removedRecord.OID)] = null
+      this.PRIVATE.RECORDMAP.set(removedRecord.OID, null)
+    }
+
+    // Update cursor indexes (to quickly reference first and last active records)
+    if (this.METADATA.LASTRECORDINDEX === activeIndex) {
+      if (this.PRIVATE.ACTIVERECORDS.size <= 1) {
+        this.METADATA.LASTRECORDINDEX = this.PRIVATE.ACTIVERECORDS.values().next().value
+        this.METADATA.FIRSTRECORDINDEX = this.METADATA.LASTRECORDINDEX
+      } else if (activeIndex !== 0) {
+        for (let i = (activeIndex - 1); i >= 0; i--) {
+          if (i === 0) {
+            this.METADATA.LASTRECORDINDEX = 0
+            break
+          }
+
+          const examinedRecord = this.METADATA.records[i]
+
+          if (examinedRecord !== null) {
+            if (this.PRIVATE.ACTIVERECORDS.has(examinedRecord.OID)) {
+              this.METADATA.LASTRECORDINDEX = this.PRIVATE.ACTIVERECORDS.get(examinedRecord.OID)
+              break
+            }
+          }
+        }
+      }
+    } else if (this.METADATA.FIRSTRECORDINDEX === activeIndex) {
+      let totalSize = this.PRIVATE.ACTIVERECORDS.size
+
+      for (let i = (activeIndex + 1); i < totalSize; i++) {
+        const examinedRecord = this.METADATA.records[i]
+
+        if (examinedRecord !== null) {
+          if (this.PRIVATE.ACTIVERECORDS.has(examinedRecord.OID)) {
+            this.METADATA.FIRSTRECORDINDEX = this.PRIVATE.ACTIVERECORDS.get(examinedRecord.OID)
+            break
+          }
+        }
+      }
+    }
+
+    this.emit(this.PRIVATE.EVENT.DELETE_RECORD, removedRecord)
+
+    if (!suppressEvents) {
+      this.emit('record.delete', removedRecord)
+    }
+
+    return removedRecord
   }
 
   /**
@@ -768,7 +872,34 @@ class NGNDataStore extends NGN.EventEmitter {
    * The zero-based index number of the model.
    */
   indexOf (model) {
+    return this.PRIVATE.RECORDMAP.get(oid[i])
+  }
 
+  /**
+   * Get the list of records for the given value.
+   * @param {string} fieldName
+   * The name of the indexed field.
+   * @param  {any} [fieldValue]
+   * The value of the index field. This is used to lookup
+   * the list of records/models whose field is equal to
+   * the specified value.
+   * @return {NGN.DATA.Model[]}
+   * Returns an array of models/records within the index for
+   * the given value.
+   */
+  getIndexRecords (field, value = null) {
+    if (this.METADATA.INDEX && this.METADATA.INDEX.hasOwnProperty(field)) {
+      let result = []
+      let oid = this.METADATA.INDEX[field].recordsFor(value)
+
+      for (let i = 0; i < oid.length; i++) {
+        result.push(this.METADATA.records[this.PRIVATE.RECORDMAP.get(oid[i])])
+      }
+
+      return result
+    }
+
+    return []
   }
 
   /**

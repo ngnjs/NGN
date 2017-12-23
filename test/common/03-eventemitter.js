@@ -48,6 +48,7 @@ test('NGN.EventEmitter Basic Events', function (t) {
   let tasks = new Tasks()
 
   tasks.add('clear()', function (next) {
+    NGN.BUS.clear()
     NGN.BUS.on('test', () => {})
     NGN.BUS.on('test1', () => {})
     NGN.BUS.on('test2', () => {})
@@ -595,17 +596,19 @@ test('EventEmitter Special Cases', function (t) {
 })
 
 test('NGN.BUS Special Events', function (t) {
-  NGN.BUS.on(NGN.WARNING_EVENT, function () {
+  NGN.BUS.clear()
+
+  NGN.BUS.once(NGN.WARNING_EVENT, function () {
     t.pass('NGN.WARNING_EVENT recognized')
     NGN.INFO('message')
   })
 
-  NGN.BUS.on(NGN.INFO_EVENT, function () {
+  NGN.BUS.once(NGN.INFO_EVENT, function () {
     t.pass('NGN.INFO_EVENT recognized')
     NGN.ERROR('message')
   })
 
-  NGN.BUS.on(NGN.ERROR_EVENT, function () {
+  NGN.BUS.once(NGN.ERROR_EVENT, function () {
     t.pass('NGN.ERROR_EVENT recognized')
     t.end()
   })

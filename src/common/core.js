@@ -1146,7 +1146,7 @@ Object.defineProperties(NGN, {
    * @private
    */
   WARNING_EVENT: NGN.privateconst(Symbol('NGN.WARN')),
-  WARN: NGN.privateconst(() => NGN.LEDGER_EVENT(NGN.WARNING_EVENT)(...arguments)),
+  WARN: NGN.privateconst((msg) => NGN.LEDGER_EVENT(NGN.WARNING_EVENT)(msg)),
 
   /**
    * @method INFO
@@ -1163,7 +1163,7 @@ Object.defineProperties(NGN, {
    * @private
    */
   INFO_EVENT: NGN.privateconst(Symbol.for('NGN.INFO')),
-  INFO: NGN.privateconst(() => NGN.LEDGER_EVENT(NGN.INFO_EVENT)(...arguments)),
+  INFO: NGN.privateconst((msg) => NGN.LEDGER_EVENT(NGN.INFO_EVENT)(msg)),
 
   /**
    * @method ERROR
@@ -1181,7 +1181,7 @@ Object.defineProperties(NGN, {
    * @private
    */
   ERROR_EVENT: NGN.privateconst(Symbol.for('NGN.ERROR')),
-  ERROR: NGN.privateconst(() => NGN.LEDGER_EVENT(NGN.ERROR_EVENT)(...arguments)),
+  ERROR: NGN.privateconst((msg) => NGN.LEDGER_EVENT(NGN.ERROR_EVENT)(msg)),
 
   CustomExceptionClass: NGN.private(null),
 
