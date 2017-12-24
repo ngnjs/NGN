@@ -757,6 +757,22 @@ class NGNDataField extends NGN.EventEmitter {
         case 'string':
           value = value.toString()
           break
+
+        case 'date':
+          let valueType = NGN.typeof(value)
+
+          if (valueType !== 'date') {
+            if (valueType === 'number') {
+              let dt = new Date()
+              dt.setTime(value)
+
+              value = dt
+            } else {
+              value = new Date(Date.parse(value))
+            }
+          }
+
+          break
       }
     } finally {
       return value

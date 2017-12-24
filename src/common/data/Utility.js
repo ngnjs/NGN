@@ -170,10 +170,35 @@ class Utility {
           case 'symbol':
             if (SERIALIZED_ARRAY_DATA === attribute[i]) {
               break
+            } else {
+              result[attribute[i]] = data[attribute[i]].toString()
             }
 
           case 'regexp':
             Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))
+
+            break
+
+          case 'weakmap':
+          case 'map':
+            let mapResult = {}
+
+            data[attribute[i]].forEach((value, key) => {
+              mapResult[key.toString()] = this.serialize(value)
+            })
+
+            result[attribute[i]] = mapResult
+
+            break
+
+          case 'weakset':
+          case 'set':
+            if (data[attribute[i]].size === 0) {
+              result[attribute[i]] = []
+              break
+            }
+
+            result[attribute[i]] = this.serialize(Array.from(data[attribute[i]].values()))
 
             break
 

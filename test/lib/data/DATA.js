@@ -429,10 +429,35 @@ class Utility {
           case 'symbol':
             if (SERIALIZED_ARRAY_DATA === attribute[i]) {
               break
+            } else {
+              result[attribute[i]] = data[attribute[i]].toString()
             }
 
           case 'regexp':
             Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))
+
+            break
+
+          case 'weakmap':
+          case 'map':
+            let mapResult = {}
+
+            data[attribute[i]].forEach((value, key) => {
+              mapResult[key.toString()] = this.serialize(value)
+            })
+
+            result[attribute[i]] = mapResult
+
+            break
+
+          case 'weakset':
+          case 'set':
+            if (data[attribute[i]].size === 0) {
+              result[attribute[i]] = []
+              break
+            }
+
+            result[attribute[i]] = this.serialize(Array.from(data[attribute[i]].values()))
 
             break
 
@@ -5003,6 +5028,18 @@ class NGNDataStore extends NGN.EventEmitter {
   // }
 
   /**
+   * @property {array} indexedFieldNames
+   * An array of the field names for which the store maintains indexes.
+   */
+  get indexedFieldNames () {
+    if (this.METADATA.INDEXFIELDS) {
+      return Array.from(this.METADATA.INDEXFIELDS)
+    } else {
+      return []
+    }
+  }
+
+  /**
    * @method add
    * Append a data record to the store. This adds the record to the end of the list.
    * @param {NGN.DATA.Model|object} data
@@ -5326,7 +5363,8 @@ class NGNDataStore extends NGN.EventEmitter {
       this.on([
         this.PRIVATE.EVENT.CREATE_RECORD,
         this.PRIVATE.EVENT.DELETE_RECORD,
-        this.PRIVATE.EVENT.LOAD_RECORDS
+        this.PRIVATE.EVENT.LOAD_RECORDS,
+        this.PRIVATE.EVENT.DELETE_RECORD_FIELD
       ], this.PRIVATE.INDEX)
     }
 
@@ -5355,12 +5393,59 @@ class NGNDataStore extends NGN.EventEmitter {
 
       // Apply to any existing records
       if (this.METADATA.records.length > 0) {
-        this.PRIVATE.apply({ event: 'load' })
+        this.PRIVATE.INDEX.apply({ event: 'load' })
       }
 
       this.emit('index.created', field)
     } else {
       throw new Error(`Cannot create index for unrecognized field "${field}".`)
+    }
+  }
+
+  /**
+   * Remove an existing index from the store.
+   * @param  {string} [field=null]
+   * The name of the indexed field. Set this to `null` (or leave blank) to
+   * remove all existing indexes.
+   * @fires index.delete
+   * Triggered when an index is removed. The name of field is passed
+   * as the only argument.
+   */
+  removeIndex (field = null) {
+    if (!this.METADATA.INDEXFIELDS) {
+      return
+    }
+
+    if (NGN.coalesce(field) === null) {
+      field = this.indexedFieldNames
+    }
+
+    // Support multiple indexes
+    if (NGN.typeof(field) === 'array') {
+      for (let i = 0; i < field.length; i++) {
+        this.removeIndex(field[i])
+      }
+
+      return
+    }
+
+    // Remove the specific index.
+    this.METADATA.INDEXFIELDS.delete(field)
+    delete this.METADATA.INDEX[field]
+    this.emit('index.delete', field)
+
+    // When there are no more indexes, clear out event
+    // listeners and fields.
+    if (this.METADATA.INDEXFIELDS.size === 0) {
+      this.METADATA.INDEX = null
+      delete this.METADATA.INDEXFIELDS
+
+      this.off([
+        this.PRIVATE.EVENT.CREATE_RECORD,
+        this.PRIVATE.EVENT.DELETE_RECORD,
+        this.PRIVATE.EVENT.LOAD_RECORDS,
+        this.PRIVATE.EVENT.DELETE_RECORD_FIELD
+      ], this.PRIVATE.INDEX)
     }
   }
 
@@ -5503,7 +5588,7 @@ class NGNDataStore extends NGN.EventEmitter {
    * ```
    */
   snapshot () {
-    this.snapshotarchive = NGN.coalesce(this.snapshotarchive, [])
+    this.METADATA.snapshotarchive = NGN.coalesce(this.METADATA.snapshotarchive, [])
 
     let data = this.data
     let dataset = {
@@ -5512,10 +5597,10 @@ class NGNDataStore extends NGN.EventEmitter {
       modelChecksums: this.data.map((item) => {
         return NGN.DATA.UTILITY.checksum(JSON.stringify(item)).toString()
       }),
-      data: this.data
+      data: data
     }
 
-    this.snapshotarchive.unshift(dataset)
+    this.METADATA.snapshotarchive.unshift(dataset)
     this.emit('snapshot', dataset)
 
     return dataset

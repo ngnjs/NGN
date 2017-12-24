@@ -1126,6 +1126,11 @@ test('NGN.DATA.Store Indexing', function (t) {
   })
 
   t.ok(Store.METADATA.INDEXFIELDS.size === 2, 'Indexes applied to store.')
+  t.ok(
+    Store.indexedFieldNames[0] === 'firstname' &&
+    Store.indexedFieldNames[1] === 'lastname',
+    'Store recognizes its indexed fields by name.'
+  )
 
   Store.add([
     { firstname: 'John', lastname: 'Doe' },
@@ -1143,6 +1148,12 @@ test('NGN.DATA.Store Indexing', function (t) {
     records[2].firstname === 'Jake',
     'Indexed records retrieved successfully.'
   )
+
+  Store.removeIndex('firstname')
+  t.ok(Store.indexedFieldNames[0] === 'lastname', 'Remove index by name.')
+
+  Store.removeIndex()
+  t.ok(Store.indexedFieldNames.length === 0, 'Remove all indexes.')
 
   t.end()
 })
@@ -1241,9 +1252,9 @@ test('NGN.DATA.BTree', function (t) {
     tree.delete(37)
 
     t.ok(
-      tree.get(8) === undefined,
-      tree.get(14) === undefined,
-      tree.get(36) === undefined,
+      tree.get(8) === undefined &&
+      tree.get(14) === undefined &&
+      tree.get(36) === undefined &&
       tree.get(37) === undefined,
       'Removal of a key deletes it from the index.'
     )
