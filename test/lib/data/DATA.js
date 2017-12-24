@@ -748,7 +748,7 @@ class NGNTreeNode {
       leaf = right.leafs.shift()
       leaf.parent = this.parent
 
-      this.parent.leaves[index] = leaf
+      this.parent.leafs[index] = leaf
 
       // Append the right rest
       rest = right.nodes.shift()
@@ -763,13 +763,13 @@ class NGNTreeNode {
       sep = this.parent.leafs[index - 1]
       sep.parent = this
 
-      this.leaves.unshift(sep)
+      this.leafs.unshift(sep)
 
       // Replace the blank with the last left leaf
       leaf = left.leafs.pop()
       leaf.parent = this.parent
 
-      this.parent.leaves[index - 1] = leaf
+      this.parent.leafs[index - 1] = leaf
 
       // Prepend the left rest to this
       rest = left.nodes.pop()
@@ -961,8 +961,8 @@ class NGNBTree extends NGN.EventEmitter {
       })
     })
 
-    this.root.minOrder = this.METADATA.minOrder
-    this.root.order = this.METADATA.order
+    this.root.METADATA.minOrder = this.METADATA.minOrder
+    this.root.METADATA.order = this.METADATA.order
   }
 
   /**
@@ -981,7 +981,7 @@ class NGNBTree extends NGN.EventEmitter {
 
     for (let i = 0; i < node.leafs.length; i++) {
       if (!node.leafs[i]) {
-        NGN.ERROR(`Illegal leaf in ${node} at ${i}: ${node.leaves[i]}`)
+        NGN.ERROR(`Illegal leaf in ${node} at ${i}: ${node.leafs[i]}`)
       }
     }
 
@@ -1084,13 +1084,13 @@ class NGNBTree extends NGN.EventEmitter {
       if (result.leaf) {
         // Minimum key itself exists
         ptr = result.leaf.parent
-        index = ptr.leafs.indeOf(result.leaf)
+        index = ptr.leafs.indexOf(result.leaf)
       } else {
         // Key does not exist
         ptr = result.node
         index = result.index
 
-        if (index >= ptr.leaves.length) {
+        if (index >= ptr.leafs.length) {
           // begin at parent separator in overrun
           if (ptr.parent instanceof NGNBTree || ptr.parent.nodes.indexOf(ptr) >= ptr.parent.leafs.length) {
             return
@@ -1106,8 +1106,11 @@ class NGNBTree extends NGN.EventEmitter {
       if (maxKey !== null && this.METADATA.compare(ptr.leafs[index].key, maxKey) > 0) {
         break
       }
+      if (ptr.leafs.length === 0) {
+        break
+      }
 
-      if (ptr && ptr.leafs && ptr.leafs.length > 0 && callback(ptr.leafs[index].key, ptr.leafs[index].value)) {
+      if (callback(ptr.leafs[index].key, ptr.leafs[index].value)) {
         break
       }
 
@@ -1116,10 +1119,8 @@ class NGNBTree extends NGN.EventEmitter {
         ptr = ptr.nodes[index + 1]
         index = 0
 
-        if (ptr) {
-          while (ptr.nodes[0] !== null) {
-            ptr = ptr.nodes[0]
-          }
+        while (ptr.nodes[0] !== null) {
+          ptr = ptr.nodes[0]
         }
       } else if (ptr.leafs.length > index + 1) {
         // Next

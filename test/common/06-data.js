@@ -1203,7 +1203,7 @@ test('NGN.DATA.BTree', function (t) {
   var tree = new NGN.DATA.BTree()
 
   tasks.add('Put values into BTree', function (next) {
-    var data = [2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36];
+    var data = [2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36]
 
     for (var i = 0; i < data.length; i++) {
       tree.put(data[i], 'value_' + data[i].toString())
@@ -1229,21 +1229,21 @@ test('NGN.DATA.BTree', function (t) {
 
   tasks.add('Retrieve values', function (next) {
     t.ok(tree.get(8) === 'value_8', 'Retrieve correct value from tree.')
-    .tok(tree.get(3) === undefined, 'Return undefined when no value exists.')
+    t.ok(tree.get(3) === undefined, 'Return undefined when no value exists.')
 
     next()
   })
 
   tasks.add('Delete values', function (next) {
-    test.log("del: "+8);
+    tree.delete(8)
+    tree.delete(14)
+    tree.delete(36)
+    tree.delete(37)
+
     t.ok(
-      tree.delete(8) &&
-      tree.get(8) === undefined &&
-      tree.delete(14) &&
-      tree.get(14) === undefined &&
-      tree.delete(36) &&
-      tree.get(36) === undefined &&
-      tree.delete(37) &&
+      tree.get(8) === undefined,
+      tree.get(14) === undefined,
+      tree.get(36) === undefined,
       tree.get(37) === undefined,
       'Removal of a key deletes it from the index.'
     )
@@ -1252,41 +1252,53 @@ test('NGN.DATA.BTree', function (t) {
   })
 
   tasks.add('Walk tree (ascending)', function (next) {
-    var comp = [2,4,5,6,7,9,10,11,12,13]
+    var comp = [2, 4, 5, 6, 7, 9, 10, 11, 12, 13]
     var res = []
 
     tree.walk(2, 14, function (key, val) {
       res.push(key)
 
-      if ("value_"+ key.toString() !== val) {
+      if ('value_' + key.toString() !== val) {
         throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
       }
     })
 
-    t.ok(res === comp, 'Ascended walk succeeds.')
+    for (var i = 0; i < comp.length; i++) {
+      if (res[i] !== comp[i]) {
+        t.fail('Walking tree failed to traverse each node.')
+      }
+    }
+
+    t.pass('Ascended walk succeeds.')
 
     next()
   })
 
   tasks.add('Walk tree (descending)', function (next) {
-    var comp = [18,16,13,12,11,10,9,7,6,5,4,2]
+    var comp = [18, 16, 13, 12, 11, 10, 9, 7, 6, 5, 4, 2]
     var res = []
 
-    tree.walkDesc(2, 18, function(key, val) {
+    tree.walkDesc(2, 18, function (key, val) {
       res.push(key)
 
-      if ("value_"+ key.toString() !== val) {
+      if ('value_' + key.toString() !== val) {
         throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
       }
     })
 
-    t.ok(res === comp, 'Descended walk succeeds.')
+    for (var i = 0; i < comp.length; i++) {
+      if (res[i] !== comp[i]) {
+        t.fail('Descended walk through tree failed to traverse each node.')
+      }
+    }
+
+    t.pass('Descended walk succeeds.')
 
     next()
   })
 
   tasks.add('Restricted count', function (next) {
-    t.ok(tree.count(2,18) === 12, 'Retrieves the correct number of indexes.')
+    t.ok(tree.count(2, 18) === 12, 'Retrieves the correct number of indexes.')
 
     next()
   })
