@@ -1,5 +1,6 @@
 (function () {
   // [INCLUDE: ./Utility.js]
+  // [INCLUDE: ./BTree.js]
   // [INCLUDE: ./TransactionLog.js]
   // [INCLUDE: ./Rule.js]
   // [INCLUDE: ./RangeRule.js]
@@ -44,6 +45,7 @@
     Model: NGN.const(NGNDataModel),
     Entity: NGN.privateconst(NGNDataEntity),
     Index: NGN.privateconst(NGNDataIndex),
-    Store: NGN.const(NGNDataStore)
+    Store: NGN.const(NGNDataStore),
+    BTree: NGN.privateconst(NGNBTree)
   })))
 })()

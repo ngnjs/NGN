@@ -27,6 +27,7 @@ test('Data Sanity Checks', function (t) {
   t.ok(typeof NGN.DATA.Model === 'function', 'NGN.DATA.Model exists as a class.')
   t.ok(typeof NGN.DATA.Index === 'function', 'NGN.DATA.Index exists as a class.')
   t.ok(typeof NGN.DATA.Store === 'function', 'NGN.DATA.Store exists as a class.')
+  t.ok(typeof NGN.DATA.BTree === 'function', 'NGN.DATA.BTree exists as a class.')
   t.end()
 })
 
@@ -574,7 +575,7 @@ test('NGN.DATA.VirtualField', function (t) {
 })
 
 // Common data
-var meta = function () {
+var Meta = function () {
   return {
     name: 'metamodel',
     idField: 'testid',
@@ -592,15 +593,11 @@ var meta = function () {
         return 'test ' + this.val
       }
     }
-    // , dataMap: {
-    //   firstname: 'gn',
-    //   lastname: 'sn'
-    // }
   }
 }
 
 test('NGN.DATA.Relationship (Single Model)', function (t) {
-  var Model = new NGN.DATA.Model(meta())
+  var Model = new NGN.DATA.Model(Meta())
   var field = new NGN.DATA.Relationship({
     audit: true,
     name: 'test',
@@ -695,7 +692,7 @@ test('NGN.DATA.Model', function (t) {
   var p
 
   tasks.add('Create model', function (next) {
-    Person = new NGN.DATA.Model(meta())
+    Person = new NGN.DATA.Model(Meta())
     t.ok(typeof Person === 'function', 'Model creation works.')
     next()
   })
@@ -761,14 +758,14 @@ test('NGN.DATA.Model', function (t) {
   })
 
   tasks.add('Data Serialization', function (next) {
-    t.ok(JSON.stringify(p.data) === '{"firstname":"Corey","lastname":null,"val":15,"testid":null}')
-    t.ok(JSON.stringify(p.representation) === '{"firstname":"Corey","lastname":null,"val":15,"testid":null,"virtual":"test 15"}')
+    t.ok(JSON.stringify(p.data) === '{"firstname":"Corey","lastname":null,"val":15,"testid":null}', 'Data serialized into JSON object.')
+    t.ok(JSON.stringify(p.representation) === '{"firstname":"Corey","lastname":null,"val":15,"testid":null,"virtual":"test 15"}', 'Representation serialized into JSON object.')
 
     next()
   })
 
   tasks.add('Field Mapping', function (next) {
-    var cfg = meta()
+    var cfg = Meta()
 
     cfg.fieldmap = {
       firstname: 'gn',
@@ -801,7 +798,7 @@ test('NGN.DATA.Model', function (t) {
   })
 
   tasks.add('Automatic ID (Basic)', function (next) {
-    var cfg = meta()
+    var cfg = Meta()
 
     delete cfg.idField
     delete cfg.fields.testid
@@ -821,7 +818,7 @@ test('NGN.DATA.Model', function (t) {
   })
 
   tasks.add('Automatic ID (Custom Field)', function (next) {
-    var cfg = meta()
+    var cfg = Meta()
 
     cfg.autoid = true
 
@@ -834,7 +831,7 @@ test('NGN.DATA.Model', function (t) {
   })
 
   tasks.add('Automatic ID (Ignore)', function (next) {
-    var cfg = meta()
+    var cfg = Meta()
 
     cfg.autoid = true
 
@@ -848,9 +845,30 @@ test('NGN.DATA.Model', function (t) {
     next()
   })
 
-  // tasks.add(function (next) {
-  //
-  // })
+  tasks.add('Expiration (TTL)', function (next) {
+    var cfg = new Meta()
+
+    cfg.expires = 600
+
+    var MetaModel = new NGN.DATA.Model(cfg)
+    var MetaRecord = new MetaModel({
+      firstname: 'John',
+      lastname: 'Doe'
+    })
+
+    MetaRecord.once('expire', function () {
+      t.pass('Record expiration event triggered using milliseconds.')
+
+      MetaRecord.once('expire', function () {
+        t.ok(MetaRecord.expired, 'Record is marked as expired.')
+        t.pass('Record expiration event triggered using future date.')
+        next()
+      })
+
+      MetaRecord.expires = new Date((new Date()).getTime() + 300)
+      t.ok(!MetaRecord.expired, 'Record is not expired if the expiration is reset.')
+    })
+  })
 
   tasks.on('complete', t.end)
 
@@ -858,7 +876,7 @@ test('NGN.DATA.Model', function (t) {
 })
 
 test('NGN.DATA.Model Data Field Auditing (Changelog)', function (t) {
-  var config = meta()
+  var config = Meta()
   config.audit = true
 
   var Model = new NGN.DATA.Model(config)
@@ -894,7 +912,7 @@ test('NGN.DATA.Model Data Field Auditing (Changelog)', function (t) {
 })
 
 test('NGN.DATA.Model Virtual Field Caching', function (t) {
-  var Model = new NGN.DATA.Model(meta())
+  var Model = new NGN.DATA.Model(Meta())
   var model = new Model()
 
   t.ok(model.METADATA.fields.virtual.METADATA.caching === true, 'Caching enabled by default.')
@@ -919,7 +937,7 @@ test('NGN.DATA.Model Virtual Field Caching', function (t) {
 
 test('NGN.DATA.Index', function (t) {
   var index = new NGN.DATA.Index()
-  var Model = new NGN.DATA.Model(meta())
+  var Model = new NGN.DATA.Model(Meta())
   var records = [
     new Model({ firstname: 'John', lastname: 'Doe' }),
     new Model({ firstname: 'Jill', lastname: 'Doe' }),
@@ -977,7 +995,7 @@ test('NGN.DATA.Index', function (t) {
 })
 
 test('NGN.DATA.Store Basic Functionality', function (t) {
-  var MetaModel = new NGN.DATA.Model(meta())
+  var MetaModel = new NGN.DATA.Model(Meta())
   var GoodStore = new NGN.DATA.Store({
     model: MetaModel
   })
@@ -998,24 +1016,29 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
 
     t.ok(GoodStore.length === 1, 'Record added.')
     t.ok(record.firstname === 'John', 'Added record accurately represents the stored data.')
+    t.ok(GoodStore.contains(record), 'Store recognizes that it contains the new record.')
+    t.ok(GoodStore.indexOf(record) === 0, 'Store accurately returns the index of the new record.')
 
     GoodStore.add({
       firstname: 'Jill',
       lastname: 'Doe'
     })
 
-    var record2 = GoodStore.add({
+    GoodStore.once('record.create', function (rec) {
+      t.pass('Adding a record to a store emits a record.create event.')
+      t.ok(record === GoodStore.first, 'First accessor returns the first record within the store.')
+      t.ok(rec === GoodStore.last, 'Last accessor returns the last record within the store.')
+      t.ok(GoodStore.last.firstname === 'Jake', 'Last accessor returns proper values.')
+      t.ok(GoodStore.first.firstname === 'John', 'First accessor returns proper values.')
+      t.ok(GoodStore.length === 3, 'Correct number of records identified.')
+
+      next()
+    })
+
+    GoodStore.add({
       firstname: 'Jake',
       lastname: 'Doe'
     })
-
-    t.ok(record === GoodStore.first, 'First accessor returns the first record within the store.')
-    t.ok(record2 === GoodStore.last, 'Last accessor returns the last record within the store.')
-    t.ok(GoodStore.last.firstname === 'Jake', 'Last accessor returns proper values.')
-    t.ok(GoodStore.first.firstname === 'John', 'First accessor returns proper values.')
-    t.ok(GoodStore.length === 3, 'Correct number of records identified.')
-
-    next()
   })
 
   tasks.add('Remove records', function (next) {
@@ -1027,28 +1050,35 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     t.ok(GoodStore.first.firstname === 'Jill', 'Removing the first record automatically moves the first index cursor forward.')
     t.ok(GoodStore.last.firstname === 'Jake', 'Removing the first record does not affect the last index cursor.')
 
-    removedRecord = GoodStore.remove(GoodStore.last)
-    t.ok(GoodStore.length === 3, 'Store record manifest is unaffected upon remove by model.')
-    t.ok(GoodStore.size === 1, 'Active record count is decremented upon remove by model.')
-    t.ok(removedRecord.firstname === 'Jake', 'Correctly returns the removed record when removing by model.')
-    t.ok(GoodStore.first.firstname === 'Jill', 'Removing the last record automatically moves the first index cursor forward.')
-    t.ok(GoodStore.last.firstname === 'Jill', 'Removing the last record does not affect the last index cursor.')
+    GoodStore.once('record.delete', function (rec) {
+      t.pass('record.remove event triggered upon record deletion.')
+      t.ok(GoodStore.length === 3, 'Store record manifest is unaffected upon remove by model.')
+      t.ok(GoodStore.size === 1, 'Active record count is decremented upon remove by model.')
+      t.ok(rec.firstname === 'Jake', 'Correctly returns the removed record when removing by model.')
+      t.ok(GoodStore.first.firstname === 'Jill', 'Removing the last record automatically moves the first index cursor forward.')
+      t.ok(GoodStore.last.firstname === 'Jill', 'Removing the last record does not affect the last index cursor.')
 
-    t.ok(GoodStore.remove(2) === null, 'Removal fails when passing an invalid index.')
+      t.ok(GoodStore.remove(2) === null, 'Removal fails when passing an invalid index.')
 
-    next()
+      next()
+    })
+
+    GoodStore.remove(GoodStore.last)
   })
 
   tasks.add('Clear store.', function (next) {
+    GoodStore.once('clear', function () {
+      t.pass('clear event fired when store is cleared.')
+      t.ok(GoodStore.length === 0, 'Cleared store of all records.')
+
+      next()
+    })
+
     GoodStore.clear()
-
-    t.ok(GoodStore.length === 0, 'Cleared store of all records.')
-
-    next()
   })
 
   tasks.add('Add multiple records simultaneously.', function (next) {
-    GoodStore.add([{
+    var results = GoodStore.add([{
       firstname: 'John',
       lastname: 'Doe'
     }, {
@@ -1063,6 +1093,7 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     }])
 
     t.ok(GoodStore.length === 4, 'Added array of records.')
+    t.ok(results.length === 4, 'Returned the correct number of results synchronously.')
     t.ok(
       GoodStore.getRecord(0).firstname === 'John' &&
       GoodStore.getRecord(1).firstname === 'Jill' &&
@@ -1074,41 +1105,50 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     next()
   })
 
+  // TODO: B-Tree indexing of numeric and date values
+  // TODO: Load
+  // TODO: Reload
+  // TODO: Find/Query
+  // TODO: Filtering (& Clearing)
+  // TODO: Sorting
+  // TODO: Deduplicate
+  // TODO: Invalid/valid field events for store records
+
   tasks.on('complete', t.end)
   tasks.run(true)
 })
 
-// test('NGN.DATA.Store Indexing', function (t) {
-//   var MetaModel = new NGN.DATA.Model(meta())
-//   var Store = new NGN.DATA.Store({
-//     model: MetaModel,
-//     index: ['firstname', 'lastname']
-//   })
-//
-//   t.ok(Store.METADATA.INDEXFIELDS.size === 2, 'Indexes applied to store.')
-//
-//   Store.add([
-//     { firstname: 'John', lastname: 'Doe' },
-//     { firstname: 'Jill', lastname: 'Doe' },
-//     { firstname: 'Jake', lastname: 'Doe' },
-//     { firstname: 'John', lastname: 'Dearborn' }
-//   ])
-//
-//   var records = Store.getIndexRecords('lastname', 'Doe')
-//
-//   t.ok(
-//     records.length === 3 &&
-//     records[0].firstname === 'John' &&
-//     records[1].firstname === 'Jill' &&
-//     records[2].firstname === 'Jake',
-//     'Indexed records retrieved successfully.'
-//   )
-//
-//   t.end()
-// })
+test('NGN.DATA.Store Indexing', function (t) {
+  var MetaModel = new NGN.DATA.Model(Meta())
+  var Store = new NGN.DATA.Store({
+    model: MetaModel,
+    index: ['firstname', 'lastname']
+  })
+
+  t.ok(Store.METADATA.INDEXFIELDS.size === 2, 'Indexes applied to store.')
+
+  Store.add([
+    { firstname: 'John', lastname: 'Doe' },
+    { firstname: 'Jill', lastname: 'Doe' },
+    { firstname: 'Jake', lastname: 'Doe' },
+    { firstname: 'John', lastname: 'Dearborn' }
+  ])
+
+  var records = Store.getIndexRecords('lastname', 'Doe')
+
+  t.ok(
+    records.length === 3 &&
+    records[0].firstname === 'John' &&
+    records[1].firstname === 'Jill' &&
+    records[2].firstname === 'Jake',
+    'Indexed records retrieved successfully.'
+  )
+
+  t.end()
+})
 
 // test('NGN.DATA.Relationship (Multi-Model)', function (t) {
-//   var Model = new NGN.DATA.Model(meta())
+//   var Model = new NGN.DATA.Model(Meta())
 //   var field = new NGN.DATA.Relationship({
 //     audit: true,
 //     name: 'test',
@@ -1154,5 +1194,115 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
 //   t.end()
 // })
 
-// TODO: Store Indexes
+// TODO: Store-level Validation Rules
 // TODO: Filters
+// TODO: Proxy
+
+test('NGN.DATA.BTree', function (t) {
+  var tasks = new TaskRunner()
+  var tree = new NGN.DATA.BTree()
+
+  tasks.add('Put values into BTree', function (next) {
+    var data = [2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36];
+
+    for (var i = 0; i < data.length; i++) {
+      tree.put(data[i], 'value_' + data[i].toString())
+    }
+
+    t.ok(tree.length === data.length, 'BTree has correct number of nodes/leafs.')
+
+    next()
+  })
+
+  tasks.add('Append nodes', function (next) {
+    var currentSize = tree.length
+    var data = [7, 9, 11, 13]
+
+    for (var i = 0; i < data.length; i++) {
+      tree.put(data[i], 'value_' + data[i].toString())
+    }
+
+    t.ok(tree.length === (data.length + currentSize), 'BTree appends the correct number of nodes/leafs after initialization.')
+
+    next()
+  })
+
+  tasks.add('Retrieve values', function (next) {
+    t.ok(tree.get(8) === 'value_8', 'Retrieve correct value from tree.')
+    .tok(tree.get(3) === undefined, 'Return undefined when no value exists.')
+
+    next()
+  })
+
+  tasks.add('Delete values', function (next) {
+    test.log("del: "+8);
+    t.ok(
+      tree.delete(8) &&
+      tree.get(8) === undefined &&
+      tree.delete(14) &&
+      tree.get(14) === undefined &&
+      tree.delete(36) &&
+      tree.get(36) === undefined &&
+      tree.delete(37) &&
+      tree.get(37) === undefined,
+      'Removal of a key deletes it from the index.'
+    )
+
+    next()
+  })
+
+  tasks.add('Walk tree (ascending)', function (next) {
+    var comp = [2,4,5,6,7,9,10,11,12,13]
+    var res = []
+
+    tree.walk(2, 14, function (key, val) {
+      res.push(key)
+
+      if ("value_"+ key.toString() !== val) {
+        throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
+      }
+    })
+
+    t.ok(res === comp, 'Ascended walk succeeds.')
+
+    next()
+  })
+
+  tasks.add('Walk tree (descending)', function (next) {
+    var comp = [18,16,13,12,11,10,9,7,6,5,4,2]
+    var res = []
+
+    tree.walkDesc(2, 18, function(key, val) {
+      res.push(key)
+
+      if ("value_"+ key.toString() !== val) {
+        throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
+      }
+    })
+
+    t.ok(res === comp, 'Descended walk succeeds.')
+
+    next()
+  })
+
+  tasks.add('Restricted count', function (next) {
+    t.ok(tree.count(2,18) === 12, 'Retrieves the correct number of indexes.')
+
+    next()
+  })
+
+  tasks.add('Walk empty ranges', function (next) {
+    tree.walk(37, 40, function (key, val) { t.fail('Failed to walk empty range (ascending).') })
+    tree.walk(0, 1, function (key, val) { t.fail('Failed to walk empty range (ascending).') })
+    tree.walkDesc(37, 40, function (key, val) { t.fail('Failed to walk empty range (descending).') })
+    tree.walkDesc(0, 1, function (key, val) { t.fail('Failed to walk empty range (descending).') })
+
+    t.ok(tree.length === 20, 'Walk results in proper number of nodes/leafs.')
+
+    next()
+  })
+
+  tasks.on('complete', t.end)
+
+  tasks.run(true)
+})

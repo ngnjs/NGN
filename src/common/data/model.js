@@ -134,7 +134,7 @@ class NGNDataEntity extends NGN.EventEmitter {
          * @fires expired
          * Triggered when the model/record expires.
          */
-        expiration: NGN.coalesce(cfg.expires),
+        expiration: null,
 
         // Holds a setTimeout method for expiration events.
         expirationTimeout: null,
@@ -454,10 +454,11 @@ class NGNDataEntity extends NGN.EventEmitter {
         this.METADATA.checksum = null
       }
     })
-  }
 
-  get countz () {
-    return this.counted
+    // Configure TTL/Expiration
+    if (cfg.expires) {
+      this.expires = cfg.expires
+    }
   }
 
   get name () {
@@ -618,6 +619,67 @@ class NGNDataEntity extends NGN.EventEmitter {
     return this.METADATA.checksum
   }
 
+  /**
+   * @property {Date} expires
+   * The date/time when the record expires. This may be set to
+   * a future date, or a numeric value. Numeric values
+   * represent the number of milliseconds from the current time
+   * before the record expires. For example, set this to `3000`
+   * to force the record to expire 3 seconds from now.
+   *
+   * Set this to `0` to immediately expire the record. Set this to
+   * `-1` or `null` to prevent the record from expiring.
+   */
+  get expires () {
+    return this.METADATA.expiration
+  }
+
+  set expires (value) {
+    if (value === null) {
+      clearTimeout(this.METADATA.expirationTimeout)
+      this.METADATA.expiration = null
+      return
+    }
+
+    let now = new Date()
+
+    if (!isNaN(value) && !(value instanceof Date)) {
+      // Handle numeric (millisecond) expiration
+      if (value < 0) {
+        this.METADATA.expiration = null
+
+        return
+      }
+
+      if (value === 0) {
+        this.METADATA.expiration = now
+        this.emit('expire')
+
+        return
+      }
+
+      this.METADATA.expiration = new Date()
+      this.METADATA.expiration.setTime(now.getTime() + value)
+    } else if (!(value instanceof Date) || value <= now) {
+      throw new Error(`${this.name} expiration (TTL) value must be a positive number (milliseconds) or future date.`)
+    } else {
+      // Handle date-based expiration
+      this.METADATA.expiration = value
+    }
+
+    clearTimeout(this.METADATA.expirationTimeout)
+
+    this.METADATA.expirationTimeout = setTimeout(() => this.emit('expire'), this.METADATA.expiration.getTime() - now.getTime())
+  }
+
+  get expired () {
+    if (this.METADATA.expiration === null) {
+      return false
+    }
+
+    return this.METADATA.expiration <= (new Date())
+  }
+
   serializeFields (ignoreID = false, ignoreVirtualFields = true) {
     if (this.METADATA.knownFieldNames.size === 0) {
       return {}
@@ -765,7 +827,13 @@ class NGNDataEntity extends NGN.EventEmitter {
 
       if (!suppressEvents) {
         this.emit('field.remove', field)
-        // this.emit('changelog.append', change)
+      }
+
+      if (this.METADATA.store !== null) {
+        this.METADATA.store.emit(this.METADATA.store.PRIVATE.EVENT.DELETE_RECORD_FIELD, {
+          record: this,
+          field
+        })
       }
     }
   }

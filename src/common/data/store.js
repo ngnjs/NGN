@@ -299,6 +299,14 @@ class NGNDataStore extends NGN.EventEmitter {
                 for (let i = 0; i < me.METADATA.records.length; i++) {
                   me.METADATA.INDEXFIELDS.forEach(field => me.METADATA.INDEX[field].add(me.METADATA.records[i][field], me.METADATA.records[i].OID))
                 }
+
+                break
+
+              case me.PRIVATE.EVENT.DELETE_RECORD_FIELD:
+                if (me.METADATA.INDEXFIELDS.has(record.field.name)) {
+                  me.METADATA.INDEX[record.field.name].remove(record.record.OID, record.field.value)
+                }
+
                 break
             }
           } else {
@@ -327,9 +335,10 @@ class NGNDataStore extends NGN.EventEmitter {
 
         // Internal events
         EVENT: {
-          CREATE_RECORD: Symbol('private.record.create'),
-          DELETE_RECORD: Symbol('private.record.delete'),
-          LOAD_RECORDS: Symbol('private.records.load')
+          CREATE_RECORD: Symbol('record.create'),
+          DELETE_RECORD: Symbol('record.delete'),
+          DELETE_RECORD_FIELD: Symbol('records.field.delete'),
+          LOAD_RECORDS: Symbol('records.load')
         }
       }),
 
@@ -610,6 +619,9 @@ class NGNDataStore extends NGN.EventEmitter {
       }
     })
 
+    delete record.METADATA.store
+    Object.defineProperty(record.METADATA, 'store', NGN.get(() => this))
+
     // Indexing is handled in an internal event handler
     this.METADATA.records.push(record)
 
@@ -871,8 +883,19 @@ class NGNDataStore extends NGN.EventEmitter {
    * @return {number}
    * The zero-based index number of the model.
    */
-  indexOf (model) {
-    return this.PRIVATE.RECORDMAP.get(oid[i])
+  indexOf (record) {
+    return this.PRIVATE.RECORDMAP.get(record.OID)
+  }
+
+  /**
+   * Determine whether the store contains a record.
+   * This only checks the active record set (ignores filtered records).
+   * @param  {NGN.DATA.Model} record
+   * The record to test for inclusion.
+   * @return {boolean}
+   */
+  contains (record) {
+    return this.PRIVATE.ACTIVERECORDS.has(record.OID)
   }
 
   /**
