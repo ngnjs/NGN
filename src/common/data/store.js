@@ -339,6 +339,40 @@ class NGNDataStore extends NGN.EventEmitter {
           DELETE_RECORD: Symbol('record.delete'),
           DELETE_RECORD_FIELD: Symbol('records.field.delete'),
           LOAD_RECORDS: Symbol('records.load')
+        },
+
+        // Makes sure the model configuration specifies a valid and indexable field.
+        checkModelIndexField: (field) => {
+          let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+
+          if (metaconfig.fields && metaconfig.fields.hasOwnProperty(field)) {
+            if (metaconfig.fields[field] !== null) {
+              if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(metaconfig.fields[field])) >= 0) {
+                throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
+              } else if (NGN.typeof(metaconfig.fields[field]) === 'object') {
+                if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(NGN.coalesce(metaconfig.fields[field].type))) >= 0) {
+                  throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
+                }
+              }
+            }
+          } else {
+            throw new Error(`Cannot create index for unrecognized field "${field}".`)
+          }
+        },
+
+        // Get the type of field from the model definition
+        getModelFieldType: (field) => {
+          let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+
+          if (metaconfig.fields[field].type) {
+            return NGN.typeof(metaconfig.fields[field].type)
+          }
+
+          if (metaconfig.fields[field].default) {
+            return NGN.typeof(metaconfig.fields[field].default)
+          }
+
+          return NGN.typeof(NGN.coalesce(metaconfig.fields[field]))
         }
       }),
 
@@ -861,30 +895,21 @@ class NGNDataStore extends NGN.EventEmitter {
     // Guarantee the existance of the index list
     this.METADATA.INDEX = NGN.coalesce(this.METADATA.INDEX, {})
 
-    let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
-    if (metaconfig.fields && metaconfig.fields.hasOwnProperty(field)) {
-      if (metaconfig.fields[field] !== null) {
-        if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(metaconfig.fields[field])) >= 0) {
-          throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
-        } else if (NGN.typeof(metaconfig.fields[field]) === 'object') {
-          if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(NGN.coalesce(metaconfig.fields[field].type))) >= 0) {
-            throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
-          }
-        }
-      }
+    this.PRIVATE.checkModelIndexField(field)
 
-      this.METADATA.INDEXFIELDS.add(field)
-      this.METADATA.INDEX[field] = new NGN.DATA.Index(`${field.toUpperCase()} INDEX`)
+    this.METADATA.INDEXFIELDS.add(field)
 
-      // Apply to any existing records
-      if (this.METADATA.records.length > 0) {
-        this.PRIVATE.INDEX.apply({ event: 'load' })
-      }
+    // Identify BTree
+    let btree = ['number', 'date'].indexOf(this.getModelFieldType(field) >= 0)
 
-      this.emit('index.created', field)
-    } else {
-      throw new Error(`Cannot create index for unrecognized field "${field}".`)
+    this.METADATA.INDEX[field] = new NGN.DATA.Index(btree, `${field.toUpperCase()} ${btree ? 'BTREE ' : ''}INDEX`)
+
+    // Apply to any existing records
+    if (this.METADATA.records.length > 0) {
+      this.PRIVATE.INDEX.apply({ event: 'load' })
     }
+
+    this.emit('index.created', field)
   }
 
   /**

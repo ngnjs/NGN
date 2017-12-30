@@ -994,6 +994,127 @@ test('NGN.DATA.Index', function (t) {
   t.end()
 })
 
+test('NGN.DATA.BTree', function (t) {
+  var tasks = new TaskRunner()
+  var tree = new NGN.DATA.BTree()
+
+  tasks.add('Put values into BTree', function (next) {
+    var data = [2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36]
+
+    for (var i = 0; i < data.length; i++) {
+      tree.put(data[i], 'value_' + data[i].toString())
+    }
+
+    t.ok(tree.length === data.length, 'BTree has correct number of nodes/leafs.')
+
+    next()
+  })
+
+  tasks.add('Append nodes', function (next) {
+    var currentSize = tree.length
+    var data = [7, 9, 11, 13]
+
+    for (var i = 0; i < data.length; i++) {
+      tree.put(data[i], 'value_' + data[i].toString())
+    }
+
+    t.ok(tree.length === (data.length + currentSize), 'BTree appends the correct number of nodes/leafs after initialization.')
+
+    next()
+  })
+
+  tasks.add('Retrieve values', function (next) {
+    t.ok(tree.get(8) === 'value_8', 'Retrieve correct value from tree.')
+    t.ok(tree.get(3) === undefined, 'Return undefined when no value exists.')
+
+    next()
+  })
+
+  tasks.add('Delete values', function (next) {
+    tree.delete(8)
+    tree.delete(14)
+    tree.delete(36)
+    tree.delete(37)
+
+    t.ok(
+      tree.get(8) === undefined &&
+      tree.get(14) === undefined &&
+      tree.get(36) === undefined &&
+      tree.get(37) === undefined,
+      'Removal of a key deletes it from the index.'
+    )
+
+    next()
+  })
+
+  tasks.add('Walk tree (ascending)', function (next) {
+    var comp = [2, 4, 5, 6, 7, 9, 10, 11, 12, 13]
+    var res = []
+
+    tree.walk(2, 14, function (key, val) {
+      res.push(key)
+
+      if ('value_' + key.toString() !== val) {
+        throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
+      }
+    })
+
+    for (var i = 0; i < comp.length; i++) {
+      if (res[i] !== comp[i]) {
+        t.fail('Walking tree failed to traverse each node.')
+      }
+    }
+
+    t.pass('Ascended walk succeeds.')
+
+    next()
+  })
+
+  tasks.add('Walk tree (descending)', function (next) {
+    var comp = [18, 16, 13, 12, 11, 10, 9, 7, 6, 5, 4, 2]
+    var res = []
+
+    tree.walkDesc(2, 18, function (key, val) {
+      res.push(key)
+
+      if ('value_' + key.toString() !== val) {
+        throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
+      }
+    })
+
+    for (var i = 0; i < comp.length; i++) {
+      if (res[i] !== comp[i]) {
+        t.fail('Descended walk through tree failed to traverse each node.')
+      }
+    }
+
+    t.pass('Descended walk succeeds.')
+
+    next()
+  })
+
+  tasks.add('Restricted count', function (next) {
+    t.ok(tree.count(2, 18) === 12, 'Retrieves the correct number of indexes.')
+
+    next()
+  })
+
+  tasks.add('Walk empty ranges', function (next) {
+    tree.walk(37, 40, function (key, val) { t.fail('Failed to walk empty range (ascending).') })
+    tree.walk(0, 1, function (key, val) { t.fail('Failed to walk empty range (ascending).') })
+    tree.walkDesc(37, 40, function (key, val) { t.fail('Failed to walk empty range (descending).') })
+    tree.walkDesc(0, 1, function (key, val) { t.fail('Failed to walk empty range (descending).') })
+
+    t.ok(tree.length === 20, 'Walk results in proper number of nodes/leafs.')
+
+    next()
+  })
+
+  tasks.on('complete', t.end)
+
+  tasks.run(true)
+})
+
 test('NGN.DATA.Store Basic Functionality', function (t) {
   var MetaModel = new NGN.DATA.Model(Meta())
   var GoodStore = new NGN.DATA.Store({
@@ -1155,6 +1276,9 @@ test('NGN.DATA.Store Indexing', function (t) {
   Store.removeIndex()
   t.ok(Store.indexedFieldNames.length === 0, 'Remove all indexes.')
 
+  // Use BTree index for numeric fields
+  
+
   t.end()
 })
 
@@ -1208,124 +1332,3 @@ test('NGN.DATA.Store Indexing', function (t) {
 // TODO: Store-level Validation Rules
 // TODO: Filters
 // TODO: Proxy
-
-test('NGN.DATA.BTree', function (t) {
-  var tasks = new TaskRunner()
-  var tree = new NGN.DATA.BTree()
-
-  tasks.add('Put values into BTree', function (next) {
-    var data = [2, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36]
-
-    for (var i = 0; i < data.length; i++) {
-      tree.put(data[i], 'value_' + data[i].toString())
-    }
-
-    t.ok(tree.length === data.length, 'BTree has correct number of nodes/leafs.')
-
-    next()
-  })
-
-  tasks.add('Append nodes', function (next) {
-    var currentSize = tree.length
-    var data = [7, 9, 11, 13]
-
-    for (var i = 0; i < data.length; i++) {
-      tree.put(data[i], 'value_' + data[i].toString())
-    }
-
-    t.ok(tree.length === (data.length + currentSize), 'BTree appends the correct number of nodes/leafs after initialization.')
-
-    next()
-  })
-
-  tasks.add('Retrieve values', function (next) {
-    t.ok(tree.get(8) === 'value_8', 'Retrieve correct value from tree.')
-    t.ok(tree.get(3) === undefined, 'Return undefined when no value exists.')
-
-    next()
-  })
-
-  tasks.add('Delete values', function (next) {
-    tree.delete(8)
-    tree.delete(14)
-    tree.delete(36)
-    tree.delete(37)
-
-    t.ok(
-      tree.get(8) === undefined &&
-      tree.get(14) === undefined &&
-      tree.get(36) === undefined &&
-      tree.get(37) === undefined,
-      'Removal of a key deletes it from the index.'
-    )
-
-    next()
-  })
-
-  tasks.add('Walk tree (ascending)', function (next) {
-    var comp = [2, 4, 5, 6, 7, 9, 10, 11, 12, 13]
-    var res = []
-
-    tree.walk(2, 14, function (key, val) {
-      res.push(key)
-
-      if ('value_' + key.toString() !== val) {
-        throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
-      }
-    })
-
-    for (var i = 0; i < comp.length; i++) {
-      if (res[i] !== comp[i]) {
-        t.fail('Walking tree failed to traverse each node.')
-      }
-    }
-
-    t.pass('Ascended walk succeeds.')
-
-    next()
-  })
-
-  tasks.add('Walk tree (descending)', function (next) {
-    var comp = [18, 16, 13, 12, 11, 10, 9, 7, 6, 5, 4, 2]
-    var res = []
-
-    tree.walkDesc(2, 18, function (key, val) {
-      res.push(key)
-
-      if ('value_' + key.toString() !== val) {
-        throw new Error('Invalid key/pair for ' + key + ':' + val.toString())
-      }
-    })
-
-    for (var i = 0; i < comp.length; i++) {
-      if (res[i] !== comp[i]) {
-        t.fail('Descended walk through tree failed to traverse each node.')
-      }
-    }
-
-    t.pass('Descended walk succeeds.')
-
-    next()
-  })
-
-  tasks.add('Restricted count', function (next) {
-    t.ok(tree.count(2, 18) === 12, 'Retrieves the correct number of indexes.')
-
-    next()
-  })
-
-  tasks.add('Walk empty ranges', function (next) {
-    tree.walk(37, 40, function (key, val) { t.fail('Failed to walk empty range (ascending).') })
-    tree.walk(0, 1, function (key, val) { t.fail('Failed to walk empty range (ascending).') })
-    tree.walkDesc(37, 40, function (key, val) { t.fail('Failed to walk empty range (descending).') })
-    tree.walkDesc(0, 1, function (key, val) { t.fail('Failed to walk empty range (descending).') })
-
-    t.ok(tree.length === 20, 'Walk results in proper number of nodes/leafs.')
-
-    next()
-  })
-
-  tasks.on('complete', t.end)
-
-  tasks.run(true)
-})
