@@ -79,7 +79,7 @@ class NGNDataIndex extends NGN.EventEmitter {
 
     // Support BTree Indexing
     if (this.isBTree) {
-      Object.defineProperty(this, BTREE, NGN.privateconst(new NGN.DATA.BTree(2, name)))
+      Object.defineProperty(this, 'BTREE', NGN.privateconst(new NGN.DATA.BTree(2, name)))
     }
   }
 
@@ -117,7 +117,7 @@ class NGNDataIndex extends NGN.EventEmitter {
       let btreeValue = value instanceof Date ? value.getTime() : value
 
       if (this.BTREE.get(btreeValue) === undefined) {
-        tree.put(btreeValue, valueIndex)
+        this.BTREE.put(btreeValue, valueIndex)
       }
     }
 
@@ -233,8 +233,8 @@ class NGNDataIndex extends NGN.EventEmitter {
 
   /**
    * Get the list of records for the given value.
-   * @param  {any} [value]
-   * The value of the index to lookup the index by.
+   * @param  {any} value
+   * The value of the index to lookup.
    * @return {array}
    * The array contains OID reference values (records).
    */

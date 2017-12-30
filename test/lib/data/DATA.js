@@ -3369,7 +3369,7 @@ class NGNDataFieldMap {
 }
 
   // [PARTIAL]
-NGN.global.test = 0
+
 /**
  * @class NGN.DATA.Model
  * Represents a data model/record.
@@ -3941,9 +3941,7 @@ class NGNDataEntity extends NGN.EventEmitter {
       return this.MAP.applyInverseMap(this.serializeFields())
     }
 
-    let d =  this.serializeFields()
-    d.test = this.countz
-    return d
+    return this.serializeFields()
   }
 
   /**
@@ -4391,7 +4389,7 @@ class NGNDataIndex extends NGN.EventEmitter {
 
     // Support BTree Indexing
     if (this.isBTree) {
-      Object.defineProperty(this, BTREE, NGN.privateconst(new NGN.DATA.BTree(2, name)))
+      Object.defineProperty(this, 'BTREE', NGN.privateconst(new NGN.DATA.BTree(2, name)))
     }
   }
 
@@ -4429,7 +4427,7 @@ class NGNDataIndex extends NGN.EventEmitter {
       let btreeValue = value instanceof Date ? value.getTime() : value
 
       if (this.BTREE.get(btreeValue) === undefined) {
-        tree.put(btreeValue, valueIndex)
+        this.BTREE.put(btreeValue, valueIndex)
       }
     }
 
@@ -4545,8 +4543,8 @@ class NGNDataIndex extends NGN.EventEmitter {
 
   /**
    * Get the list of records for the given value.
-   * @param  {any} [value]
-   * The value of the index to lookup the index by.
+   * @param  {any} value
+   * The value of the index to lookup.
    * @return {array}
    * The array contains OID reference values (records).
    */
@@ -4926,6 +4924,10 @@ class NGNDataStore extends NGN.EventEmitter {
         // Get the type of field from the model definition
         getModelFieldType: (field) => {
           let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+
+          if (metaconfig.fields[field] === null) {
+            return NGN.typeof(metaconfig.fields[field])
+          }
 
           if (metaconfig.fields[field].type) {
             return NGN.typeof(metaconfig.fields[field].type)
@@ -5463,13 +5465,13 @@ class NGNDataStore extends NGN.EventEmitter {
     this.METADATA.INDEXFIELDS.add(field)
 
     // Identify BTree
-    let btree = ['number', 'date'].indexOf(this.getModelFieldType(field) >= 0)
+    let btree = ['number', 'date'].indexOf(this.PRIVATE.getModelFieldType(field)) >= 0
 
     this.METADATA.INDEX[field] = new NGN.DATA.Index(btree, `${field.toUpperCase()} ${btree ? 'BTREE ' : ''}INDEX`)
 
     // Apply to any existing records
     if (this.METADATA.records.length > 0) {
-      this.PRIVATE.INDEX.apply({ event: 'load' })
+      this.PRIVATE.INDEX.apply({ event: this.PRIVATE.EVENT.LOAD_RECORDS })
     }
 
     this.emit('index.created', field)
@@ -5550,7 +5552,7 @@ class NGNDataStore extends NGN.EventEmitter {
    * Get the list of records for the given value.
    * @param {string} fieldName
    * The name of the indexed field.
-   * @param  {any} [fieldValue]
+   * @param  {any} fieldValue
    * The value of the index field. This is used to lookup
    * the list of records/models whose field is equal to
    * the specified value.
@@ -5558,7 +5560,7 @@ class NGNDataStore extends NGN.EventEmitter {
    * Returns an array of models/records within the index for
    * the given value.
    */
-  getIndexRecords (field, value = null) {
+  getIndexRecords (field, value) {
     if (this.METADATA.INDEX && this.METADATA.INDEX.hasOwnProperty(field)) {
       let result = []
       let oid = this.METADATA.INDEX[field].recordsFor(value)

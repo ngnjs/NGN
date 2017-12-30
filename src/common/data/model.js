@@ -1,5 +1,5 @@
 // [PARTIAL]
-NGN.global.test = 0
+
 /**
  * @class NGN.DATA.Model
  * Represents a data model/record.
@@ -571,9 +571,7 @@ class NGNDataEntity extends NGN.EventEmitter {
       return this.MAP.applyInverseMap(this.serializeFields())
     }
 
-    let d =  this.serializeFields()
-    d.test = this.countz
-    return d
+    return this.serializeFields()
   }
 
   /**

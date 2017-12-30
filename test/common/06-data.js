@@ -1254,10 +1254,10 @@ test('NGN.DATA.Store Indexing', function (t) {
   )
 
   Store.add([
-    { firstname: 'John', lastname: 'Doe' },
-    { firstname: 'Jill', lastname: 'Doe' },
-    { firstname: 'Jake', lastname: 'Doe' },
-    { firstname: 'John', lastname: 'Dearborn' }
+    { firstname: 'John', lastname: 'Doe', val: 17 },
+    { firstname: 'Jill', lastname: 'Doe', val: 13 },
+    { firstname: 'Jake', lastname: 'Doe', val: 14 },
+    { firstname: 'John', lastname: 'Dearborn', val: 14 }
   ])
 
   var records = Store.getIndexRecords('lastname', 'Doe')
@@ -1277,7 +1277,15 @@ test('NGN.DATA.Store Indexing', function (t) {
   t.ok(Store.indexedFieldNames.length === 0, 'Remove all indexes.')
 
   // Use BTree index for numeric fields
-  
+  Store.createIndex('val')
+  t.ok(
+    Store.indexedFieldNames.length === 1 &&
+    Store.indexedFieldNames[0] === 'val' &&
+    Store.METADATA.INDEX.val.isBTree &&
+    Store.getIndexRecords('val', 14).length === 2 &&
+    Store.METADATA.INDEX.val.BTREE.get(13) === 1,
+    'Add B-Tree index on numeric field.'
+  )
 
   t.end()
 })
