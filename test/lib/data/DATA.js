@@ -2624,6 +2624,22 @@ class NGNDataField extends NGN.EventEmitter {
         case 'string':
           value = value.toString()
           break
+
+        case 'date':
+          let valueType = NGN.typeof(value)
+
+          if (valueType !== 'date') {
+            if (valueType === 'number') {
+              let dt = new Date()
+              dt.setTime(value)
+
+              value = dt
+            } else {
+              value = new Date(Date.parse(value))
+            }
+          }
+
+          break
       }
     } finally {
       return value
@@ -4326,23 +4342,26 @@ class NGNDataEntity extends NGN.EventEmitter {
 class NGNDataIndex extends NGN.EventEmitter {
   /**
    * Create a new data index.
-   * @param  {String} [name='Untitled Index']
+   * @param {Boolean} [BTree=false]
+   * Use a B-Tree index. This is only available for numeric values and dates.
+   * @param {String} [name='Untitled Index']
    * Optional name for index. This is useful for debugging when multiple
    * indexes exist.
    */
-  constructor (name = 'Untitled Index') {
+  constructor (btree = false, name = 'Untitled Index') {
     super()
 
     Object.defineProperties(this, {
       // Private constants
-      CREATE_EVENT: NGN.private(Symbol('create')),
-      REMOVE_EVENT: NGN.private(Symbol('delete')),
-      UPDATE_EVENT: NGN.private(Symbol('update')),
+      CREATE_EVENT: NGN.privateconst(Symbol('create')),
+      REMOVE_EVENT: NGN.privateconst(Symbol('delete')),
+      UPDATE_EVENT: NGN.privateconst(Symbol('update')),
 
       // Private data attributes
-      uniqueValues: NGN.private(new Set()),
-      knownRecords: NGN.private([]), // Linked list of Sets
-      name: NGN.const(name)
+      uniqueValues: NGN.privateconst(new Set()),
+      knownRecords: NGN.privateconst([]), // Linked list of Sets
+      name: NGN.const(name),
+      isBTree: NGN.privateconst(btree)
     })
 
     // Bubble up private events when applicable
@@ -4369,6 +4388,11 @@ class NGNDataIndex extends NGN.EventEmitter {
         }
       }
     })
+
+    // Support BTree Indexing
+    if (this.isBTree) {
+      Object.defineProperty(this, BTREE, NGN.privateconst(new NGN.DATA.BTree(2, name)))
+    }
   }
 
   get keys () {
@@ -4400,6 +4424,15 @@ class NGNDataIndex extends NGN.EventEmitter {
 
     this.knownRecords[valueIndex].add(oid)
 
+    // Add BTree indexing
+    if (this.isBTree) {
+      let btreeValue = value instanceof Date ? value.getTime() : value
+
+      if (this.BTREE.get(btreeValue) === undefined) {
+        tree.put(btreeValue, valueIndex)
+      }
+    }
+
     this.emit(this.CREATE_EVENT, oid, value, suppressEvent)
   }
 
@@ -4420,7 +4453,12 @@ class NGNDataIndex extends NGN.EventEmitter {
       // If a value index is found, remove the OID
       if (index) {
         if (index.delete(oid)) { // Returns false if nothing is actually deleted.
+          if (this.isBTree && (!index || index.size === 0)) {
+            this.BTREE.delete(value instanceof Date ? value.getTime() : value)
+          }
+
           this.emit(this.REMOVE_EVENT, oid, value, suppressEvent)
+
           return
         }
       }
@@ -4434,6 +4472,11 @@ class NGNDataIndex extends NGN.EventEmitter {
       if (this.knownRecords[i].delete(oid) && !removed) {
         removed = true
         value = Array.from(this.uniqueValues.values())[i]
+
+        if (this.isBTree) {
+          this.BTREE.delete(value instanceof Date ? value.getTime() : value)
+        }
+
         break
       }
     }
@@ -4462,8 +4505,13 @@ class NGNDataIndex extends NGN.EventEmitter {
    * Forcibly reset the index (clears everything).
    */
   reset () {
-    this.uniqueValues = new Set()
-    this.knownRecords = []
+    this.uniqueValues.clear()
+    this.knownRecords.splice(0)
+
+    if (this.isBTree) {
+      this.BTREE.reset()
+    }
+
     this.emit('reset')
   }
 
@@ -4486,8 +4534,8 @@ class NGNDataIndex extends NGN.EventEmitter {
    * @private
    * @param  {any} value
    * The index field value to use as a lookup.
-   * @return {Set.iterator}
-   * An iterator of object ID's or `null` if none exist.
+   * @return {Set}
+   * An set of object ID's or `null` if none exist.
    */
   recordsOf (value) {
     let valueIndex = this.indexOf(value)
@@ -4854,6 +4902,40 @@ class NGNDataStore extends NGN.EventEmitter {
           DELETE_RECORD: Symbol('record.delete'),
           DELETE_RECORD_FIELD: Symbol('records.field.delete'),
           LOAD_RECORDS: Symbol('records.load')
+        },
+
+        // Makes sure the model configuration specifies a valid and indexable field.
+        checkModelIndexField: (field) => {
+          let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+
+          if (metaconfig.fields && metaconfig.fields.hasOwnProperty(field)) {
+            if (metaconfig.fields[field] !== null) {
+              if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(metaconfig.fields[field])) >= 0) {
+                throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
+              } else if (NGN.typeof(metaconfig.fields[field]) === 'object') {
+                if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(NGN.coalesce(metaconfig.fields[field].type))) >= 0) {
+                  throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
+                }
+              }
+            }
+          } else {
+            throw new Error(`Cannot create index for unrecognized field "${field}".`)
+          }
+        },
+
+        // Get the type of field from the model definition
+        getModelFieldType: (field) => {
+          let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+
+          if (metaconfig.fields[field].type) {
+            return NGN.typeof(metaconfig.fields[field].type)
+          }
+
+          if (metaconfig.fields[field].default) {
+            return NGN.typeof(metaconfig.fields[field].default)
+          }
+
+          return NGN.typeof(NGN.coalesce(metaconfig.fields[field]))
         }
       }),
 
@@ -5376,30 +5458,21 @@ class NGNDataStore extends NGN.EventEmitter {
     // Guarantee the existance of the index list
     this.METADATA.INDEX = NGN.coalesce(this.METADATA.INDEX, {})
 
-    let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
-    if (metaconfig.fields && metaconfig.fields.hasOwnProperty(field)) {
-      if (metaconfig.fields[field] !== null) {
-        if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(metaconfig.fields[field])) >= 0) {
-          throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
-        } else if (NGN.typeof(metaconfig.fields[field]) === 'object') {
-          if (['model', 'store', 'entity', 'function'].indexOf(NGN.typeof(NGN.coalesce(metaconfig.fields[field].type))) >= 0) {
-            throw new Error(`Cannot create index for "${field}" field. Only basic NGN.DATA.Field types can be indexed. Relationship and virtual fields cannot be indexed.`)
-          }
-        }
-      }
+    this.PRIVATE.checkModelIndexField(field)
 
-      this.METADATA.INDEXFIELDS.add(field)
-      this.METADATA.INDEX[field] = new NGN.DATA.Index(`${field.toUpperCase()} INDEX`)
+    this.METADATA.INDEXFIELDS.add(field)
 
-      // Apply to any existing records
-      if (this.METADATA.records.length > 0) {
-        this.PRIVATE.INDEX.apply({ event: 'load' })
-      }
+    // Identify BTree
+    let btree = ['number', 'date'].indexOf(this.getModelFieldType(field) >= 0)
 
-      this.emit('index.created', field)
-    } else {
-      throw new Error(`Cannot create index for unrecognized field "${field}".`)
+    this.METADATA.INDEX[field] = new NGN.DATA.Index(btree, `${field.toUpperCase()} ${btree ? 'BTREE ' : ''}INDEX`)
+
+    // Apply to any existing records
+    if (this.METADATA.records.length > 0) {
+      this.PRIVATE.INDEX.apply({ event: 'load' })
     }
+
+    this.emit('index.created', field)
   }
 
   /**
@@ -5592,6 +5665,7 @@ class NGNDataStore extends NGN.EventEmitter {
 
     let data = this.data
     let dataset = {
+      id: NGN.DATA.UTILITY.GUID(),
       timestamp: (new Date()).toISOString(),
       checksum: NGN.DATA.UTILITY.checksum(JSON.stringify(data)).toString(),
       modelChecksums: this.data.map((item) => {
