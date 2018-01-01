@@ -5,7 +5,7 @@
  * Supports numeric ranges, date ranges, and simple string-based
  * ranges (string length).
  */
-class NGNDataRangeValidationRule extends NGNDataValidationRule {
+class NGNDataRangeValidationRule extends NGNDataValidationRule { // eslint-disable-line
   /**
    * Create a new range rule.
    * @param {string} [name]

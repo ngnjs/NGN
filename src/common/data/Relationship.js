@@ -49,7 +49,7 @@
  * - **0,1 => 1,N**: Zero-or-One to One-or-More
  * - ... write the rest in the guide...
  */
-class NGNRelationshipField extends NGNDataField {
+class NGNRelationshipField extends NGNDataField { // eslint-disable-line
   constructor (cfg = {}) {
     let type = NGN.typeof(cfg.join)
 
@@ -149,7 +149,7 @@ class NGNRelationshipField extends NGNDataField {
         }
 
         me.METADATA.commitPayload({
-          field:  me.name + (change ? `.${change.field}` : ''),
+          field: me.name + (change ? `.${change.field}` : ''),
           old: change ? NGN.coalesce(change.old) : old,
           new: change ? NGN.coalesce(change.new) : me.data,
           join: true,
@@ -290,7 +290,7 @@ class NGNRelationshipField extends NGNDataField {
       throw new Error('Cannot set a relationship field to anything other than an NGN.DATA.Store, NGN.DATA.Model, or an array of NGN.DATA.Model collections. (Unknown manner of relationship)')
     }
 
-    this.METADATA.join = type === 'model' ? new value() : value
+    this.METADATA.join = type === 'model' ? new value() : value // eslint-disable-line new-cap
     this.auditable = this.METADATA.AUDITABLE
     this.METADATA.applyMonitor()
 

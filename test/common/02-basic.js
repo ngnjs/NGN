@@ -5,8 +5,9 @@ const test = require('tape')
 
 require('../lib/core')
 require('../lib/eventemitter')
-require('../lib/net/NET')
-require('../lib/data/DATA')
+require('../lib/net/bootstrap')
+require('../lib/utility/bootstrap')
+require('../lib/data/bootstrap')
 require('../lib/tasks/bootstrap')
 
 const isEnumerable = (obj, property) => {

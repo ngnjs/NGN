@@ -27,7 +27,7 @@
  * Triggered when the index is completely cleared/reset to it's original state.
  * @private
  */
-class NGNDataIndex extends NGN.EventEmitter {
+class NGNDataIndex extends NGN.EventEmitter { // eslint-disable-line
   /**
    * Create a new data index.
    * @param {Boolean} [BTree=false]

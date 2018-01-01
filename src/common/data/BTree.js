@@ -79,7 +79,7 @@ class NGNTreeNode {
       for (i = 1; i < this.leafs.length; i++) {
         let b = this.leafs[i]
 
-        if (this.METADATA.compare(b.key, key) == 0) {
+        if (this.METADATA.compare(b.key, key) === 0) {
           return {
             leaf: b,
             index: i
@@ -189,7 +189,7 @@ class NGNTreeNode {
   balance () {
     if (this.parent instanceof NGNBTree) {
       // Root has a single child and no leafs
-      if (this.leafs.length == 0 && this.nodes[0] !== null) {
+      if (this.leafs.length === 0 && this.nodes[0] !== null) {
         this.parent.root = this.nodes[0]
         this.parent.root.parent = this.parent
       }
@@ -256,7 +256,7 @@ class NGNTreeNode {
       if (right !== null) {
         // Combine this + seperator from the parent + right
         sep = this.parent.leafs[index]
-        subst = new NGNTreeNode(this.parent, this.leafs.concat([sep], right.leafs), concat(this.nodes, right.nodes))
+        subst = new NGNTreeNode(this.parent, this.leafs.concat([sep], right.leafs), this.nodes.concat(right.nodes))
         subst.METADATA.order = this.METADATA.order
         subst.METADATA.minOrder = this.METADATA.minOrder
 
@@ -283,7 +283,7 @@ class NGNTreeNode {
         // Replace seperated nodes with subst
         this.parent.nodes.splice(index - 1, 2, subst)
       } else {
-        throw(new Error(`Internal error: ${this.toString(true)} has neither a left nor a right sibling`))
+        throw new Error(`Internal error: ${this.toString(true)} has neither a left nor a right sibling`)
       }
 
       this.parent.balance()
@@ -294,7 +294,7 @@ class NGNTreeNode {
    * Split the node.
    */
   split () {
-    let index = Math.floor(this.leafs.length/2)
+    let index = Math.floor(this.leafs.length / 2)
 
     if (this.parent instanceof NGNBTree) {
       this.nodes = [
@@ -304,7 +304,7 @@ class NGNTreeNode {
 
       this.leafs = [this.leafs[index]]
     } else {
-      let leaf = this.leafs[index];
+      let leaf = this.leafs[index]
       let rest = new NGNTreeNode(
         this.parent,
         this.leafs.slice(index + 1),
@@ -366,12 +366,13 @@ class NGNTreeNode {
    */
   toString (includeNodes = false) {
     let value = []
+    let i
 
-    for (let i = 0; i < this.leafs.length; i++) {
+    for (i = 0; i < this.leafs.length; i++) {
       value.push(this.leafs[i].key)
     }
 
-    let s = `[${value.toString()}]${(this.parent instanceof Tree ? ":*" : ":")}${this.parent}`
+    let s = `[${value.toString()}]${(this.parent instanceof NGNBTree ? ':*' : ':')}${this.parent}`
 
     if (includeNodes) {
       for (i = 0; i < this.nodes.length; i++) {
@@ -424,7 +425,7 @@ class NGNBTree extends NGN.EventEmitter {
       METADATA: NGN.private({
         order: order,
 
-        minOrder: order > 1 ? Math.floor(order/2) : 1,
+        minOrder: order > 1 ? Math.floor(order / 2) : 1,
 
         compare: (firstNumber, secondNumber) => {
           return firstNumber < secondNumber ? -1 : (firstNumber > secondNumber ? 1 : 0)
@@ -442,7 +443,7 @@ class NGNBTree extends NGN.EventEmitter {
    * @private
    */
   validate (node) {
-    if (node instanceof NgnBTreeIndex) {
+    if (node instanceof NGNBTree) {
       return
     }
 
@@ -450,7 +451,9 @@ class NGNBTree extends NGN.EventEmitter {
       NGN.ERROR(`Illegal leaf/node count in ${node}: ${node.leafs.length}/${node.nodes.length}`)
     }
 
-    for (let i = 0; i < node.leafs.length; i++) {
+    let i
+
+    for (i = 0; i < node.leafs.length; i++) {
       if (!node.leafs[i]) {
         NGN.ERROR(`Illegal leaf in ${node} at ${i}: ${node.leafs[i]}`)
       }

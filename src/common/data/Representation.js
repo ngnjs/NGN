@@ -18,8 +18,8 @@
  * such as outputting data as XML instead of JSON.
  * @extends NGN
  */
-class NGNDataRepresentation extends NGN.EventEmitter {
-  constructor (cfg= {}) {
-
+class NGNDataRepresentation extends NGN.EventEmitter { // eslint-disable-line
+  constructor (cfg = {}) {
+    super()
   }
 }

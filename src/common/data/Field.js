@@ -31,7 +31,7 @@
  * Triggered when the key (identifier) status changes. The boolean
  * payload indicates whether the field is considered an identifier.
  */
-class NGNDataField extends NGN.EventEmitter {
+class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
   /**
    * @param {string|object} configuration
    * Accepts an object with all configuration objects, or a string representing
@@ -374,7 +374,7 @@ class NGNDataField extends NGN.EventEmitter {
     if (this.METADATA.rules.length > 0) {
       for (let i = 0; i < this.METADATA.rules.length; i++) {
         if (NGN.isFn(this.METADATA.rules[i]) && !(this.METADATA.rules[i] instanceof NGN.DATA.Rule)) {
-          this.METADATA.rules[i] = new NGN.DATA.Rule(this.METADATA.rules[i], `Custom Rule #${i+1}`)
+          this.METADATA.rules[i] = new NGN.DATA.Rule(this.METADATA.rules[i], `Custom Rule #${i + 1}`)
         }
       }
     }
@@ -775,7 +775,7 @@ class NGNDataField extends NGN.EventEmitter {
           break
       }
     } finally {
-      return value
+      return value // eslint-disable-line no-unsafe-finally
     }
   }
 }

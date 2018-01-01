@@ -24,7 +24,7 @@
  * }
  * ```
  */
-class NGNDataStore extends NGN.EventEmitter {
+class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   constructor (cfg = {}) {
     if (NGN.typeof(cfg) === 'model') {
       cfg = { model: cfg }
@@ -222,14 +222,14 @@ class NGNDataStore extends NGN.EventEmitter {
          * {
          *   ModelFieldName: 'inputName',
          *   father: 'dad',
-         *	 email: 'eml',
-         *	 image: 'img',
-         *	 displayName: 'dn',
-         *	 firstName: 'gn',
-         *	 lastName: 'sn',
-         *	 middleName: 'mn',
-         *	 gender: 'sex',
-         *	 dob: 'bd'
+         *   email: 'eml',
+         *   image: 'img',
+         *   displayName: 'dn',
+         *   firstName: 'gn',
+         *   lastName: 'sn',
+         *   middleName: 'mn',
+         *   gender: 'sex',
+         *   dob: 'bd'
          * }
          * ```
          */
@@ -607,7 +607,7 @@ class NGNDataStore extends NGN.EventEmitter {
 
     const record = new this.METADATA.Model(data)
 
-    if (!(record instanceof NGNDataEntity)) {
+    if (!(record instanceof NGN.DATA.Entity)) {
       throw new Error(`Only a NGN.DATA.Model or JSON object may be used in NGN.DATA.Store#add. Received a "${NGN.typeof(data)}" value.`)
     }
 
@@ -665,7 +665,6 @@ class NGNDataStore extends NGN.EventEmitter {
 
         case 'expired':
           // TODO: Handle expiration
-          return
       }
     })
 
@@ -757,7 +756,7 @@ class NGNDataStore extends NGN.EventEmitter {
 
         record = record.OID
 
-      case 'symbol':
+      case 'symbol': // eslint-disable-line no-fallthrough
         index = this.PRIVATE.ACTIVERECORDS.get(record)
 
         if (!index) {
@@ -1069,7 +1068,7 @@ class NGNDataStore extends NGN.EventEmitter {
    */
   replaceModel (newModel) {
     NGN.deprecate(
-      () => this.model = newModel,
+      () => { this.model = newModel },
       'replaceModel has been deprected. Set the model directly instead.'
     )
   }

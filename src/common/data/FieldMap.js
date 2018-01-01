@@ -69,7 +69,7 @@
  * to NGN.DATA.Model and NGN.DATA.Store instances.
  * @private
  */
-class NGNDataFieldMap {
+class NGNDataFieldMap { // eslint-disable-line
   constructor (cfg = {}) {
     Object.defineProperties(this, {
       originalSource: NGN.privateconst(cfg),

@@ -7,7 +7,7 @@ const uri = require('../../package.json').endpoints
 
 require('../lib/core')
 require('../lib/eventemitter')
-require('../lib/net/NET')
+require('../lib/net/bootstrap')
 
 test('NGN.NET Sanity Checks', function (t) {
   t.ok(NGN.NET !== undefined, 'NGN.NET namespace exists')

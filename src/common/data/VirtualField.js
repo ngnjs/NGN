@@ -39,7 +39,7 @@
  * Fired whenever the cache is cleared. The field is passed as the only argument
  * to event handler functions.
  */
-class NGNVirtualDataField extends NGNDataField {
+class NGNVirtualDataField extends NGNDataField { // eslint-disable-line
   constructor (cfg) {
     cfg = cfg || {}
 
@@ -205,7 +205,7 @@ class NGNVirtualDataField extends NGNDataField {
 
   set default (value) {
     NGN.WARN('Virtual fields do not have default values.')
-    return
+    return undefined
   }
 
   get violatedRule () {

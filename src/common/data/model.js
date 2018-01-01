@@ -12,7 +12,7 @@
  * @fires field.invalid
  * Fired when an invalid value is detected in an data field.
  */
-class NGNDataEntity extends NGN.EventEmitter {
+class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
   constructor (cfg) {
     cfg = NGN.coalesce(cfg, {})
 
@@ -386,14 +386,14 @@ class NGNDataEntity extends NGN.EventEmitter {
          * {
          *   ModelFieldName: 'inputName',
          *   father: 'dad',
-         *	 email: 'eml',
-         *	 image: 'img',
-         *	 displayName: 'dn',
-         *	 firstName: 'gn',
-         *	 lastName: 'sn',
-         *	 middleName: 'mn',
-         *	 gender: 'sex',
-         *	 dob: 'bd'
+         *   email: 'eml',
+         *   image: 'img',
+         *   displayName: 'dn',
+         *   firstName: 'gn',
+         *   lastName: 'sn',
+         *   middleName: 'mn',
+         *   gender: 'sex',
+         *   dob: 'bd'
          * }
          * ```
          */
@@ -410,7 +410,7 @@ class NGNDataEntity extends NGN.EventEmitter {
       })
     })
 
-    if (cfg.fieldmap instanceof NGN.DATA.FieldMap){
+    if (cfg.fieldmap instanceof NGN.DATA.FieldMap) {
       this.METADATA.DATAMAP = cfg.fieldmap
     } else if (NGN.typeof(cfg.fieldmap) === 'object') {
       this.METADATA.DATAMAP = new NGN.DATA.FieldMap(cfg.fieldmap)
@@ -862,7 +862,7 @@ class NGNDataEntity extends NGN.EventEmitter {
    * The new value of the field.
    * @private
    */
-  setSilentFieldValue(field, value) {
+  setSilentFieldValue (field, value) {
     this.METADATA.fields[field].silentValue = value
   }
 

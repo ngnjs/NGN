@@ -32,9 +32,9 @@ const makeCRCTable = function () {
  * @class NGN.DATA.UTILITY
  * A utility library of functions relevant to data management.
  */
-class Utility {
+class Utility { // eslint-disable-line
   static diff () {
-    return ObjectDiff.compare(...arguments)
+    return ObjectDiff.compare(...arguments) // eslint-disable-line no-undef
   }
 
   /**
@@ -79,8 +79,8 @@ class Utility {
    * Returns a [V4 GUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29).
    */
   static UUID () {
-    return NGN.nodelike ? this.GUID() : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    return NGN.nodelike ? this.GUID() : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => // eslint-disable-line
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16) // eslint-disable-line
     )
   }
 
@@ -141,7 +141,7 @@ class Utility {
     let result = {}
     let attribute = Object.keys(data)
 
-    for (let i =0; i < attribute.length; i++) {
+    for (let i = 0; i < attribute.length; i++) {
       if (data[attribute[i]] !== undefined) {
         switch (NGN.typeof(data[attribute[i]])) {
           case 'object':
@@ -168,11 +168,11 @@ class Utility {
             break
 
           case 'symbol':
-            if (SERIALIZED_ARRAY_DATA === attribute[i]) {
-              break
-            } else {
+            if (SERIALIZED_ARRAY_DATA !== attribute[i]) {
               result[attribute[i]] = data[attribute[i]].toString()
             }
+
+            break
 
           case 'regexp':
             Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))

@@ -9,7 +9,7 @@
   *
   * @fires validator.add
   */
-class NGNDataValidationRule {
+class NGNDataValidationRule { // eslint-disable-line
   /**
    * Create a new data rule.
    * @param {Function/String[]/Number[]/Date[]/RegExp/Array} rule
@@ -26,7 +26,6 @@ class NGNDataValidationRule {
    * Aplpy a custom scope to the validation functions (applicable to custom methods only).
    */
   constructor (validation, name = null, scope = null) {
-    const RULE_INSTANCE = Symbol('rule')
     const type = NGN.typeof(validation)
 
     Object.defineProperties(this, {

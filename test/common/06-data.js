@@ -6,8 +6,9 @@ const TaskRunner = require('shortbus')
 
 require('../lib/core')
 require('../lib/eventemitter')
+require('../lib/utility/bootstrap')
 require('../lib/tasks/bootstrap')
-require('../lib/data/DATA')
+require('../lib/data/bootstrap')
 
 NGN.BUS.on(NGN.WARNING_EVENT, function (msg) {
   console.log('\n\n\n\n:::WARNING:::', msg)

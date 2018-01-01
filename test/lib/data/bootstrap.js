@@ -291,9 +291,9 @@ const makeCRCTable = function () {
  * @class NGN.DATA.UTILITY
  * A utility library of functions relevant to data management.
  */
-class Utility {
+class Utility { // eslint-disable-line
   static diff () {
-    return ObjectDiff.compare(...arguments)
+    return ObjectDiff.compare(...arguments) // eslint-disable-line no-undef
   }
 
   /**
@@ -338,8 +338,8 @@ class Utility {
    * Returns a [V4 GUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29).
    */
   static UUID () {
-    return NGN.nodelike ? this.GUID() : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    return NGN.nodelike ? this.GUID() : ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => // eslint-disable-line
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16) // eslint-disable-line
     )
   }
 
@@ -400,7 +400,7 @@ class Utility {
     let result = {}
     let attribute = Object.keys(data)
 
-    for (let i =0; i < attribute.length; i++) {
+    for (let i = 0; i < attribute.length; i++) {
       if (data[attribute[i]] !== undefined) {
         switch (NGN.typeof(data[attribute[i]])) {
           case 'object':
@@ -427,11 +427,11 @@ class Utility {
             break
 
           case 'symbol':
-            if (SERIALIZED_ARRAY_DATA === attribute[i]) {
-              break
-            } else {
+            if (SERIALIZED_ARRAY_DATA !== attribute[i]) {
               result[attribute[i]] = data[attribute[i]].toString()
             }
+
+            break
 
           case 'regexp':
             Object.defineProperty(result, attribute[i], NGN.public(data[attribute[i]].toString()))
@@ -633,7 +633,7 @@ class NGNTreeNode {
       for (i = 1; i < this.leafs.length; i++) {
         let b = this.leafs[i]
 
-        if (this.METADATA.compare(b.key, key) == 0) {
+        if (this.METADATA.compare(b.key, key) === 0) {
           return {
             leaf: b,
             index: i
@@ -743,7 +743,7 @@ class NGNTreeNode {
   balance () {
     if (this.parent instanceof NGNBTree) {
       // Root has a single child and no leafs
-      if (this.leafs.length == 0 && this.nodes[0] !== null) {
+      if (this.leafs.length === 0 && this.nodes[0] !== null) {
         this.parent.root = this.nodes[0]
         this.parent.root.parent = this.parent
       }
@@ -810,7 +810,7 @@ class NGNTreeNode {
       if (right !== null) {
         // Combine this + seperator from the parent + right
         sep = this.parent.leafs[index]
-        subst = new NGNTreeNode(this.parent, this.leafs.concat([sep], right.leafs), concat(this.nodes, right.nodes))
+        subst = new NGNTreeNode(this.parent, this.leafs.concat([sep], right.leafs), this.nodes.concat(right.nodes))
         subst.METADATA.order = this.METADATA.order
         subst.METADATA.minOrder = this.METADATA.minOrder
 
@@ -837,7 +837,7 @@ class NGNTreeNode {
         // Replace seperated nodes with subst
         this.parent.nodes.splice(index - 1, 2, subst)
       } else {
-        throw(new Error(`Internal error: ${this.toString(true)} has neither a left nor a right sibling`))
+        throw new Error(`Internal error: ${this.toString(true)} has neither a left nor a right sibling`)
       }
 
       this.parent.balance()
@@ -848,7 +848,7 @@ class NGNTreeNode {
    * Split the node.
    */
   split () {
-    let index = Math.floor(this.leafs.length/2)
+    let index = Math.floor(this.leafs.length / 2)
 
     if (this.parent instanceof NGNBTree) {
       this.nodes = [
@@ -858,7 +858,7 @@ class NGNTreeNode {
 
       this.leafs = [this.leafs[index]]
     } else {
-      let leaf = this.leafs[index];
+      let leaf = this.leafs[index]
       let rest = new NGNTreeNode(
         this.parent,
         this.leafs.slice(index + 1),
@@ -920,12 +920,13 @@ class NGNTreeNode {
    */
   toString (includeNodes = false) {
     let value = []
+    let i
 
-    for (let i = 0; i < this.leafs.length; i++) {
+    for (i = 0; i < this.leafs.length; i++) {
       value.push(this.leafs[i].key)
     }
 
-    let s = `[${value.toString()}]${(this.parent instanceof Tree ? ":*" : ":")}${this.parent}`
+    let s = `[${value.toString()}]${(this.parent instanceof NGNBTree ? ':*' : ':')}${this.parent}`
 
     if (includeNodes) {
       for (i = 0; i < this.nodes.length; i++) {
@@ -978,7 +979,7 @@ class NGNBTree extends NGN.EventEmitter {
       METADATA: NGN.private({
         order: order,
 
-        minOrder: order > 1 ? Math.floor(order/2) : 1,
+        minOrder: order > 1 ? Math.floor(order / 2) : 1,
 
         compare: (firstNumber, secondNumber) => {
           return firstNumber < secondNumber ? -1 : (firstNumber > secondNumber ? 1 : 0)
@@ -996,7 +997,7 @@ class NGNBTree extends NGN.EventEmitter {
    * @private
    */
   validate (node) {
-    if (node instanceof NgnBTreeIndex) {
+    if (node instanceof NGNBTree) {
       return
     }
 
@@ -1004,7 +1005,9 @@ class NGNBTree extends NGN.EventEmitter {
       NGN.ERROR(`Illegal leaf/node count in ${node}: ${node.leafs.length}/${node.nodes.length}`)
     }
 
-    for (let i = 0; i < node.leafs.length; i++) {
+    let i
+
+    for (i = 0; i < node.leafs.length; i++) {
       if (!node.leafs[i]) {
         NGN.ERROR(`Illegal leaf in ${node} at ${i}: ${node.leafs[i]}`)
       }
@@ -1351,7 +1354,7 @@ class NGNBTree extends NGN.EventEmitter {
  * #commit. This will immediately remove all log entries after the
  * current cursor position.
  */
-class NGNTransactionLog extends NGN.EventEmitter {
+class NGNTransactionLog extends NGN.EventEmitter { // eslint-disable-line
   /**
    * Create a new transaction log.
    * @param  {number} [maxEntryCount=10]
@@ -1425,7 +1428,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id= typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
+    let id = typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
 
     this.METADATA.transaction[id] = [
       new Date(),
@@ -1643,7 +1646,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
   *
   * @fires validator.add
   */
-class NGNDataValidationRule {
+class NGNDataValidationRule { // eslint-disable-line
   /**
    * Create a new data rule.
    * @param {Function/String[]/Number[]/Date[]/RegExp/Array} rule
@@ -1660,7 +1663,6 @@ class NGNDataValidationRule {
    * Aplpy a custom scope to the validation functions (applicable to custom methods only).
    */
   constructor (validation, name = null, scope = null) {
-    const RULE_INSTANCE = Symbol('rule')
     const type = NGN.typeof(validation)
 
     Object.defineProperties(this, {
@@ -1717,7 +1719,7 @@ class NGNDataValidationRule {
  * Supports numeric ranges, date ranges, and simple string-based
  * ranges (string length).
  */
-class NGNDataRangeValidationRule extends NGNDataValidationRule {
+class NGNDataRangeValidationRule extends NGNDataValidationRule { // eslint-disable-line
   /**
    * Create a new range rule.
    * @param {string} [name]
@@ -1898,7 +1900,7 @@ class NGNDataRangeValidationRule extends NGNDataValidationRule {
  * Triggered when the key (identifier) status changes. The boolean
  * payload indicates whether the field is considered an identifier.
  */
-class NGNDataField extends NGN.EventEmitter {
+class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
   /**
    * @param {string|object} configuration
    * Accepts an object with all configuration objects, or a string representing
@@ -2241,7 +2243,7 @@ class NGNDataField extends NGN.EventEmitter {
     if (this.METADATA.rules.length > 0) {
       for (let i = 0; i < this.METADATA.rules.length; i++) {
         if (NGN.isFn(this.METADATA.rules[i]) && !(this.METADATA.rules[i] instanceof NGN.DATA.Rule)) {
-          this.METADATA.rules[i] = new NGN.DATA.Rule(this.METADATA.rules[i], `Custom Rule #${i+1}`)
+          this.METADATA.rules[i] = new NGN.DATA.Rule(this.METADATA.rules[i], `Custom Rule #${i + 1}`)
         }
       }
     }
@@ -2642,7 +2644,7 @@ class NGNDataField extends NGN.EventEmitter {
           break
       }
     } finally {
-      return value
+      return value // eslint-disable-line no-unsafe-finally
     }
   }
 }
@@ -2688,7 +2690,7 @@ class NGNDataField extends NGN.EventEmitter {
  * Fired whenever the cache is cleared. The field is passed as the only argument
  * to event handler functions.
  */
-class NGNVirtualDataField extends NGNDataField {
+class NGNVirtualDataField extends NGNDataField { // eslint-disable-line
   constructor (cfg) {
     cfg = cfg || {}
 
@@ -2854,7 +2856,7 @@ class NGNVirtualDataField extends NGNDataField {
 
   set default (value) {
     NGN.WARN('Virtual fields do not have default values.')
-    return
+    return undefined
   }
 
   get violatedRule () {
@@ -2935,7 +2937,7 @@ class NGNVirtualDataField extends NGNDataField {
  * - **0,1 => 1,N**: Zero-or-One to One-or-More
  * - ... write the rest in the guide...
  */
-class NGNRelationshipField extends NGNDataField {
+class NGNRelationshipField extends NGNDataField { // eslint-disable-line
   constructor (cfg = {}) {
     let type = NGN.typeof(cfg.join)
 
@@ -3035,7 +3037,7 @@ class NGNRelationshipField extends NGNDataField {
         }
 
         me.METADATA.commitPayload({
-          field:  me.name + (change ? `.${change.field}` : ''),
+          field: me.name + (change ? `.${change.field}` : ''),
           old: change ? NGN.coalesce(change.old) : old,
           new: change ? NGN.coalesce(change.new) : me.data,
           join: true,
@@ -3176,7 +3178,7 @@ class NGNRelationshipField extends NGNDataField {
       throw new Error('Cannot set a relationship field to anything other than an NGN.DATA.Store, NGN.DATA.Model, or an array of NGN.DATA.Model collections. (Unknown manner of relationship)')
     }
 
-    this.METADATA.join = type === 'model' ? new value() : value
+    this.METADATA.join = type === 'model' ? new value() : value // eslint-disable-line new-cap
     this.auditable = this.METADATA.AUDITABLE
     this.METADATA.applyMonitor()
 
@@ -3283,7 +3285,7 @@ class NGNRelationshipField extends NGNDataField {
  * to NGN.DATA.Model and NGN.DATA.Store instances.
  * @private
  */
-class NGNDataFieldMap {
+class NGNDataFieldMap { // eslint-disable-line
   constructor (cfg = {}) {
     Object.defineProperties(this, {
       originalSource: NGN.privateconst(cfg),
@@ -3382,7 +3384,7 @@ class NGNDataFieldMap {
  * @fires field.invalid
  * Fired when an invalid value is detected in an data field.
  */
-class NGNDataEntity extends NGN.EventEmitter {
+class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
   constructor (cfg) {
     cfg = NGN.coalesce(cfg, {})
 
@@ -3756,14 +3758,14 @@ class NGNDataEntity extends NGN.EventEmitter {
          * {
          *   ModelFieldName: 'inputName',
          *   father: 'dad',
-         *	 email: 'eml',
-         *	 image: 'img',
-         *	 displayName: 'dn',
-         *	 firstName: 'gn',
-         *	 lastName: 'sn',
-         *	 middleName: 'mn',
-         *	 gender: 'sex',
-         *	 dob: 'bd'
+         *   email: 'eml',
+         *   image: 'img',
+         *   displayName: 'dn',
+         *   firstName: 'gn',
+         *   lastName: 'sn',
+         *   middleName: 'mn',
+         *   gender: 'sex',
+         *   dob: 'bd'
          * }
          * ```
          */
@@ -3780,7 +3782,7 @@ class NGNDataEntity extends NGN.EventEmitter {
       })
     })
 
-    if (cfg.fieldmap instanceof NGN.DATA.FieldMap){
+    if (cfg.fieldmap instanceof NGN.DATA.FieldMap) {
       this.METADATA.DATAMAP = cfg.fieldmap
     } else if (NGN.typeof(cfg.fieldmap) === 'object') {
       this.METADATA.DATAMAP = new NGN.DATA.FieldMap(cfg.fieldmap)
@@ -4232,7 +4234,7 @@ class NGNDataEntity extends NGN.EventEmitter {
    * The new value of the field.
    * @private
    */
-  setSilentFieldValue(field, value) {
+  setSilentFieldValue (field, value) {
     this.METADATA.fields[field].silentValue = value
   }
 
@@ -4337,7 +4339,7 @@ class NGNDataEntity extends NGN.EventEmitter {
  * Triggered when the index is completely cleared/reset to it's original state.
  * @private
  */
-class NGNDataIndex extends NGN.EventEmitter {
+class NGNDataIndex extends NGN.EventEmitter { // eslint-disable-line
   /**
    * Create a new data index.
    * @param {Boolean} [BTree=false]
@@ -4585,7 +4587,7 @@ class NGNDataIndex extends NGN.EventEmitter {
  * }
  * ```
  */
-class NGNDataStore extends NGN.EventEmitter {
+class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   constructor (cfg = {}) {
     if (NGN.typeof(cfg) === 'model') {
       cfg = { model: cfg }
@@ -4783,14 +4785,14 @@ class NGNDataStore extends NGN.EventEmitter {
          * {
          *   ModelFieldName: 'inputName',
          *   father: 'dad',
-         *	 email: 'eml',
-         *	 image: 'img',
-         *	 displayName: 'dn',
-         *	 firstName: 'gn',
-         *	 lastName: 'sn',
-         *	 middleName: 'mn',
-         *	 gender: 'sex',
-         *	 dob: 'bd'
+         *   email: 'eml',
+         *   image: 'img',
+         *   displayName: 'dn',
+         *   firstName: 'gn',
+         *   lastName: 'sn',
+         *   middleName: 'mn',
+         *   gender: 'sex',
+         *   dob: 'bd'
          * }
          * ```
          */
@@ -5168,7 +5170,7 @@ class NGNDataStore extends NGN.EventEmitter {
 
     const record = new this.METADATA.Model(data)
 
-    if (!(record instanceof NGNDataEntity)) {
+    if (!(record instanceof NGN.DATA.Entity)) {
       throw new Error(`Only a NGN.DATA.Model or JSON object may be used in NGN.DATA.Store#add. Received a "${NGN.typeof(data)}" value.`)
     }
 
@@ -5226,7 +5228,6 @@ class NGNDataStore extends NGN.EventEmitter {
 
         case 'expired':
           // TODO: Handle expiration
-          return
       }
     })
 
@@ -5318,7 +5319,7 @@ class NGNDataStore extends NGN.EventEmitter {
 
         record = record.OID
 
-      case 'symbol':
+      case 'symbol': // eslint-disable-line no-fallthrough
         index = this.PRIVATE.ACTIVERECORDS.get(record)
 
         if (!index) {
@@ -5630,7 +5631,7 @@ class NGNDataStore extends NGN.EventEmitter {
    */
   replaceModel (newModel) {
     NGN.deprecate(
-      () => this.model = newModel,
+      () => { this.model = newModel },
       'replaceModel has been deprected. Set the model directly instead.'
     )
   }
@@ -5717,19 +5718,19 @@ class NGNDataStore extends NGN.EventEmitter {
   }
 
   NGN.extend('DATA', NGN.const(Object.defineProperties({}, {
-    UTILITY: NGN.const(Utility),
-    util: NGN.deprecate(Utility, 'NGN.DATA.util is now NGN.DATA.UTILITY'),
-    TransactionLog: NGN.const(NGNTransactionLog),
-    Rule: NGN.privateconst(NGNDataValidationRule),
-    RangeRule: NGN.privateconst(NGNDataRangeValidationRule),
-    Field: NGN.const(NGNDataField),
-    VirtualField: NGN.const(NGNVirtualDataField),
-    Relationship: NGN.const(NGNRelationshipField),
-    FieldMap: NGN.privateconst(NGNDataFieldMap),
-    Model: NGN.const(NGNDataModel),
-    Entity: NGN.privateconst(NGNDataEntity),
-    Index: NGN.privateconst(NGNDataIndex),
-    Store: NGN.const(NGNDataStore),
-    BTree: NGN.privateconst(NGNBTree)
+    UTILITY: NGN.const(Utility), // eslint-disable-line no-undef
+    util: NGN.deprecate(Utility, 'NGN.DATA.util is now NGN.DATA.UTILITY'), // eslint-disable-line no-undef
+    TransactionLog: NGN.const(NGNTransactionLog), // eslint-disable-line no-undef
+    Rule: NGN.privateconst(NGNDataValidationRule), // eslint-disable-line no-undef
+    RangeRule: NGN.privateconst(NGNDataRangeValidationRule), // eslint-disable-line no-undef
+    Field: NGN.const(NGNDataField), // eslint-disable-line no-undef
+    VirtualField: NGN.const(NGNVirtualDataField), // eslint-disable-line no-undef
+    Relationship: NGN.const(NGNRelationshipField), // eslint-disable-line no-undef
+    FieldMap: NGN.privateconst(NGNDataFieldMap), // eslint-disable-line no-undef
+    Model: NGN.const(NGNDataModel), // eslint-disable-line no-undef
+    Entity: NGN.privateconst(NGNDataEntity), // eslint-disable-line no-undef
+    Index: NGN.privateconst(NGNDataIndex), // eslint-disable-line no-undef
+    Store: NGN.const(NGNDataStore), // eslint-disable-line no-undef
+    BTree: NGN.privateconst(NGNBTree) // eslint-disable-line no-undef
   })))
 })()

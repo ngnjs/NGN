@@ -50,7 +50,7 @@
  * #commit. This will immediately remove all log entries after the
  * current cursor position.
  */
-class NGNTransactionLog extends NGN.EventEmitter {
+class NGNTransactionLog extends NGN.EventEmitter { // eslint-disable-line
   /**
    * Create a new transaction log.
    * @param  {number} [maxEntryCount=10]
@@ -124,7 +124,7 @@ class NGNTransactionLog extends NGN.EventEmitter {
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id= typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
+    let id = typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
 
     this.METADATA.transaction[id] = [
       new Date(),
