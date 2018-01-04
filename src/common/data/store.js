@@ -1019,6 +1019,16 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
    * The index of the record to retrieve.
    */
   getRecord (index = 0) {
+    if (index < 0) {
+      NGN.WARN('Cannot retrieve a record for a negative index.')
+      return null
+    }
+
+    if (index >= this.METADATA.records.length) {
+      NGN.WARN('Cannot retrieve a record for an out-of-scope index (index greater than total record count.)')
+      return null
+    }
+
     return this.METADATA.records[index]
   }
 

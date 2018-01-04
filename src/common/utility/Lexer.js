@@ -59,6 +59,7 @@ class NGNLexer { // eslint-disable-line no-unused-vars
       reject: NGN.private(false),
       lastLineIndex: NGN.private(0),
       currentLength: NGN.private(0),
+      currentMatch: NGN.private(null),
       row: NGN.private(1),
       unrecognizedCharacters: NGN.private(false)
     })
@@ -86,8 +87,8 @@ class NGNLexer { // eslint-disable-line no-unused-vars
     this.remove = 0
     this.state = 0
     this.index = 0
-    this.tokens.length = 0
-    this.col = 0
+    this.currentMatch = null
+    this.tokens = []
     this.row = 1
     this.statement = value
   }
@@ -202,6 +203,10 @@ class NGNLexer { // eslint-disable-line no-unused-vars
       }
     } else {
       actionFn = action
+    }
+
+    if (NGN.isFn(actionFn)) {
+      throw new Error(`INVALID LEXER ATTRIBUTES: ${pattern.toString()} rule is missing a valid handler function (action) or token name.`)
     }
 
     let actionString = actionFn.toString()

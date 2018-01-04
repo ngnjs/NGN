@@ -4301,12 +4301,90 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
     return this
   }
 
-  next () {
-    // TODO: Get the next record in the data set.
+  /**
+   * @info This method only works on records within a store. If this method is
+   * called on a model that is not part of a store, the model itself will be
+   * returned.
+   *
+   * Retrieve the next record (after this one) from the store.
+   * This can be used to iterate through a store by calling `model.next()`.
+   * This is operation acts as a linked list iterator.
+   * @param  {Number}  [count=1]
+   * The number of records to retrieve. For example, `1` retrieves the next record.
+   * `2` retrieves the second record after this one. A negative number will
+   * automatically use the #previous method to retrieve prior records. Setting this
+   * to `0` will return the current record (i.e. no change).
+   * @param  {Boolean}  [cycle=false] [description]
+   * If this `next` is called on the last record, it will fail. Setting `cycle` to
+   * `true` will automatically restart the iteration, returning the first record in
+   * the store.
+   * @return {NGN.DATA.Model}
+   * Returns the next model in the store (after this one.)
+   */
+  next (count = 1, cycle = false) {
+    if (count === 0) {
+      return this
+    }
+
+    if (this.METADATA.store) {
+      if (count < 0) {
+        return this.previous(Math.abs(count), cycle)
+      }
+
+      let currentIndex = this.METADATA.store.indexOf(this)
+      let nextRecord = this.METADATA.store.getRecord(currentIndex + count)
+
+      if (nextRecord === null && cycle) {
+        return this.METADATA.store.first
+      }
+
+      return nextRecord
+    } else {
+      return this
+    }
   }
 
-  previous () {
-    // TODO: Get the previous record in the data set.
+  /**
+   * @info This method only works on records within a store. If this method is
+   * called on a model that is not part of a store, the model itself will be
+   * returned.
+   *
+   * Retrieve the previous record (before this one) from the store.
+   * This can be used to iterate through a store in reverse by calling
+   * `model.previous()`. This is operation acts as a doubly linked list iterator.
+   * @param  {Number}  [count=1]
+   * The number of records to retrieve. For example, `1` retrieves the prior record.
+   * `2` retrieves the second record before this one. A negative number will
+   * automatically use the #next method to retrieve forward records. Setting this
+   * to `0` will return the current record (i.e. no change).
+   * @param  {Boolean}  [cycle=false] [description]
+   * If this `next` is called on the first record, it will fail. Setting `cycle` to
+   * `true` will automatically restart the iteration, returning the last record in
+   * the store.
+   * @return {NGN.DATA.Model}
+   * Returns the previous model in the store (before this one.)
+   */
+  previous (count = 1, cycle = false) {
+    if (count === 0) {
+      return this
+    }
+
+    if (this.METADATA.store) {
+      if (count < 0) {
+        return this.next(Math.abs(count), cycle)
+      }
+
+      let currentIndex = this.METADATA.store.indexOf(this)
+      let priorRecord = this.METADATA.store.getRecord(currentIndex - count)
+
+      if (priorRecord === null && cycle) {
+        return this.METADATA.store.last
+      }
+
+      return priorRecord
+    } else {
+      return this
+    }
   }
 }
 
@@ -5582,6 +5660,16 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
    * The index of the record to retrieve.
    */
   getRecord (index = 0) {
+    if (index < 0) {
+      NGN.WARN('Cannot retrieve a record for a negative index.')
+      return null
+    }
+
+    if (index >= this.METADATA.records.length) {
+      NGN.WARN('Cannot retrieve a record for an out-of-scope index (index greater than total record count.)')
+      return null
+    }
+
     return this.METADATA.records[index]
   }
 
