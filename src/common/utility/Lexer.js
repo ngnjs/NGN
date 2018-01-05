@@ -205,7 +205,7 @@ class NGNLexer { // eslint-disable-line no-unused-vars
       actionFn = action
     }
 
-    if (NGN.isFn(actionFn)) {
+    if (!NGN.isFn(actionFn)) {
       throw new Error(`INVALID LEXER ATTRIBUTES: ${pattern.toString()} rule is missing a valid handler function (action) or token name.`)
     }
 

@@ -1257,9 +1257,6 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     curr = record.previous(5, true)
     t.ok(curr.OID === GoodStore.last.OID, 'Calling previous() (w/ cycling) for more records than the store contains returns the correct record (multicycle).')
 
-    // curr = record.previous(3, true)
-    // t.ok(curr.OID === GoodStore.first.OID, '')
-
     record = GoodStore.last
     curr = record.next()
     t.ok(curr === null, 'Calling next() on the last item returns null.')
@@ -1275,6 +1272,7 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
 
     next()
   })
+
   // TODO: B-Tree indexing of numeric and date values
   // TODO: Load
   // TODO: Reload

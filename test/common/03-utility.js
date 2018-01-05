@@ -10,6 +10,7 @@ require('../lib/utility/bootstrap')
 test('NGN.UTILITY Sanity Check', function (t) {
   t.ok(typeof NGN.UTILITY.Lexer === 'function', 'NGN.UTILITY.Lexer exists as a class.')
   t.ok(typeof NGN.UTILITY.Tokenizer === 'function', 'NGN.UTILITY.Tokenizer exists as a class.')
+  t.ok(typeof NGN.UTILITY.Set === 'function', 'NGN.UTILITY.Set exists as a class (singleton).')
 
   t.end()
 })
@@ -100,6 +101,21 @@ test('NGN.UTILITY.Tokenizer', function (t) {
   } catch (e) {
     t.pass('Fails when error rule triggered.')
   }
+
+  t.end()
+})
+
+test('NGN.UTILITY.Set', function (t) {
+  var setA = new Set([1, 2, 3, 4])
+  var setB = new Set([2, 3])
+  var setC = new Set([3, 4, 5, 6])
+  var setX = new Set([7])
+
+  t.ok(NGN.UTILITY.Set.isSuperSet(setA, setB), 'Identify a superset')
+  t.ok(NGN.UTILITY.Set.equal(setX, new Set([7])), 'Recognize equality of two sets.')
+  t.ok(NGN.UTILITY.Set.equal(NGN.UTILITY.Set.concat(setA, setC, setX), new Set([1, 2, 3, 4, 5, 6, 7])), 'Concatenate multiple sets.')
+  t.ok(NGN.UTILITY.Set.equal(NGN.UTILITY.Set.intersection(setA, setC), new Set([3, 4])), 'Intersection restricts set.')
+  t.ok(NGN.UTILITY.Set.equal(NGN.UTILITY.Set.difference(setA, setC), new Set([1, 2])), 'Difference restricts set.')
 
   t.end()
 })
