@@ -661,6 +661,11 @@ class NGNSet { // eslint-disable-line
     return NGN.UTILITY.Set.difference(setA, setB).size === 0
   }
 
+  static equals () {
+    NGN.WARN('NGN.UTILITY.Set.equals() should be equal() (no s at the end).')
+    NGN.UTILITY.Set.equal(...arguments)
+  }
+
   /**
    * A convenience method for appending the Set prototype with all
    * of the methods in this utility, where the first argument of
