@@ -886,7 +886,8 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
         this.PRIVATE.EVENT.CREATE_RECORD,
         this.PRIVATE.EVENT.DELETE_RECORD,
         this.PRIVATE.EVENT.LOAD_RECORDS,
-        this.PRIVATE.EVENT.DELETE_RECORD_FIELD
+        this.PRIVATE.EVENT.DELETE_RECORD_FIELD,
+        'clear'
       ], this.PRIVATE.INDEX)
     }
 
@@ -962,6 +963,50 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
     }
   }
 
+  getRecordSibling (currentRecord, count = 1, cycle = false) {
+    let size = this.size
+
+    if (size === 0) {
+      NGN.WARN('Attempted to execute getRecordSibling with no active records.')
+      return null
+    }
+
+    // Make sure the iterator fits within the range
+    if (Math.abs(count) > size) {
+      count = count % size
+    }
+
+    if (size === 1 || count === 0) {
+      return currentRecord
+    }
+
+    let ActiveRecords = Array.from(this.PRIVATE.ACTIVERECORDS)
+    let currentIndex = ActiveRecords.findIndex(item => currentRecord.OID === item[0])
+
+    if (currentIndex < 0) {
+      throw new Error('Record not found.')
+    }
+
+    currentIndex += count
+
+    // Support cycling through records.
+    if ((currentIndex >= ActiveRecords.length || currentIndex < 0) && cycle) {
+      // Cycle forwards
+      if (count > 0) {
+        currentIndex = currentIndex % ActiveRecords.length
+      } else {
+        // Cycle Backwards
+        currentIndex = ActiveRecords.length - Math.abs(currentIndex)
+      }
+    }
+
+    if (currentIndex < 0 || currentIndex >= ActiveRecords.length) {
+      return null
+    }
+
+    return this.METADATA.records[ActiveRecords[currentIndex][1]]
+  }
+
   /**
    * Returns the index number of the model. If the same
    * model exists more than once (duplicate records), only
@@ -1014,7 +1059,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   }
 
   /**
-   * Retrieve a record by index number (0-based, like an array).
+   * Retrieve an active record by index number (0-based, like an array).
    * @param  {number} [index=0]
    * The index of the record to retrieve.
    */
@@ -1024,12 +1069,12 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
       return null
     }
 
-    if (index >= this.METADATA.records.length) {
+    if (index >= this.PRIVATE.ACTIVERECORDS.size) {
       NGN.WARN('Cannot retrieve a record for an out-of-scope index (index greater than total record count.)')
       return null
     }
 
-    return this.METADATA.records[index]
+    return this.METADATA.records[Array.from(this.PRIVATE.ACTIVERECORDS)[index][1]]
   }
 
   /**
@@ -1052,8 +1097,15 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
     }
 
     this.METADATA.records = []
+    this.PRIVATE.RECORDMAP = new Map()
+    this.PRIVATE.ACTIVERECORDMAP = null
+    this.PRIVATE.FILTEREDRECORDMAP = null
+    this.METADATA.LASTRECORDINDEX = 0
+    this.METADATA.FIRSTRECORDINDEX = 0
 
-    // TODO: Update indexes
+    // TODO: Audit log needs to be updated
+
+    // Indexes updated automatically (listening for 'clear' event)
 
     if (!suppressEvents) {
       this.emit('clear')

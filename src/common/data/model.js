@@ -955,19 +955,14 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
     }
 
     if (this.METADATA.store) {
-      if (count < 0) {
-        return this.previous(Math.abs(count), cycle)
+      if (typeof count === 'boolean') {
+        cycle = count
+        count = 1
       }
 
-      let currentIndex = this.METADATA.store.indexOf(this)
-      let nextRecord = this.METADATA.store.getRecord(currentIndex + count)
-
-      if (nextRecord === null && cycle) {
-        return this.METADATA.store.first
-      }
-
-      return nextRecord
+      return this.METADATA.store.getRecordSibling(this, count, cycle)
     } else {
+      NGN.WARN('Attempted to call next() on a model that does not belong to a store.')
       return this
     }
   }
@@ -998,19 +993,14 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
     }
 
     if (this.METADATA.store) {
-      if (count < 0) {
-        return this.next(Math.abs(count), cycle)
+      if (typeof count === 'boolean') {
+        cycle = count
+        count = 1
       }
 
-      let currentIndex = this.METADATA.store.indexOf(this)
-      let priorRecord = this.METADATA.store.getRecord(currentIndex - count)
-
-      if (priorRecord === null && cycle) {
-        return this.METADATA.store.last
-      }
-
-      return priorRecord
+      return this.METADATA.store.getRecordSibling(this, 0 - count, cycle)
     } else {
+      NGN.WARN('Attempted to call previous() on a model that does not belong to a store.')
       return this
     }
   }

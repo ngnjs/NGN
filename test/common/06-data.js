@@ -1227,6 +1227,54 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     next()
   })
 
+  tasks.add('Doubly Linked list', function (next) {
+    GoodStore.clear()
+    GoodStore.add([{
+      firstname: 'John',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jill',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jake',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jean',
+      lastname: 'Doe'
+    }])
+
+    var record = GoodStore.first
+
+    var curr = record.previous()
+    t.ok(curr === null, 'Calling previous() on first item returns null.')
+
+    curr = record.previous(true)
+    t.ok(curr.OID === GoodStore.last.OID, 'Calling previous() on first record with cycling returns last record.')
+
+    curr = record.previous(3, true)
+    t.ok(curr.OID === GoodStore.getRecord(1).OID, 'Calling previous() on the first record with cycling (skipping 2) returns appropriate record.')
+
+    curr = record.previous(5, true)
+    t.ok(curr.OID === GoodStore.last.OID, 'Calling previous() (w/ cycling) for more records than the store contains returns the correct record (multicycle).')
+
+    // curr = record.previous(3, true)
+    // t.ok(curr.OID === GoodStore.first.OID, '')
+
+    record = GoodStore.last
+    curr = record.next()
+    t.ok(curr === null, 'Calling next() on the last item returns null.')
+
+    curr = record.next(true)
+    t.ok(curr.OID === GoodStore.first.OID, 'Calling next() on last record with cycling returns first record.')
+
+    curr = record.next(3, true)
+    t.ok(curr.OID === GoodStore.getRecord(2).OID, 'Calling next() on the last record with cycling (skipping 2) returns appropriate record.')
+
+    curr = record.next(5, true)
+    t.ok(curr.OID === GoodStore.first.OID, 'Calling next() (w/ cycling) for more records than the store contains returns the correct record (multicycle).')
+
+    next()
+  })
   // TODO: B-Tree indexing of numeric and date values
   // TODO: Load
   // TODO: Reload
