@@ -1284,6 +1284,48 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     next()
   })
 
+  tasks.add('Basic Iteration (forEach)', function (next) {
+    GoodStore.forEach(function (record) {
+      record.lastname = 'changed'
+    })
+
+    t.ok(
+      GoodStore.first.lastname === 'changed' &&
+      GoodStore.getRecord(1).lastname === 'changed' &&
+      GoodStore.last.lastname === 'changed',
+      'Method properly applied to each record within the store.'
+    )
+
+    next()
+  })
+
+  tasks.add('Compact Store', function (next) {
+    GoodStore.clear()
+
+    var x = 0
+    var shortLived = []
+
+    while (x < 220) {
+      var r = GoodStore.add({
+        firstname: x.toString()
+      })
+
+      if (x >= 40 && x < 150) {
+        shortLived.push(r)
+      }
+
+      x++
+    }
+
+    GoodStore.remove(shortLived)
+
+    GoodStore.compact()
+
+    t.ok(GoodStore.size === GoodStore.length, 'Compacted store contains correct number of results.')
+
+    next()
+  })
+
   // TODO: B-Tree indexing of numeric and date values
   // TODO: Load
   // TODO: Reload
@@ -1292,6 +1334,7 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
   // TODO: Sorting
   // TODO: Deduplicate
   // TODO: Invalid/valid field events for store records
+  // TODO: Undo/Redo
 
   tasks.on('complete', t.end)
   tasks.run(true)

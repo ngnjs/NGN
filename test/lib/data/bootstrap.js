@@ -4859,6 +4859,14 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
         minRecords: NGN.coalesce(cfg.minRecords, 0),
 
         /**
+         * @cfg {Number} [autocompact=50000]
+         * Identify the number of deletions that should occur before
+         * the store is compacted. See #compact. Set this to any value
+         * below `100` (the minimum) to disable autocompact.
+         */
+        autocompact: NGN.coalesce(cfg.autocompact, 50000),
+
+        /**
          * @cfgproperty {object} fieldmap
          * An object mapping model attribute names to data storage field names.
          *
@@ -4894,7 +4902,9 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
           'filter.create',
           'filter.delete',
           'index.create',
-          'index.delete'
+          'index.delete',
+          'compact.start',
+          'compact.complete'
         ]),
 
         /**
@@ -5070,6 +5080,19 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
     // Configure Indices
     if (NGN.coalesce(cfg.index) && NGN.typeof(this.METADATA.Model.prototype.CONFIGURATION.fields) === 'object') {
       this.createIndex(cfg.index)
+    }
+
+    // Setup auto-compact
+    if (this.METADATA.autocompact < 100) {
+      this.METADATA.DELETECOUNT = 0
+      this.on(this.PRIVATE.EVENTS.DELETE_RECORD, () => {
+        this.METADATA.DELETECOUNT++
+
+        if (this.METADATA >= this.METADATA.autocompact) {
+          this.METADATA.DELETECOUNT = 0
+          this.compact()
+        }
+      })
     }
   }
 
@@ -5297,6 +5320,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
 
     // Relay model events to this store.
     // record.relay('*', this, 'record.')
+    const me = this
     record.on('*', function () {
       switch (this.event) {
         // case 'field.update':
@@ -5306,7 +5330,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
 
         case 'field.invalid':
         case 'field.valid':
-          return this.emit(this.event.replace('field.', 'record.'), record)
+          return me.emit(this.event.replace('field.', 'record.'), record)
 
         case 'expired':
           // TODO: Handle expiration
@@ -5356,7 +5380,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   remove (record, suppressEvents = false) {
     // Short-circuit processing if there are no records.
     if (this.METADATA.records.length === 0) {
-      NGN.INFO(`Store.remove() called "${this.name}" store, which contains no records.`)
+      NGN.INFO(`"${this.name}" store called remove(), but the store contains no records.`)
       return
     }
 
@@ -5381,7 +5405,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
 
     switch (NGN.typeof(record)) {
       case 'number':
-        if (record < 0) {
+        if (record < 0 || !this.METADATA.records[record]) {
           NGN.ERROR(`Record removal failed (record not found at index ${(record || 'undefined').toString()}).`)
           return null
         }
@@ -5444,7 +5468,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
       if (this.METADATA.softDeleteTtl >= 0) {
         removedRecord.once('expired', () => {
           this.METADATA.records[this.PRIVATE.RECORDMAP.get(removedRecord.OID)] = null
-          this.PRIVATE.RECORDMAP.set(removedRecord.OID, null)
+          this.PRIVATE.RECORDMAP.delete(removedRecord.OID)
 
           if (!suppressEvents) {
             this.emit('record.purge', removedRecord)
@@ -5455,7 +5479,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
       }
     } else {
       this.METADATA.records[this.PRIVATE.RECORDMAP.get(removedRecord.OID)] = null
-      this.PRIVATE.RECORDMAP.set(removedRecord.OID, null)
+      this.PRIVATE.RECORDMAP.delete(removedRecord.OID)
     }
 
     // Update cursor indexes (to quickly reference first and last active records)
@@ -5713,7 +5737,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   }
 
   /**
-   * Retrieve an active record by index number (0-based, like an array).
+   * Retrieve an active record by index number (0-based, similar to an array).
    * @param  {number} [index=0]
    * The index of the record to retrieve.
    */
@@ -5733,7 +5757,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
 
   /**
    * @method clear
-   * Removes all data.
+   * Removes all data. If auditing is enabled, the transaction log is reset.
    * @param {boolean} [purgeSoftDelete=true]
    * Purge soft deleted records from memory.
    * @param {boolean} [suppressEvents=false]
@@ -5757,7 +5781,9 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
     this.METADATA.LASTRECORDINDEX = 0
     this.METADATA.FIRSTRECORDINDEX = 0
 
-    // TODO: Audit log needs to be updated
+    if (this.METADATA.AUDITABLE) {
+      this.METADATA.AUDITLOG.reset()
+    }
 
     // Indexes updated automatically (listening for 'clear' event)
 
@@ -5846,6 +5872,112 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
 
   load (data) {
     // this.emit(this.PRIVATE.EVENT.LOAD_RECORDS)
+  }
+
+  /**
+   * This rebuilds the local index of records, removing any dead records.
+   * While deleted records are destroyed (in accordance to #softDeleteTtl),
+   * the active record table contains a `null` or `undefined` value for each
+   * deleted/dead record. This method removes such records, akin in nature to
+   * the common JavaScript garbage collection process.
+   *
+   * This method almost never needs to be run, since stores
+   * attempt to manage this process for themselves automatically. However; if
+   * large volume deletions occur rapidly (50K+), it's possible (though not assured)
+   * performance could be negatively impacted. Compacting the store can
+   * improve performance in these cases. However; running this too often or
+   * excessively may degrade performance since it is essentially rewriting
+   * the store data each time.
+   *
+   * When in doubt, *don't* use this method.
+   * @info This method will not run when fewer than 100 cumulative records have
+   * existed in the store, due to the inefficient nature at such low volume.
+   * @fires compact.start
+   * Triggered when the compact process begins.
+   * @fires compact.complete
+   * Triggered when the compact process completes.
+   */
+  compact () {
+    this.emit('compact.start')
+
+    if (this.METADATA.records.length < 100) {
+      this.emit('compact.complete')
+
+      if (this.METADATA.records.length !== 0) {
+        NGN.WARN(`compact() called on ${this.name} with fewer than 100 elements.`)
+      }
+
+      return
+    }
+
+    let ranges = []
+    let currentRange = []
+    let empty = 0
+
+    // Identify null ranges (dead records)
+    for (let i = 0; i < this.METADATA.records.length; i++) {
+      if (this.METADATA.records[i] === null) {
+        empty++
+
+        if (currentRange.length === 0) {
+          currentRange.push(i)
+        }
+      } else {
+        // Identify new index values for remaining records
+        if (empty > 0) {
+          this.PRIVATE.RECORDMAP.set(this.METADATA.records[i].OID, i - empty)
+
+          if (this.METADATA.FIRSTRECORDINDEX === i) {
+            this.METADATA.FIRSTRECORDINDEX = i - empty
+          }
+
+          if (this.METADATA.LASTRECORDINDEX === i) {
+            this.METADATA.LASTRECORDINDEX = i - empty
+          }
+        }
+
+        if (currentRange.length === 1) {
+          currentRange.push(i - 1)
+          ranges.push(currentRange)
+          currentRange = []
+        }
+      }
+    }
+
+    // Clear null ranges
+    empty = 0
+    while (ranges.length > 0) {
+      this.METADATA.records.splice(ranges[0][0] - empty, ranges[0][1] - ranges[0][0] + 1)
+      empty += ranges[0][1] - ranges[0][0] + 1
+      ranges.shift()
+    }
+
+    // Reset the active record map
+    this.PRIVATE.ACTIVERECORDMAP = null
+
+    this.emit('compact.complete')
+  }
+
+  /**
+   * Performs executes the callback method on each active record
+   * within the store. For example:
+   *
+   * ```js
+   * Store.forEach(function (record) {
+   *   // Do Something
+   * })
+   * ```
+   * @param  {Function} callback
+   * The callback method is applied to each record.
+   */
+  forEach (fn) {
+    if (!NGN.isFn(fn)) {
+      throw new Error(`A ${NGN.typeof(fn)} was applied to ${this.name}'s each() method when a function was expected.`)
+    }
+
+    this.PRIVATE.ACTIVERECORDS.forEach((value, key, map) => {
+      fn(this.METADATA.records[value])
+    })
   }
 }
 
