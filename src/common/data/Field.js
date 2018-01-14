@@ -566,6 +566,10 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
       return NGN.coalesce(this.METADATA.autoid, this.METADATA.default)
     }
 
+    if (NGN.isFn(this.METADATA.default) && this.type !== 'function') {
+      return this.METADATA.default.apply(this)
+    }
+
     return this.METADATA.default
   }
 
