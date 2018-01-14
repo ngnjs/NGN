@@ -1097,6 +1097,10 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
    * The index of the record to retrieve.
    */
   getRecord (index = 0) {
+    if (typeof index === 'symbol') {
+      index = this.PRIVATE.ACTIVERECORDS.get(index)
+    }
+
     if (index < 0) {
       NGN.WARN('Cannot retrieve a record for a negative index.')
       return null

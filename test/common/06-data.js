@@ -1323,6 +1323,14 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
 
     t.ok(GoodStore.size === GoodStore.length, 'Compacted store contains correct number of results.')
 
+    GoodStore.forEach(function (record) {
+      var val = parseInt(record.firstname, 10)
+
+      if (!(val < 40 || val >= 150)) {
+        t.fail('Removed record still exists.')
+      }
+    })
+
     next()
   })
 
