@@ -4340,13 +4340,13 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
   }
 
   /**
-   * @info This method only works on records within a store. If this method is
-   * called on a model that is not part of a store, the model itself will be
-   * returned.
-   *
    * Retrieve the previous record (before this one) from the store.
    * This can be used to iterate through a store in reverse by calling
    * `model.previous()`. This is operation acts as a doubly linked list iterator.
+   *
+   * @info This method only works on records within a store. If this method is
+   * called on a model that is not part of a store, the model itself will be
+   * returned.
    * @param  {Number}  [count=1]
    * The number of records to retrieve. For example, `1` retrieves the prior record.
    * `2` retrieves the second record before this one. A negative number will
@@ -4374,6 +4374,20 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
     } else {
       NGN.WARN('Attempted to call previous() on a model that does not belong to a store.')
       return this
+    }
+  }
+
+  /**
+   * Remove this model from the NGN.DATA.Store it is a part of.
+   *
+   * @info This method only works on records within a store. If this method is
+   * called on a model that is not part of a store, nothing will happen.
+   */
+  destroy () {
+    if (this.METADATA.store) {
+      this.METADATA.store.remove(this.OID)
+    } else {
+      NGN.WARN('Attempted to call remove() on a model that does not belong to a store.')
     }
   }
 }
@@ -5390,7 +5404,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
       case 'symbol': // eslint-disable-line no-fallthrough
         index = this.PRIVATE.ACTIVERECORDS.get(record)
 
-        if (!index) {
+        if (index < 0) {
           NGN.ERROR(`Record removal failed. Record OID not found ("${record.toString()}").`)
           return null
         }
@@ -5594,6 +5608,15 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
     }
   }
 
+  /**
+   * Retrieve a record based on it's relative position to another
+   * record. This method is used by NGN.DATA.Model#next and NGN.DATA.Model#previous
+   * to support "doubly linked list" approach to record iteration.
+   * @param  {[type]}  currentRecord [description]
+   * @param  {Number}  [count=1]     [description]
+   * @param  {Boolean} [cycle=false] [description]
+   * @return {[type]}                [description]
+   */
   getRecordSibling (currentRecord, count = 1, cycle = false) {
     let size = this.size
 

@@ -759,7 +759,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
       case 'symbol': // eslint-disable-line no-fallthrough
         index = this.PRIVATE.ACTIVERECORDS.get(record)
 
-        if (!index) {
+        if (index < 0) {
           NGN.ERROR(`Record removal failed. Record OID not found ("${record.toString()}").`)
           return null
         }
@@ -963,6 +963,15 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
     }
   }
 
+  /**
+   * Retrieve a record based on it's relative position to another
+   * record. This method is used by NGN.DATA.Model#next and NGN.DATA.Model#previous
+   * to support "doubly linked list" approach to record iteration.
+   * @param  {[type]}  currentRecord [description]
+   * @param  {Number}  [count=1]     [description]
+   * @param  {Boolean} [cycle=false] [description]
+   * @return {[type]}                [description]
+   */
   getRecordSibling (currentRecord, count = 1, cycle = false) {
     let size = this.size
 

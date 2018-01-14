@@ -1273,6 +1273,17 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     next()
   })
 
+  tasks.add('Remove a model from a store, from the model.', function (next) {
+    var record = GoodStore.first
+    var firstname = record.firstname
+
+    record.destroy()
+
+    t.ok(GoodStore.size === 3 && firstname !== GoodStore.first.firstname, 'Model.destroy() removes an individual model from its parent store.')
+
+    next()
+  })
+
   // TODO: B-Tree indexing of numeric and date values
   // TODO: Load
   // TODO: Reload
