@@ -6,6 +6,7 @@ env.json
 /**/env.json
 node_modules
 coverage
+test/lib
 !.gitignore
 !.npmignore
 !.codeclimate.yml
