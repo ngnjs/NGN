@@ -1,15 +1,15 @@
 (function () {
   // [INCLUDE: ./Utility.js]
-  // [INCLUDE: ./BTree.js]
+  // [INCLUDE: ./index/BTree.js]
   // [INCLUDE: ./TransactionLog.js]
-  // [INCLUDE: ./Rule.js]
-  // [INCLUDE: ./RangeRule.js]
-  // [INCLUDE: ./Field.js]
-  // [INCLUDE: ./VirtualField.js]
-  // [INCLUDE: ./Relationship.js]
-  // [INCLUDE: ./FieldMap.js]
+  // [INCLUDE: ./rule/Rule.js]
+  // [INCLUDE: ./rule/RangeRule.js]
+  // [INCLUDE: ./field/Field.js]
+  // [INCLUDE: ./field/VirtualField.js]
+  // [INCLUDE: ./field/Relationship.js]
+  // [INCLUDE: ./field/FieldMap.js]
   // [INCLUDE: ./Model.js]
-  // [INCLUDE: ./Index.js]
+  // [INCLUDE: ./index/Index.js]
   // [INCLUDE: ./Store.js]
 
   const NGNDataModel = function (cfg) {

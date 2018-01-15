@@ -380,8 +380,16 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
     }
 
     // Apply pattern validation if specified.
-    if (this.METADATA.dataType === String && this.METADATA.pattern !== null) {
-      this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern, `Pattern Match (${cfg.pattern.toString()})`))
+    if (this.METADATA.dataType === String) {
+      if (this.METADATA.pattern !== null) {
+        this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern, `Pattern Match (${cfg.pattern.toString()})`))
+      }
+
+      if (cfg.hasOwnProperty('noblanks')) {
+        this.METADATA.rules.unshift(new NGN.DATA.Rule(value => {
+          return value.trim().length > 0
+        }, `No Blanks (${cfg.pattern.toString()})`))
+      }
     }
 
     if (this.METADATA.dataType === Number || this.METADATA.dataType === Date || this.METADATA.dataType === String) {
