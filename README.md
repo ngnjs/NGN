@@ -1,3 +1,18 @@
+**NOTICE:**
+
+This repo is ridiculously out of date. NGN grew enormously, scattered amongst several repos. We've been working hard over the last year to centralize all of the code for [NGN 2.0.0](https://github.com/ngnjs/NGN/tree/2.0.0). We've been using NGN 1.x.x in production (clients and our own apps) for a few years, but have held off on a formal public release. Version 2.0.0 will be the first release we publicize. The [project roadmap](https://github.com/ngnjs/ngn-core/projects/1) is updated as we complete pieces of the revamped library.
+
+We are in the midst of:
+
+- Completing NGN 2.0.0 core.
+- Building NGNX for Browsers & Node.js.
+- Building Docker images for NGN server-side systems.
+- Creating a completely new site at ngn.js.org.
+- Building a brand new documentation system.
+- Building a completely automated CI/CD pipeline.
+- Massivley updating our CDN.
+- Building a developer-friendly proxyfill service.
+
 # NGN
 
 NGN is a platform for building web systems. It provides best-practice building blocks
