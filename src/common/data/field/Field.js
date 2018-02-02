@@ -385,7 +385,7 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
         this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern, `Pattern Match (${cfg.pattern.toString()})`))
       }
 
-      if (cfg.hasOwnProperty('noblanks')) {
+      if (cfg.nonempty) {
         this.METADATA.rules.unshift(new NGN.DATA.Rule(value => {
           return value.trim().length > 0
         }, `No Blanks (${cfg.pattern.toString()})`))

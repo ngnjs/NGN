@@ -1,6 +1,7 @@
 (function () {
   // [INCLUDE: ./Utility.js]
   // [INCLUDE: ./index/BTree.js]
+  // [INCLUDE: ./schema/JSON.js]
   // [INCLUDE: ./TransactionLog.js]
   // [INCLUDE: ./rule/Rule.js]
   // [INCLUDE: ./rule/RangeRule.js]
@@ -46,6 +47,7 @@
     Entity: NGN.privateconst(NGNDataEntity), // eslint-disable-line no-undef
     Index: NGN.privateconst(NGNDataIndex), // eslint-disable-line no-undef
     Store: NGN.const(NGNDataStore), // eslint-disable-line no-undef
-    BTree: NGN.privateconst(NGNBTree) // eslint-disable-line no-undef
+    BTree: NGN.privateconst(NGNBTree), // eslint-disable-line no-undef
+    JSONSchema: NGN.privateconst(NGNJSONSchema) // eslint-disable-line no-undef
   })))
 })()

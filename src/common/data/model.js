@@ -44,9 +44,16 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
         /**
          * @cfg {string} [name]
          * A descriptive name for the model. This is typically used for
-         * debugging, logging, and (somtimes) data proxies.
+         * debugging, logging, schema defintions, and (sometimes) data proxies.
          */
         name: NGN.coalesce(cfg.name, 'Untitled Model'),
+
+        /**
+         * @cfg {string} [description]
+         * A description of the model. This is typically used for
+         * debugging, logging, schema definitions, and (sometimes) data proxies.
+         */
+        description: NGN.coalesce(cfg.description, cfg.name, 'Generic Data Model'),
 
         /**
          * @cfg {object} fields
