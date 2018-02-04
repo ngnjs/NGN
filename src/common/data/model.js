@@ -96,12 +96,31 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
         auditFieldNames: NGN.coalesce(cfg.audit, false) ? new Set() : null,
 
         /**
-         * @property {Object}
+         * @property {[NGN.DATA.Rule]|Object}
          * Custom validation rules used to verify the integrity of the entire
          * model. This only applies to the full model. Individual data fields
          * may have their own validators.
+         *
+         * If an object is specified, it should contain simple key/value pairs,
+         * where the key is the descriptive name of the rule and the value is
+         * a synchronous callback function that returns a `true`/`false` value.
+         * For instance, assume the fields called `price`, `items`, and `tax` exist
+         * in the example model below. :
+         *
+         * ```js
+         * {
+         *   'Positive Sale': function () {
+         *      return (this.price * this.items) > 0
+         *   },
+         *   'Taxes Applied': function () {
+         *      return this.tax > 0
+         *   }
+         * }
+         * ```
+         *
+         * Alternatively, an array of NGN.DATA.Rule instances may be provided.
          */
-        validators: NGN.coalesce(cfg.rules, cfg.rule, cfg.validators, {}),
+        validators: NGN.coalesce(cfg.rules, cfg.rule, cfg.validators),
 
         /**
          * @cfgproperty {boolean} [validation=true]
@@ -465,6 +484,38 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
     // Configure TTL/Expiration
     if (cfg.expires) {
       this.expires = cfg.expires
+    }
+
+    // Configure model-level validation rules
+    if (this.METADATA.validators !== null) {
+      switch (NGN.typeof(this.METADATA.validators)) {
+        // Support key/value objects where the key is the name and value is a function.
+        case 'object':
+          let keys = Object.keys(this.METADATA.validators)
+          let rules = []
+
+          for (let i = 0; i < keys.length; i++) {
+            rules.push(new NGN.DATA.Rule(this.METADATA.validators[keys[i]], keys[i], this))
+          }
+
+          break
+
+        // Support an array of existing data rules.
+        case 'array':
+          for (let i = 0; i < this.METADATA.validators.length; i++) {
+            if (this.METADATA.validators[i].hasOwnProperty('RULE')) {
+              this.METADATA.validators[i].RULE.scope = this
+            } else {
+              throw new Error(`Invalid data rule configuration for ${this.name} model. Rule #${i} is not a valid NGN.DATA.Rule instance.`)
+            }
+          }
+
+          break
+
+        // Diasllow any other kinds of rules.
+        default:
+          throw new Error(`Invalid data rule configuration for ${this.name} model. Expected an object or array of NGN.DATA.Rule instances. Received "${NGN.typeof(this.METADATA.validators)}"`)
+      }
     }
   }
 

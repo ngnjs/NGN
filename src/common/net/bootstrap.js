@@ -93,6 +93,7 @@
   // [INCLUDE: ./Resource.js]
 
   NGN.extend('NET', NGN.const(new Network()))
+  NGN.NET.normalizeUrl = normalizeUrl
 
   // Network = null // eslint-disable-line
   // NetworkResource = null // eslint-disable-line

@@ -392,14 +392,33 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
       }
     }
 
+    // Apply number specific validations.
     if (this.METADATA.dataType === Number || this.METADATA.dataType === Date || this.METADATA.dataType === String) {
+      // Support minimum/maximum range
       if (NGN.objectHasAny(cfg, 'min', 'minimum', 'max', 'maximum')) {
         cfg.range = NGN.forceArray(NGN.coalesce(cfg.range))
         cfg.range.push([NGN.coalesce(cfg.min, cfg.minimum), NGN.coalesce(cfg.max, cfg.maximum)])
       }
 
+      // Support any kind of range(s)
       if (cfg.hasOwnProperty('range')) {
         this.METADATA.rules.unshift(new NGN.DATA.RangeRule('Numeric Range', cfg.range))
+      }
+
+      if (this.METADATA.dataType === Number) {
+        // Support numeric patterns (i.e. support for integers)
+        if (NGN.coalesce(cfg.pattern)) {
+          this.METADATA.rules.unshift(new NGN.DATA.Rule(value => {
+            return cfg.pattern.test(value.toString())
+          }, `Numeric Pattern (${cfg.pattern.toString().substr(0, 15) + (cfg.pattern.toString().length > 15 ? '...' : '')})`))
+        }
+
+        // Support multiples
+        if (NGN.typeof(cfg.multipleOf) === 'number') {
+          this.METADATA.rules.unshift(new NGN.DATA.Rule(value => {
+            return Math.abs(value % cfg.multipleOf) === 0
+          }, `Numeric Multiple of ${cfg.multipleOf}`))
+        }
       }
     }
 
@@ -412,17 +431,45 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
       this.METADATA.rules.push(new NGN.DATA.Rule((value) => this.METADATA.ENUMERABLE_VALUES.has(value), 'Enumerable Values'))
     }
 
+    // Check if the field type is an array, which indicates multiple
+    // data types are considered valid.
+    if (cfg.type instanceof Array) {
+      // If the array has no values, assume the user meant to create an "Array" data type.
+      // Warn them, in case this was not the intention.
+      if (cfg.type.length === 0) {
+        NGN.WARN(`No data type specified for ${this.name} field. Autoconverted to an array.`)
+        cfg.type = Array
+      } else if (cfg.type.length === 1) {
+        // If there is only one data type, the array is extraneous and standard
+        // datatype validation can be used.
+        cfg.type = cfg.type[0]
+      }
+    }
+
     /**
-     * @cfg {Primitive} [type=String]
+     * @cfg {Primitive|Array} [type=String]
      * The type should be a JavaScript primitive, class, or constructor.
      * For example, `String`, `Number`, `Boolean`, `RegExp`, `Array`, or `Date`.
+     * This can also be an array of primitive values. For example, `[String, Number]`
+     * indicates the field could be a string or a numeric value.
      */
-    this.METADATA.rules.unshift(
-      new NGN.DATA.Rule(
-        (value) => NGN.typeof(value) === NGN.typeof(this.METADATA.dataType),
-        `${this.type.toUpperCase()} Type Check`
+    if (cfg.type instanceof Array) {
+      let typeList = cfg.type.map(type => NGN.typeof(type))
+
+      this.METADATA.rules.unshift(
+        new NGN.DATA.Rule(
+          (value) => typeList.indexOf(NGN.typeof(value)) >= 0,
+          `${this.type.toUpperCase()} Multitype Check`
+        )
       )
-    )
+    } else {
+      this.METADATA.rules.unshift(
+        new NGN.DATA.Rule(
+          (value) => NGN.typeof(value) === NGN.typeof(this.METADATA.dataType),
+          `${this.type.toUpperCase()} Type Check`
+        )
+      )
+    }
 
     // Associate a model if one is defined.
     if (NGN.coalesce(cfg.model) !== null) {

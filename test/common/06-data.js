@@ -38,6 +38,8 @@ test('JSON Schema', function (t) {
   var schema = new NGN.DATA.JSONSchema('http://json-schema.org/example/calendar.json')
 
   schema.getModelDefinitions(definitions => {
+    console.log(definitions[0])
+    console.log('\n\n\n==========\n\n\n')
     console.log(definitions[1])
     // console.log(JSON.stringify(definitions, null, 2))
     t.end()
@@ -506,6 +508,40 @@ test('JSON Schema', function (t) {
 //
 //   field.value = 5
 //   t.ok(field.valid, 'Value in minimum/maximum threshold is valid.')
+//
+//   // Multiples
+//   field = new NGN.DATA.Field({
+//     name: 'testfieldnumber',
+//     type: Number,
+//     multipleOf: 10
+//   })
+//
+//   field.value = 100
+//   t.ok(field.valid, 'Positive value matching a multipleOf constraint is valid.')
+//
+//   field.value = -100
+//   t.ok(field.valid, 'Negative value matching a multipleOf constraint is valid.')
+//
+//   field.value = 101
+//   t.ok(!field.valid, 'A value outside of a specified multiple is not valid.')
+//
+//   t.end()
+// })
+//
+// test('NGN.DATA.Field (Multitype Field)', function (t) {
+//   var field = new NGN.DATA.Field({
+//     name: 'testfield',
+//     type: [String, Number]
+//   })
+//
+//   field.value = 'X-test'
+//   t.ok(field.valid, 'Acceptable data type value passes data type validation.')
+//
+//   field.value = 5
+//   t.ok(field.valid, 'Acceptable alternative data type value passes data type validation.')
+//
+//   field.value = true
+//   t.ok(field.valid === false, 'Unacceptable data type value fails data type validation.')
 //
 //   t.end()
 // })
