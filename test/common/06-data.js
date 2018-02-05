@@ -528,6 +528,49 @@ test('JSON Schema', function (t) {
 //   t.end()
 // })
 //
+// test('NGN.DATA.Field (Array Field)', function (t) {
+//   var field = new NGN.DATA.Field({
+//     name: 'testfield',
+//     type: Array,
+//     min: 1,
+//     max: 5,
+//     listType: Number
+//   })
+//
+//   field.value = [1, 2, 3]
+//   t.ok(field.valid, 'Acceptable array is valid.')
+//
+//   field.value = []
+//   t.ok(!field.valid, 'Array with too few items is invalid.')
+//
+//   field.value = [1, 2, 3, 4, 5, 6]
+//   t.ok(!field.valid, 'Array with too many items is invalid.')
+//
+//   field.value = [1, 2, 3, 'no']
+//   t.ok(!field.valid, 'Array that violates listType is invalid.')
+//
+//   field = new NGN.DATA.Field({
+//     name: 'testfield',
+//     type: Array,
+//     tuples: [{
+//       type: Number
+//     }, {
+//       enum: ['a', 'b']
+//     }]
+//   })
+//
+//   field.value = [1, 'a', 1, 2, 3, 4]
+//   t.ok(field.valid, 'Array matching tuples is valid.')
+//
+//   field.value = ['test', 'a']
+//   t.ok(!field.valid, 'Array violating tuples type is invalid.')
+//
+//   field.value = [1, 'c']
+//   t.ok(!field.valid, 'Array violating tuples enum is invalid.')
+//
+//   t.end()
+// })
+//
 // test('NGN.DATA.Field (Multitype Field)', function (t) {
 //   var field = new NGN.DATA.Field({
 //     name: 'testfield',

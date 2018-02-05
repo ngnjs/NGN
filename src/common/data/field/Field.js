@@ -385,6 +385,11 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
         this.METADATA.rules.unshift(new NGN.DATA.Rule(cfg.pattern, `Pattern Match (${cfg.pattern.toString()})`))
       }
 
+      /**
+       * @cfg {Boolean} [nonempty]
+       * @info This validation attribute applies to #String fields only.
+       * Validates a value is not blank, `null`, or `undefined`.
+       */
       if (cfg.nonempty) {
         this.METADATA.rules.unshift(new NGN.DATA.Rule(value => {
           return value.trim().length > 0
@@ -392,7 +397,28 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
       }
     }
 
-    // Apply number specific validations.
+    /**
+     * @cfg {Number} [min]
+     * @info This validation attribute applies to #Array, #String, and #Number fields only.
+     * Specify a minimum value:
+     *
+     * - For string values, this is a minimum number of characters.
+     * - For numeric values, this is a minimum inclusive value (i.e. value must be greater than
+     * or equal to the minimum).
+     * - For arrays, this is a minimum number of items that must exist in the array.
+     */
+     /**
+      * @cfg {Number} [max]
+      * @info This validation attribute applies to #Array, #String, and #Number fields only.
+      * Specify a maximum value:
+      *
+      * - For string values, this is a maximum number of characters.
+      * - For numeric values, this is a maximum inclusive value (i.e. value must be less than
+      * or equal to the maximum).
+      * - For arrays, this is a maximum number of items that may exist in the array.
+      */
+
+    // Apply number-specific validations.
     if (this.METADATA.dataType === Number || this.METADATA.dataType === Date || this.METADATA.dataType === String) {
       // Support minimum/maximum range
       if (NGN.objectHasAny(cfg, 'min', 'minimum', 'max', 'maximum')) {
@@ -400,7 +426,14 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
         cfg.range.push([NGN.coalesce(cfg.min, cfg.minimum), NGN.coalesce(cfg.max, cfg.maximum)])
       }
 
-      // Support any kind of range(s)
+      /**
+       * @cfg {Number} [range]
+       * @info This validation attribute applies to #String and #Number fields only.
+       * Specify a range of acceptable values:
+       *
+       * - For numbers, this implies inclusive ranges. For example, `1-10` means "between 1 and 10, where both 1 and 10 are valid."
+       * - For strings, this implies inclusive ranges just like numbers, where the number is the character count.
+       */
       if (cfg.hasOwnProperty('range')) {
         this.METADATA.rules.unshift(new NGN.DATA.RangeRule('Numeric Range', cfg.range))
       }
@@ -413,12 +446,116 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
           }, `Numeric Pattern (${cfg.pattern.toString().substr(0, 15) + (cfg.pattern.toString().length > 15 ? '...' : '')})`))
         }
 
-        // Support multiples
+        /**
+         * @cfg {Number} [multipleOf]
+         * @info This validation attribute applies to #Number fields only.
+         * Insures the field value is a multiple of this number. For example,
+         * if the multiple is `10` and the value is `100`, it is valid.
+         * If the multiple is `10` and the value is `101`, it is invalid.
+         */
         if (NGN.typeof(cfg.multipleOf) === 'number') {
           this.METADATA.rules.unshift(new NGN.DATA.Rule(value => {
             return Math.abs(value % cfg.multipleOf) === 0
           }, `Numeric Multiple of ${cfg.multipleOf}`))
         }
+      }
+    }
+
+    // Apply array-specific native validations
+    if (this.METADATA.dataType === Array) {
+      // Enforce minimum number of array items
+      if (NGN.objectHasAny(cfg, 'min', 'minimum')) {
+        this.METADATA.rules.push(new NGN.DATA.Rule(value => value.length >= NGN.coalesce(cfg.min, cfg.minimum), `${NGN.coalesce(cfg.min, cfg.minimum)} count minimum`))
+      }
+
+      // Enforce maximum number of array items
+      if (NGN.objectHasAny(cfg, 'max', 'maximum')) {
+        this.METADATA.rules.push(new NGN.DATA.Rule(value => value.length <= NGN.coalesce(cfg.max, cfg.maximum), `${NGN.coalesce(cfg.max, cfg.maximum)} count maximum`))
+      }
+
+      /**
+       * @cfg {Array} [unique]
+       * @info This validation attribute applies to #Array fields only.
+       * @warning This is a computationally expensive validation when used in NGN Data Stores.
+       * Validates that all items are unique.
+       */
+      if (NGN.coalesce(cfg.unique, false)) {
+        this.METADATA.rules.push(new NGN.DATA.Rule(value => NGN.dedupe(value).length === value.length, 'Unique value constraint'))
+      }
+
+      /**
+       * @cfg {any} [listType]
+       * @info This validation attribute applies to #Array fields only.
+       * Require each element of the array to conform to the specified data
+       * type. For example, setting `listType: Number` will validate that
+       * each element of the array is a number.
+       *
+       * ```js
+       * [1, 2, 3, 4, 5] // Valid
+       * [1, 2, 'three', 4, 5] // Invalid
+       * ```
+       */
+      if (cfg.hasOwnProperty('listType')) {
+        this.METADATA.rules.push(new NGN.DATA.Rule(value => {
+          for (let i = 0; i < value.length; i++) {
+            if (NGN.typeof(value[i]) !== NGN.typeof(cfg.listType)) {
+              return false
+            }
+          }
+
+          return true
+        }, `${NGN.typeof(cfg.listType).toUpperCase()} list type constraint`))
+      }
+
+      /**
+       * @cfg {Array} [tuples]
+       * @info This validation attribute applies to #Array fields only.
+       * @warning This is a computationally expensive validation when used in NGN Data Stores.
+       * Validate each item of an array according to a unique schema.
+       * Each item is a key value object, which supports only the `type` and
+       * `enum` validations.
+       *
+       * For example:
+       *
+       * ```js
+       * {
+       *   tuples: [{
+       *     type: Number
+       *   }, {
+       *     type: String,
+       *     enum: ['a', 'b', 'c']
+       *   }, {
+       *     enum: ['d', 1]
+       *   }]
+       * }
+       * ```
+       * The configuration above will make sure the first array item is a number,
+       * while the second is either `a`, `b`, or `c`, and the third is either
+       * the letter `d` or the number `1`. Only the first three items of the
+       * array will be checked, but there must be at least 3 items.
+       */
+      if (cfg.hasOwnProperty('tuples')) {
+        this.METADATA.rules.push(new NGN.DATA.Rule(value => {
+          if (value.length < cfg.tuples.length) {
+            return false
+          }
+
+          for (let i = 0; i < cfg.tuples.length; i++) {
+            if (cfg.tuples[i].hasOwnProperty('type')) {
+              if (NGN.typeof(value[i]) !== NGN.typeof(cfg.tuples[i].type)) {
+                return false
+              }
+            }
+
+            if (cfg.tuples[i].hasOwnProperty('enum')) {
+              if (cfg.tuples[i].enum.indexOf(value[i]) < 0) {
+                return false
+              }
+            }
+          }
+
+          return true
+        }, 'Tuple constraint'))
       }
     }
 
