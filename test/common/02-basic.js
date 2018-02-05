@@ -658,3 +658,20 @@ test('NGN.createException', function (t) {
 
   t.end()
 })
+
+test('NGN.getType', function (t) {
+  t.ok(NGN.getType('number') === Number, 'Identifies number.')
+  t.ok(NGN.getType('regexp') === RegExp, 'Identifies regexp.')
+  t.ok(NGN.getType('regex') === RegExp, 'Identifies regex w/ warning.')
+  t.ok(NGN.getType('boolean') === Boolean, 'Identifies boolean.')
+  t.ok(NGN.getType('symbol') === Symbol, 'Identifies symbol.')
+  t.ok(NGN.getType('date') === Date, 'Identifies date.')
+  t.ok(NGN.getType('array') === Array, 'Identifies array.')
+  t.ok(NGN.getType('object') === Object, 'Identifies object.')
+  t.ok(NGN.getType('function') === Function, 'Identifies function.')
+  t.ok(NGN.getType('string') === String, 'Identifies string.')
+  t.ok(NGN.getType('nada', String) === String, 'Identifies default type.')
+  t.ok(NGN.getType('nada') === undefined, 'Defaults to undefined when no type is recognized.')
+
+  t.end()
+})

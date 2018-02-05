@@ -1255,6 +1255,57 @@ Object.defineProperties(NGN, {
 
       return new NGN.CustomException(config)
     }
+  }),
+
+  /**
+   * @method getType
+   * Returns the primitive object/function of the specified type.
+   * For example:
+   *
+   * ```js
+   * let type = NGN.getType('number') // Returns Number
+   * let type = NGN.getType('string') // Returns String
+   * ```
+   */
+  getType: NGN.const(function (type, defaultType) {
+    switch (type.trim().toLowerCase()) {
+      case 'number':
+        return Number
+
+      case 'regex':
+        NGN.WARN('regex is not a valid JavaScript type. Using regexp instead.')
+
+      case 'regexp':
+        return RegExp
+
+      case 'boolean':
+        return Boolean
+
+      case 'symbol':
+        return Symbol
+
+      case 'date':
+        return Date
+
+      case 'array':
+        return Array
+
+      case 'object':
+        return Object
+
+      case 'function':
+        return Function
+
+      case 'string':
+        return String
+
+      default:
+        if (defaultType) {
+          return defaultType
+        }
+
+        return undefined
+    }
   })
 })
 

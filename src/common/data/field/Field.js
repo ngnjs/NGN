@@ -53,42 +53,7 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
 
     if (cfg.type === undefined) {
       if (cfg.default) {
-        switch (NGN.typeof(cfg.default)) {
-          case 'number':
-            cfg.type = Number
-            break
-
-          case 'regexp':
-            cfg.type = RegExp
-            break
-
-          case 'boolean':
-            cfg.type = Boolean
-            break
-
-          case 'symbol':
-            cfg.type = Symbol
-            break
-
-          case 'date':
-            cfg.type = Date
-            break
-
-          case 'array':
-            cfg.type = Array
-            break
-
-          case 'object':
-            cfg.type = Object
-            break
-
-          case 'function':
-            cfg.type = cfg.default
-            break
-
-          default:
-            cfg.type = String
-        }
+        cfg.type = NGN.getType(NGN.typeof(cfg.default), String)
       }
     }
 
@@ -505,6 +470,13 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
 
           return true
         }, `${NGN.typeof(cfg.listType).toUpperCase()} list type constraint`))
+      }
+
+      // Support enumerations in array values
+      if (cfg.hasOwnProperty('enum')) {
+        this.METADATA.rules.push(new NGN.DATA.Rule(value => {
+          return cfg.enum.indexOf(value) >= 0
+        }))
       }
 
       /**

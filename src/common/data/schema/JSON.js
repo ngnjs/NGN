@@ -156,7 +156,7 @@ class NGNJSONSchema extends NGN.EventEmitter { // eslint-disable-line no-unused-
           }
 
           // String validation options
-          if (property.type === String || property.type === Number) {
+          if (field.type === String || field.type === Number) {
             if (NGN.coalesce(property.minLength, property.minimum)) {
               field.min = NGN.coalesce(property.minLength, property.minimum)
             }
@@ -177,6 +177,35 @@ class NGNJSONSchema extends NGN.EventEmitter { // eslint-disable-line no-unused-
 
               if (property.exclusiveMaximum) {
                 field.max = (property.exclusiveMaximum - 0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
+              }
+            }
+          }
+
+          // Array validation options
+          if (field.type === Array) {
+            // Support minimum array length
+            if (property.hasOwnProperty('minItems')) {
+              field.min = property.minItems
+            }
+
+            // Support maximum array length
+            if (property.hasOwnProperty('maxItems')) {
+              field.max = property.maxItems
+            }
+
+            if (property.hasOwnProperty('items')) {
+              if (NGN.typeof(property.items) === 'array') {
+                // Apply tuple validation
+                field.tuples = property.items
+              } else {
+                // Apply list validation
+                if (property.items.hasOwnProperty('type')) {
+                  field.listType = NGN.getType(property.items.type)
+                }
+
+                if (property.items.hasOwnProperty('enum')) {
+                  field.enum = property.items.enum
+                }
               }
             }
           }
