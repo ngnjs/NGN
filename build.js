@@ -1,3 +1,4 @@
+const path = require('path')
 const ProductionLine = require('productionline')
 
 class NGNBuilder extends ProductionLine {
@@ -26,20 +27,39 @@ class NGNBuilder extends ProductionLine {
     this.clean()
 
     this.tasks.add(`Generate test files in ${this.output}`, next => {
-      this.walk(this.source).forEach((filepath, i) => {
+      let excluded = []
+      let ui = new this.Table()
+
+      ui.div({
+        text: this.COLORS.subtle('Generated Files:'),
+        padding: [1, 0, 0, 5]
+      })
+
+      console.log(ui.toString())
+
+      this.walk(this.source).forEach(filepath => {
         let content = this.readFileSync(filepath)
 
         // If the file is a partial, exclude it
-        if (exclusion.test(content)) {
+        if (this.exclusion.test(content)) {
           this.PARTIALS[filepath] = content
-          this.highlight(`Excluded ${filepath} (partial)`)
+          excluded.push(this.relativePath(filepath))
         } else {
-          this.writeFileSync(this.output(filepath), this.includePartials(filepath, content))
-          this.info(`  ${i + 1} ==> ${this.relativePath(filepath)}`)
+          this.writeFileSync(this.outputDirectory(filepath), this.includePartials(filepath, content))
+          this.success(`     ${this.relativePath(filepath)}`)
         }
-
-        next()
       })
+
+      ui = new this.Table()
+
+      ui.div({
+        text: this.COLORS.subtle('Partials Identified:') + '\n' + this.COLORS.info(excluded.join('\n')),
+        padding: [1, 0, 1, 5]
+      })
+
+      console.log(ui.toString())
+
+      next()
     })
   }
 
@@ -55,7 +75,7 @@ class NGNBuilder extends ProductionLine {
       }
 
       content = content.replace(tokens[0], this.PARTIALS[filepath])
-      tokens = tokenizer.exec(content)
+      tokens = this.tokenizer.exec(content)
     }
 
     return content
