@@ -19,7 +19,9 @@
     "test:node:tasks": "npm run test:build && tape ./test/common/*-tasks.js | tap-spec && standard --verbose | tap-nyc | snazzy",
     "coverage": "nyc tape ./test/common/*.js | tap-nyc",
     "coverage:report": "nyc report --reporter=html",
-    "cover": "npm run coverage && npm run coverage:report"
+    "cover": "npm run coverage && npm run coverage:report",
+
+    "test:build:2": "node build.js --test"
   },
   "repository": {
     "type": "git",
