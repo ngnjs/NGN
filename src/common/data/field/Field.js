@@ -208,6 +208,7 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
         RAWDATAPLACEHOLDER: EMPTYDATA,
         RAW: EMPTYDATA,
         ENUMERABLE_VALUES: null,
+        REVERSE_ENUMERABLE_VALUES: null,
         IS_NEW: true,
 
         EVENTS: new Set([
@@ -538,6 +539,15 @@ class NGNDataField extends NGN.EventEmitter { // eslint-disable-line
     if (NGN.objectHasAny(cfg, 'enum', 'enumeration')) {
       this.METADATA.ENUMERABLE_VALUES = new Set(NGN.forceArray(NGN.coalesce(cfg.enum, cfg.enumeration)))
       this.METADATA.rules.push(new NGN.DATA.Rule((value) => this.METADATA.ENUMERABLE_VALUES.has(value), 'Enumerable Values'))
+    }
+
+    /**
+     * @cfg {Array} [not]
+     * A "reverse" enumeration, i.e. a list of values this field is **not** allowed to be.
+     */
+    if (NGN.objectHasAny(cfg, 'not', 'notin')) {
+      this.METADATA.REVERSE_ENUMERABLE_VALUES = new Set(NGN.forceArray(NGN.coalesce(cfg.not, cfg.notin)))
+      this.METADATA.rules.push(new NGN.DATA.Rule((value) => !this.METADATA.REVERSE_ENUMERABLE_VALUES.has(value), 'Rejected Values'))
     }
 
     // Check if the field type is an array, which indicates multiple

@@ -1275,7 +1275,7 @@ Object.defineProperties(NGN, {
       case 'regex':
         NGN.WARN('regex is not a valid JavaScript type. Using regexp instead.')
 
-      case 'regexp':
+      case 'regexp':  // eslint-disable-line no-fallthrough
         return RegExp
 
       case 'boolean':

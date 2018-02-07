@@ -35,7 +35,8 @@ test('Data Sanity Checks', function (t) {
 })
 
 test('JSON Schema', function (t) {
-  var schema = new NGN.DATA.JSONSchema('http://json-schema.org/example/calendar.json')
+  var schema = new NGN.DATA.JSONSchema('http://json.schemastore.org/project')
+  // var schema = new NGN.DATA.JSONSchema('http://json-schema.org/example/calendar.json')
 
   schema.getModelDefinitions(definitions => {
     console.log(definitions[0])
@@ -420,6 +421,28 @@ test('JSON Schema', function (t) {
 //
 //   field.value = 'x'
 //   t.ok(!field.valid, 'A value outside the enumeration set is marked as invalid.')
+//
+//   t.end()
+// })
+//
+// test('NGN.DATA.Field (Rejected Values)', function (t) {
+//   var field = new NGN.DATA.Field({
+//     name: 'enumfield',
+//     type: String,
+//     not: [
+//       'a',
+//       'b'
+//     ],
+//     allowInvalid: true
+//   })
+//
+//   t.ok(field.METADATA.rules.length === 2, 'Rejection match configured as part of the validation rules.')
+//
+//   field.value = 'b'
+//   t.ok(!field.valid, 'A value within the enumeration set is marked as invalid.')
+//
+//   field.value = 'x'
+//   t.ok(field.valid, 'A value outside the enumeration set is marked as valid.')
 //
 //   t.end()
 // })

@@ -21,13 +21,13 @@ class NGNJSONSchema extends NGN.EventEmitter { // eslint-disable-line no-unused-
     Object.defineProperties(this, {
       METADATA: NGN.private({
         schema,
-        NET: NGN.coalesce(NetworkResource, NGN.NET),
         ID: null,
         name: null
       }),
 
       PRIVATE: NGN.privateconst({
         MODELS: null,
+        NET: NGN.coalesce(NetworkResource, NGN.NET),
 
         parsed: false,
 
@@ -54,6 +54,11 @@ class NGNJSONSchema extends NGN.EventEmitter { // eslint-disable-line no-unused-
           // Add description
           if (property.description) {
             field.description = property.description
+          }
+
+          // Add default
+          if (property.default) {
+            field.default = property.default
           }
 
           if (!property.$ref) {
@@ -236,93 +241,139 @@ class NGNJSONSchema extends NGN.EventEmitter { // eslint-disable-line no-unused-
           if (data.type === 'object') {
             let name = NGN.coalesce(data.name, this.name, 'Untitled')
 
-            if (data.$schema && name === null && this.METADATA.URL) {
+            if (data.hasOwnProperty('$schema') && name === null && this.METADATA.URL) {
               name = this.METADATA.URL.split(/\/|\\/).pop().replace('.json', '')
-            }
-
-            // Flag the ID for the schema
-            if (data.$schema) {
-              this.METADATA.ID = data.$schema
             }
 
             // Configure the basic model
             let model = {
               name,
-              description: NGN.coalesce(data.description, 'No description.')
+              description: NGN.coalesce(data.description, 'No description.'),
+              fields: {}
             }
 
-            // If the schema specifies dependencies, it is specifying a set of
-            // rules requiring the existance and non-empty value of additional
-            // fields. Create NGN.DATA.Rule sets to support this.
-            if (data.dependencies) {
-              Object.keys(data.dependencies).forEach(dependency => {
-                let requiredFields = null
-                let dep = data.dependencies[dependency]
-
-                if (NGN.typeof(dep) === 'array') {
-                  // Simple property dependencies
-                  requiredFields = dep
-                } else if (dep.hasOwnProperty('required')) {
-                  // Schema dependencies
-                  requiredFields = dep.required
-                }
-
-                // Add all valid dependencies as rules
-                if (requiredFields !== null) {
-                  model.rules[`${dependency} dependency on "${requiredFields.join(', ')}"`] = function () {
-                    if (NGN.coalesce(this[dependency]) !== null) {
-                      for (let i = 0; i < requiredFields.length; i++) {
-                        if (NGN.coalesce(this[requiredFields[i]]) === null) {
-                          return false
-                        }
-                      }
-                    }
-
-                    return true
-                  }
-                }
-              })
+            // Flag the ID for the schema
+            if (data.hasOwnProperty('$schema')) {
+              this.METADATA.ID = NGN.coalesce(data.$id, data.$schema)
             }
 
-            // Identify the fields
-            let properties = Object.keys(data.properties)
+            // Queue the tasks since several are async but sequential
             let tasks = new NGN.Tasks()
 
-            if (properties.length > 0) {
-              model.fields = {}
+            // If the allOf attribute exists, the schema is extending another.
+            // Extract the subschema before continuing.
+            if (data.hasOwnProperty('allOf')) {
+              for (let i = 0; i < data.allOf.length; i++) {
+                tasks.add(`Identify base schema: ${data.allOf}`, cont => {
+                  let URI = NGN.coalesce(data.allOf[i].$ref, data.allOf[i].$schema)
 
-              for (let i = 0; i < properties.length; i++) {
-                let propertyName = properties[i]
-                let property = data.properties[propertyName]
+                  if (URI !== null) {
+                    // When a URI is specified, retrieve the remote schema
+                    let baseSchema = new NGN.DATA.JSONSchema(URI)
 
-                model.fields[propertyName] = this.PRIVATE.extractCommonPropertyAttributes(property, models)
+                    baseSchema.getModelDefinitions(definitions => {
+                      let coreModel = definitions.pop()
 
-                // If this is a subschema, retrieve it.
-                if (property.$ref) {
-                  tasks.add(next => {
-                    let nestedModel = new NGN.DATA.JSONSchema(property.$ref)
+                      Object.assign(model.fields, coreModel.fields)
 
-                    nestedModel.getModelDefinitions(definitions => {
-                      models = definitions.concat(models)
-
-                      model.fields[propertyName] = {
-                        $model: definitions[definitions.length - 1].name
+                      // If the nested schema has additional models, apply them.
+                      if (definitions.length > 0) {
+                        models = definitions.concat(models)
                       }
 
-                      next()
-                    })
-                  })
-                }
+                      this.METADATA.name = NGN.coalesce(this.METADATA.name, coreModel.name)
 
-                model.fields[propertyName].required = NGN.coalesce(data.required, '').indexOf(propertyName) >= 0
+                      cont()
+                    })
+                  } else if (data.allOf[i].hasOwnProperty('properties')) {
+                    // Handle additional properties
+                    let additionalProperties = Object.keys(data.allOf[i].properties)
+
+                    for (let prop = 0; prop < additionalProperties.length; prop++) {
+                      model.fields[additionalProperties[prop]] = this.extractCommonPropertyAttributes(data.allOf[i].properties[additionalProperties[prop]])
+                    }
+
+                    cont()
+                  }
+                })
               }
             }
 
-            tasks.on('complete', () => {
-              models.push(model)
-              callback(models)
+            tasks.add('Identify attributes', cont => {
+              // If the schema specifies dependencies, it is specifying a set of
+              // rules requiring the existance and non-empty value of additional
+              // fields. Create NGN.DATA.Rule sets to support this.
+              if (data.hasOwnProperty('dependencies')) {
+                Object.keys(data.dependencies).forEach(dependency => {
+                  let requiredFields = null
+                  let dep = data.dependencies[dependency]
+
+                  if (NGN.typeof(dep) === 'array') {
+                    // Simple property dependencies
+                    requiredFields = dep
+                  } else if (dep.hasOwnProperty('required')) {
+                    // Schema dependencies
+                    requiredFields = dep.required
+                  }
+
+                  // Add all valid dependencies as rules
+                  if (requiredFields !== null) {
+                    model.rules[`${dependency} dependency on "${requiredFields.join(', ')}"`] = function () {
+                      if (NGN.coalesce(this[dependency]) !== null) {
+                        for (let i = 0; i < requiredFields.length; i++) {
+                          if (NGN.coalesce(this[requiredFields[i]]) === null) {
+                            return false
+                          }
+                        }
+                      }
+
+                      return true
+                    }
+                  }
+                })
+              }
+
+              // Identify the fields
+              let properties = Object.keys(data.properties)
+              let subtasks = new NGN.Tasks()
+
+              if (properties.length > 0) {
+                for (let i = 0; i < properties.length; i++) {
+                  let propertyName = properties[i]
+                  let property = data.properties[propertyName]
+
+                  model.fields[propertyName] = this.PRIVATE.extractCommonPropertyAttributes(property, models)
+
+                  // If this is a subschema, retrieve it.
+                  if (property.$ref) {
+                    subtasks.add(next => {
+                      let nestedModel = new NGN.DATA.JSONSchema(property.$ref)
+
+                      nestedModel.getModelDefinitions(definitions => {
+                        models = definitions.concat(models)
+
+                        model.fields[propertyName] = {
+                          $model: definitions[definitions.length - 1].name
+                        }
+
+                        next()
+                      })
+                    })
+                  }
+
+                  model.fields[propertyName].required = NGN.coalesce(data.required, '').indexOf(propertyName) >= 0
+                }
+              }
+
+              subtasks.on('complete', () => {
+                models.push(model)
+                cont()
+              })
+
+              subtasks.run(true)
             })
 
+            tasks.on('complete', () => callback(models))
             tasks.run(true)
           } else {
             callback(models)
@@ -341,7 +392,7 @@ class NGNJSONSchema extends NGN.EventEmitter { // eslint-disable-line no-unused-
       case 'string':
         // If schema is actually a URL, retrieve it.
         this.METADATA.URL = schema
-        this.METADATA.NET.json(schema, (err, schema) => {
+        this.PRIVATE.NET.json(schema, (err, schema) => {
           if (err) {
             throw err
           }
@@ -375,13 +426,13 @@ class NGNJSONSchema extends NGN.EventEmitter { // eslint-disable-line no-unused-
       return id
     }
 
-    let root = NGN.coalesce(this.METADATA.NET.baseUrl, (
+    let root = NGN.coalesce(this.PRIVATE.NET.baseUrl, (
       NGN.nodelike
         ? `http://${require('os').hostname()}`
         : window.location.origin
     ))
 
-    this.METADATA.ID = this.METADATA.NET.normalizeUrl(`${root}/${NGN.coalesce(this.name, 'untitled').toLowerCase()}.json`)
+    this.METADATA.ID = this.PRIVATE.NET.normalizeUrl(`${root}/${NGN.coalesce(this.name, 'untitled').toLowerCase()}.json`)
 
     return this.METADATA.ID
   }
