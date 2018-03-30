@@ -1,5 +1,5 @@
 const path = require('path')
-const ProductionLine = require('productionline')
+const ProductionLine = require('productionline-web')
 
 class NGNBuilder extends ProductionLine {
   constructor () {
@@ -8,14 +8,9 @@ class NGNBuilder extends ProductionLine {
     // Override standard source
     this.source = path.resolve('./src/common')
 
-    // Create a header with attribution.
-    this.header = `v${this.version} generated on: ${(new Date())}\n` +
-      `Copyright (c) 2014-${(new Date()).getFullYear()}` +
-      `, ${this.author} and contributors. All Rights Reserved. License: ${this.package.license}.`
-
     // Tokenizers
-    this.tokenizer = /\/\/\s{0,30}\[INCLUDE\:\s{0,30}(.*)\]/i
-    this.exclusion = /\/\/\s{0,30}\[PARTIAL\](.*)/im
+    this.tokenizer = /\/\/\s+\[INCLUDE\:\s+(.*)\]/i
+    this.exclusion = /\/\/\s+\[PARTIAL\](.*)/im
 
     // Hold partial files
     this.PARTIALS = {}
@@ -24,9 +19,9 @@ class NGNBuilder extends ProductionLine {
   testBuild () {
     this.output = path.resolve('./test/lib')
 
-    this.clean()
+    this.addTask('Clean', () => this.clean())
 
-    this.tasks.add(`Generate test files in ${this.output}`, next => {
+    this.addTask(`Generate test files in ${this.output}`, next => {
       let excluded = []
       let ui = new this.Table()
 
@@ -71,10 +66,25 @@ class NGNBuilder extends ProductionLine {
       let filepath = path.join(path.dirname(file), tokens[1])
 
       if (!this.PARTIALS.hasOwnProperty(filepath)) {
-        this.PARTIALS[filepath] = this.readFileSync(filepath)
+        this.PARTIALS[filepath] = {
+          content: this.readFileSync(filepath)
+        }
+
+        if (this.sourcemapurl) {
+          let generator = new SourceMapper.SourceMapGenerator({
+            file: path.basename(filepath),
+            sourceRoot: `${path.join(this.sourcemapurl, path.dirname(this.relativePath(filepath)))}`
+          })
+
+          generator.setSourceContent(this.relativePath(filepath), this.PARTIALS[filepath].content)
+
+          this.PARTIALS[filepath].sourcemap = generator.toString()
+        }
       }
 
-      content = content.replace(tokens[0], this.PARTIALS[filepath])
+      console.log(filepath, this.PARTIALS[filepath].sourcemap)
+
+      content = content.replace(tokens[0], this.includePartials(file, this.PARTIALS[filepath].content))
       tokens = this.tokenizer.exec(content)
     }
 

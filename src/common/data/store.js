@@ -1,5 +1,10 @@
 // [PARTIAL]
 
+NGN.createException({
+  name: 'NGNDuplicateRecordError',
+  message: 'A duplicate record exists within the unique data set.'
+})
+
 /**
  * @class NGN.DATA.Store
  * Represents a collection of data.
@@ -293,6 +298,8 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
 
       // Internal attributes that should not be extended.
       PRIVATE: NGN.privateconst({
+        STUB: Symbol('record.stub'),
+
         // A private indexing method
         INDEX: function (record, delta) {
           if (typeof this.event === 'symbol') {
@@ -387,6 +394,96 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
           }
 
           return NGN.typeof(NGN.coalesce(metaconfig.fields[field]))
+        },
+
+        // Add a record
+        addRecord: (data, suppressEvents = false) => {
+          const record = new me.METADATA.Model(data)
+
+          if (!(record instanceof NGN.DATA.Entity)) {
+            throw new Error(`Only a NGN.DATA.Model or JSON object may be used in NGN.DATA.Store#add. Received a "${NGN.typeof(data)}" value.`)
+          }
+
+          // Prevent invalid record addition (if configured)
+          if (!me.METADATA.allowInvalid && !record.valid) {
+            NGN.WARN(`An attempt to add invalid data to the "${this.name}" store was prevented. The following fields are invalid: ${Array.from(record.METADATA.invalidFieldNames.keys()).join(', ')}`)
+
+            if (!suppressEvents) {
+              this.emit('record.invalid', record)
+            }
+
+            if (this.METADATA.errorOnInvalid) {
+              throw new Error(`Invalid data cannot be added to the "${this.name}" store.`)
+            }
+          }
+
+          // If duplicates are prevented, check the new data.
+          if (!me.METADATA.allowDuplicates) {
+            for (let i = 0; i < this.METADATA.records.length; i++) {
+              if (this.METADATA.records[i].checksum === record.checksum) {
+                NGN.WARN(`An attempt to add a duplicate record to the "${this.name}" store was prevented.`)
+
+                if (!suppressEvents) {
+                  this.emit('record.duplicate', record)
+                }
+
+                if (this.METADATA.errorOnDuplicate) {
+                  throw new Error(`Duplicate records are not allowed in the "${this.name}" data store.`)
+                }
+
+                break
+              }
+            }
+          }
+
+          // Handle special record count processing (LIFO/FIFO support)
+          if (me.METADATA.lifo > 0 && me.METADATA.records.length + 1 > me.METADATA.lifo) {
+            me.remove(me.METADATA.records.length - 1, suppressEvents)
+          } else if (this.METADATA.fifo > 0 && me.METADATA.records.length + 1 > me.METADATA.fifo) {
+            me.remove(0, suppressEvents)
+          }
+
+          // Relay model events to this store.
+          // record.relay('*', this, 'record.')
+          record.on('*', function () {
+            switch (this.event) {
+              // case 'field.update':
+              // case 'field.delete':
+              //   // TODO: Update indices
+              //   return
+
+              case 'field.invalid':
+              case 'field.valid':
+                return me.emit(this.event.replace('field.', 'record.'), record)
+
+              case 'expired':
+                // TODO: Handle expiration
+            }
+          })
+
+          delete record.METADATA.store
+          Object.defineProperty(record.METADATA, 'store', NGN.get(() => me))
+
+          // Indexing is handled in an internal event handler
+          me.METADATA.records.push(record)
+
+          // Add the record to the map for efficient retrievel by OID
+          me.PRIVATE.RECORDMAP.set(record.OID, me.METADATA.records.length - 1)
+
+          return record
+        },
+
+        convertStubToRecord: (index, record) => {
+          if (record.hasOwnProperty(this.PRIVATE.STUB)) {
+            let newRecord = this.PRIVATE.addRecord(record.metadata, false)
+            newRecord.OID = record.OID
+
+            this.METADATA.records[index] = newRecord
+
+            return newRecord
+          } else {
+            return record
+          }
         }
       }),
 
@@ -497,7 +594,10 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
    * if the store is empty.
    */
   get first () {
-    return NGN.coalesce(this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
+    let record = NGN.coalesce(this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
+
+    return this.PRIVATE.convertStubToRecord(this.METADATA.FIRSTRECORDINDEX, record)
+    // return NGN.coalesce(this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
   }
 
   /**
@@ -506,7 +606,9 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
    * if the store is empty.
    */
   get last () {
-    return NGN.coalesce(this.METADATA.records[this.METADATA.LASTRECORDINDEX])
+    let record = NGN.coalesce(this.METADATA.records[this.METADATA.LASTRECORDINDEX])
+
+    return this.PRIVATE.convertStubToRecord(this.METADATA.LASTRECORDINDEX, record)
   }
 
   /**
@@ -516,12 +618,52 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
    * a representation of data containing virtual fields.
    */
   get data () {
-    const result = []
     const recordList = this.PRIVATE.ACTIVERECORDS
 
+    // If no records exist, skip
+    if (recordList.size === 0) {
+      return []
+    }
+
+    let rec = this.PRIVATE.convertStubToRecord(this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
+
+    if (this.METADATA.MAP === null) {
+      this.METADATA.MAP = NGN.coalesce(rec.MAP)
+    }
+
+    let defaults = null
+
+    if (rec instanceof NGN.DATA.Entity) {
+      let fieldDefinitions = rec.fieldDefinitions
+      let fields = Object.keys(fieldDefinitions)
+
+      defaults = {}
+
+      fields.forEach(field => {
+        if (!fieldDefinitions[field].hidden && !fieldDefinitions[field].virtual) {
+          defaults[field] = fieldDefinitions[field].default
+        }
+      })
+    }
+
+    const result = []
+
+    // Iterate through set
     recordList.forEach(index => {
       if (this.METADATA.records[index] !== null) {
-        result.push(this.METADATA.records[index].data)
+        // If the value is a stub, map it.
+        if (this.METADATA.records[index].hasOwnProperty(this.PRIVATE.STUB)) {
+          let applicableData = Object.assign({}, defaults)
+          let data = Object.assign(applicableData, this.METADATA.records[index].metadata)
+
+          if (this.METADATA.MAP !== null) {
+            result.push(this.METADATA.MAP.applyInverseMap(data))
+          } else {
+            result.push(data)
+          }
+        } else {
+          result.push(this.METADATA.records[index].data)
+        }
       }
     })
 
@@ -573,6 +715,10 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   //   }
   // }
 
+  get map () {
+    return this.METADATA.MAP
+  }
+
   /**
    * @property {array} indexedFieldNames
    * An array of the field names for which the store maintains indexes.
@@ -601,10 +747,10 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   add (data, suppressEvents = false) {
     // Support array input
     if (NGN.typeof(data) === 'array') {
-      let result = []
+      let result = new Array(data.length)
 
       for (let i = 0; i < data.length; i++) {
-        result.push(this.add(data[i]))
+        result[i] = this.add(data[i], suppressEvents)
       }
 
       return result
@@ -628,78 +774,7 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
       data = data.data
     }
 
-    const record = new this.METADATA.Model(data)
-
-    if (!(record instanceof NGN.DATA.Entity)) {
-      throw new Error(`Only a NGN.DATA.Model or JSON object may be used in NGN.DATA.Store#add. Received a "${NGN.typeof(data)}" value.`)
-    }
-
-    // Prevent invalid record addition (if configured)
-    if (!this.METADATA.allowInvalid && !record.valid) {
-      NGN.WARN(`An attempt to add invalid data to the "${this.name}" store was prevented. The following fields are invalid: ${Array.from(record.METADATA.invalidFieldNames.keys()).join(', ')}`)
-
-      if (!suppressEvents) {
-        this.emit('record.invalid', record)
-      }
-
-      if (this.METADATA.errorOnInvalid) {
-        throw new Error(`Invalid data cannot be added to the "${this.name}" store.`)
-      }
-    }
-
-    // If duplicates are prevented, check the new data.
-    if (!this.METADATA.allowDuplicates) {
-      for (let i = 0; i < this.METADATA.records.length; i++) {
-        if (this.METADATA.records[i].checksum === record.checksum) {
-          NGN.WARN(`An attempt to add a duplicate record to the "${this.name}" store was prevented.`)
-
-          if (!suppressEvents) {
-            this.emit('record.duplicate', record)
-          }
-
-          if (this.METADATA.errorOnDuplicate) {
-            throw new Error(`Duplicate records are not allowed in the "${this.name}" data store.`)
-          }
-
-          break
-        }
-      }
-    }
-
-    // Handle special record count processing (LIFO/FIFO support)
-    if (this.METADATA.lifo > 0 && this.METADATA.records.length + 1 > this.METADATA.lifo) {
-      this.remove(this.METADATA.records.length - 1, suppressEvents)
-    } else if (this.METADATA.fifo > 0 && this.METADATA.records.length + 1 > this.METADATA.fifo) {
-      this.remove(0, suppressEvents)
-    }
-
-    // Relay model events to this store.
-    // record.relay('*', this, 'record.')
-    const me = this
-    record.on('*', function () {
-      switch (this.event) {
-        // case 'field.update':
-        // case 'field.delete':
-        //   // TODO: Update indices
-        //   return
-
-        case 'field.invalid':
-        case 'field.valid':
-          return me.emit(this.event.replace('field.', 'record.'), record)
-
-        case 'expired':
-          // TODO: Handle expiration
-      }
-    })
-
-    delete record.METADATA.store
-    Object.defineProperty(record.METADATA, 'store', NGN.get(() => this))
-
-    // Indexing is handled in an internal event handler
-    this.METADATA.records.push(record)
-
-    // Add the record to the map for efficient retrievel by OID
-    this.PRIVATE.RECORDMAP.set(record.OID, this.METADATA.records.length - 1)
+    const record = this.PRIVATE.addRecord(data)
 
     // TODO: Apply filters to new record before identifying the last record.
     this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
@@ -741,10 +816,10 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
 
     // Support removal of simultaneously removing multiple records
     if (NGN.typeof(record) === 'array') {
-      let result = []
+      let result = new Array(record.length)
 
       for (let i = 0; i < record.length; i++) {
-        result.push(this.remove(record[i]))
+        result[i] = this.remove(record[i])
       }
 
       return result
@@ -1078,11 +1153,11 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
    */
   getIndexRecords (field, value) {
     if (this.METADATA.INDEX && this.METADATA.INDEX.hasOwnProperty(field)) {
-      let result = []
       let oid = this.METADATA.INDEX[field].recordsFor(value)
+      let result = new Array(oid.length)
 
       for (let i = 0; i < oid.length; i++) {
-        result.push(this.METADATA.records[this.PRIVATE.RECORDMAP.get(oid[i])])
+        result[i] = this.METADATA.records[this.PRIVATE.RECORDMAP.get(oid[i])]
       }
 
       return result
@@ -1230,6 +1305,53 @@ class NGNDataStore extends NGN.EventEmitter { // eslint-disable-line
   }
 
   load (data) {
+    console.time('load')
+    let insertableData
+
+    // Guarantee unique records amongst only the new records
+    if (!this.METADATA.allowDuplicates) {
+      let uniqueValues = new Set()
+
+      insertableData = []
+
+      for (let i = 0; i < data.length; i++) {
+        if (!uniqueValues.has(JSON.stringify(data[i]))) {
+          uniqueValues.add(JSON.stringify(data[i]))
+          insertableData.push(data[i])
+        } else if (this.METADATA.errorOnDuplicate) {
+          throw new NGNDuplicateRecordError()
+        }
+      }
+    } else {
+      insertableData = data
+    }
+
+    let newRecordCount = insertableData.length + this.METADATA.records.length
+
+    // Don't exceed the maximum record count if it exists.
+    if (this.METADATA.maxRecords > 0 && newRecordCount > this.METADATA.maxRecords) {
+      throw new Error('Maximum record count exceeded.')
+    }
+
+    if (newRecordCount > 4000000) {
+      throw new Error('Maximum load size exceeded. A store may contain a maximum of 4M records.')
+    }
+
+    for (let i = 0; i < insertableData.length; i++) {
+      let oid = Symbol('model.id')
+      this.METADATA.records.push({
+        [this.PRIVATE.STUB]: true,
+        OID: oid,
+        metadata: insertableData[i]
+      })
+
+      // Add the record to the map for efficient retrievel by OID
+      this.PRIVATE.RECORDMAP.set(oid, this.METADATA.records.length - 1)
+    }
+
+    // TODO: Apply filters to new record before identifying the last record.
+    this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
+
     // this.emit(this.PRIVATE.EVENT.LOAD_RECORDS)
   }
 

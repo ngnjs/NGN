@@ -18,11 +18,11 @@
       throw new Error('Model must be configured.')
     }
 
-    let Model = function (data) {
+    let Model = function (data, suppressEvents = false) {
       let Entity = new NGN.DATA.Entity(cfg)
 
       if (data) {
-        Entity.load(data)
+        Entity.load(data, suppressEvents)
       }
 
       return Entity

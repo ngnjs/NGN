@@ -38,7 +38,7 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
        * internal readon-only reference.
        * @private
        */
-      OID: NGN.privateconst(Symbol('model.id')),
+      OID: NGN.private(Symbol('model.id')),
 
       METADATA: NGN.privateconst({
         /**
@@ -736,6 +736,40 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
     return this.METADATA.expiration <= (new Date())
   }
 
+  get fieldDefinitions () {
+    return this.METADATA.fields
+    // if (this.METADATA.knownFieldNames.size === 0) {
+    //   return {}
+    // }
+    //
+    // let fields = this.METADATA.knownFieldNames.keys()
+    // let result = {}
+    // let fieldname = fields.next()
+    //
+    // while (!fieldname.done) {
+    //   let field = this.METADATA.fields[fieldname.value]
+    //
+    //   if ((
+    //     field.value === undefined ||
+    //     (ignoreID && fieldname.value === this.IdentificationField) ||
+    //     (!field.virtual || (!ignoreVirtualFields && field.virtual))
+    //   )) {
+    //     // Do not serialize hidden values or virtuals
+    //     if (!field.hidden) {
+    //       switch (NGN.typeof(field.value)) {
+    //         case 'array':
+    //         case 'object':
+    //           result[fieldname.value] = NGN.DATA.UTILITY.serialize(field.value)
+    //           break
+    //
+    //         default:
+    //           result[fieldname.value] = field.value
+    //       }
+    //     }
+    //   }
+    // }
+  }
+
   serializeFields (ignoreID = false, ignoreVirtualFields = true) {
     if (this.METADATA.knownFieldNames.size === 0) {
       return {}
@@ -750,7 +784,6 @@ class NGNDataEntity extends NGN.EventEmitter { // eslint-disable-line
 
       // Ignore unserializable fields
       if ((
-
         field.value === undefined ||
         (ignoreID && fieldname.value === this.IdentificationField) ||
         (!field.virtual || (!ignoreVirtualFields && field.virtual))

@@ -23,7 +23,7 @@ test('NGN.define', function (t) {
   t.ok(isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.define creates an enumerable property.')
 
   obj.test = 'changed'
-  t.ok(obj.test === 'changed', 'NGN.define writable property can be changed.')
+  t.ok(obj.test === 'changedx', 'NGN.define writable property can be changed.')
 
   delete obj.test
   t.ok(!obj.hasOwnProperty('test'), 'NGN.define configurable property can be deleted.')
