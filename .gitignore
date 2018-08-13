@@ -10,3 +10,5 @@ test/lib
 !.gitignore
 !.npmignore
 !.codeclimate.yml
+dist
+out

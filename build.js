@@ -1,108 +1,150 @@
 const path = require('path')
-const ProductionLine = require('productionline-web')
+const ProductionLine = require('productionline')
+const fs = require('fs')
+const Parser = require('cherow')
+const traverse = require('traverse')
 
-class NGNBuilder extends ProductionLine {
-  constructor () {
-    super()
+class Generator extends ProductionLine {
+  constructor (cfg) {
+    // Remove assets (since there aren't any)
+    cfg.assets = []
 
     // Override standard source
-    this.source = path.resolve('./src/common')
+    cfg.source = path.resolve('./src')
 
-    // Tokenizers
-    this.tokenizer = /\/\/\s+\[INCLUDE\:\s+(.*)\]/i
-    this.exclusion = /\/\/\s+\[PARTIAL\](.*)/im
+    // Inherit from super class
+    super(cfg)
 
-    // Hold partial files
-    this.PARTIALS = {}
+    this.FILES = {}
+
+    this.DATA = {
+      globals: [],
+      classes: {},
+      exceptions: {},
+      requires: {}
+    }
+
+    this.STANDARD_OPTIONS = {
+      loc: true,
+      ranges: true,
+      skipShebang: true,
+      next: true,
+      jsx: false,
+      module: true
+      // tolerant: true
+    }
+
+    this.on('global.variable', name => {
+      if (this.DATA.globals.indexOf(name) < 0) {
+        this.DATA.globals.push(name)
+      }
+    })
   }
 
-  testBuild () {
-    this.output = path.resolve('./test/lib')
+  lineAtToken (content, token) {
+    let lines = []
+    let lastLine = content.split(/\r|\n/).reduce((line, currentLine, index) => {
+      if (line === 0 && currentLine.indexOf(token) >= 0) {
+        line = index + 1
+        lines.push(line)
+      }
 
-    this.addTask('Clean', () => this.clean())
+      return line
+    }, 0)
 
-    this.addTask(`Generate test files in ${this.output}`, next => {
-      let excluded = []
-      let ui = new this.Table()
+    return lines
+  }
 
-      ui.div({
-        text: this.COLORS.subtle('Generated Files:'),
-        padding: [1, 0, 0, 5]
-      })
+  parseFile (file) {
+    let source = new this.File(file)
+    let ast = Parser.parse(source.content, this.STANDARD_OPTIONS)
 
-      console.log(ui.toString())
+    traverse(ast).reduce((x, node) => {
+      if (Array.isArray(node)) {
 
-      this.walk(this.source).forEach(filepath => {
-        let content = this.readFileSync(filepath)
+      } else if (node.hasOwnProperty('type')) {
+        switch (node.type.toLowerCase()) {
+          case 'classdeclaration':
+            console.log(node)
+            break
+//             // let Class = new ClassSnippet({
+//             //   comments: this.FILES[file].comments
+//             // })
+// console.log('class')
+//             break
+//
+//           case 'identifier':
+//             // Identify NGN custom exceptions
+//             if (node.name === 'createException' && node.parent.node.type.toLowerCase() === 'memberexpression' && node.parent.node.object && node.parent.node.object.name === 'NGN') {
+// console.log('Process custom exception')
+//               // let CustomException = new ExceptionSnippet()
+//               //
+//               // CustomException.parse(parent)
+//               //
+//               // if (this.DATA.exceptions.hasOwnProperty(CustomException.name)) {
+//               //   this.warn(`Duplicate ${CustomException.name} defined at ${file}:${CustomException.start.line},${CustomException.start.column}`)
+//               // } else {
+//               //   CustomException.code = this.FILES[file].source.getSnippet(CustomException.start.line, CustomException.end.line).substr(CustomException.start.column)
+//               //
+//               //   this.DATA.exceptions[CustomException.name] = CustomException.json
+//               // }
+//             }
+//
+//             // Identify global variables
+//             if ((node.name === 'window' || node.name === 'global') && node.parent.parent.key === 'expression' && node.parent.key === 'left') {
+//               this.emit('global.variable', node.parent.node.property.name)
+//             }
+//
+//             break
+        }
+      }
+    }, {})
+    // ast.body.forEach(snippet => console.log(snippet))
+  }
 
-        // If the file is a partial, exclude it
-        if (this.exclusion.test(content)) {
-          this.PARTIALS[filepath] = content
-          excluded.push(this.relativePath(filepath))
-        } else {
-          this.writeFileSync(this.outputDirectory(filepath), this.includePartials(filepath, content))
-          this.success(`     ${this.relativePath(filepath)}`)
+  createJson () {
+    this.addTask('Generate JSON', next => {
+      this.walk(this.source).forEach((file, i) => {
+        if (i === 3) {
+          this.parseFile(file)
         }
       })
-
-      ui = new this.Table()
-
-      ui.div({
-        text: this.COLORS.subtle('Partials Identified:') + '\n' + this.COLORS.info(excluded.join('\n')),
-        padding: [1, 0, 1, 5]
-      })
-
-      console.log(ui.toString())
 
       next()
     })
   }
-
-  includePartials (file, content) {
-    let tokens = this.tokenizer.exec(content)
-
-    // Replace all tokens
-    while (tokens) {
-      let filepath = path.join(path.dirname(file), tokens[1])
-
-      if (!this.PARTIALS.hasOwnProperty(filepath)) {
-        this.PARTIALS[filepath] = {
-          content: this.readFileSync(filepath)
-        }
-
-        if (this.sourcemapurl) {
-          let generator = new SourceMapper.SourceMapGenerator({
-            file: path.basename(filepath),
-            sourceRoot: `${path.join(this.sourcemapurl, path.dirname(this.relativePath(filepath)))}`
-          })
-
-          generator.setSourceContent(this.relativePath(filepath), this.PARTIALS[filepath].content)
-
-          this.PARTIALS[filepath].sourcemap = generator.toString()
-        }
-      }
-
-      console.log(filepath, this.PARTIALS[filepath].sourcemap)
-
-      content = content.replace(tokens[0], this.includePartials(file, this.PARTIALS[filepath].content))
-      tokens = this.tokenizer.exec(content)
-    }
-
-    return content
-  }
 }
 
 // Use the custom builder
-let pipeline = new NGNBuilder()
+const generator = new Generator({
+  commands: {
+    '--docs': () => {
+      generator.output = path.resolve('./docs')
+      generator.createJson()
+    }
+  }
+})
 
-// Command Line Interface
-switch (process.argv[2]) {
-  case '--test':
-    pipeline.testBuild()
-    break
 
-  default:
-    return pipeline.error('No argument specified. Did you mean to run --build?')
-}
-
-pipeline.run()
+generator.run()
+// const BUS = require('events').EventEmitter
+// const Parser = require('cherow')
+//
+// // Data Placeholder
+// const DATA = {
+//   globals: [],
+//   classes: {},
+//   exceptions: {},
+//   requires: {}
+// }
+//
+// // Default Parsing Options
+// const options = {
+//   loc: true,
+//   ranges: true,
+//   skipShebang: true,
+//   next: true,
+//   jsx: false
+//   // tolerant: true
+// }
+//

@@ -1,13 +1,11 @@
-const test = require('tape')
+const test = require('tap').test
 const TaskRunner = require('shortbus')
 const uri = require('../../package.json').endpoints
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/core')
-require('../lib/eventemitter')
-require('../lib/net/bootstrap')
+require('../lib/ngn')
 
 test('NGN.NET Sanity Checks', function (t) {
   t.ok(NGN.NET !== undefined, 'NGN.NET namespace exists')

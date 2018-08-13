@@ -1,15 +1,10 @@
-const test = require('tape')
+const test = require('tap').test
 const TaskRunner = require('shortbus')
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/core')
-require('../lib/eventemitter')
-require('../lib/utility/bootstrap')
-require('../lib/tasks/bootstrap')
-require('../lib/net/bootstrap')
-require('../lib/data/bootstrap')
+require('../lib/ngn')
 
 NGN.BUS.on(NGN.WARNING_EVENT, function (msg) {
   console.log('\n\n\n\n:::WARNING:::', msg)
@@ -1471,10 +1466,13 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
   //   next()
   // })
 
+  var timer
   tasks.add('Performance Benchmark: Bulk Load', function (next) {
     GoodStore.clear()
 
-    t.timeoutAfter(1000)
+    timer = setTimeout(function () {
+      t.fail('Bulk load did not complete in a timely manner.')
+    }, 1000)
 
     // console.time('Build Test Data')
     var count = 200000
@@ -1509,7 +1507,11 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
   // TODO: Invalid/valid field events for store records
   // TODO: Undo/Redo
 
-  tasks.on('complete', t.end)
+  tasks.on('complete', function () {
+    clearTimeout(timer)
+    t.end()
+  })
+
   tasks.run(true)
 })
 

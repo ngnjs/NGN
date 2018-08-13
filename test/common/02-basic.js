@@ -1,14 +1,9 @@
-const test = require('tape')
+const test = require('tap').test
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/core')
-require('../lib/eventemitter')
-require('../lib/net/bootstrap')
-require('../lib/utility/bootstrap')
-require('../lib/data/bootstrap')
-require('../lib/tasks/bootstrap')
+require('../lib/ngn')
 
 const isEnumerable = (obj, property) => {
   return Object.keys(obj).indexOf(property) >= 0
@@ -23,7 +18,7 @@ test('NGN.define', function (t) {
   t.ok(isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.define creates an enumerable property.')
 
   obj.test = 'changed'
-  t.ok(obj.test === 'changedx', 'NGN.define writable property can be changed.')
+  t.ok(obj.test === 'changed', 'NGN.define writable property can be changed.')
 
   delete obj.test
   t.ok(!obj.hasOwnProperty('test'), 'NGN.define configurable property can be deleted.')

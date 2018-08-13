@@ -1,11 +1,10 @@
-const test = require('tape')
+const test = require('tap').test
 const Tasks = require('shortbus')
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/core')
-require('../lib/eventemitter')
+require('../lib/ngn')
 
 test('NGN.EventEmitter Sanity Checks', function (t) {
   t.ok(NGN.EventEmitter !== undefined, 'NGN.EventEmitter exists')

@@ -1,14 +1,14 @@
-const test = require('tape')
+const test = require('tap').test
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/core')
-require('../lib/eventemitter')
-require('../lib/net/bootstrap')
-require('../lib/utility/bootstrap')
-require('../lib/data/bootstrap')
-require('../lib/tasks/bootstrap')
+require('../lib/ngn')
+// require('../lib/eventemitter')
+// require('../lib/net/bootstrap')
+// require('../lib/utility/bootstrap')
+// require('../lib/data/bootstrap')
+// require('../lib/tasks/bootstrap')
 
 test('Namespace', (t) => {
   t.ok(NGN !== undefined, 'NGN namespace is recognized.')
@@ -57,8 +57,8 @@ test('Method Existance', (t) => {
     'objectRequires',
     'needs',
     'createAlias',
-    'CustomExceptionClass',
-    'CustomException',
+    // 'CustomExceptionClass',
+    // 'CustomException',
     'createException',
     'getType',
     'LEDGER_EVENT',
@@ -75,7 +75,8 @@ test('Method Existance', (t) => {
     'NET',
     'DATA',
     'Task',
-    'Tasks',
+    'Tasks', // Deprecated in favor of Queue
+    'Queue',
     'UTILITY'
   ]
 
