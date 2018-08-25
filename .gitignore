@@ -12,3 +12,4 @@ test/lib
 !.codeclimate.yml
 dist
 out
+docs
