@@ -6,6 +6,6 @@ We are currently working on:
 
 - Our documentation generator ([metadoc](https://github.com/author/metadoc))
 - The [productionline](https://github.com/coreybutler/productionline) build tool
-- (Chassis)[https://github.com/ngn-chassis] - our PostCSS layout engine.
+- [Chassis](https://github.com/ngn-chassis) - our PostCSS layout engine.
 - A web component library.
 - [JET NGN](https://github.com/ngn-jet) - the browser framework we built on NGN.
