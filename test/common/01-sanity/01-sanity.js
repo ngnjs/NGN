@@ -3,12 +3,7 @@ const test = require('tap').test
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/ngn')
-// require('../lib/eventemitter')
-// require('../lib/net/bootstrap')
-// require('../lib/utility/bootstrap')
-// require('../lib/data/bootstrap')
-// require('../lib/tasks/bootstrap')
+require('../../lib/ngn')
 
 test('Namespace', (t) => {
   t.ok(NGN !== undefined, 'NGN namespace is recognized.')

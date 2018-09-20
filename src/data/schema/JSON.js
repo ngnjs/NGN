@@ -258,7 +258,7 @@ export default class NGNJSONSchema extends EventEmitter { // eslint-disable-line
             }
 
             // Queue the tasks since several are async but sequential
-            let tasks = new NGN.Tasks()
+            let tasks = new NGN.Queue()
 
             // If the allOf attribute exists, the schema is extending another.
             // Extract the subschema before continuing.
@@ -335,7 +335,7 @@ export default class NGNJSONSchema extends EventEmitter { // eslint-disable-line
 
               // Identify the fields
               let properties = Object.keys(data.properties)
-              let subtasks = new NGN.Tasks()
+              let subtasks = new NGN.Queue()
 
               if (properties.length > 0) {
                 for (let i = 0; i < properties.length; i++) {
