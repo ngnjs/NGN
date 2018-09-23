@@ -217,6 +217,36 @@ export default class Utility { // eslint-disable-line
     return result[SERIALIZED_ARRAY_DATA] !== undefined ? result[SERIALIZED_ARRAY_DATA] : result
   }
 
+  /**
+   * @method isModel
+   * Determines whether an object is an instance of NGN.DATA.Model.
+   * @param {function} PossibleModel
+   * The class or function to be checked.
+   * @returns {boolean}
+   */
+  static isDataModel (Model) {
+    if (Model instanceof NGN.DATA.Model || NGN.typeof(Model) === 'model') {
+      return true
+    }
+
+    if (Model.hasOwnProperty('prototype') && Model.prototype !== null) {
+      let currentElement = Model
+      let count = 0
+
+      while (currentElement.prototype !== null && count < 30) {
+        count++
+
+        currentElement = currentElement.prototype
+
+        if (currentElement instanceof NGN.DATA.Model || NGN.typeof(currentElement) === 'model') {
+          return true
+        }
+      }
+    }
+
+    return Model instanceof NGN.DATA.Entity
+  }
+
   // /**
   //  * @method objectByteSize
   //  * Calculates the _estimated_ size (in bytes) of primitive key/value objects,

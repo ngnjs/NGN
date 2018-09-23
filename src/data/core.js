@@ -17,8 +17,17 @@ const Model = function (cfg) {
     throw new Error('Model must be configured.')
   }
 
+  const me = this
+
   let Model = function (data, suppressEvents = false) {
     let Entity = new NGN.DATA.Entity(cfg)
+
+    Object.defineProperty(Entity, 'ENTITY', {
+      enumerable: false,
+      get () {
+        return me
+      }
+    })
 
     if (data) {
       Entity.load(data, suppressEvents)
@@ -28,6 +37,12 @@ const Model = function (cfg) {
   }
 
   Object.defineProperty(Model.prototype, 'CONFIGURATION', NGN.const(cfg))
+  Object.defineProperty(Model.prototype, 'ENTITY', {
+    enumerable: false,
+    get () {
+      return me
+    }
+  })
 
   return Model
 }

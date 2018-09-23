@@ -1,5 +1,3 @@
-// [PARTIAL]
-
 /**
  * @class NGN.DATA.Representation
  * A data representation is a customized view of a model or

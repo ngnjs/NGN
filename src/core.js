@@ -531,9 +531,15 @@ Object.defineProperties(NGN, {
 
     let value = Object.prototype.toString.call(el).split(' ')[1].replace(/[^A-Za-z]/gi, '').toLowerCase()
 
-    if (value === 'function') {
+    if (value === 'function' || typeof el === 'function') {
       if (!el.name) {
-        return NGN.coalesceb(el.toString().replace(/\n/gi, '').replace(/^function\s|\(.*$/mgi, '').toLowerCase(), 'function')
+        let name = NGN.coalesceb(el.toString().replace(/\n/gi, '').replace(/^function\s|\(.*$/mgi, '').toLowerCase(), 'function')
+
+        if (name.indexOf(' ') >= 0) {
+          return 'function'
+        }
+
+        return name
       } else {
         value = NGN.coalesceb(el.name, 'function')
       }

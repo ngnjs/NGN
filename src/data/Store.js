@@ -33,7 +33,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
   constructor (cfg = {}) {
     if (NGN.typeof(cfg) === 'model') {
       cfg = { model: cfg }
-    } else if (!cfg.model || NGN.typeof(cfg.model) !== 'model') {
+    } else if (!cfg.model || !NGN.DATA.UTILITY.isDataModel(cfg.model)) {
       throw new InvalidConfigurationError('Missing or invalid "model" configuration property.')
     }
 

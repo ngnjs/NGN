@@ -1,6 +1,9 @@
+// TODO: Automatically console.log the version and other pertinent details
+// for debugging versions.
 import buble from 'rollup-plugin-buble'
 import {uglify} from 'rollup-plugin-uglify'
 import {terser} from 'rollup-plugin-terser'
+import replace from 'rollup-plugin-replace'
 import stripCode from  'rollup-plugin-strip-code'
 import pkg from './package.json'
 
@@ -23,15 +26,25 @@ export default [
 		input,
 		plugins: [
 			stripCode(BROWSERONLY),
+			replace({
+				delimiters: ['[#', '#]'],
+				REPLACE_VERSION: require('./package.json').version
+			}),
 			terser()
 		],
-		output: [
-			{ file: `${standard}/browser/ngn.min.js`, format: 'iife', sourcemap: true }
-		]
+		output: [{
+			file: `${standard}/browser/ngn.min.js`,
+			format: 'iife',
+			sourcemap: true
+		}]
 	}, {
 		input,
 		plugins: [
 			stripCode(NODEONLY),
+			replace({
+				delimiters: ['[#', '#]'],
+				REPLACE_VERSION: require('./package.json').version
+			}),
 			terser()
 		],
 		output: [
@@ -46,6 +59,10 @@ export default [
 		input,
 		plugins: [
 			stripCode(BROWSERONLY),
+			replace({
+				delimiters: ['[#', '#]'],
+				REPLACE_VERSION: require('./package.json').version
+			}),
 			buble(),
 			uglify()
 		],
@@ -58,7 +75,11 @@ export default [
 	{
 		input,
 		plugins: [
-			stripCode(BROWSERONLY)
+			stripCode(BROWSERONLY),
+			replace({
+				delimiters: ['[#', '#]'],
+				REPLACE_VERSION: require('./package.json').version
+			})
 		],
 		output: [
 			{ file: `${standard}/browser/ngn.js`, format: 'iife', sourcemap: true },
@@ -66,7 +87,11 @@ export default [
 	}, {
 		input,
 		plugins: [
-			stripCode(NODEONLY)
+			stripCode(NODEONLY),
+			replace({
+				delimiters: ['[#', '#]'],
+				REPLACE_VERSION: require('./package.json').version
+			})
 		],
 		output: [
 			{ file: `${standard}/node/debug.js`, format: 'cjs', sourcemap: true }
@@ -78,7 +103,11 @@ export default [
 	{
 		input,
 		plugins: [
-			stripCode(BROWSERONLY)
+			stripCode(BROWSERONLY),
+			replace({
+				delimiters: ['[#', '#]'],
+				REPLACE_VERSION: require('./package.json').version
+			})
 		],
 		output: [
 			{ file: `${legacy}/ngn.js`, format: 'iife', sourcemap: true }

@@ -11,12 +11,20 @@ hostname = window.location.host // eslint-disable-line comma-style
 const normalizeUrl = function (url) { // eslint-disable-line no-unused-vars
   let uri = []
 
+  let protocol = /^(.*):\/.*/.exec(url)
+
+  protocol = protocol.length > 0 ? protocol[1] : null
+
+  if (protocol) {
+    url = url.replace(new RegExp(`${protocol}\\:\\/+`, 'i'), '')
+  }
+
   url = url.split('/')
 
   for (let i = 0; i < url.length; i++) {
     if (url[i] === '..') {
       uri.pop()
-    } else if (url[i] !== '.') {
+    } else if (url[i] !== '.' && url[i].trim().length > 0) {
       uri.push(url[i])
     }
   }
@@ -46,7 +54,7 @@ const normalizeUrl = function (url) { // eslint-disable-line no-unused-vars
     uri = `${uri}?${queryString.join('&')}`
   }
 
-  return uri
+  return protocol ? `${protocol}://${uri}` : uri
 }
 
 let networkInterfaces = [

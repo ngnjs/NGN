@@ -249,7 +249,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
 
                 // Collection of models
                 case 'array':
-                  return this.applyField(field, fieldcfg[0], suppressEvents)
+                  return this.METADATA.applyField(field, fieldcfg[0], suppressEvents)
 
                 // Type-based cfg.
                 default:

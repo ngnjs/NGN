@@ -3,7 +3,7 @@ const test = require('tap').test
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/ngn')
+require('../../lib/ngn')
 
 test('NGN.UTILITY Sanity Check', function (t) {
   t.ok(typeof NGN.UTILITY.Lexer === 'function', 'NGN.UTILITY.Lexer exists as a class.')

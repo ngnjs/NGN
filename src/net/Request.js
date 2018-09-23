@@ -480,6 +480,24 @@ export default class Request { // eslint-disable-line no-unused-vars
       NGN.WARN('NET.Request.url', 'A blank URL was identified for a request.')
     }
 
+    // If a relative URL is provided in a browser context, prepend
+    // the current browser location to the URI.
+    if (/^.*:\/{2}/i.exec(value) === null && /^\.{1,2}\/.*/.exec(value) !== null && NGN.global.hasOwnProperty('location')) {
+      let loc = NGN.global.location
+      let href = `${loc.host}${loc.pathname}`
+
+      href = href.split('/')
+
+      if (href[href.length - 1].indexOf('.') >= 0) {
+        href.pop()
+      }
+
+      href = href.join('/')
+      href = href.substring(0, href.lastIndexOf('/') + 1)
+
+      value = `${NGN.global.location.protocol}//${href}/${value}`.replace(/\/{2,1000000}/i, '/')
+    }
+
     this.uri = normalizeUrl(value.trim())
     this.uriParts = this.parseUri(this.uri)
   }

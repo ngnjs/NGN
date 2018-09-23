@@ -3,7 +3,7 @@ const test = require('tap').test
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
-require('../lib/ngn')
+require('../../lib/ngn')
 // require('../lib/eventemitter')
 // require('../lib/net/bootstrap')
 // require('../lib/utility/bootstrap')
@@ -77,7 +77,10 @@ test('Method Existance', (t) => {
     'Task',
     'Tasks', // Deprecated in favor of Queue
     'Queue',
-    'UTILITY'
+    'UTILITY',
+
+    // Extras
+    'version'
   ]
 
   for (let method of methodList) {

@@ -11,13 +11,6 @@ import * as Utility from './utility'
  * @singleton
  */
 
-// [INCLUDE: ./Request.js]
-// [INCLUDE: ./Network.js]
-// [INCLUDE: ./Resource.js]
-
-// NGN.extend('NET', NGN.const(new Network()))
-// NGN.NET.normalizeUrl = normalizeUrl
-
 Network.prototype.Resource = Resource
 
 const normalizeUrl = Utility.normalizeUrl
@@ -25,6 +18,3 @@ const networkInterfaces = Utility.networkInterfaces
 const Library = new Network()
 
 export { Library, normalizeUrl, networkInterfaces, Request, Resource }
-
-// Network = null // eslint-disable-line
-// NetworkResource = null // eslint-disable-line

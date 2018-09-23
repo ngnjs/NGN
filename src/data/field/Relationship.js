@@ -230,7 +230,13 @@ export default class NGNRelationshipField extends DataField { // eslint-disable-
    * The manner of relationship. This can be one of 3 values: `store`
    * (NGN.DATA.Store), `model` (NGN.DATA.Model), or `collection`. A collection
    * is a special configuration shortcut used to represent a new store of models.
-   *
+   * ```math
+   * E = mc^2
+   * ```
+   * ```graph
+   * graph LR
+   * a-->b
+   * ```
    * For example, a model may be defined as:
    *
    * ```js

@@ -24,7 +24,7 @@ export default class NGNDataValidationRule { // eslint-disable-line
 
     Object.defineProperties(this, {
       RULE: NGN.private({
-        type: type,
+        type,
         validator: validation,
         name: NGN.coalesce(name, `Untitled ${type.toUpperCase()} Validation`),
         scope: NGN.coalesce(scope, this)
