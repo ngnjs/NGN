@@ -1,6 +1,5 @@
 import UTILITY from './Utility'
 import BTree from './index/BTree'
-import JSONSchema from './schema/JSON'
 import TransactionLog from './TransactionLog'
 import Rule from './rule/Rule'
 import RangeRule from './rule/RangeRule'
@@ -63,6 +62,5 @@ export {
   Entity,
   Index,
   Store,
-  BTree,
-  JSONSchema
+  BTree
 }

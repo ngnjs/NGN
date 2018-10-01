@@ -24,6 +24,5 @@ test('Data Sanity Checks', function (t) {
   t.ok(typeof NGN.DATA.Index === 'function', 'NGN.DATA.Index exists as a class.')
   t.ok(typeof NGN.DATA.Store === 'function', 'NGN.DATA.Store exists as a class.')
   t.ok(typeof NGN.DATA.BTree === 'function', 'NGN.DATA.BTree exists as a class.')
-  t.ok(typeof NGN.DATA.JSONSchema === 'function', 'NGN.DATA.JSONSchema exists as a class.')
   t.end()
 })

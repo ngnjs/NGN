@@ -12,6 +12,7 @@ import * as Utility from './utility'
  */
 
 Network.prototype.Resource = Resource
+Network.prototype.Plugin = Network
 
 const normalizeUrl = Utility.normalizeUrl
 const networkInterfaces = Utility.networkInterfaces

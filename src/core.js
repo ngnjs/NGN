@@ -409,8 +409,9 @@ Object.defineProperties(NGN, {
         }
       }
 
-      return null
+      return sourceExpression === comparisonExpression ? null : sourceExpression
     } catch (e) {
+      NGN.WARN(`nullIf threw an error (${e.message}) when comparing '${sourceExpression}' to '${comparisonExpression}'.`)
       return null
     }
   }),

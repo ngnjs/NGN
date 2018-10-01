@@ -239,13 +239,19 @@ test('NGN.nullIf', function (t) {
   t.ok(NGN.nullIf('test', 'test') === null, 'NGN.nullIf returns null for matching values.')
   t.ok(NGN.nullIf('test') === 'test', 'NGN.nullIf returns non-blank/empty values by default.')
   t.ok(NGN.nullIf('test', 'not_test') === 'test', 'NGN.nullIf return test value when it does not match the null qualifier.')
+
+  var obj = {}
+
   t.ok(
     NGN.nullIf({}) !== null &&
     NGN.nullIf(1) === 1 &&
     NGN.nullIf(true) === true &&
     NGN.nullIf(false) === false &&
-    NGN.nullIf({}, {}) === null &&
-    NGN.nullIf(EmptyFn) !== null,
+    NGN.nullIf(EmptyFn) !== null &&
+    NGN.nullIf(obj, obj) === null &&
+    NGN.nullIf(EmptyFn, EmptyFn) === null &&
+    NGN.nullIf(1, 1) === null &&
+    NGN.nullIf(true, true) === null,
     'NGN.nullIf works with non-string arguments'
   )
   t.ok(NGN.nullif('') === null, 'NGN.nullif alias executes NGN.nullIf.')
