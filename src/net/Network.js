@@ -1,9 +1,20 @@
-import { hostname } from './utility'
+import { hostname, normalizeUrl } from './Utility'
 import Request from './Request'
 
 export default class Network { // eslint-disable-line
   constructor () {
     Object.defineProperties(this, {
+      /**
+       * @method normalizeUrl
+       * Normalize a URL by removing extraneous characters,
+       * applying protocol, and resolving relative links.
+       * @param {string} URI
+       * The URI to normalize.
+       * @return {string}
+       * The normalized URL.
+       */
+      normalizeUrl: NGN.privateconst(normalizeUrl),
+
       /**
        * @method parseRequestConfiguration
        * Prepare common configuration attributes for a request.

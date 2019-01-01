@@ -1,4 +1,4 @@
-const test = require('tap').test
+const test = require('tape')
 const TaskRunner = require('shortbus')
 const uri = require('../../../package.json').endpoints
 
@@ -25,7 +25,7 @@ test('NGN.NET.Request', function (t) {
 
   t.ok(request.getHeader('X-NGN') === 'test', 'Request.getHeader returns proper value.')
   t.ok(request.password === undefined, 'Password is not exposed.')
-  t.ok(request.hostname === 'test.author.io', 'Properly parsed hostname.')
+  t.ok(request.hostname === 'test.author.io', 'Properly parsed hostname: ' + request.hostname)
   t.ok(request.protocol === uri.get.split(':')[0], 'Properly parsed protocol.')
   t.ok(request.method === 'GET', 'Defaults to GET method.')
   t.ok(request.headers.hasOwnProperty('x-ngn'), 'Custom header applied.')

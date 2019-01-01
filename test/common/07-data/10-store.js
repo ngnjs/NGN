@@ -1,4 +1,4 @@
-const test = require('tap').test
+const test = require('tape')
 const TaskRunner = require('shortbus')
 const Meta = require('../helper').Meta
 

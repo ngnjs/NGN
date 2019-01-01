@@ -1,4 +1,4 @@
-const test = require('tap').test
+const test = require('tape')
 const uri = require('../../../package.json').endpoints
 
 // Remember to run `npm run test:build` before executing,

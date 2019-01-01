@@ -949,6 +949,7 @@ export default class EventEmitter extends EEmitter {
     }
 
     super.removeListener(...arguments)
+    this.emit('removeListener', ...arguments)
   }
 
   /**

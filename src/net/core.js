@@ -1,7 +1,7 @@
 import Request from './Request'
 import Network from './Network'
 import Resource from './Resource'
-import * as Utility from './utility'
+import Utility from './Utility'
 
 /**
  * @namespace NGN.NET
@@ -13,6 +13,7 @@ import * as Utility from './utility'
 
 Network.prototype.Resource = Resource
 Network.prototype.Plugin = Network
+Network.prototype.Utility = Utility
 
 const normalizeUrl = Utility.normalizeUrl
 const networkInterfaces = Utility.networkInterfaces

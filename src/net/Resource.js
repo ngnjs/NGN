@@ -1,5 +1,5 @@
 import Network from './Network'
-import { hostname, normalizeUrl } from './utility'
+import { hostname, normalizeUrl } from './Utility'
 
 /**
  * @class NGN.NET.Resource

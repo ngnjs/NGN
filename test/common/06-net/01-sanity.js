@@ -1,4 +1,4 @@
-const test = require('tap').test
+const test = require('tape')
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
@@ -11,6 +11,7 @@ NGN.BUS.on(NGN.WARNING_EVENT, function (msg) {
 
 test('NGN.NET Sanity Checks', function (t) {
   t.ok(NGN.NET !== undefined, 'NGN.NET namespace exists')
+  t.ok(typeof NGN.NET.Plugin === 'function', 'NGN.NET.Plugin class available for extension.')
   t.ok(typeof NGN.NET.Resource === 'function', 'NGN.NET.Resource class available.')
   t.ok(typeof NGN.NET.Request === 'function', 'NGN.NET.Request class available.')
   t.ok(typeof NGN.NET.request === 'function', 'NGN.NET.request method available.')
@@ -34,6 +35,7 @@ test('NGN.NET Sanity Checks', function (t) {
   t.ok(typeof NGN.NET.JSON === 'function', 'NGN.NET.JSON request alias available.')
   t.ok(typeof NGN.NET.jsonp === 'function', 'NGN.NET.jsonp request method available.')
   t.ok(typeof NGN.NET.JSONP === 'function', 'NGN.NET.JSONP request alias available.')
+  t.ok(typeof NGN.NET.normalizeUrl === 'function', 'NGN.NET.normalizeUrl is available.')
 
   t.end()
 })

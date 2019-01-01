@@ -1,4 +1,4 @@
-const test = require('tap').test
+const test = require('tape')
 
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.

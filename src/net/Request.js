@@ -1,4 +1,4 @@
-import { hostname, normalizeUrl, HttpMethods, networkInterfaces } from './utility'
+import Utility from './Utility'
 
 /**
  * @class NGN.NET.Request
@@ -20,8 +20,6 @@ export default class Request { // eslint-disable-line no-unused-vars
     }
 
     Object.defineProperties(this, {
-      UrlPattern: NGN.privateconst(new RegExp('^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?')),
-
       /**
        * @cfgproperty {string} url (required)
        * The complete URL for the request, including query parameters.
@@ -167,13 +165,7 @@ export default class Request { // eslint-disable-line no-unused-vars
        * @private
        */
       isCrossOrigin: NGN.privateconst(function (url) {
-        /* node-only */
-        if (networkInterfaces.indexOf(this.host) < 0) {
-          return true
-        }
-        /* end-node-only */
-
-        return this.host !== hostname // eslint-disable-line no-undef
+        return Utility.isCrossOrigin(url)
       }),
 
       /**
@@ -225,46 +217,7 @@ export default class Request { // eslint-disable-line no-unused-vars
        * ```
        * @private
        */
-      parseUri: NGN.privateconst(uri => {
-        let part = uri.match(this.UrlPattern)
-        let protocol
-        /* node-only */
-        protocol = 'http'
-        /* end-node-only */
-        /* browser-only */
-        protocol = window.location.protocol.replace(':', '').toLowerCase()
-        /* end-browser-only */
-        let url = {
-          protocol: NGN.coalesce(part[2], protocol),
-          hostname: NGN.coalesce(part[4], hostname),
-          path: NGN.coalesceb(part[5], '/'),
-          query: NGN.coalesceb(part[7]),
-          hash: NGN.coalesceb(part[9])
-        }
-
-        // URL contains a username/password.
-        if (url.hostname.indexOf('@') > 0) {
-          let credentials = uri.match(/^.*\/{1,2}(.*):(.*)@/i)
-
-          url.hostname = url.hostname.split('@').pop()
-
-          this.user = credentials[1]
-          this.secret = credentials[2]
-          this.applyAuthorizationHeader()
-        }
-
-        url.port = NGN.coalesce(url.hostname.match(/:([0-9]{1,6})/), url.protocol === 'https' ? 443 : 80)
-
-        if (url.hostname.indexOf(':') > 0) {
-          url.hostname = url.hostname.split(':')[0]
-        }
-
-        if (url.path.charAt(0) !== '/') {
-          url.path = `/${url.path}`
-        }
-
-        return url
-      }),
+      parseUri: NGN.privateconst(Utility.parseUri),
 
       uriParts: NGN.private(null),
 
@@ -498,7 +451,7 @@ export default class Request { // eslint-disable-line no-unused-vars
       value = `${NGN.global.location.protocol}//${href}/${value}`.replace(/\/{2,1000000}/i, '/')
     }
 
-    this.uri = normalizeUrl(value.trim())
+    this.uri = Utility.normalizeUrl(value.trim())
     this.uriParts = this.parseUri(this.uri)
   }
 
@@ -517,7 +470,7 @@ export default class Request { // eslint-disable-line no-unused-vars
 
     value = value.trim().toUpperCase()
 
-    if (HttpMethods.indexOf(value) < 0) {
+    if (Utility.HttpMethods.indexOf(value) < 0) {
       NGN.WARN('NET.Request.method', `A non-standard HTTP method was recognized in a request: ${value}.`)
     }
 
