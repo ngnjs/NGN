@@ -82,7 +82,7 @@
   "license": "BSD-3-Clause",
   "homepage": "https://ngn.js.org",
   "devDependencies": {
-    "@author.io/metadoc": "^0.0.8",
+    "@author.io/metadoc": "^0.0.9",
     "@author.io/metadoc-api": "^1.0.4",
     "@author.io/metadoc-md": "^0.0.3",
     "browserify": "^14.5.0",
