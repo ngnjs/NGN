@@ -31,7 +31,8 @@
     "md": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-api | metadoc-md",
     "md2": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-md | metadoc-api",
     "blag": " | metadoc-api | metadoc-md",
-    "docs": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-api"
+    "docs": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-api && npm run netlify",
+    "netflify": "echo /* /index.json > ./docs/_redirects"
   },
   "repository": {
     "type": "git",
