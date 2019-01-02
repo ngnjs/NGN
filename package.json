@@ -28,10 +28,7 @@
     "build": "rollup -c ./rollup.release.config.js",
     "documentation": "rollup -c ./rollup.documentation.config.js && node build.js --docs",
     "metadoc": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-md",
-    "md": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-api | metadoc-md",
-    "md2": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-md | metadoc-api",
-    "blag": " | metadoc-api | metadoc-md",
-    "docs": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-api",
+    "metadoc:api": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-md | metadoc-api",
     "deploy": "node ./deploy.js ./docs"
   },
   "repository": {
@@ -84,8 +81,8 @@
   "homepage": "https://ngn.js.org",
   "devDependencies": {
     "@author.io/metadoc": "^0.0.9",
-    "@author.io/metadoc-api": "^1.0.4",
-    "@author.io/metadoc-md": "^0.0.3",
+    "@author.io/metadoc-api": "^1.0.5",
+    "@author.io/metadoc-md": "^0.0.4",
     "browserify": "^14.5.0",
     "browserify-istanbul": "^3.0.1",
     "browserslist": "^2.5.1",
