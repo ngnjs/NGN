@@ -28,7 +28,7 @@
     "build": "rollup -c ./rollup.release.config.js",
     "documentation": "rollup -c ./rollup.documentation.config.js && node build.js --docs",
     "metadoc": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-md",
-    "metadoc:api": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-md | metadoc-api --version auto --root https://ngnapi.author.io/",
+    "metadoc:api": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-md | metadoc-api --root https://ngnapi.author.io/",
     "deploy": "node ./deploy.js ./docs"
   },
   "repository": {
