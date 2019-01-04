@@ -13,7 +13,7 @@ const walk = directory => {
 
 			paths.add(relativePath)
 
-			walk(absolutePath).forEach(value => console.log(paths.add(path.join(relativePath, value))))
+			walk(absolutePath).forEach(value => paths.add(path.join(relativePath, value)))
 		}
 	})
 
