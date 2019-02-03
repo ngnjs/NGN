@@ -10,6 +10,7 @@ test/lib
 !.gitignore
 !.npmignore
 !.codeclimate.yml
+!.travis.yml
 dist
 out
 docs

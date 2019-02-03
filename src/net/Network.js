@@ -206,7 +206,7 @@ export default class Network { // eslint-disable-line
   /**
    * @method json
    * This is a shortcut method for creating a `GET` request and
-   * auto-processing the response body into a JSON object.
+   * auto-parsing the response into a JSON object.
    * @param  {string} url
    * The URL to issue the request to.
    * @param  {Function} callback

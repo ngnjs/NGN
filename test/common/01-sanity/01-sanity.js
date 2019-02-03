@@ -56,6 +56,7 @@ test('Method Existance', (t) => {
     // 'CustomException',
     'createException',
     'getType',
+    'platform',
     'LEDGER_EVENT',
     'WARNING_EVENT',
     'INFO_EVENT',

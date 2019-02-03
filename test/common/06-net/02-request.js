@@ -1,7 +1,7 @@
 const test = require('tape')
 const TaskRunner = require('shortbus')
 const uri = require('../../../package.json').endpoints
-
+const hostname = (new RegExp(`://(.*?)/`, 'i')).exec(uri.get)[1]
 // Remember to run `npm run test:build` before executing,
 // otherwise the lib directory will not exist.
 
@@ -25,7 +25,7 @@ test('NGN.NET.Request', function (t) {
 
   t.ok(request.getHeader('X-NGN') === 'test', 'Request.getHeader returns proper value.')
   t.ok(request.password === undefined, 'Password is not exposed.')
-  t.ok(request.hostname === 'test.author.io', 'Properly parsed hostname: ' + request.hostname)
+  t.ok(request.hostname === hostname, 'Properly parsed hostname: ' + request.hostname)
   t.ok(request.protocol === uri.get.split(':')[0], 'Properly parsed protocol.')
   t.ok(request.method === 'GET', 'Defaults to GET method.')
   t.ok(request.headers.hasOwnProperty('x-ngn'), 'Custom header applied.')
@@ -125,7 +125,7 @@ test('NGN.NET Basic Requests', function (t) {
     try {
       NGN.NET.OPTIONS(uri.options, function (res) {
         t.pass('NGN.NET.OPTIONS alias points to NGN.NET.options')
-        t.ok(res.status === 200, 'NGN.NET.OPTIONS sends and receives.')
+        t.ok(res.status === 200, 'NGN.NET.OPTIONS sends and receives. Received: ' + res.status)
         next()
       })
     } catch (eeee) {
@@ -137,7 +137,7 @@ test('NGN.NET Basic Requests', function (t) {
   reqs.add('HEAD', function (next) {
     NGN.NET.HEAD(uri.head, function (res) {
       t.pass('NGN.NET.HEAD alias points to NGN.NET.head')
-      t.ok(res.status === 200, 'NGN.NET.HEAD sends and receives.')
+      t.ok(res.status === 200, 'NGN.NET.HEAD sends and receives. Received: ' + res.status)
       next()
     })
   })
@@ -150,7 +150,7 @@ test('NGN.NET Basic Requests', function (t) {
         if (res.status === 405) {
           t.pass('NGN.NET.TRACE sends and receives.')
         } else {
-          t.ok(res.status === 200, 'NGN.NET.TRACE sends and receives.')
+          t.ok(res.status === 200, 'NGN.NET.TRACE sends and receives. Received: ' + res.status)
         }
 
         next()
@@ -164,14 +164,14 @@ test('NGN.NET Basic Requests', function (t) {
   reqs.add('GET', function (next) {
     NGN.NET.GET(uri.get, function (res) {
       t.pass('NGN.NET.GET alias points to NGN.NET.get')
-      t.ok(res.status === 200, 'NGN.NET.GET sends and receives.')
+      t.ok(res.status === 200, 'NGN.NET.GET sends and receives. Received: ' + res.status)
       next()
     })
   })
 
   reqs.add('Redirected GET', function (next) {
     NGN.NET.GET(uri.redirect, function (res) {
-      t.ok(res.status === 200, 'NGN.NET.GET follows a redirect.')
+      t.ok(res.status === 200, 'NGN.NET.GET follows a redirect. Received: ' + res.status)
       next()
     })
   })
@@ -184,7 +184,7 @@ test('NGN.NET Basic Requests', function (t) {
       }
     }, function (res) {
       t.pass('NGN.NET.POST alias points to NGN.NET.post')
-      t.ok(res.status === 200 || res.status === 201, 'NGN.NET.POST sends and receives.')
+      t.ok(res.status === 200 || res.status === 201, 'NGN.NET.POST sends and receives. Received: ' + res.status)
       next()
     })
   })
@@ -197,7 +197,7 @@ test('NGN.NET Basic Requests', function (t) {
       }
     }, function (res) {
       t.pass('NGN.NET.PUT alias points to NGN.NET.put')
-      t.ok(res.status === 200, 'NGN.NET.PUT sends and receives.')
+      t.ok(res.status === 200, 'NGN.NET.PUT sends and receives. Received: ' + res.status)
       next()
     })
   })
@@ -205,7 +205,7 @@ test('NGN.NET Basic Requests', function (t) {
   reqs.add('DELETE', function (next) {
     NGN.NET.DELETE(uri.del, function (res) {
       t.pass('NGN.NET.DELETE alias points to NGN.NET.delete')
-      t.ok(res.status === 200, 'NGN.NET.DELETE sends and receives.')
+      t.ok(res.status === 200, 'NGN.NET.DELETE sends and receives. Received: ' + res.status)
       next()
     })
   })
@@ -213,7 +213,7 @@ test('NGN.NET Basic Requests', function (t) {
   reqs.add('JSON', function (next) {
     NGN.NET.JSON(uri.json, function (err, data) {
       t.pass('NGN.NET.JSON alias points to NGN.NET.json')
-      t.ok(err === null, 'NGN.NET.JSON sends and receives.')
+      t.ok(err === null, 'NGN.NET.JSON sends and receives.' + (err !== null ? err.message : ''))
       next()
     })
   })

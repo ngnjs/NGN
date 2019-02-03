@@ -1284,6 +1284,61 @@ Object.defineProperties(NGN, {
 
         return undefined
     }
+  }),
+
+  /**
+   * @typedef {Object} OperatingSystem
+   * Represents an operating system.
+   * @property {string} name
+   * The name of the operating system, as recognized by the environment.
+   * @property {string} type
+   * A simple string indicating the class of operating system. This will be
+   * `windows`, `mac`, `linux`, `ios`, `android`, or `other`.
+   * @property {string} version
+   * A version number identifying which release of the operating system is in use.
+   */
+  /**
+   * Identifies the operating system.
+   * @returns {OperatingSystem}
+   */
+  platform: NGN.get(() => {
+    let os
+
+    /* node-only */
+    os = process.platform
+    /* end-node-only */
+    /* browser-only */
+    os = navigator.platform
+    /* end-node-only */
+
+    let type = os.toLowerCase()
+    if (type.indexOf('ios') >= 0 || type.indexOf('like mac')) {
+      type = 'ios'
+    } else if (type.indexOf('mac') >= 0) {
+      type = 'mac'
+    } else if (type.indexOf('win') >= 0) {
+      type = 'windows'
+    } else if (type.indexOf('android') >= 0) {
+      type = 'android'
+    } else if (type.indexOf('linux') >= 0) {
+      type = 'linux'
+    } else {
+      type = 'other'
+    }
+
+    let release
+    /* node-only */
+    release = require('os').release()
+    /* end-node-only */
+    /* browser-only */
+    release = /\((.*)\)/i.exec(navigator.userAgent)[1].split(';')[0].split(/\s+/i).pop()
+    /* end-node-only */
+
+    return {
+      name: os,
+      type,
+      version: release
+    }
   })
 })
 
