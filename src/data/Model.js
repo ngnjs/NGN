@@ -581,6 +581,14 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
   }
 
   /**
+   * Returns a reference to the store in which the model/record is a part of.
+   * @return {NGN.DATA.Store}
+   */
+  get store () {
+    return this.METADATA.store
+  }
+
+  /**
    * @property {Array} changelog
    * The changelog returns the underlying NGN.DATA.TransactionLog#log if
    * auditing is available. The array will be empty if auditing is disabled.

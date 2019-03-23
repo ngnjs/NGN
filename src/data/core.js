@@ -9,6 +9,7 @@ import Relationship from './field/Relationship'
 import FieldMap from './field/FieldMap'
 import Entity from './Model'
 import Index from './index/Index'
+import Filter from './Filter'
 import Store from './Store'
 
 const Model = function (cfg) {
@@ -62,5 +63,6 @@ export {
   Entity,
   Index,
   Store,
-  BTree
+  BTree,
+  Filter
 }

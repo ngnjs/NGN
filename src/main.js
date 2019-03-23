@@ -22,10 +22,3 @@ NGN.extend('UTILITY', NGN.const(Utility))
 
 // Add Data Library
 NGN.extend('DATA', NGN.const(Data))
-
-Object.defineProperty(NGN, 'version', {
-  enumerable: true,
-  writable: false,
-  configurable: false,
-  value: '[#REPLACE_VERSION#]'
-})

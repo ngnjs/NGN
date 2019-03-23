@@ -1,6 +1,3 @@
-// Difference Utilities
-import ObjectDiff from './DiffEngine'
-
 // CRC table for checksum (cached)
 let crcTable = null
 
@@ -31,10 +28,6 @@ const makeCRCTable = function () {
  * A utility library of functions relevant to data management.
  */
 export default class Utility { // eslint-disable-line
-  static diff () {
-    return ObjectDiff.compare(...arguments) // eslint-disable-line no-undef
-  }
-
   /**
    * @method checksum
    * Create the checksum of the specified string.

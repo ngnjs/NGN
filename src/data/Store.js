@@ -5,6 +5,11 @@ NGN.createException({
   message: 'A duplicate record exists within the unique data set.'
 })
 
+NGN.createException({
+  name: 'NGNMissingRecordError',
+  message: 'The specified record does not exist or cannot be found.'
+})
+
 /**
  * @class NGN.DATA.Store
  * Represents a collection of data.
@@ -49,9 +54,14 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
        */
       name: NGN.const(NGN.coalesce(cfg.name, 'Untitled Data Store')),
 
+      OID: NGN.privateconst(Symbol('store.id')),
+
       METADATA: NGN.private({
         // Holds the models/records
         records: [],
+
+        // Holds all of the relevant filters associated with the store.
+        filters: new Map(),
 
         /**
          * @cfgproperty {NGN.DATA.Model} model
@@ -359,8 +369,8 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         },
 
         // Makes sure the model configuration specifies a valid and indexable field.
-        checkModelIndexField: (field) => {
-          let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+        checkModelIndexField (field) {
+          let metaconfig = me.METADATA.Model.prototype.CONFIGURATION
 
           if (metaconfig.fields && metaconfig.fields.hasOwnProperty(field)) {
             if (metaconfig.fields[field] !== null) {
@@ -378,8 +388,8 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         },
 
         // Get the type of field from the model definition
-        getModelFieldType: (field) => {
-          let metaconfig = this.METADATA.Model.prototype.CONFIGURATION
+        getModelFieldType (field) {
+          let metaconfig = me.METADATA.Model.prototype.CONFIGURATION
 
           if (metaconfig.fields[field] === null) {
             return NGN.typeof(metaconfig.fields[field])
@@ -396,8 +406,8 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
           return NGN.typeof(NGN.coalesce(metaconfig.fields[field]))
         },
 
-        // Add a record
-        addRecord: (data, suppressEvents = false) => {
+        // Prepare record for insertion into the store.
+        preCreateRecord (data, suppressEvents = false) {
           const record = new me.METADATA.Model(data)
 
           if (!(record instanceof NGN.DATA.Entity)) {
@@ -439,7 +449,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
           // Handle special record count processing (LIFO/FIFO support)
           if (me.METADATA.lifo > 0 && me.METADATA.records.length + 1 > me.METADATA.lifo) {
             me.remove(me.METADATA.records.length - 1, suppressEvents)
-          } else if (this.METADATA.fifo > 0 && me.METADATA.records.length + 1 > me.METADATA.fifo) {
+          } else if (me.METADATA.fifo > 0 && me.METADATA.records.length + 1 > me.METADATA.fifo) {
             me.remove(0, suppressEvents)
           }
 
@@ -458,32 +468,129 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
               case 'expired':
                 // TODO: Handle expiration
+
             }
           })
 
           delete record.METADATA.store
           Object.defineProperty(record.METADATA, 'store', NGN.get(() => me))
 
+          return record
+        },
+
+        // Add a record
+        addRecord (data, suppressEvents = false) {
+          let record = me.PRIVATE.preCreateRecord(...arguments)
+
           // Indexing is handled in an internal event handler
-          me.METADATA.records.push(record)
+          let length = me.METADATA.records.push(record)
 
           // Add the record to the map for efficient retrievel by OID
-          me.PRIVATE.RECORDMAP.set(record.OID, me.METADATA.records.length - 1)
+          me.PRIVATE.RECORDMAP.set(record.OID, length - 1)
+
+          // TODO: Apply filters
+          me.PRIVATE.ACTIVERECORDS.set(record.OID, length - 1)
+          me.emit(me.PRIVATE.EVENT.CREATE_RECORD, record)
 
           return record
         },
 
-        convertStubToRecord: (index, record) => {
-          if (record.hasOwnProperty(this.PRIVATE.STUB)) {
-            let newRecord = this.PRIVATE.addRecord(record.metadata, false)
+        /**
+         * Insert record at specific position.
+         * This is accomplished by splicing the record into the records array,
+         * then splitting the record map at the insertion point and recreating
+         * the record map with updated pointer values.
+         */
+        insertRecord (data, index = 0, suppressEvents = false) {
+          index = index < 0 ? 0 : index
+
+          // If the record is supposed to be inserted at the end, just use the
+          // standard addRecord method instead.
+          if (index > me.PRIVATE.RECORDMAP.size) {
+            return me.PRIVATE.addRecord(data, suppressEvents)
+          }
+
+          let record = me.PRIVATE.preCreateRecord(data, suppressEvents)
+          me.METADATA.records.push(record)
+
+          let firstRecords = Array.from(me.PRIVATE.RECORDMAP).slice(0, index)
+          let lastRecords = Array.from(me.PRIVATE.RECORDMAP).slice(index)
+          let recordMap = new Map(firstRecords)
+
+          let updatedRecords = Array.from(me.PRIVATE.RECORDMAP).splice(index, 0, [record.oid, index])
+          updatedRecords = updatedRecords.slice(0, index + 1).concat(updatedRecords.slice(index).map(item => { item[1] += 1; return item }))
+
+          me.PRIVATE.RECORDMAP = new Map(updatedRecords)
+
+          // Apply filters
+          let retain = me.PRIVATE.shouldFilterRecord(record)
+
+          if (retain) {
+            let firstActiveRecords = Array.from(me.PRIVATE.ACTIVERECORDS).filter(item => item[1] <= index)
+            let lastActiveRecords = Array.from(me.PRIVATE.ACTIVERECORDS).filter(item => item[1] > index).map(item => { item[1] += 1; return item})
+
+            me.PRIVATE.ACTIVERECORDS = new Map([...firstActiveRecords, [record.OID, index], ...lastActiveRecords])
+          } else {
+            throw new Error('Need to finish this function. Add to the filtered record set and update the appropriate filter cache.')
+          }
+
+          me.emit(me.PRIVATE.EVENT.CREATE_RECORD, record)
+
+          return record
+        },
+
+        convertStubToRecord (index, record) {
+          if (record !== null && record.hasOwnProperty(me.PRIVATE.STUB)) {
+            let newRecord = me.PRIVATE.addRecord(record.metadata, false)
             newRecord.OID = record.OID
 
-            this.METADATA.records[index] = newRecord
+            me.METADATA.records[index] = newRecord
 
             return newRecord
+          } else if (record === null || record === undefined) {
+            throw new Error('Null stub cannot be converted to record.')
           } else {
             return record
           }
+        },
+
+        /**
+         * Determines whether a specific record should be filtered
+         * @param  {NGN.DATA.Model} record
+         * The record to check.
+         * @return {boolean}
+         * Returns `true` if the record should be retained or `false`
+         * if it should be filtered out.
+         * @private
+         */
+        shouldFilterRecord (record) {
+          let retain = true
+
+          me.METADATA.filters.forEach((filter, name) => {
+            if (retain && !filter.fn(record)) {
+              retain = false
+            }
+          })
+
+          return retain
+        },
+
+        // Force JSON data into the store's specified data model.
+        forceDataObject (data) {
+          if (!(data instanceof me.METADATA.Model)) {
+            // Force a data model
+            if (NGN.typeof(data) === 'string') {
+              data = JSON.parse(data)
+            }
+
+            if (typeof data !== 'object') {
+              throw new Error(`${NGN.typeof(data)} is an invalid data type (must be an object conforming to the ${this.METADATA.Model.name} field configuration).`)
+            }
+          } else {
+            data = data.data
+          }
+
+          return data
         }
       }),
 
@@ -495,7 +602,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     Object.defineProperties(this.PRIVATE, {
       ACTIVERECORDS: NGN.get(() => {
         if (this.PRIVATE.ACTIVERECORDMAP === null) {
-          return this.PRIVATE.RECORDMAP
+          this.PRIVATE.ACTIVERECORDMAP = new Map([...this.PRIVATE.RECORDMAP])
         }
 
         return this.PRIVATE.ACTIVERECORDMAP
@@ -503,7 +610,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
       FILTEREDRECORDS: NGN.get(() => {
         if (this.PRIVATE.FILTEREDRECORDMAP === null) {
-          return this.PRIVATE.RECORDMAP
+          this.PRIVATE.FILTEREDRECORDMAP = new Map()
         }
 
         return this.PRIVATE.FILTEREDRECORDMAP
@@ -624,7 +731,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     if (recordList.size === 0) {
       return []
     }
-
+console.log('1st REC', this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
     let rec = this.PRIVATE.convertStubToRecord(this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
 
     if (this.METADATA.MAP === null) {
@@ -762,25 +869,10 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       throw new Error('Maximum record count exceeded.')
     }
 
-    if (!(data instanceof this.METADATA.Model)) {
-      // Force a data model
-      if (NGN.typeof(data) === 'string') {
-        data = JSON.parse(data)
-      }
-
-      if (typeof data !== 'object') {
-        throw new Error(`${NGN.typeof(data)} is an invalid data type (must be an object conforming to the ${this.METADATA.Model.name} field configuration).`)
-      }
-    } else {
-      data = data.data
-    }
-
-    const record = this.PRIVATE.addRecord(data)
+    const record = this.PRIVATE.addRecord(this.PRIVATE.forceDataObject(data))
 
     // TODO: Apply filters to new record before identifying the last record.
     this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
-
-    this.emit(this.PRIVATE.EVENT.CREATE_RECORD, record)
 
     if (!suppressEvents) {
       this.emit('record.create', record)
@@ -788,6 +880,75 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
     return record
   }
+
+  /**
+   * @method insertBefore
+   * Add a record before the specified record or index.
+   *
+   * **BE CAREFUL** when using this in combination with #LIFO or #FIFO.
+   * LIFO/FIFO is applied _after_ the record is added to the store but
+   * _before_ it is moved to the desired index.
+   * @param  {NGN.DATA.Model|number} target
+   * The record (model) or index where the new record will be before.
+   * @param {NGN.DATA.Model|object} data
+   * Accepts an existing NGN Data Model or a JSON object.
+   * If a JSON object is supplied, it will be applied to
+   * the data model specified in cfg#model.
+   * @param {boolean} [suppressEvent=false]
+   * Set this to `true` to prevent the `record.create` event
+   * from firing.
+   * @return {NGN.DATA.Model}
+   * Returns the new record.
+   */
+  insertBefore (beforeRecord, data, suppressEvents = false) {
+    let recordIndex = typeof beforeRecord === 'number' ? beforeRecord : this.indexOf(beforeRecord)
+
+    if (recordIndex < 0) {
+      throw new NGNMissingRecordError()
+    }
+
+    if (recordIndex >= this.METADATA.records.length) {
+      recordIndex = this.METADATA.records.length - 1
+      recordIndex = recordIndex < 0 ? 0 : recordIndex
+    }
+
+    // Support array input
+    // Records must be inserted in reverse order, since they're being added
+    // BEFORE the same record on each iteration.
+    if (NGN.typeof(data) === 'array') {
+      let result = new Array(data.length)
+
+      for (let i = data.length - 1; i >= 0; i--) {
+        result[i] = this.insertBefore(recordIndex, suppressEvents)
+      }
+
+      return result
+    }
+
+    // Prevent creation if it will exceed maximum record count.
+    if (this.METADATA.maxRecords > 0 && this.METADATA.records.length + 1 > this.METADATA.maxRecords) {
+      throw new Error('Maximum record count exceeded.')
+    }
+
+    const record = this.PRIVATE.insertRecord(this.PRIVATE.forceDataObject(data), recordIndex, suppressEvents)
+
+    // TODO: Apply filters to new record before identifying the last record.
+    this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
+
+    if (!suppressEvents) {
+      this.emit('record.create', record)
+    }
+
+    return record
+  }
+
+  // TODO: insertAfter
+  // TODO: removeBefore
+  // TODO: removeAfter
+  // TODO: move
+  // TODO: restore (archived record)
+  // TODO: contains
+  // TODO: find/query
 
   /**
    * @method remove
@@ -815,7 +976,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       return
     }
 
-    // Support removal of simultaneously removing multiple records
+    // Support simultaneously removing multiple records
     if (NGN.typeof(record) === 'array') {
       let result = new Array(record.length)
 
@@ -866,18 +1027,18 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
         break
     }
-
+console.log('==>', this.data, this.PRIVATE.ACTIVERECORDMAP)
     // If nothing has been deleted yet, create an active record map.
     // The active record map contains Model OID values with a reference
     // to the actual record index.
     if (this.PRIVATE.ACTIVERECORDMAP === null) {
       // Copy the record map to initialize the active records
-      this.PRIVATE.ACTIVERECORDMAP = new Map(this.PRIVATE.RECORDMAP)
+      this.PRIVATE.ACTIVERECORDMAP = new Map([...this.PRIVATE.RECORDMAP])
     }
 
     // Identify the record to be removed.
     const removedRecord = this.METADATA.records[index]
-
+console.log('REMVED', removedRecord.data);
     // If the record isn't among the active records, do not remove it.
     if (removedRecord === null) {
       NGN.WARN('Specified record does not exist.')
@@ -890,9 +1051,9 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       NGN.WARN(`Record not found for "${removedRecord.OID.toString()}".`)
       return null
     }
-
+console.log('PRE', this.PRIVATE.ACTIVERECORDS)
     this.PRIVATE.ACTIVERECORDS.delete(removedRecord.OID)
-
+console.log('POST', this.PRIVATE.ACTIVERECORDS)
     // If the store is configured to soft-delete,
     // don't actually remove it until it expires.
     if (this.METADATA.softDelete) {
@@ -909,7 +1070,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         removedRecord.expires = this.METADATA.softDeleteTtl
       }
     } else {
-      this.METADATA.records[this.PRIVATE.RECORDMAP.get(removedRecord.OID)] = null
+      this.METADATA.records[activeIndex] = null
       this.PRIVATE.RECORDMAP.delete(removedRecord.OID)
     }
 
@@ -1126,18 +1287,19 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
    * The zero-based index number of the model.
    */
   indexOf (record) {
-    return this.PRIVATE.RECORDMAP.get(record.OID)
+    return NGN.coalesce(this.PRIVATE.RECORDMAP.get(record.OID), -1)
   }
 
   /**
    * Determine whether the store contains a record.
    * This only checks the active record set (ignores filtered records).
-   * @param  {NGN.DATA.Model} record
+   * @param  {NGN.DATA.Model|NGN.DATA.Model#OID} record
    * The record to test for inclusion.
+   * Internal methods may use the unique Object ID of a record.
    * @return {boolean}
    */
   contains (record) {
-    return this.PRIVATE.ACTIVERECORDS.has(record.OID)
+    return this.PRIVATE.ACTIVERECORDS.has(typeof record === 'symbol' ? record : record.OID)
   }
 
   /**
@@ -1174,7 +1336,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
    */
   getRecord (index = 0) {
     if (typeof index === 'symbol') {
-      index = this.PRIVATE.ACTIVERECORDS.get(index)
+      index = NGN.coalesce(this.PRIVATE.ACTIVERECORDS.get(index), -1)
     }
 
     if (index < 0) {
@@ -1369,7 +1531,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
    * performance could be negatively impacted. Compacting the store can
    * improve performance in these cases. However; running this too often or
    * excessively may degrade performance since it is essentially rewriting
-   * the store data each time.
+   * the store's data each time.
    *
    * When in doubt, *don't* use this method.
    * @info This method will not run when fewer than 100 cumulative records have
@@ -1460,5 +1622,186 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     this.PRIVATE.ACTIVERECORDS.forEach((value, key, map) => {
       fn(this.METADATA.records[value])
     })
+  }
+
+  /**
+   * @method addFilter
+   * Add a filter to the record set.
+   * @param {string} [name]
+   * The name of the filter. This is unnecessary/ignored if a NGN.DATA.Filter
+   * is supplied for the filter argument.
+   * @param {NGN.DATA.Filter|function} filter
+   * Add a filter object/function. This function should comply
+   * with the [Array.filter](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter) specification,
+   * returning a boolean value.
+   * The item passed to the filter will be the NGN.DATA.Model specified
+   * in the cfg#model.
+   * @fires filter.create
+   * Fired when a filter is created.
+   * @returns {NGN.DATA.Filter}
+   * Returns the new filter.
+   */
+  addFilter (name, filterFn) {
+    if (name instanceof NGN.DATA.Filter) {
+      filterFn = name
+      name = filterFn.name
+    } else if (NGN.isFn(name)) {
+      filterFn = new NGN.DATA.Filter(name, filterFn)
+      name = filterFn
+    }
+
+    this.METADATA.filters.set(filterFn.name, filterFn)
+
+    this.emit('filter.create', filterFn)
+
+    return filterFn
+  }
+
+  /**
+   * Apply all enabled filters to the Store's recordset.
+   *
+   * For example:
+   *
+   * ```js
+   * let firstNameIsJohn = new NGN.DATA.Filter('only_john', record => {
+   *   return record.firstName === 'John'
+   * })
+   *
+   * let lastNameIsGeneric = new NGN.DATA.Filter('generic_names', record => {
+   *   return ['Doe', 'Smith'].indexOf(record.lastName) >= 0
+   * })
+   *
+   * let weirdLastName = new NGN.DATA.Filter('weird_names', record => {
+   *   return ['Beeblebrox', 'Anastasio'].indexOf(record.lastName) >= 0
+   * })
+   *
+   * MyStore.addFilter(firstNameIsJohn)
+   * MyStore.addFilter(lastNameIsGeneric)
+   * MyStore.addFilter(weirdLastName)
+   *
+   * MyStore.filter('only_john', 'generic_names')
+   * ```
+   *
+   * In the example above, the store's records would only display people
+   * of the name `John Doe` or `John Smith`, even though there are 3 known filters
+   * associated with the store.
+   * @param {string[]} namedFilters
+   * A list of filters can be supplied to selectively enable
+   * a specific subset of filters. If no filters are specified,
+   * all known filters are applied. Disabled filters will not be applied.
+   * @return {NGN.DATA.Store}
+   * Returns a reference to the data store, which enables
+   * chaining methods together.
+   */
+  filter () {
+    let args = Array.from(arguments)
+
+    this.METADATA.filters.forEach((filter, name) => {
+      if (args.length === 0 || args.indexOf(name) >= 0) {
+        Array.from(this.PRIVATE.ACTIVERECORDS).forEach(item => filter.exec(this.METADATA.records[item[1]]))
+      }
+    })
+
+    return this
+  }
+
+  /**
+   * Restores any records which were removed by the specified filters.
+   * @param {string[]} namedFilters
+   * A list of named filters can be supplied to selectively clear
+   * a specific subset of filters. If no named filters are specified,
+   * all known filters are cleared. Disabled filters will not be processed.
+   * @return {NGN.DATA.Store}
+   * Returns a reference to the data store, which enables
+   * chaining methods together.
+   */
+  clearFilter () {
+    if (arguments.length === 0) {
+      this.PRIVATE.ACTIVERECORDMAP = new Map([...this.PRIVATE.ACTIVERECORDS, ...this.PRIVATE.FILTEREDRECORDS])
+      this.PRIVATE.FILTEREDRECORDMAP = null
+      this.METADATA.filters.forEach(filter => { filter.purge() })
+    } else {
+      Array.from(arguments).forEach(filter => { filter.clear() })
+    }
+
+    return this
+  }
+
+  /**
+   * This is the same as #clearFilter, but it also permanently
+   * removes the filter from the store (un-apply).
+   * @param {string[]} namedFilters
+   * A list of named filters can be supplied to selectively remove
+   * a specific subset of filters. If no named filters are specified,
+   * all known filters are removed. This includes disabled filters.
+   * @return {NGN.DATA.Store}
+   * Returns a reference to the data store, which enables
+   * chaining methods together.
+   */
+  removeFilter () {
+    let args = Array.from(arguments)
+
+    if (args.length === 0) {
+      this.PRIVATE.ACTIVERECORDMAP = new Map([...this.PRIVATE.ACTIVERECORDS, ...this.PRIVATE.FILTEREDRECORDS])
+      this.PRIVATE.FILTEREDRECORDMAP = null
+      this.METADATA.filters.forEach(filter => { filter.destroy(this) })
+    } else {
+      args.forEach(filter => { this.METADATA.filters.get(filter).destroy(this) })
+    }
+
+    return this
+  }
+
+  /**
+   * This acts like #clearFilter. However, unlike clearing a filter
+   * on a specific data store, disabling a filter will affect all
+   * data stores to which the filter is applied.
+   * @param {string[]} namedFilters
+   * A list of named filters can be supplied to selectively remove
+   * a specific subset of filters. If no named filters are specified,
+   * all known filters are disabled.
+   * @return {NGN.DATA.Store}
+   * Returns a reference to the data store, which enables
+   * chaining methods together.
+   */
+  disableFilter () {
+    let args = new Set(Array.from(arguments))
+
+    this.METADATA.filters.forEach(filter => {
+      if (args.size === 0 || args.has(filter.name)) {
+        filter.disable()
+      }
+    })
+
+    return this
+  }
+
+  /**
+   * Enabling a filter will make it available
+   * _on all stores to which the filter is applied_.
+   *
+   * Filters are enabled by default, so this method
+   * typically isn't used unless a filter has been explicitly
+   * disabled. The anticipated use case is toggling filters on/off,
+   * likely fordata visualizations, table renderings, and other
+   * data exploration uses.
+   * @param {string[]} namedFilters
+   * A list of named filters can be supplied to selectively remove
+   * a specific subset of filters. If no named filters are specified,
+   * all known filters are disabled.
+   * @return {NGN.DATA.Store}
+   * Returns a reference to the data store, which enables
+   * chaining methods together.
+   */
+  enableFilter () {
+    let args = new Set(Array.from(arguments))
+
+    this.METADATA.filters.forEach(filter => {
+      if (args.size === 0 || args.has(filter.name)) {
+        filter.enable()
+      }
+    })
+
+    return this
   }
 }

@@ -132,8 +132,8 @@ base.getFiles = function () {
 }
 
 module.exports = config => {
-  base.modernOnly()
-  base.displayFiles()
+  base.modernOnly = true
+  // base.displayFiles()
 
   config.set(Object.assign(base.configuration, {
     // browserify: {
@@ -143,8 +143,7 @@ module.exports = config => {
       'test/common/**/*.js': ['browserify'],
       'test/test.html': 'html2js'
       // , 'test/lib/**/*.js': 'coverage'
-    },
-    concurrency: 1
+    }
   }))
 }
 

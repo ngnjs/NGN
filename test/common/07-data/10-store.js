@@ -1,4 +1,4 @@
-const test = require('tape')
+const test = require('tape').test
 const TaskRunner = require('shortbus')
 const Meta = require('../helper').Meta
 
@@ -59,6 +59,8 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
   })
 
   tasks.add('Remove records', function (next) {
+    GoodStore.METADATA.records.forEach(record => console.log('-->', record.data))
+
     var removedRecord = GoodStore.remove(0)
 
     t.ok(GoodStore.length === 3, 'Store record manifest is unaffected upon remove by index.')
@@ -122,6 +124,104 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     next()
   })
 
+  tasks.add('Filtering', function(next) {
+    t.ok(typeof NGN.DATA.Filter === 'function', 'The filter class is recognized.')
+
+    GoodStore.clear()
+    GoodStore.add([{
+      firstname: 'John',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jane',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Bob',
+      lastname: 'Doe'
+    }, {
+      firstname: 'Jack',
+      lastname: 'Swanson'
+    }])
+
+    var DoeFamily = new NGN.DATA.Filter('doe_family', function (record) {
+      return record.lastname === 'Doe'
+    })
+
+    var JNames = new NGN.DATA.Filter('j_names', function (record) {
+      return record.firstname.charAt(0) === 'J'
+    })
+
+    GoodStore.addFilter(DoeFamily)
+    GoodStore.addFilter(JNames)
+
+    t.ok(GoodStore.METADATA.filters.size === 2)
+    t.ok(GoodStore.size === 4, 'Filters are not automatically applied.')
+
+    GoodStore.filter()
+    t.ok(GoodStore.size === 2, 'All filters reduce the resultset properly.')
+
+    GoodStore.clearFilter()
+    t.ok(GoodStore.size === 4, 'Clearing filters maximmizes the resultset.')
+
+    GoodStore.filter()
+    GoodStore.disableFilter('j_names')
+
+    t.ok(GoodStore.size === 3, 'Disabling a filter reapplies records to active resultset.')
+
+    GoodStore.filter('j_names')
+    t.ok(GoodStore.size === 3, 'Applying specific filters reduces the data set correctly.')
+
+    GoodStore.filter('j_names')
+    t.ok(GoodStore.size === 3, 'Repeating filter doesn\'t change results.')
+
+    GoodStore.filter('doe_family')
+    t.ok(GoodStore.size === 2, 'Applying additional filters reduces the resultset correctly.')
+
+    GoodStore.removeFilter('j_names')
+    t.ok(GoodStore.METADATA.filters.size === 1, 'Successfully removed single filter.')
+    t.ok(GoodStore.size === 3, 'Removing a single filter restores records.')
+
+    GoodStore.removeFilter()
+    t.ok(GoodStore.METADATA.filters.size === 0, 'Successfully removed all filters.')
+    t.ok(GoodStore.size === 4, 'Removing all filters restores records.')
+
+    next()
+  })
+
+//   tasks.add('Insert record before another', function (next) {
+//     GoodStore.clear()
+//
+//     var record = GoodStore.insertBefore(10, {
+//       firstname: 'John',
+//       lastname: 'Doe'
+//     })
+//
+//     t.ok(GoodStore.length === 1, 'Record inserted into empty store.')
+// console.log(record.data);
+//     t.ok(record.firstname === 'John', 'Added record accurately represents the stored data.')
+//     t.ok(GoodStore.contains(record), 'Store recognizes that it contains the new record.')
+//     t.ok(GoodStore.indexOf(record) === 0, 'Store accurately returns the index of the new record.')
+//
+//     GoodStore.once('record.create', function (rec) {
+//       t.pass('Inserting a record to a store emits a record.create event.')
+//       t.ok(record === GoodStore.first, 'First accessor returns the inserted record within the store.')
+//       t.ok(GoodStore.first.firstname === 'Jill', 'First accessor returns proper values.')
+//       t.ok(GoodStore.last.firstname === 'John', 'Last accessor returns proper values.')
+//       t.ok(GoodStore.length === 2, 'Correct number of records identified.')
+//
+//       next()
+//     })
+//
+//     GoodStore.insertBefore(record, {
+//       firstname: 'Jill',
+//       lastname: 'Doe'
+//     })
+//
+//     // GoodStore.add({
+//     //   firstname: 'Jake',
+//     //   lastname: 'Doe'
+//     // })
+//   })
+
   tasks.add('Doubly Linked list', function (next) {
     GoodStore.clear()
     GoodStore.add([{
@@ -134,8 +234,8 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
       firstname: 'Jake',
       lastname: 'Doe'
     }, {
-      firstname: 'Jean',
-      lastname: 'Doe'
+      firstname: 'Bob',
+      lastname: 'Swanson'
     }])
 
     var record = GoodStore.first
@@ -164,6 +264,16 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
 
     curr = record.next(5, true)
     t.ok(curr.OID === GoodStore.first.OID, 'Calling next() (w/ cycling) for more records than the store contains returns the correct record (multicycle).')
+
+    // var noBobFilter = new NGN.DATA.Filter('no_bob', function (record) {
+    //   return record.firstname !== 'Bob'
+    // })
+    //
+    // noBobFilter.apply(GoodStore)
+    // GoodStore.filter()
+    // console.log()
+    // curr = record.next(4, true)
+    // t.ok(curr.OID === GoodStore.first.OID, 'Calling next() (w/ cycling) for more records than the store contains WITH RECORDS FILTERED OUT returns the correct record (multicycle).')
 
     next()
   })
@@ -215,7 +325,6 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     GoodStore.remove(shortLived)
 
     GoodStore.compact()
-
     t.ok(GoodStore.size === GoodStore.length, 'Compacted store contains correct number of results.')
 
     GoodStore.forEach(function (record) {

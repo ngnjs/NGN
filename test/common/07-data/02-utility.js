@@ -47,30 +47,5 @@ test('NGN.DATA.UTILITY', function (t) {
   // GUID
   t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(NGN.DATA.UTILITY.GUID()), 'GUID() returns a properly formatted identifier.')
 
-  // Data Diffing
-  var left = {
-    a: 1,
-    b: true,
-    c: 'three',
-    nested: {
-      element: 'is here',
-      and: 'here'
-    }
-  }
-
-  var right = {
-    a: 1,
-    b: false,
-    nested: {
-      element: 'is here',
-      and: 'there'
-    },
-    x: {
-      y: 'new value'
-    }
-  }
-
-  console.log(NGN.DATA.UTILITY.diff(left, right))
-
   t.end()
 })
