@@ -6,8 +6,22 @@ import CustomException from './exception'
 let NGN = Object.defineProperties({
   // Establish a globally recognized namespace for browser or node-like environment.
   get global () {
-    try { return window } catch (e) { return global }
+    /* node-only */
+    return global
+    /* end-node-only */
+    /* browser-only */
+    return window
+    /* end-browser-only */
   }
+
+  // get worker () {
+  //   /* node-only */
+  //   return require('worker_threads').Worker
+  //   /* end-node-only */
+  //   /* browser-only */
+  //   return window.worker
+  //   /* end-browser-only */
+  // }
 }, {
   /**
   * @method define
@@ -50,6 +64,17 @@ let NGN = Object.defineProperties({
         value
       }
     }
+  },
+
+  /**
+   * @property {string} version
+   * Identifies the NGN version number.
+   */
+  version: {
+    enumerable: true,
+    writable: false,
+    configurable: false,
+    value: '#VERSION#'
   }
 })
 

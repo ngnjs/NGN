@@ -335,6 +335,11 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
                 }
 
                 break
+
+              case me.PRIVATE.EVENT.CLEAR_RECORDS:
+                me.METADATA.INDEXFIELDS.forEach(field => me.METADATA.INDEX[field].reset())
+
+                break
             }
           } else {
             switch (this.event) {
@@ -351,7 +356,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
           }
         },
 
-        // Contains a map of all records
+        // Contains a map of all records, in order.
         RECORDMAP: new Map(),
 
         // A reference to active records
@@ -365,7 +370,8 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
           CREATE_RECORD: Symbol('record.create'),
           DELETE_RECORD: Symbol('record.delete'),
           DELETE_RECORD_FIELD: Symbol('records.field.delete'),
-          LOAD_RECORDS: Symbol('records.load')
+          LOAD_RECORDS: Symbol('records.load'),
+          CLEAR_RECORDS: Symbol('records.delete')
         },
 
         // Makes sure the model configuration specifies a valid and indexable field.
@@ -407,7 +413,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         },
 
         // Prepare record for insertion into the store.
-        preCreateRecord (data, suppressEvents = false) {
+        createRecord (data, suppressEvents = false) {
           const record = new me.METADATA.Model(data)
 
           if (!(record instanceof NGN.DATA.Entity)) {
@@ -480,7 +486,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
         // Add a record
         addRecord (data, suppressEvents = false) {
-          let record = me.PRIVATE.preCreateRecord(...arguments)
+          let record = me.PRIVATE.createRecord(...arguments)
 
           // Indexing is handled in an internal event handler
           let length = me.METADATA.records.push(record)
@@ -488,8 +494,10 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
           // Add the record to the map for efficient retrievel by OID
           me.PRIVATE.RECORDMAP.set(record.OID, length - 1)
 
-          // TODO: Apply filters
           me.PRIVATE.ACTIVERECORDS.set(record.OID, length - 1)
+
+          me.METADATA.filters.forEach(filter => filter.exec(record))
+
           me.emit(me.PRIVATE.EVENT.CREATE_RECORD, record)
 
           return record
@@ -510,33 +518,47 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
             return me.PRIVATE.addRecord(data, suppressEvents)
           }
 
-          let record = me.PRIVATE.preCreateRecord(data, suppressEvents)
+          let record = me.PRIVATE.createRecord(data, suppressEvents)
           me.METADATA.records.push(record)
 
-          let firstRecords = Array.from(me.PRIVATE.RECORDMAP).slice(0, index)
-          let lastRecords = Array.from(me.PRIVATE.RECORDMAP).slice(index)
-          let recordMap = new Map(firstRecords)
+          let rawIndex = me.METADATA.records.length - 1
+          let updatedRecords = Array.from(me.PRIVATE.RECORDMAP)
 
-          let updatedRecords = Array.from(me.PRIVATE.RECORDMAP).splice(index, 0, [record.oid, index])
-          updatedRecords = updatedRecords.slice(0, index + 1).concat(updatedRecords.slice(index).map(item => { item[1] += 1; return item }))
+          if (index === 0) {
+            updatedRecords.unshift([record.OID, rawIndex])
+          } else {
+            let lastRecords = updatedRecords.splice(index, updatedRecords.length, [record.OID, rawIndex])
+            updatedRecords = updatedRecords.concat(lastRecords)
+          }
 
           me.PRIVATE.RECORDMAP = new Map(updatedRecords)
 
-          // Apply filters
-          let retain = me.PRIVATE.shouldFilterRecord(record)
+          let firstActiveRecords = index === 0 ? new Array(0) : Array.from(me.PRIVATE.ACTIVERECORDS).filter(item => item[1] < index)
+          let lastActiveRecords = Array.from(me.PRIVATE.ACTIVERECORDS)
 
-          if (retain) {
-            let firstActiveRecords = Array.from(me.PRIVATE.ACTIVERECORDS).filter(item => item[1] <= index)
-            let lastActiveRecords = Array.from(me.PRIVATE.ACTIVERECORDS).filter(item => item[1] > index).map(item => { item[1] += 1; return item})
-
-            me.PRIVATE.ACTIVERECORDS = new Map([...firstActiveRecords, [record.OID, index], ...lastActiveRecords])
-          } else {
-            throw new Error('Need to finish this function. Add to the filtered record set and update the appropriate filter cache.')
+          if (index === 0) {
+            lastActiveRecords = lastActiveRecords.filter(item => item[1] >= index)
           }
+
+          me.PRIVATE.ACTIVERECORDMAP = new Map([...firstActiveRecords, [record.OID, rawIndex], ...lastActiveRecords])
+          me.METADATA.filters.forEach(filter => filter.exec(record))
+          me.PRIVATE.updateOrderIndex()
 
           me.emit(me.PRIVATE.EVENT.CREATE_RECORD, record)
 
           return record
+        },
+
+        updateOrderIndex () {
+          let activeRecords = Array.from(me.PRIVATE.ACTIVERECORDS)
+
+          if (activeRecords.length === 0) {
+            me.METADATA.FIRSTRECORDINDEX = 0
+            me.METADATA.LASTRECORDINDEX = 0
+          } else {
+            me.METADATA.FIRSTRECORDINDEX = activeRecords[0][1]
+            me.METADATA.LASTRECORDINDEX = activeRecords[activeRecords.length - 1][1]
+          }
         },
 
         convertStubToRecord (index, record) {
@@ -731,7 +753,6 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     if (recordList.size === 0) {
       return []
     }
-console.log('1st REC', this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
     let rec = this.PRIVATE.convertStubToRecord(this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[this.METADATA.FIRSTRECORDINDEX])
 
     if (this.METADATA.MAP === null) {
@@ -932,8 +953,7 @@ console.log('1st REC', this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[thi
 
     const record = this.PRIVATE.insertRecord(this.PRIVATE.forceDataObject(data), recordIndex, suppressEvents)
 
-    // TODO: Apply filters to new record before identifying the last record.
-    this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
+    // Filters are auto-applied to new records
 
     if (!suppressEvents) {
       this.emit('record.create', record)
@@ -949,6 +969,8 @@ console.log('1st REC', this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[thi
   // TODO: restore (archived record)
   // TODO: contains
   // TODO: find/query
+  // TODO: merge (with another data store)
+  // TODO: split (into more data stores)
 
   /**
    * @method remove
@@ -1027,7 +1049,7 @@ console.log('1st REC', this.METADATA.FIRSTRECORDINDEX, this.METADATA.records[thi
 
         break
     }
-console.log('==>', this.data, this.PRIVATE.ACTIVERECORDMAP)
+
     // If nothing has been deleted yet, create an active record map.
     // The active record map contains Model OID values with a reference
     // to the actual record index.
@@ -1038,7 +1060,7 @@ console.log('==>', this.data, this.PRIVATE.ACTIVERECORDMAP)
 
     // Identify the record to be removed.
     const removedRecord = this.METADATA.records[index]
-console.log('REMVED', removedRecord.data);
+
     // If the record isn't among the active records, do not remove it.
     if (removedRecord === null) {
       NGN.WARN('Specified record does not exist.')
@@ -1051,9 +1073,9 @@ console.log('REMVED', removedRecord.data);
       NGN.WARN(`Record not found for "${removedRecord.OID.toString()}".`)
       return null
     }
-console.log('PRE', this.PRIVATE.ACTIVERECORDS)
+
     this.PRIVATE.ACTIVERECORDS.delete(removedRecord.OID)
-console.log('POST', this.PRIVATE.ACTIVERECORDS)
+
     // If the store is configured to soft-delete,
     // don't actually remove it until it expires.
     if (this.METADATA.softDelete) {
@@ -1148,7 +1170,7 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
         this.PRIVATE.EVENT.DELETE_RECORD,
         this.PRIVATE.EVENT.LOAD_RECORDS,
         this.PRIVATE.EVENT.DELETE_RECORD_FIELD,
-        'clear'
+        this.PRIVATE.EVENT.CLEAR_RECORDS,
       ], this.PRIVATE.INDEX)
     }
 
@@ -1253,8 +1275,30 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
     let ActiveRecords = Array.from(this.PRIVATE.ACTIVERECORDS)
     let currentIndex = ActiveRecords.findIndex(item => currentRecord.OID === item[0])
 
+    if (ActiveRecords.length === 0) {
+      NGN.WARN(`"${this.name}" data store has no active records and ${this.PRIVATE.FILTEREDRECORDS.size} record${this.PRIVATE.FILTEREDRECORDS.size !== 1 ? 's' : ''}. record.next() & record.previous() do not iterate through filtered records.`)
+      return null
+    }
+
     if (currentIndex < 0) {
-      throw new Error('Record not found.')
+      let recordIndex = Array.from(this.PRIVATE.FILTEREDRECORDS).findIndex(item => currentRecord.OID === item[0])
+
+      if (recordIndex < 0) {
+        throw new Error('Record not found.')
+      }
+
+      let iterations = 0
+
+      while (ActiveRecords.findIndex(item => recordIndex === item[1]) < 0 && iterations < ActiveRecords.length) {
+        recordIndex++
+        iterations++
+      }
+
+      if (iterations < ActiveRecords.length) {
+        currentIndex = recordIndex
+      } else {
+        return null
+      }
     }
 
     currentIndex += count
@@ -1287,7 +1331,11 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
    * The zero-based index number of the model.
    */
   indexOf (record) {
-    return NGN.coalesce(this.PRIVATE.RECORDMAP.get(record.OID), -1)
+    if (typeof record !== 'symbol') {
+      record = record.OID
+    }
+
+    return NGN.coalesce(this.PRIVATE.RECORDMAP.get(record), -1)
   }
 
   /**
@@ -1336,7 +1384,7 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
    */
   getRecord (index = 0) {
     if (typeof index === 'symbol') {
-      index = NGN.coalesce(this.PRIVATE.ACTIVERECORDS.get(index), -1)
+      index = this.indexOf(index)
     }
 
     if (index < 0) {
@@ -1349,7 +1397,7 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
       return null
     }
 
-    return this.METADATA.records[Array.from(this.PRIVATE.ACTIVERECORDS)[index][1]]
+    return this.PRIVATE.convertStubToRecord(index, this.METADATA.records[Array.from(this.PRIVATE.ACTIVERECORDS)[index][1]])
   }
 
   /**
@@ -1377,12 +1425,14 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
     this.PRIVATE.FILTEREDRECORDMAP = null
     this.METADATA.LASTRECORDINDEX = 0
     this.METADATA.FIRSTRECORDINDEX = 0
+    this.METADATA.filters.forEach(filter => filter.purge(this))
 
     if (this.METADATA.AUDITABLE) {
       this.METADATA.AUDITLOG.reset()
     }
 
     // Indexes updated automatically (listening for 'clear' event)
+    this.emit(this.PRIVATE.EVENT.CLEAR_RECORDS)
 
     if (!suppressEvents) {
       this.emit('clear')
@@ -1467,8 +1517,31 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
     this.snapshotarchive = null
   }
 
-  load (data) {
-    console.time('load')
+  /**
+   * Load bulk data.
+   * @param  {Array} data
+   * An array of data Object or NGN.DATA.Model values.
+   * @param {Boolean} [autoApplyFilters=false]
+   * Set this to `true` to automatically apply filters to
+   * the data once loaded into the store.
+   * @warning Filtering is a O(n) operation, meaning the
+   * larger the dataset, the slower it will perform. Unfortunately,
+   * there is no generic way to circumvent this challenge in JavaScript.
+   * @fires {Object} loaded
+   * Triggered when the load is complete. The object returned to the event
+   * handler looks like:
+   *
+   * ```
+   * {
+   *   recordCount: 5,
+   *   activeRecordCount: 3,
+   *   filteredRecordCount: 2,
+   *   loadDuration: 300 // milliseconds
+   * }
+   * ```
+   */
+  load (data, autoApplyFilters = false, suppressEvents = false) {
+    let start = new Date()
     let insertableData
 
     // Guarantee unique records amongst only the new records
@@ -1500,22 +1573,82 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
       throw new Error('Maximum load size exceeded. A store may contain a maximum of 4M records.')
     }
 
+    let me = this
     for (let i = 0; i < insertableData.length; i++) {
       let oid = Symbol('model.id')
       this.METADATA.records.push({
         [this.PRIVATE.STUB]: true,
         OID: oid,
+        get store () {
+          return me
+        },
         metadata: insertableData[i]
       })
 
-      // Add the record to the map for efficient retrievel by OID
+      // Add the record to the map for efficient retrieval by OID
       this.PRIVATE.RECORDMAP.set(oid, this.METADATA.records.length - 1)
+      this.PRIVATE.ACTIVERECORDS.set(oid, this.METADATA.records.length - 1)
     }
 
-    // TODO: Apply filters to new record before identifying the last record.
-    this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
+    if (autoApplyFilters) {
+      let startFilter = new Date()
+      this.filter()
+      let endFilter = new Date()
+    } else {
+      this.PRIVATE.updateOrderIndex()
+    }
 
-    // this.emit(this.PRIVATE.EVENT.LOAD_RECORDS)
+    let end = new Date()
+
+    this.emit(this.PRIVATE.EVENT.LOAD_RECORDS)
+
+    let result = {
+      recordCount: this.length,
+      activeRecordCount: this.size,
+      filteredRecordCount: this.length - this.size,
+      loadDuration: (end - start),
+      filterDuration: autoApplyFilters ? (endFilter - startFilter) : 0
+    }
+
+    if (!suppressEvents) {
+      this.emit('loaded', result)
+    }
+
+    return result
+  }
+
+  /**
+   * Drop all records and reload. This is the equivalent of running #clear()
+   * before a new #load().
+   ** @param  {Array} data
+   * An array of data Object or NGN.DATA.Model values.
+   * @param {Boolean} [autoApplyFilters=false]
+   * Set this to `true` to automatically apply filters to
+   * the data once loaded into the store.
+   * @warning Filtering is a O(n) operation, meaning the
+   * larger the dataset, the slower it will perform. Unfortunately,
+   * there is no generic way to circumvent this challenge in JavaScript.
+   * @fires {Object} reloaded
+   * Triggered when the reload is complete. The object returned to the event
+   * handler looks like:
+   *
+   * ```
+   * {
+   *   recordCount: 5,
+   *   activeRecordCount: 3,
+   *   filteredRecordCount: 2,
+   *   loadDuration: 300 // milliseconds
+   * }
+   * ```
+   */
+  reload (data, autoApplyFilters = false) {
+    this.clear(true)
+
+    this.METADATA.records = new Array(data.length)
+
+    let result = this.load(data, autoApplyFilters, false)
+
+    this.emit('reloaded', result)
   }
 
   /**
@@ -1694,11 +1827,23 @@ console.log('POST', this.PRIVATE.ACTIVERECORDS)
    * chaining methods together.
    */
   filter () {
+    if (this.METADATA.filters.size === 0) {
+      return this
+    }
+
+    // let interval = 1000
+    // let timer = setTimeout(function () {
+    //   interval = interval * 1.5
+    //   NGN.WARN()
+    // }, interval)
+
     let args = Array.from(arguments)
 
     this.METADATA.filters.forEach((filter, name) => {
       if (args.length === 0 || args.indexOf(name) >= 0) {
-        Array.from(this.PRIVATE.ACTIVERECORDS).forEach(item => filter.exec(this.METADATA.records[item[1]]))
+        this.PRIVATE.ACTIVERECORDS.forEach(index => {
+          filter.exec(this.METADATA.records[index])
+        })
       }
     })
 

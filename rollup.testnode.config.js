@@ -1,4 +1,5 @@
 import stripCode from  'rollup-plugin-strip-code'
+import replace from 'rollup-plugin-replace'
 import pkg from './package.json'
 import { install } from 'source-map-support'
 install()
@@ -13,7 +14,11 @@ export default [{
 		stripCode({
 			start_comment: 'browser-only',
 			end_comment: 'end-browser-only'
-		})
+		}),
+		replace({
+			delimiters: ['[#', '#]'],
+			REPLACE_VERSION: require('./package.json').version
+		}),
 	],
 	output: [
 		{ file: `${outdir}/ngn.js`, format: 'cjs', sourcemap: true },

@@ -14,6 +14,7 @@ test('Namespace', (t) => {
 test('Method Existance', (t) => {
   const methodList = [
     'global',
+    // 'worker',
     'define',
     'public',
     'private',

@@ -1016,5 +1016,7 @@ export default class EventEmitter extends EEmitter {
 
       currentEvent = iterator.next()
     }
+
+    super.emit(...arguments)
   }
 }

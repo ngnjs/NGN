@@ -63,15 +63,18 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
             NGN.WARN(`An attempt to remove ${this.name} filter occurred for a NGN.DATA.Store that could not be found or does not exist.`)
           }
         })
+
+        this.active = false
       }),
-      STORE_EVENT: NGN.privateconst(Symbol(`monitor.store.event-${this.filterName}-filter`)),
+      STORE_EVENT: NGN.privateconst(Symbol(`monitor.store.event-${name}-filter`)),
       // When the store is disabled, restore the records to the active list.
       deactivate: NGN.privateconst(() => {
         NGN.INFO('filter.disable', `Disabling "${this.name}"`)
+
         this.filteredRecordStores.forEach(store => {
           this.filteredRecords[store.OID].forEach(recordOID => {
-console.log(store.PRIVATE.RECORDMAP.size, store.PRIVATE.RECORDMAP.get(recordOID));
             let recordIndex = store.indexOf(recordOID)
+
             if (recordIndex < 0) {
               console.log('Record DNE?');
               this.filteredRecords[store.OID].delete(recordOID)
@@ -81,19 +84,37 @@ console.log(store.PRIVATE.RECORDMAP.size, store.PRIVATE.RECORDMAP.get(recordOID)
             }
           })
         })
+
+        this.active = false
       }),
       // When the store is enabled, reapply the filter.
       activate: NGN.privateconst(() => {
         NGN.INFO('filter.enable', `Enabling "${this.name}"`)
         this.filteredRecordStores.forEach(store => {
-          this.recordUpdates[store.OID].forEach(recordOID => {
-            if (store.PRIVATE.RECORDMAP.has(recordOID)) {
-              this.exec(store.METADATA.records[store.PRIVATE.RECORDMAP.get(recordOID)])
+          // Support updates that occured while filter was inactive.
+          if (this.recordUpdates.has(store.OID)) {
+            this.recordUpdates.get(store.OID).forEach(recordOID => {
+              if (store.PRIVATE.RECORDMAP.has(recordOID)) {
+                this.exec(store.METADATA.records[store.PRIVATE.RECORDMAP.get(recordOID)])
+              }
+            })
+
+            this.recordUpdates.get(store.OID).clear()
+          }
+
+          // Refilter known records
+          this.filteredRecords[store.OID].forEach(recordOID => {
+            if (!this.recordUpdates.has(store.OID) || !this.recordUpdates.get(store.OID).has(recordOID)) {
+              // Add the record to the store's filtered recordset
+              store.PRIVATE.FILTEREDRECORDS.set(recordOID, store.indexOf(recordOID))
+
+              // Remove the filtered record from the store's active record set.
+              store.PRIVATE.ACTIVERECORDS.delete(recordOID)
             }
           })
-
-          this.recordUpdates[store.OID].clear()
         })
+
+        this.active = true
       })
     })
 
@@ -106,7 +127,7 @@ console.log(store.PRIVATE.RECORDMAP.size, store.PRIVATE.RECORDMAP.get(recordOID)
       switch (payload.event) {
         case 'record.create':
           if (!this.active) {
-            this.recordUpdates[payload.record.store.OID].add(payload.record.OID)
+            this.recordUpdates.get(payload.record.store.OID).add(payload.record.OID)
           } else {
             this.exec(payload.record)
           }
@@ -114,16 +135,15 @@ console.log(store.PRIVATE.RECORDMAP.size, store.PRIVATE.RECORDMAP.get(recordOID)
 
         case 'record.delete':
           if (!this.active) {
-console.log(this.recordUpdates[payload.record.store.OID]);
-            this.recordUpdates[payload.record.store.OID].add(payload.record.OID)
-          } else {
+            this.recordUpdates.get(payload.record.store.OID).add(payload.record.OID)
+          } else if (this.filteredRecords.hasOwnProperty(payload.record.store.OID)) {
             this.filteredRecords[payload.record.store.OID].delete(payload.record.OID)
           }
           break
 
         case 'record.update':
           if (!this.active) {
-            this.recordUpdates[payload.record.store.OID].add(payload.record.OID)
+            this.recordUpdates.get(payload.record.store.OID).add(payload.record.OID)
           } else {
             let filtered = this.filteredRecords[payload.record.store.OID].get(payload.record.OID)
             let retained = this.exec(payload.record)
@@ -142,6 +162,10 @@ console.log(this.recordUpdates[payload.record.store.OID]);
           NGN.WARN(`"${payload.event}" is not handled by filter functions.`)
       }
     })
+  }
+
+  get applied () {
+    return this.active
   }
 
   get name () {
@@ -190,17 +214,13 @@ console.log(this.recordUpdates[payload.record.store.OID]);
 
   enable () {
     if (!this.active) {
-      this.active = true
       this.activate()
       this.emit('enabled')
     }
   }
 
   disable () {
-    console.log('Disabled?');
     if (this.active) {
-console.log('YUP!', this.name)
-      this.active = false
       this.deactivate()
       this.emit('disabled')
     }
@@ -230,15 +250,23 @@ console.log('YUP!', this.name)
       return
     }
 
-    if (record.METADATA.store === null) {
+    if (!record) {
+      throw new Error('Cannot execute filter against a null/undefined record.')
+    }
+
+    if (!record.METADATA) {
+      record = record.store.getRecord(record.OID)
+    }
+
+    const store = record.METADATA.store
+
+    if (store === null || store === undefined) {
       throw new Error('Cannot filter a record which is not part of a store: \n' + JSON.stringify(record.data, null, 2))
     }
 
     let retain = this.fn(record)
 
     if (!retain) {
-      let store = record.METADATA.store
-
       if (!this.filteredRecords.hasOwnProperty(store.OID)) {
         this.filteredRecords[store.OID] = new Set()
         this.filteredRecordStores.set(store.OID, store)
