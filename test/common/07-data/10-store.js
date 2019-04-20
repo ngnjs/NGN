@@ -394,6 +394,18 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     GoodStore.reload(dataset)
   })
 
+  tasks.add('Reset Store', function (next) {
+    GoodStore.reset()
+    t.ok(GoodStore.size === 0
+      && GoodStore.length === 0
+      && GoodStore.METADATA.filters.size === 0
+      && GoodStore.snapshots.length === 0,
+      'Store is reset to original state.'
+    )
+
+    next()
+  })
+
   tasks.on('complete', function () {
     // clearTimeout(timer)
     t.end()
@@ -453,7 +465,6 @@ test('NGN.DATA.Store Indexing', function (t) {
   t.end()
 })
 
-// TODO: Reload
 // TODO: Find/Query
 // TODO: Sorting
 // TODO: Deduplicate

@@ -1652,6 +1652,19 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
   }
 
   /**
+   * Removes all data, filters, and "resets" the store back to
+   * the original unpopulated state.
+   * @param {Boolean} [suppressEvents=false]
+   * Set to `true` to prevent events from triggering when this method is run.
+   */
+  reset (suppressEvents = false) {
+    this.clear(true, suppressEvents)
+    this.clearSnapshots()
+    this.clearFilter()
+    this.METADATA.filters = new Map()
+  }
+
+  /**
    * This rebuilds the local index of records, removing any dead records.
    * While deleted records are destroyed (in accordance to #softDeleteTtl),
    * the active record table contains a `null` or `undefined` value for each
