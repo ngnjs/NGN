@@ -714,11 +714,17 @@ export default class EventEmitter extends EEmitter {
       thresholdOnce: NGN.const(function (thresholdEventName, limit, finalEventName, payload = null) {
         let thresholdClosureEvent = `::NGNTHRESHOLD::${(new Date()).getTime()}::${finalEventName}`
         let threshold = this.threshold(thresholdEventName, limit, thresholdClosureEvent, payload)
+        let me = this
 
-        this.once(thresholdClosureEvent, () => {
+        this.once(thresholdClosureEvent, function () {
           threshold.remove()
           threshold = null
-          this.emit(finalEventName, payload)
+
+          if (NGN.isFn(finalEventName)) {
+            finalEventName(payload)
+          } else {
+            me.emit(finalEventName, payload)
+          }
         })
       }),
 

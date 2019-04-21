@@ -217,6 +217,37 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
     })
   })
 
+  tasks.add('Insert record after another', function (next) {
+    GoodStore.clear()
+    GoodStore.clearFilter()
+
+    var record = GoodStore.insertAfter(10, {
+      firstname: 'John',
+      lastname: 'Doe'
+    })
+
+    t.ok(GoodStore.length === 1, 'Inserted record into empty store.')
+    t.ok(GoodStore.size === 1, 'Inserted record recognized in data set.')
+    t.ok(record.firstname === 'John', 'Added record accurately represents the stored data.')
+    t.ok(GoodStore.contains(record), 'Store recognizes that it contains the new record.')
+    t.ok(GoodStore.indexOf(record) === 0, 'Store accurately returns the index of the new record.')
+
+    GoodStore.once('record.create', function (rec) {
+      t.pass('Inserting a record after another emits a record.create event.')
+      t.ok(rec.firstname === GoodStore.last.firstname, 'Last accessor returns the inserted record within the store.')
+      t.ok(GoodStore.last.firstname === 'Jill', 'Last accessor returns proper values.')
+      t.ok(GoodStore.first.firstname === 'John', 'First accessor returns proper values.')
+      t.ok(GoodStore.size === 2, 'Correct number of records identified.')
+
+      next()
+    })
+
+    GoodStore.insertAfter(record, {
+      firstname: 'Jill',
+      lastname: 'Doe'
+    })
+  })
+
   tasks.add('Doubly Linked list', function (next) {
     GoodStore.clear()
     GoodStore.add([{
@@ -414,6 +445,36 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
   tasks.run(true)
 })
 
+test('NGN.DATA.Store Record Auto-expiration (TTL)', function (t) {
+  var MetaModel = new NGN.DATA.Model(Meta())
+  var Store = new NGN.DATA.Store({
+    model: MetaModel,
+    expires: 100,
+    index: ['firstname', 'lastname']
+  })
+
+  Store.thresholdOnce('record.expired', 4, function() {
+    t.pass('Expiration events occurred on all records.')
+
+    t.ok(Store.size === 0, 'All expired records removed from the store.')
+    t.end()
+  })
+
+  Store.add([{
+    firstname: 'John',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Jill',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Jake',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Bob',
+    lastname: 'Swanson'
+  }])
+})
+
 test('NGN.DATA.Store Indexing', function (t) {
   var MetaModel = new NGN.DATA.Model(Meta())
   var Store = new NGN.DATA.Store({
@@ -470,7 +531,7 @@ test('NGN.DATA.Store Indexing', function (t) {
 // TODO: Deduplicate
 // TODO: Invalid/valid field events for store records
 // TODO: Undo/Redo
-// TODO: Merge & Split Store(s)
+// TODO: Merge & Split Store(s): By # of divisions, By # of records. Have a concat() method for merging.
 // TODO: Store-level Validation Rules
 // TODO: Proxy
 

@@ -37,6 +37,11 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
       name = `Filter_${filterFn.toString().length}${(new Date()).getTime()}`
     }
 
+    // If the filter is not a function, convert it to one.
+    // if (!NGN.isFn(filterFn)) {
+    //
+    // }
+
     super()
 
     const me = this
@@ -276,7 +281,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
           me.delayEmit(me.STORE_EVENT, 0, {
             event: this.event,
             record: storeRecord
-          }) // Specify 0 to emit on the next event loop.
+          }) // Specify 0 to emit on the next event loop, assuring the record is written to memory before handling the event.
         })
       }
 

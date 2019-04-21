@@ -70,6 +70,14 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         Model: NGN.coalesce(cfg.model),
 
         /**
+         * @cfg {Number} [expires=-1]
+         * Sets the default NGN.DATA.Model#expiration value (Milliseconds) for each new record as it
+         * is added to the store.
+         * @type {Number}
+         */
+        expires: NGN.coalesce(cfg.expires, -1),
+
+        /**
          * @cfg {boolean} [allowDuplicates=true]
          * Set to `false` to prevent duplicate records from being added.
          * If a duplicate record is added, it will be ignored and an
@@ -472,14 +480,23 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
               case 'field.valid':
                 return me.emit(this.event.replace('field.', 'record.'), record)
 
-              case 'expired':
-                // TODO: Handle expiration
+              case 'expire':
+                if (me.METADATA.autoRemoveExpiredRecords) {
+                  me.remove(arguments[0])
+                }
 
+                me.emit('record.expired', arguments[0])
+                return
             }
           })
 
           delete record.METADATA.store
           Object.defineProperty(record.METADATA, 'store', NGN.get(() => me))
+
+          if (me.METADATA.expires > 0) {
+            record.expires = me.METADATA.expires
+
+          }
 
           return record
         },
@@ -567,6 +584,10 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
             newRecord.OID = record.OID
 
             me.METADATA.records[index] = newRecord
+
+            if (me.METADATA.expires > 0) {
+              newRecord.expires = this.METADATA.expires
+            }
 
             return newRecord
           } else if (record === null || record === undefined) {
@@ -892,7 +913,6 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
     const record = this.PRIVATE.addRecord(this.PRIVATE.forceDataObject(data))
 
-    // TODO: Apply filters to new record before identifying the last record.
     this.METADATA.LASTRECORDINDEX = this.METADATA.records.length - 1
 
     if (!suppressEvents) {
@@ -962,7 +982,64 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     return record
   }
 
-  // TODO: insertAfter
+  /**
+   * @method insertAfter
+   * Add a record after the specified record or index.
+   *
+   * **BE CAREFUL** when using this in combination with #LIFO or #FIFO.
+   * LIFO/FIFO is applied _after_ the record is added to the store but
+   * _before_ it is moved to the desired index.
+   * @param  {NGN.DATA.Model|number} target
+   * The record (model) or index where the new record will be inserted after.
+   * @param {NGN.DATA.Model|object} data
+   * Accepts an existing NGN Data Model or a JSON object.
+   * If a JSON object is supplied, it will be applied to
+   * the data model specified in cfg#model.
+   * @param {boolean} [suppressEvent=false]
+   * Set this to `true` to prevent the `record.create` event
+   * from firing.
+   * @return {NGN.DATA.Model}
+   * Returns the new record.
+   */
+  insertAfter (afterRecord, data, suppressEvents = false) {
+    let recordIndex = typeof afterRecord === 'number' ? afterRecord : this.indexOf(afterRecord)
+
+    if (recordIndex < 0) {
+      throw new NGNMissingRecordError()
+    }
+
+    if (recordIndex >= this.METADATA.records.length) {
+      recordIndex = this.METADATA.records.length - 1
+      recordIndex = recordIndex < 0 ? 0 : recordIndex
+    }
+
+    // Support array input
+    if (NGN.typeof(data) === 'array') {
+      let result = new Array(data.length)
+
+      for (let i = data.length - 1; i >= 0; i--) {
+        result[i] = this.insertAfter(recordIndex, suppressEvents)
+      }
+
+      return result
+    }
+
+    // Prevent creation if it will exceed maximum record count.
+    if (this.METADATA.maxRecords > 0 && this.METADATA.records.length + 1 > this.METADATA.maxRecords) {
+      throw new Error('Maximum record count exceeded.')
+    }
+
+    const record = this.PRIVATE.insertRecord(this.PRIVATE.forceDataObject(data), recordIndex + 1, suppressEvents)
+
+    // Filters are auto-applied to new records
+
+    if (!suppressEvents) {
+      this.emit('record.create', record)
+    }
+
+    return record
+  }
+
   // TODO: removeBefore
   // TODO: removeAfter
   // TODO: move
@@ -1831,7 +1908,9 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
    * In the example above, the store's records would only display people
    * of the name `John Doe` or `John Smith`, even though there are 3 known filters
    * associated with the store.
-   * @param {string[]} namedFilters
+   * @param {NGN.DATA.Model} [record]
+   * Optionally identify a specific record to run filters against.
+   * @param {string[]} [namedFilters]
    * A list of filters can be supplied to selectively enable
    * a specific subset of filters. If no filters are specified,
    * all known filters are applied. Disabled filters will not be applied.
@@ -1853,7 +1932,9 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     let args = Array.from(arguments)
 
     this.METADATA.filters.forEach((filter, name) => {
-      if (args.length === 0 || args.indexOf(name) >= 0) {
+      if (args[0] instanceof NGN.DATA.Entity) {
+        filter.exec(args[0])
+      } else if (args.length === 0 || args.indexOf(name) >= 0) {
         this.PRIVATE.ACTIVERECORDS.forEach(index => {
           filter.exec(this.METADATA.records[index])
         })

@@ -518,6 +518,10 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
           throw new Error(`Invalid data rule configuration for ${this.name} model. Expected an object or array of NGN.DATA.Rule instances. Received "${NGN.typeof(this.METADATA.validators)}"`)
       }
     }
+
+    if (NGN.coalesce(cfg.expires) !== null) {
+      this.expires = cfg.expires
+    }
   }
 
   get name () {
@@ -718,7 +722,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
 
       if (value === 0) {
         this.METADATA.expiration = now
-        this.emit('expire')
+        this.emit('expire', this)
 
         return
       }
@@ -734,7 +738,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
 
     clearTimeout(this.METADATA.expirationTimeout)
 
-    this.METADATA.expirationTimeout = setTimeout(() => this.emit('expire'), this.METADATA.expiration.getTime() - now.getTime())
+    this.METADATA.expirationTimeout = setTimeout(() => this.emit('expire', this), this.METADATA.expiration.getTime() - now.getTime())
   }
 
   get expired () {
