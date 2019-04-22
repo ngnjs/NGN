@@ -1040,14 +1040,118 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     return record
   }
 
-  // TODO: removeBefore
-  // TODO: removeAfter
-  // TODO: move
-  // TODO: restore (archived record)
-  // TODO: contains
-  // TODO: find/query
-  // TODO: merge (with another data store)
-  // TODO: split (into more data stores)
+  /**
+   * @method move
+   * Move an existing record to a specific index. This can be used
+   * to reorder a single record.
+   * @param {NGN.DATA.Model|number|string} source
+   * The record or the index of a record within the store to move.
+   * This can also be the unique ID of a record.
+   * @param {NGN.DATA.Model|number|string} target
+   * The record or the index of a record within the store where the source
+   * will be positioned against. This can also be the unique ID of a record.
+   * @returns {NGN.DATA.Model}
+   * Returns the model.
+   * @fires {change:Object} record.moved
+   * This event is triggered when the move is complete.
+   * The change data sent to this event handler looks like:
+   *
+   * ```
+   * {
+   *   oldPosition: {number},
+   *   newPosition: {number},
+   *   record: {NGN.DATA.Model}
+   * }
+   * ```
+   */
+  move (sourceRecord, targetRecord) {
+    sourceRecord = typeof sourceRecord === 'symbol' || typeof sourceRecord === 'number'
+      ? this.getRecord(sourceRecord)
+      : sourceRecord
+
+    if (!sourceRecord) {
+      throw NGNMissingRecordError('Could not find source record.')
+    }
+
+    targetRecord = typeof targetRecord === 'symbol' || typeof targetRecord === 'number'
+      ? this.getRecord(targetRecord)
+      : targetRecord
+
+    if (!targetRecord) {
+      throw NGNMissingRecordError('Could not find target record.')
+    }
+
+    if (sourceRecord === targetRecord) {
+      return
+    }
+
+    let activeRecords = Array.from(this.PRIVATE.ACTIVERECORDS)
+    let sourceIndex = activeRecords.findIndex(item => item[0] === sourceRecord.OID)
+    let targetIndex = activeRecords.findIndex(item => item[0] === targetRecord.OID)
+
+    activeRecords.splice(targetIndex, 0, activeRecords.splice(sourceIndex, 1)[0])
+
+    this.PRIVATE.ACTIVERECORDMAP = new Map([...activeRecords])
+    this.PRIVATE.updateOrderIndex()
+
+    this.emit('record.moved', {
+      oldPosition: sourceIndex,
+      newPosition: targetIndex,
+      record: sourceRecord
+    })
+
+    return this
+  }
+
+  /**
+   * @method moveToEnd
+   * Move a record to the end of the dataset.
+   * @param {NGN.DATA.Model|number|string} source
+   * The record or the index of a record within the store to move.
+   * This can also be the unique ID of a record.
+   * will be positioned against. This can also be the unique ID of a record.
+   * @returns {NGN.DATA.Model}
+   * Returns the model.
+   * @fires {change:Object} record.moved
+   * This event is triggered when the move is complete.
+   * The change data sent to this event handler looks like:
+   *
+   * ```
+   * {
+   *   oldPosition: {number},
+   *   newPosition: {number},
+   *   record: {NGN.DATA.Model}
+   * }
+   * ```
+   */
+  moveToEnd (record) {
+    return this.move(record, this.PRIVATE.ACTIVERECORDS.size - 1)
+  }
+
+  /**
+   * @method moveToStart
+   * Move a record to the beginning of the dataset.
+   * @param {NGN.DATA.Model|number|string} source
+   * The record or the index of a record within the store to move.
+   * This can also be the unique ID of a record.
+   * will be positioned against. This can also be the unique ID of a record.
+   * @returns {NGN.DATA.Model}
+   * Returns the model.
+   * @fires {change:Object} record.moved
+   * This event is triggered when the move is complete.
+   * The change data sent to this event handler looks like:
+   *
+   * ```
+   * {
+   *   oldPosition: {number},
+   *   newPosition: {number},
+   *   record: {NGN.DATA.Model}
+   * }
+   * ```
+   */
+  moveToStart (record) {
+    return this.move(record, 0)
+  }
 
   /**
    * @method remove
@@ -1136,7 +1240,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     }
 
     // Identify the record to be removed.
-    const removedRecord = this.METADATA.records[index]
+    let removedRecord = this.METADATA.records[index]
 
     // If the record isn't among the active records, do not remove it.
     if (removedRecord === null) {
@@ -1218,6 +1322,53 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
     return removedRecord
   }
+
+  /**
+   * @method restore
+   * Restore a soft-deleted record to the store. This does not preserve the
+   * original index (a new index number is assigned).
+   * @param  {NGN.DATA.Model,Number,Symbol} id
+   * This may be the archived model/record, the index number of the record,
+   * or the record OID value.
+   * @return {NGN.DATA.Model}
+   * Returns the archived record. This will be `null` if the record cannot be
+   * found or does not exist, has been purged, or otherwise does not exist in
+   * the store.
+   * @fires {restoredRecord:NGN.DATA.Model} record.restored
+   * Triggered once a previously removed record has been restored .
+   */
+  restore (id) {
+    let index = typeof id === 'number' ? id : this.indexOf(id)
+
+    if (index < 0) {
+      return null
+    }
+
+    let record = this.PRIVATE.convertStubToRecord(index, this.METADATA.records[index])
+
+    if (!record) {
+      return null
+    }
+
+    if (this.PRIVATE.ACTIVERECORDMAP.has(record.OID) || this.PRIVATE.FILTEREDRECORDS.has(record.OID)) {
+      NGN.WARN(`${this.name} could not restore the specified record because it already exists amongst the active or filtered records.`)
+
+      return record
+    }
+
+    this.PRIVATE.ACTIVERECORDS.set(record.OID, index)
+    this.filter(record)
+
+    this.emit('record.restored', record)
+
+    return record
+  }
+
+  // TODO: find/query
+  // TODO: merge (with another data store)
+  // TODO: split (into more data stores)
+  // TODO: splitAt (specfific record/s)
+  // TODO: pop, shift (for parity w/ array)
 
   /**
    * Create a new index on the store.
@@ -1417,7 +1568,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
   /**
    * Determine whether the store contains a record.
-   * This only checks the active record set (ignores filtered records).
+   * This only checks the _active_ record set (ignores filtered records).
    * @param  {NGN.DATA.Model|NGN.DATA.Model#OID} record
    * The record to test for inclusion.
    * Internal methods may use the unique Object ID of a record.
@@ -1469,7 +1620,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       return null
     }
 
-    if (index >= this.PRIVATE.ACTIVERECORDS.size) {
+    if (index >= this.PRIVATE.RECORDMAP.size) {
       NGN.WARN('Cannot retrieve a record for an out-of-scope index (index greater than total record count.)')
       return null
     }

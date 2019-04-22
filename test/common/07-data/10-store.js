@@ -526,6 +526,70 @@ test('NGN.DATA.Store Indexing', function (t) {
   t.end()
 })
 
+test('NGN.DATA.Store Record Movement', function (t) {
+  var MetaModel = new NGN.DATA.Model(Meta())
+  var Store = new NGN.DATA.Store({
+    model: MetaModel
+  })
+
+  Store.add([{
+    firstname: 'John',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Jill',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Jake',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Bob',
+    lastname: 'Swanson'
+  }])
+
+  Store.move(Store.last, 1)
+  t.ok(Store.last.firstname === 'Jake' && Store.getRecord(1).firstname === 'Bob', 'Moved record to new position.')
+
+  Store.once('record.moved', function(delta) {
+    t.pass('record.moved event triggered.')
+    t.ok(Store.last.firstname === 'Bob' && Store.getRecord(1).firstname === 'Jill', 'Moved record to end of store.')
+
+    Store.moveToStart(Store.last)
+    t.ok(Store.first.firstname === 'Bob' && Store.last.firstname === 'Jake', 'Moved record to beginning of store.')
+
+    t.end()
+  })
+
+  Store.moveToEnd(1)
+})
+
+test('NGN.DATA.Store Record Restoration', function (t) {
+  var MetaModel = new NGN.DATA.Model(Meta())
+  var Store = new NGN.DATA.Store({
+    model: MetaModel,
+    softDelete: true
+  })
+
+  Store.add([{
+    firstname: 'John',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Jill',
+    lastname: 'Doe'
+  }])
+
+  Store.once('record.restored', function (record) {
+    t.pass('record.restored event triggered correctly.')
+    t.ok(record === oldRecord, 'The appropriate record was restored.')
+    t.ok(Store.size === 2, 'Store record counts are correct before and after the restore operation.')
+    t.end()
+  })
+
+  var oldRecord = Store.remove(Store.first)
+  t.ok(Store.size === 1 && Store.length === 2 && !Store.PRIVATE.ACTIVERECORDS.has(oldRecord.OID), 'Soft delete works.')
+
+  Store.restore(oldRecord)
+})
+
 // TODO: Find/Query
 // TODO: Sorting
 // TODO: Deduplicate
