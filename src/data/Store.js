@@ -73,7 +73,6 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
          * @cfg {Number} [expires=-1]
          * Sets the default NGN.DATA.Model#expiration value (Milliseconds) for each new record as it
          * is added to the store.
-         * @type {Number}
          */
         expires: NGN.coalesce(cfg.expires, -1),
 
@@ -272,6 +271,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
           'record.update',
           'record.delete',
           'record.restored',
+          'record.expired',
           'record.purged',
           'record.move',
           'record.invalid',
@@ -381,6 +381,8 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
           LOAD_RECORDS: Symbol('records.load'),
           CLEAR_RECORDS: Symbol('records.delete')
         },
+
+        ORIGINALCFG: cfg,
 
         // Makes sure the model configuration specifies a valid and indexable field.
         checkModelIndexField (field) {
@@ -855,15 +857,15 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     return this.METADATA.Model
   }
 
-  // set model (value) {
-  //   if (value !== this.METADATA.Model) {
-  //     if (NGN.typeof(value) !== 'model') {
-  //       throw new InvalidConfigurationError(`"${this.name}" model could not be set because the value is a ${NGN.typeof(value)} type (requires NGN.DATA.Model).`)
-  //     }
-  //
-  //     this.METADATA.Model = value
-  //   }
-  // }
+  set model (value) {
+    if (value !== this.METADATA.Model) {
+      if (NGN.typeof(value) !== 'model') {
+        throw new InvalidConfigurationError(`"${this.name}" model could not be set because the value is a ${NGN.typeof(value)} type (requires NGN.DATA.Model).`)
+      }
+
+      this.METADATA.Model = value
+    }
+  }
 
   get map () {
     return this.METADATA.MAP
@@ -1359,9 +1361,51 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     this.PRIVATE.ACTIVERECORDS.set(record.OID, index)
     this.filter(record)
 
+    record.removeAllListeners('expired')
+
     this.emit('record.restored', record)
 
     return record
+  }
+
+  /**
+   * Create a copy of the store.
+   * @param {boolean} [copyData=true]
+   * Copy the data. If this is set to `false`, the store configuration will be
+   * copied, but it will contain no data.
+   * Snapshots are not copied.
+   * @return {NGN.DATA.Store}
+   */
+  copy (includeData = true) {
+    let cfg = Object.assign({}, this.PRIVATE.ORIGINALCFG)
+
+    if (this.auditable) {
+      cfg.audit = true
+    }
+
+    let store = new Object.getPrototypeOf(this)(cfg)
+
+    store.name = `Copy of ${this.name}`
+
+    // Apply filters
+    this.METADATA.filters.forEach(filter => filter.apply(store))
+
+    // Apply model
+    store.METADATA.Model = this.METADATA.Model
+
+    // Indexes
+    this.METADATA.INDEXFIELDS.forEach(field => store.PRIVATE.createIndex(field))
+
+    store.METADATA.autoRemoveExpiredRecords = this.METADATA.autoRemoveExpiredRecords
+
+    store.METADATA.MAP = this.METADATA.MAP
+    store.auditable = this.auditable
+
+    if (includeData) {
+      store.load(this.METADATA.records)
+    }
+
+    return store
   }
 
   // TODO: find/query
@@ -1369,6 +1413,93 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
   // TODO: split (into more data stores)
   // TODO: splitAt (specfific record/s)
   // TODO: pop, shift (for parity w/ array)
+  // TODO: Copy
+
+  /**
+   * Split records into multiple stores. This
+   * does **not** delete the original store.
+   *
+   * ```
+   * let store = new NGN.DATA.Store(...)
+   *
+   * store.add([{
+   *   field: 'a'
+   * }, {
+   *   field: 'b'
+   * }, {
+   *   field: 'c'
+   * }, {
+   *   field: 'd'
+   * }])
+   *
+   * let smallerStores = store.split()
+   *
+   * smallerStores.forEach((store, index) => console.log(`\nStore ${index+1}\n`, store.data))
+   * ```
+   *
+   * The output of the example above would be:
+   *
+   * ```
+   *
+   * Store 1
+   * [{
+   *   field: 'a'
+   * }, {
+   *   field: 'b'
+   * }]
+   *
+   * Store 2
+   * [{
+   *   field: 'c'
+   * }, {
+   *   field: 'd'
+   * }]
+   * ```
+   * @param  {Number}  [recordsPerStore]
+   * The number of records that will be in each result store.
+   * If this is not specified, it will be automatically
+   * calculated by dividing the total number of records by 2.
+   * This would result in 2 stores.
+   *
+   * The appropriate number of stores will automatically
+   * be created by dividing the total number of records by
+   * the `recordPerStore` value, rounding up to the nearest integer.
+   * @param  {Boolean} [includeFiltered=false]
+   * Include records which have been filtered out but not deleted from the store.
+   * @return {NGN.DATA.Store[]}
+   * An array of the data stores.
+   */
+  split (chunkSize = null, includeFiltered = false) {
+    if (typeof chunkSize === 'boolean') {
+      includeFiltered = chunkSize
+      chunkSize = null
+    }
+
+    if (isNaN(chunkSize)) {
+      chunkSize = (this.size + (includeFiltered ? this.PRIVATE.FILTEREDRECORDS.size : 0)) / 2
+    }
+
+    if (chunkSize < 0) {
+      throw new Error('Cannot split a store into 0 or fewer records.')
+    }
+
+    let activeRecords = Array.from(this.PRIVATE.ACTIVERECORDS)
+
+    if (includeFiltered) {
+      activeRecords = activeRecords.concat(Array.from(this.PRIVATE.FILTEREDRECORDS))
+    }
+
+    let count = Math.ceil(activeRecords.length / chunkSize)
+    let results = new Array(count)
+
+    for (let i = 0; i < count; i++) {
+      // Create a copy of the store
+      results[i] = this.copy(false)
+      results[i].load(activeRecords.splice(0, chunkSize))
+    }
+
+    return results
+  }
 
   /**
    * Create a new index on the store.
@@ -1779,15 +1910,22 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       insertableData = []
 
       for (let i = 0; i < data.length; i++) {
-        if (!uniqueValues.has(JSON.stringify(data[i]))) {
-          uniqueValues.add(JSON.stringify(data[i]))
-          insertableData.push(data[i])
-        } else if (this.METADATA.errorOnDuplicate) {
-          throw new NGNDuplicateRecordError()
+        if (data[i]) {
+          if (!uniqueValues.has(JSON.stringify(data[i]))) {
+            uniqueValues.add(JSON.stringify(data[i]))
+            insertableData.push(data[i])
+          } else if (this.METADATA.errorOnDuplicate) {
+            throw new NGNDuplicateRecordError()
+          }
         }
       }
     } else {
       insertableData = data
+
+      // Remove any null or undefined records, which would otherwise be recognized as deleted record placeholders
+      while (insertableData.indexOf(null) >= 0 || insertableData.indexOf(undefined) >= 0) {
+        insertableData.splice(NGN.coalesceb(NGN.nullIf(insertableData.indexOf(null), -1), NGN.nullIf(insertableData.indexOf(undefined), -1) - 1, 1)
+      }
     }
 
     let newRecordCount = insertableData.length + this.METADATA.records.length
