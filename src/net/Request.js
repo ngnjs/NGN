@@ -104,6 +104,14 @@ export default class Request { // eslint-disable-line no-unused-vars
       requestbody: NGN.public(NGN.coalesce(cfg.body)),
 
       /**
+       * @cfg {string} [responseType=text]
+       * Specifies the type of data expected in the response.
+       * Values conform with those available in the XHR spec.
+       * See [MDN: XMLHttpRequest.responseType](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType)
+       */
+      responseType: NGN.public(NGN.coalesce(cfg.responseType, '')),
+
+      /**
        * @cfgproperty {string} username
        * A username to authenticate the request with (basic auth).
        */
@@ -259,6 +267,7 @@ export default class Request { // eslint-disable-line no-unused-vars
               this.requestbody = JSON.stringify(this.requestbody).trim()
               this.setHeader('Content-Length', this.requestbody.length, false)
               this.setHeader('Content-Type', NGN.coalesceb(contentType, 'application/json'), false)
+              this.responseType = 'json'
             }
           }
 

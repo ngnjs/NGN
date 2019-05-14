@@ -590,6 +590,61 @@ test('NGN.DATA.Store Record Restoration', function (t) {
   Store.restore(oldRecord)
 })
 
+test('Store Cloning', function (t) {
+  var MetaModel = new NGN.DATA.Model(Meta())
+  var Store = new NGN.DATA.Store({
+    model: MetaModel,
+    softDelete: true
+  })
+
+  Store.add([{
+    firstname: 'John',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Jill',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Jason',
+    lastname: 'Doe'
+  }, {
+    firstname: 'Dylan',
+    lastname: 'Johnson'
+  }])
+
+  Store.addFilter('j_names', function (record) {
+    return record.firstname.charAt(0).toUpperCase() === 'J'
+  })
+
+  var Clone = Store.clone()
+
+console.log(Clone.size === Store.size
+  , Clone.length === Store.length
+  , Clone.METADATA.filters.size + ' --> ' + Store.METADATA.filters.size
+  ,Clone.OID !== Store.OID);
+  t.ok(Clone.size === Store.size
+    && Clone.length === Store.length
+    && Clone.METADATA.filters.size === Store.METADATA.filters.size
+    && Clone.OID !== Store.OID,
+    'Basic cloning produces a copy of the store.'
+  )
+console.log('<--', Store.size, Clone.size)
+console.log('Filter Store');
+  Store.filter()
+console.log('Filter Clone');
+  Clone.filter()
+console.log('==>', Store.size, Clone.size)
+
+  t.ok(Store.size === 3
+    && Clone.size === Store.size
+    && Clone.length === Store.length
+    && Clone.METADATA.filters.size === Store.METADATA.filters.size
+    && Clone.OID !== Store.OID,
+    'Basic cloning with filter produces a copy of the store.'
+  )
+
+  t.end()
+})
+
 // TODO: Find/Query
 // TODO: Sorting
 // TODO: Deduplicate
@@ -598,6 +653,9 @@ test('NGN.DATA.Store Record Restoration', function (t) {
 // TODO: Merge & Split Store(s): By # of divisions, By # of records. Have a concat() method for merging.
 // TODO: Store-level Validation Rules
 // TODO: Proxy
+// TODO: Split by queries
+// TODO: pop() unshift()
+// TODO: Make it possible to trace where events are triggered from.
 
 // test('NGN.DATA.Relationship (Multi-Model)', function (t) {
 //   var Model = new NGN.DATA.Model(Meta())

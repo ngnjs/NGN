@@ -17,7 +17,7 @@
     "test:node": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-**/*-*.js --cov --coverage-report=html && standard --verbose | snazzy",
     "test:node:sanity": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-sanity/**/*.js",
     "test:node:basic": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-basic/**/*.js",
-    "test:node:events": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-event/**/**.js",
+    "test:node:events": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-events/**/**.js",
     "test:node:utility": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-utility/**/*.js",
     "test:node:queue": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-queue/**/*.js",
     "test:node:data": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/**/*.js",

@@ -47,16 +47,16 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     const me = this
 
     Object.defineProperties(this, {
-      /**
-       * @cfgproperty {string} [name]
-       * A descriptive name for the store. This is typically used for
-       * debugging, logging, and (somtimes) data proxies.
-       */
-      name: NGN.const(NGN.coalesce(cfg.name, 'Untitled Data Store')),
-
       OID: NGN.privateconst(Symbol('store.id')),
 
       METADATA: NGN.private({
+        /**
+         * @cfgproperty {string} [name]
+         * A descriptive name for the store. This is typically used for
+         * debugging, logging, and (somtimes) data proxies.
+         */
+        name: NGN.coalesce(cfg.name, 'Untitled Data Store'),
+
         // Holds the models/records
         records: [],
 
@@ -698,6 +698,30 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         }
       })
     }
+
+    NGN.INTERNAL('datastore.created', this)
+  }
+
+  get name () {
+    return this.METADATA.name
+  }
+
+  /**
+   * @property {string}
+   * Name of the store.
+   * @fires {object} renamed
+   * Fired when the name of the store changes.
+   */
+  set name (value) {
+    if (this.METADATA.name !== value) {
+      let oldName = this.METADATA.name
+      NGN.LABELS.DATASTORES.rename(oldName, value)
+      this.METADATA.name = value
+      this.emit('renamed', {
+        old: oldName,
+        new: value
+      })
+    }
   }
 
   /**
@@ -820,6 +844,15 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     })
 
     return result
+  }
+
+  /**
+  * @property {array} filtered
+  * An array of NGN.DATA.Model records that have been filtered out.
+  * The results reflect the inverse of #data.
+  */
+  get filtered () {
+    return Array.from(this.PRIVATE.FILTEREDRECORDS).map(item => this.METADATA.records[item[1]].data)
   }
 
   /**
@@ -1370,39 +1403,48 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
   /**
    * Create a copy of the store.
+   * @param {string} [name]
+   * An optional name for the new store.
    * @param {boolean} [copyData=true]
    * Copy the data. If this is set to `false`, the store configuration will be
    * copied, but it will contain no data.
    * Snapshots are not copied.
    * @return {NGN.DATA.Store}
    */
-  copy (includeData = true) {
+  clone (name = null, includeData = true) {
     let cfg = Object.assign({}, this.PRIVATE.ORIGINALCFG)
 
     if (this.auditable) {
       cfg.audit = true
     }
 
-    let store = new Object.getPrototypeOf(this)(cfg)
+    if (typeof name === 'boolean') {
+      includeData = name
+      name = null
+    }
 
-    store.name = `Copy of ${this.name}`
+    cfg.name = NGN.LABELS.DATASTORES.create(NGN.coalesce(name, this.name))
 
-    // Apply filters
-    this.METADATA.filters.forEach(filter => filter.apply(store))
+    let store = new NGN.DATA.Store(cfg)
 
     // Apply model
     store.METADATA.Model = this.METADATA.Model
 
     // Indexes
-    this.METADATA.INDEXFIELDS.forEach(field => store.PRIVATE.createIndex(field))
+    if (this.METADATA.hasOwnProperty('INDEXFIELDS')) {
+      this.METADATA.INDEXFIELDS.forEach(field => store.PRIVATE.createIndex(field))
+    }
 
     store.METADATA.autoRemoveExpiredRecords = this.METADATA.autoRemoveExpiredRecords
 
     store.METADATA.MAP = this.METADATA.MAP
     store.auditable = this.auditable
 
+    // Apply filters
+    this.METADATA.filters.forEach(filter => store.addFilter(filter))
+
     if (includeData) {
-      store.load(this.METADATA.records)
+      store.METADATA.records = this.data.slice().concat(this.filtered.slice())
     }
 
     return store
@@ -1494,11 +1536,78 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
     for (let i = 0; i < count; i++) {
       // Create a copy of the store
-      results[i] = this.copy(false)
-      results[i].load(activeRecords.splice(0, chunkSize))
+      results[i] = this.clone(false)
+      results[i].load(activeRecords.splice(0, chunkSize).map(item => this.METADATA.records[item[1]]))
     }
 
     return results
+  }
+
+  /**
+   * Split the store into a specific number of smaller stores.
+   * @param  {Number}  [divisions=2]
+   * The number of stores that should be returned.
+   * Records are dispersed as evenly as possible amongst the divisions.
+   * @param  {Boolean} [includeFiltered=false]
+   * Include records which have been filtered out but not deleted from the store.
+   * @return {NGN.DATA.Store[]}
+   * An array of the data stores.
+   */
+  splitTo (divisions = 2, includeFiltered = false) {
+    if (divisions < 1) {
+      throw new Error('Cannot split to less than one division.')
+    }
+
+    let total = this.PRIVATE.ACTIVERECORDS.size
+
+    if (includeFiltered) {
+      total += this.PRIVATE.FILTEREDRECORDS.size
+    }
+
+    let chunkSize = Math.ceil(total / divisions)
+
+    return this.split(chunkSize, includeFiltered)
+  }
+
+  /**
+   * Merge similar stores into this one. Each store
+   * must have the same data model.
+   * @param {NGN.DATA.Store[]} stores
+   * The other store/s to be merged into this one.
+   * An unlimited number of stores can be specified.
+   * @return {NGN.DATA.Store}
+   * Returns the store with the new records merged in.
+   */
+  concat () {
+    if (arguments.length < 0) {
+      return this
+    }
+
+    let args
+    if (NGN.typeof(arguments[0]) === 'array') {
+      args = arguments[0]
+    } else {
+      args = NGN.slice(arguments)
+    }
+
+    args = args.filter(store => store instanceof NGN.DATA.Store && store.METADATA.Model === this.METADATA.Model)
+
+    if (args.length === 0) {
+      throw new Error('Cannot concatenate/merge stores with different model types.')
+    }
+
+    const EVENT = new Symbol('store.merge')
+
+    this.thresholdOnce(EVENT, args.length, 'merge', {
+      sourceStores: args
+    })
+
+    args.forEach(store => {
+      store.once(store.PRIVATE.EVENT.LOAD_RECORDS, () => this.emit(EVENT))
+      this.load(store.data.concat(includeFiltered ? store.filtered : []))
+    })
+
+    return this
   }
 
   /**
@@ -1924,7 +2033,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
       // Remove any null or undefined records, which would otherwise be recognized as deleted record placeholders
       while (insertableData.indexOf(null) >= 0 || insertableData.indexOf(undefined) >= 0) {
-        insertableData.splice(NGN.coalesceb(NGN.nullIf(insertableData.indexOf(null), -1), NGN.nullIf(insertableData.indexOf(undefined), -1) - 1, 1)
+        insertableData.splice(NGN.coalesceb(NGN.nullIf(insertableData.indexOf(null), -1), NGN.nullIf(insertableData.indexOf(undefined), -1)) - 1, 1)
       }
     }
 
@@ -1941,15 +2050,22 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
     let me = this
     for (let i = 0; i < insertableData.length; i++) {
-      let oid = Symbol('model.id')
-      this.METADATA.records.push({
-        [this.PRIVATE.STUB]: true,
-        OID: oid,
-        get store () {
-          return me
-        },
-        metadata: insertableData[i]
-      })
+      let oid
+
+      if (insertableData[i] instanceof NGN.DATA.Entity) {
+        oid = insertableData[i].OID
+        this.METADATA.records.push(insertableData[i])
+      } else {
+        oid = Symbol('model.id')
+        this.METADATA.records.push({
+          [this.PRIVATE.STUB]: true,
+          OID: oid,
+          get store () {
+            return me
+          },
+          metadata: insertableData[i]
+        })
+      }
 
       // Add the record to the map for efficient retrieval by OID
       this.PRIVATE.RECORDMAP.set(oid, this.METADATA.records.length - 1)
@@ -2162,6 +2278,10 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       name = filterFn
     }
 
+    if (!(filterFn instanceof NGN.DATA.Filter)) {
+      filterFn = new NGN.DATA.Filter(name, filterFn)
+    }
+
     this.METADATA.filters.set(filterFn.name, filterFn)
 
     this.emit('filter.create', filterFn)
@@ -2212,20 +2332,15 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       return this
     }
 
-    // let interval = 1000
-    // let timer = setTimeout(function () {
-    //   interval = interval * 1.5
-    //   NGN.WARN()
-    // }, interval)
-
     let args = Array.from(arguments)
 
     this.METADATA.filters.forEach((filter, name) => {
       if (args[0] instanceof NGN.DATA.Entity) {
         filter.exec(args[0])
       } else if (args.length === 0 || args.indexOf(name) >= 0) {
+console.log(`>> Filtering ${this.name} with ${filter.name}:`);
         this.PRIVATE.ACTIVERECORDS.forEach(index => {
-          filter.exec(this.METADATA.records[index])
+          console.log(`Retain?`, filter.exec(this.PRIVATE.convertStubToRecord(index, this.METADATA.records[index])))
         })
       }
     })

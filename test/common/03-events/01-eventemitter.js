@@ -609,6 +609,11 @@ test('NGN.BUS Special Events', function (t) {
 
   NGN.BUS.once(NGN.ERROR_EVENT, function () {
     t.pass('NGN.ERROR_EVENT recognized')
+    NGN.INTERNAL('internal.message')
+  })
+
+  NGN.BUS.once(NGN.INTERNAL_EVENT, function () {
+    t.pass('NGN.INTERNAL_EVENT recognized')
     t.end()
   })
 

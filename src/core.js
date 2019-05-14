@@ -259,7 +259,7 @@ Object.defineProperties(NGN, {
     }
   }),
 
-  LEDGER_EVENT: NGN.define(false, false, false, (EVENT) => {
+  LEDGER_EVENT: NGN.define(false, false, false, EVENT => {
     return function () {
       NGN.BUS.emit(EVENT, ...arguments)
     }
@@ -1196,6 +1196,30 @@ Object.defineProperties(NGN, {
    */
   ERROR_EVENT: NGN.privateconst(Symbol.for('NGN.ERROR')),
   ERROR: NGN.privateconst(msg => NGN.LEDGER_EVENT(NGN.ERROR_EVENT)(msg)),
+
+  /**
+   * @method INTERNAL
+   * This method is used to emit special soft internal events. An internal
+   * event is typically used for keeping track of object states.
+   * The NGN.BUS can listen for all events using the NGN.INTERNAL global symbol.
+   *
+   * ```js
+   * NGN.BUS.on(NGN.INTERNAL_EVENT, 'some.name', function () => {
+   *   console.info(...arguments)
+   * })
+   * ```
+   *
+   * See NGN.EventEmitter#emit for detailed parameter usage.
+   * @private
+   * @ignore
+   */
+  INTERNAL_EVENT: NGN.privateconst(Symbol.for('NGN.INTERNAL')),
+
+  /**
+   * Internal event trigger.
+   * @ignore
+   */
+  INTERNAL: NGN.privateconst(function () { NGN.LEDGER_EVENT(NGN.INTERNAL_EVENT)(...arguments) }),
 
   /**
    * @method createException

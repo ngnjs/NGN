@@ -782,7 +782,7 @@ export default class EventEmitter extends EEmitter {
             args.pop()
           }
 
-          handlerFn.apply({ event: name }, args)
+          handlerFn.apply({ event: name, trace: NGN.stack }, args)
         }
       }),
 

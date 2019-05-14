@@ -62,9 +62,12 @@ test('Method Existance', (t) => {
     'WARNING_EVENT',
     'INFO_EVENT',
     'ERROR_EVENT',
+    'INTERNAL_EVENT',
     'WARN',
     'INFO',
     'ERROR',
+    'INTERNAL',
+    'LABELS',
 
     // Classes
     'EventEmitter',

@@ -53,6 +53,17 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
       active: NGN.private(enabled),
       filteredRecords: NGN.private({}),
       filteredRecordStores: NGN.private(new Map()),
+      clean: NGN.privateconst(function () {
+        for (let i = 0; i < arguments.length; i++) {
+          let store = arguments[0]
+          if (store instanceof NGN.DATA.Store) {
+            me.filteredRecordStores.set(store.OID, store)
+            me.filteredRecords[store.OID] = new Set()
+          } else {
+            throw new Error('Cannot clean filter for an unrecognized data store.')
+          }
+        }
+      }),
       clearFilter: NGN.privateconst(function () {
         let stores = arguments.length > 0 ? Array.from(arguments).map(store => store.OID) : Object.keys(me.filteredRecords)
 
@@ -252,7 +263,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
    */
   exec (record) {
     if (!this.active) {
-      return
+      return false
     }
 
     if (!record) {

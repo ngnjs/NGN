@@ -22,3 +22,19 @@ NGN.extend('UTILITY', NGN.const(Utility))
 
 // Add Data Library
 NGN.extend('DATA', NGN.const(Data))
+
+// Add Name Management Utilities
+// Object.defineProperty(NGN, 'LABELS',
+//   NGN.privateconst({
+//     DATASTORES: new NGN.UTILITY.NameManager('NGN Data Store')
+//   })
+// )
+
+// NGN.BUS.on(NGN.INTERNAL_EVENT, function (eventName, payload) {
+//   switch (eventName.toLowerCase()) {
+//     case 'datastore.created':
+//       NGN.LABELS.DATASTORES.set(payload.name, payload)
+//       // NGN.INFO(`${payload.name} data store created.`)
+//       break
+//   }
+// })
