@@ -2057,14 +2057,20 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         this.METADATA.records.push(insertableData[i])
       } else {
         oid = Symbol('model.id')
-        this.METADATA.records.push({
+
+        let stub = {
           [this.PRIVATE.STUB]: true,
           OID: oid,
-          get store () {
-            return me
-          },
           metadata: insertableData[i]
+        }
+
+        Object.defineProperty(stub, 'store', {
+          get () {
+            return me
+          }
         })
+
+        this.METADATA.records.push(stub)
       }
 
       // Add the record to the map for efficient retrieval by OID
