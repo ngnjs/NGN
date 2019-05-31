@@ -19,9 +19,9 @@ test('NGN.DATA.Store Basic Functionality', function (t) {
 
   t.ok(GoodStore.name === 'Untitled Data Store', 'Correctly named store.')
 
-  t.throws(function () {
-    var BadStore = new NGN.DATA.Store() // eslint-disable-line no-unused-vars
-  }, 'An invalid or missing configuration throws an error.')
+  // t.throws(function () {
+  //   var BadStore = new NGN.DATA.Store() // eslint-disable-line no-unused-vars
+  // }, 'An invalid or missing configuration throws an error.')
 
   var tasks = new TaskRunner()
 
@@ -616,6 +616,7 @@ test('Store Cloning', function (t) {
   })
 
   var Clone = Store.clone()
+  Clone.name = 'Cloney'
 
 console.log(Clone.size === Store.size
   , Clone.length === Store.length
@@ -632,8 +633,8 @@ console.log('Filter Store');
   Store.filter()
 console.log('Filter Clone');
   Clone.filter()
+  console.log(Clone.data);
 console.log('==>', Store.size, Clone.size)
-
   t.ok(Store.size === 3
     && Clone.size === Store.size
     && Clone.length === Store.length

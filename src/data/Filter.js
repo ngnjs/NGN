@@ -298,12 +298,14 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
 
       // Store references to the filtered records
       this.filteredRecords[store.OID].add(record.OID)
-
+console.log('DO NOT RETAIN');
       // Add the record to the store's filtered recordset
       store.PRIVATE.FILTEREDRECORDS.set(record.OID, store.indexOf(record.OID))
-
+console.log(store.PRIVATE.FILTEREDRECORDS);
       // Remove the filtered record from the store's active record set.
       store.PRIVATE.ACTIVERECORDS.delete(record.OID)
+console.log(store.PRIVATE.ACTIVERECORDS);
+console.log(store.name, store.size);
     }
 
     return retain
