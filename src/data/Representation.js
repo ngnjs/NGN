@@ -23,3 +23,4 @@ class NGNDataRepresentation extends NGN.EventEmitter { // eslint-disable-line
   constructor (cfg) {
     super()
   }
+}

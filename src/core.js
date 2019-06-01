@@ -2,6 +2,7 @@ import CustomException from './exception'
 
 /**
  * @namespace NGN
+ * The NGN namespace.
  */
 let NGN = Object.defineProperties({
   // Establish a globally recognized namespace for browser or node-like environment.
