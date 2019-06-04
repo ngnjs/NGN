@@ -1348,8 +1348,9 @@ Object.defineProperties(NGN, {
    * A version number identifying which release of the operating system is in use.
    */
   /**
+   * @property {OperatingSystem} platform
    * Identifies the operating system.
-   * @returns {OperatingSystem}
+   * @readonly
    */
   platform: NGN.get(() => {
     let os
