@@ -1259,7 +1259,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         index = this.PRIVATE.ACTIVERECORDS.get(record)
 
         if (index < 0) {
-          NGN.ERROR(`Record removal failed. Record OID not found ("${record.toString()}").`)
+          NGN.ERROR(`Record removal failed. Record OID not found ("${(record || 'undefined').toString()}").`)
           return null
         }
 
@@ -1286,7 +1286,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     let activeIndex = this.PRIVATE.ACTIVERECORDS.get(removedRecord.OID)
 
     if (isNaN(activeIndex)) {
-      NGN.WARN(`Record not found for "${removedRecord.OID.toString()}".`)
+      NGN.WARN(`Record not found for "${(removedRecord.OID || 'undefined').toString()}".`)
       return null
     }
 
@@ -2057,14 +2057,20 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         this.METADATA.records.push(insertableData[i])
       } else {
         oid = Symbol('model.id')
-        this.METADATA.records.push({
+
+        let stub = {
           [this.PRIVATE.STUB]: true,
           OID: oid,
-          get store () {
-            return me
-          },
           metadata: insertableData[i]
+        }
+
+        Object.defineProperty(stub, 'store', {
+          get () {
+            return me
+          }
         })
+
+        this.METADATA.records.push(stub)
       }
 
       // Add the record to the map for efficient retrieval by OID

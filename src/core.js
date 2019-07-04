@@ -2,6 +2,7 @@ import CustomException from './exception'
 
 /**
  * @namespace NGN
+ * The NGN namespace.
  */
 let NGN = Object.defineProperties({
   // Establish a globally recognized namespace for browser or node-like environment.
@@ -1347,8 +1348,9 @@ Object.defineProperties(NGN, {
    * A version number identifying which release of the operating system is in use.
    */
   /**
+   * @property {OperatingSystem} platform
    * Identifies the operating system.
-   * @returns {OperatingSystem}
+   * @readonly
    */
   platform: NGN.get(() => {
     let os
