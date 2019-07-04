@@ -29,7 +29,7 @@
     "test:local:browser:sanity": "rollup -c ./rollup.testbrowser.config.js && karma start karma.conf.js --local --test sanity",
     "build": "rollup -c",
     "documentation": "rollup -c ./rollup.documentation.config.js && node build.js --docs",
-    "metadoc": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP",
+    "metadoc": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP --maxfiles 1",
     "metadoc:api": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-api --root https://ngnapi.author.io/",
     "deploy": "node ./deploy.js ./docs"
   },

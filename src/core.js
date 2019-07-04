@@ -1146,6 +1146,7 @@ Object.defineProperties(NGN, {
     }))
   }),
 
+  WARNING_EVENT: NGN.privateconst(Symbol('NGN.WARN')),
   /**
    * @method WARN
    * This method is used to emit special info events.
@@ -1160,9 +1161,9 @@ Object.defineProperties(NGN, {
    * See NGN.EventEmitter#emit for detailed parameter usage.
    * @private
    */
-  WARNING_EVENT: NGN.privateconst(Symbol('NGN.WARN')),
   WARN: NGN.privateconst(msg => NGN.LEDGER_EVENT(NGN.WARNING_EVENT)(msg)),
 
+  INFO_EVENT: NGN.privateconst(Symbol.for('NGN.INFO')),
   /**
    * @method INFO
    * This method is used to emit special warning events.
@@ -1177,9 +1178,9 @@ Object.defineProperties(NGN, {
    * See NGN.EventEmitter#emit for detailed parameter usage.
    * @private
    */
-  INFO_EVENT: NGN.privateconst(Symbol.for('NGN.INFO')),
   INFO: NGN.privateconst(msg => NGN.LEDGER_EVENT(NGN.INFO_EVENT)(msg)),
 
+  ERROR_EVENT: NGN.privateconst(Symbol.for('NGN.ERROR')),
   /**
    * @method ERROR
    * This method is used to emit special soft error events. A soft error
@@ -1195,8 +1196,13 @@ Object.defineProperties(NGN, {
    * See NGN.EventEmitter#emit for detailed parameter usage.
    * @private
    */
-  ERROR_EVENT: NGN.privateconst(Symbol.for('NGN.ERROR')),
   ERROR: NGN.privateconst(msg => NGN.LEDGER_EVENT(NGN.ERROR_EVENT)(msg)),
+
+  /**
+    * Internal event trigger.
+    * @ignore
+    */
+  INTERNAL_EVENT: NGN.privateconst(Symbol.for('NGN.INTERNAL')),
 
   /**
    * @method INTERNAL
@@ -1212,12 +1218,6 @@ Object.defineProperties(NGN, {
    *
    * See NGN.EventEmitter#emit for detailed parameter usage.
    * @private
-   * @ignore
-   */
-  INTERNAL_EVENT: NGN.privateconst(Symbol.for('NGN.INTERNAL')),
-
-  /**
-   * Internal event trigger.
    * @ignore
    */
   INTERNAL: NGN.privateconst(function () { NGN.LEDGER_EVENT(NGN.INTERNAL_EVENT)(...arguments) }),
@@ -1347,7 +1347,7 @@ Object.defineProperties(NGN, {
    * @property {string} version
    * A version number identifying which release of the operating system is in use.
    */
-  /**
+   /**
    * @property {OperatingSystem} platform
    * Identifies the operating system.
    * @readonly
@@ -1430,7 +1430,7 @@ NGN.createException({
   }
 })
 
-// Self reference to make NGN global in any environment.
+// Self reference to make NGN globally accessible in any environment.
 NGN.global.NGN = NGN
 
 export { NGN as default }
