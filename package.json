@@ -23,6 +23,7 @@
     "test:node:data": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/**/*.js",
     "test:node:data:rules": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/*-rules.js",
     "test:node:data:utility": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/*-utility.js",
+    "test:node:data:store": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/*-store.js",
     "test:node:net": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-net/**/*.js",
     "test:node:integration": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-integration/**/*.js",
     "test:browser:sanity": "rollup -c ./rollup.testbrowser.config.js && karma start karma.conf.js --test sanity",

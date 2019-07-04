@@ -1444,7 +1444,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     this.METADATA.filters.forEach(filter => store.addFilter(filter))
 
     if (includeData) {
-      store.METADATA.records = this.data.slice().concat(this.filtered.slice())
+      store.load(this.METADATA.records)//this.data.slice().concat(this.filtered.slice()))
     }
 
     return store
