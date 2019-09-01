@@ -141,6 +141,7 @@ export default class NetworkResource extends Network {
        * @cfg {string} [useragent]
        * Specify a custom user agent to identify each request made
        * with the resource.
+       * @nodeonly
        */
       useragent: NGN.private(NGN.coalesce(cfg.useragent)),
 
@@ -148,6 +149,7 @@ export default class NetworkResource extends Network {
        * @cfg {boolean} [uniqueagent=false]
        * Guarantees each user agent is unique by appending a unique ID to the
        * user agent.
+       * @nodeonly
        */
       uniqueagent: NGN.private(NGN.coalesce(cfg.uniqueagent, false))
     })
@@ -383,7 +385,11 @@ export default class NetworkResource extends Network {
     }
 
     if (useragent !== null) {
-      request.setHeader('User-Agent', useragent.trim())
+      if (NGN.nodelike) {
+        request.setHeader('User-Agent', useragent.trim())
+      } else {
+        NGN.WARN(`Cannot set user agent to "${useragent.trim()}" in a browser. Browsers consider this an unsafe operation and will block the request.`)
+      }
     }
   }
 
