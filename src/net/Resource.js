@@ -388,6 +388,7 @@ export default class NetworkResource extends Network {
       if (NGN.nodelike) {
         request.setHeader('User-Agent', useragent.trim())
       } else {
+        request.removeHeader('user-agent')
         NGN.WARN(`Cannot set user agent to "${useragent.trim()}" in a browser. Browsers consider this an unsafe operation and will block the request.`)
       }
     }
