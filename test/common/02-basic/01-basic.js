@@ -644,35 +644,37 @@ test('NGN.createException', function (t) {
 
   t.ok(typeof TestError === 'function', 'Create a global exception.')
 
-  try {
+  t.throws(() => {
     throw new TestError() // eslint-disable-line no-undef
-  } catch (e) {
-    if (NGN.nodelike) {
-      console.log(e)
-      t.ok(NGN.typeof(e.trace) === 'array', 'Exception trace returns an array.')
-    } else {
-      t.skip('Exception trace attribute unavailable in browser (use stack trace instead).')
-    }
-    t.ok(e.name === 'TestError', 'Recognized custom error name.')
-    t.ok(e.message === 'A test message', 'Successfully thrown.')
+  }, 'Throwing a custom global exception functions the same way a standard error functions.')
+
+  var e = new TestError()
+
+  if (NGN.nodelike) {
+    t.ok(NGN.typeof(e.trace) === 'array', 'Exception trace returns an array.')
+  } else {
+    t.skip('Exception trace attribute unavailable in browser (use stack trace instead).')
   }
+
+  t.ok(e.name === 'TestError', 'Recognized custom error name.')
+  t.ok(e.message === 'A test message', 'Recognized custom error message.')
 
   t.end()
 })
 
 test('NGN.getType', function (t) {
-  t.ok(NGN.getType('number') === Number, 'Identifies number.')
-  t.ok(NGN.getType('regexp') === RegExp, 'Identifies regexp.')
-  t.ok(NGN.getType('regex') === RegExp, 'Identifies regex w/ warning.')
-  t.ok(NGN.getType('boolean') === Boolean, 'Identifies boolean.')
-  t.ok(NGN.getType('symbol') === Symbol, 'Identifies symbol.')
-  t.ok(NGN.getType('date') === Date, 'Identifies date.')
-  t.ok(NGN.getType('array') === Array, 'Identifies array.')
-  t.ok(NGN.getType('object') === Object, 'Identifies object.')
-  t.ok(NGN.getType('function') === Function, 'Identifies function.')
-  t.ok(NGN.getType('string') === String, 'Identifies string.')
-  t.ok(NGN.getType('nada', String) === String, 'Identifies default type.')
-  t.ok(NGN.getType('nada') === undefined, 'Defaults to undefined when no type is recognized.')
+  t.ok(NGN.getType('number') === Number, 'NGN.getType identifies number.')
+  t.ok(NGN.getType('regexp') === RegExp, 'NGN.getType identifies regexp.')
+  t.ok(NGN.getType('regex') === RegExp, 'NGN.getType identifies regex w/ warning.')
+  t.ok(NGN.getType('boolean') === Boolean, 'NGN.getType identifies boolean.')
+  t.ok(NGN.getType('symbol') === Symbol, 'NGN.getType identifies symbol.')
+  t.ok(NGN.getType('date') === Date, 'NGN.getType identifies date.')
+  t.ok(NGN.getType('array') === Array, 'NGN.getType identifies array.')
+  t.ok(NGN.getType('object') === Object, 'NGN.getType identifies object.')
+  t.ok(NGN.getType('function') === Function, 'NGN.getType identifies function.')
+  t.ok(NGN.getType('string') === String, 'NGN.getType identifies string.')
+  t.ok(NGN.getType('nada', String) === String, 'NGN.getType identifies default type.')
+  t.ok(NGN.getType('nada') === undefined, 'NGN.getType defaults to undefined when no type is recognized.')
 
   t.end()
 })

@@ -1,3 +1,4 @@
+import NGN from '../core.js'
 import { hostname, normalizeUrl } from './Utility'
 import Request from './Request'
 
@@ -14,26 +15,6 @@ export default class Network { // eslint-disable-line
        * The normalized URL.
        */
       normalizeUrl: NGN.privateconst(normalizeUrl),
-
-      /**
-       * @method parseRequestConfiguration
-       * Prepare common configuration attributes for a request.
-       * @return {NGN.NET.Request}
-       * @private
-       */
-      parseRequestConfiguration: NGN.private((cfg, method = 'GET') => {
-        if (typeof cfg === 'string') {
-          cfg = {
-            url: cfg
-          }
-        }
-
-        cfg = cfg || {}
-        cfg.method = method
-        cfg.url = NGN.coalesceb(cfg.url, hostname) // eslint-disable-line no-undef
-
-        return new NGN.NET.Request(cfg)
-      }),
 
       // Returns a scoped method for sending the request, after preparing it.
       makeRequest: NGN.private((method) => {
@@ -56,6 +37,20 @@ export default class Network { // eslint-disable-line
         }
       }),
 
+      parseRequestConfiguration: NGN.define(false, true, false, (cfg, method = 'GET') => {
+        if (typeof cfg === 'string') {
+          cfg = {
+            url: cfg
+          }
+        }
+
+        cfg = cfg || {}
+        cfg.method = method
+        cfg.url = NGN.coalesceb(cfg.url, hostname) // eslint-disable-line no-undef
+
+        return new NGN.NET.Request(cfg)
+      }),
+
       // Helper aliases (undocumented)
       OPTIONS: NGN.privateconst(this.options.bind(this)),
       HEAD: NGN.privateconst(this.head.bind(this)),
@@ -72,6 +67,26 @@ export default class Network { // eslint-disable-line
   get Request () {
     return Request
   }
+
+  /**
+   * @method parseRequestConfiguration
+   * Prepare common configuration attributes for a request.
+   * @return {NGN.NET.Request}
+   * @private
+   */
+  // parseRequestConfiguration (cfg, method = 'GET') {
+  //   if (typeof cfg === 'string') {
+  //     cfg = {
+  //       url: cfg
+  //     }
+  //   }
+  //
+  //   cfg = cfg || {}
+  //   cfg.method = method
+  //   cfg.url = NGN.coalesceb(cfg.url, hostname) // eslint-disable-line no-undef
+  //
+  //   return new NGN.NET.Request(cfg)
+  // }
 
   /**
    * @method request

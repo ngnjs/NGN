@@ -1,3 +1,5 @@
+import NGN from '../core.js'
+
 /**
  * @class NGN.UTILITY.Set
  * Provides advanced features for [Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set)

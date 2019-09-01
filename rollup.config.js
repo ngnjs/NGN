@@ -15,6 +15,7 @@ const output = (file, browser = true, sourcemap = true) => {
 	return {
 		file: path.join(outdir, browser ? '/browser' : '/node', file),
 		format: browser ? 'iife' : 'cjs',
+		name: 'NGN',
 		sourcemap
 	}
 }

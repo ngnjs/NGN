@@ -622,6 +622,7 @@ console.log(Clone.size === Store.size
   , Clone.length === Store.length
   , Clone.METADATA.filters.size + ' --> ' + Store.METADATA.filters.size
   ,Clone.OID !== Store.OID);
+
   t.ok(Clone.size === Store.size
     && Clone.length === Store.length
     && Clone.METADATA.filters.size === Store.METADATA.filters.size

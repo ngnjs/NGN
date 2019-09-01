@@ -1,3 +1,5 @@
+import NGN from '../core.js'
+
 /**
  * @class NGN.UTILITY.Tokenizer
  * Given a grammar, a tokenizer will perform lexical analysis of text.

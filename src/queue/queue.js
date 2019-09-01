@@ -1,3 +1,4 @@
+import NGN from '../core.js'
 import EventEmitter from '../emitter/core'
 
 /**

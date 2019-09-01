@@ -1,3 +1,5 @@
+import NGN from '../core.js'
+
 /**
  * @class EventEmitterBase
  * This is an extendable generic class used to apply event management

@@ -1,3 +1,5 @@
+import NGN from '../core.js'
+
 /**
  * @class NGN.NET.Utility
  * A utility library for network communications.

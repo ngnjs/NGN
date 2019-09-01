@@ -1,3 +1,4 @@
+import NGN from '../core.js'
 import Network from './Network'
 import { hostname, normalizeUrl } from './Utility'
 
@@ -88,7 +89,7 @@ export default class NetworkResource extends Network {
        * @cfg {string} accessToken
        * Use this to set an access token (instead of using #credentials).
        */
-      accesstoken: NGN.private(NGN.coalesceb(cfg.token, cfg.accessToken)),
+      accesstoken: NGN.private(NGN.coalesceb(cfg.token, cfg.accessToken, cfg.accesstoken)),
 
       /**
        * @cfg {object} query
@@ -107,19 +108,48 @@ export default class NetworkResource extends Network {
        * the root applied (`{root}/path/to/endpoint`) whereas `https://domain.com/endpoint`
        * will **not** have the root applied.
        */
-      baseUrl: NGN.private(NGN.coalesce(cfg.baseUrl, cfg.baseurl, `http://${hostname}/`)),
+      baseUrl: NGN.private(NGN.coalesce(cfg.baseURL, cfg.baseUrl, cfg.baseurl, `http://${hostname}/`)),
 
       /**
        * @cfg {boolean} [nocache=false]
-       * Set this to `true` to add a unique cache-busting URL parameter to all requests.
+       * This sets the `Cache-Control` header to `no-cache`.
+       * Servers are supposed to honor these headers and serve non-cached
+       * content. However; this is not always the case. Some servers
+       * perform caching by matching on URL's. In this case, the #unique
+       * attribute can be set to `true` to apply unique characters to the URL.
        */
       nocache: NGN.private(NGN.coalesce(cfg.nocache, false)),
+
+      /**
+       * @cfg {boolean} [unique=false]
+       * Set this to `true` to add a unique URL parameter to all requests.
+       * This guarantees a unique request. This can be used for
+       * cache-busting, though setting #nocache to `true` is
+       * recommended for these purposes. Only use this feature
+       * for cache busting when the server does not honor `Cache-Control`
+       * headers.
+       */
+      unique: NGN.private(NGN.coalesce(cfg.unique, false)),
 
       /**
        * @cfg {boolean} [sslonly=false]
        * Set this to true to rewrite all URL's to use HTTPS.
        */
-      sslonly: NGN.public(NGN.coalesce(cfg.sslonly, false))
+      sslonly: NGN.public(NGN.coalesce(cfg.sslonly, false)),
+
+      /**
+       * @cfg {string} [useragent]
+       * Specify a custom user agent to identify each request made
+       * with the resource.
+       */
+      useragent: NGN.private(NGN.coalesce(cfg.useragent)),
+
+      /**
+       * @cfg {boolean} [uniqueagent=false]
+       * Guarantees each user agent is unique by appending a unique ID to the
+       * user agent.
+       */
+      uniqueagent: NGN.private(NGN.coalesce(cfg.uniqueagent, false))
     })
 
     if (this.baseUrl.indexOf('://') < 0 || this.baseUrl.indexOf('://') > 10) {
@@ -132,11 +162,23 @@ export default class NetworkResource extends Network {
       this.credentials = {
         accessToken: this.accesstoken
       }
-    } else if (this.user !== null && this.ssecret !== null) {
+    } else if (this.user !== null && this.secret !== null) {
       this.credentials = {
         username: this.user,
         password: this.secret
       }
+    }
+
+    this.parseRequestConfiguration = function (cfg, method = 'GET') {
+      if (typeof cfg === 'string') {
+        cfg = { url: cfg }
+      }
+
+      cfg = cfg || {}
+      cfg.method = method
+      cfg.url = this.prepareUrl(NGN.coalesceb(cfg.url, hostname)) // eslint-disable-line no-undef
+
+      return new NGN.NET.Request(cfg)
     }
   }
 
@@ -311,25 +353,10 @@ export default class NetworkResource extends Network {
     request.url = this.prepareUrl(request.url)
 
     // If global query parameters have been defined, apply them.
-    let qp = Object.keys(this.globalQuery)
-    if (qp.length > 0) {
-      let queryString = []
-      for (let i = 0; i < qp.length; i++) {
-        queryString.push(`${qp[i]}=${encodeURIComponent(this.globalQuery[qp[i]])}`)
-      }
-
-      if (request.query === '') {
-        request.url = `${request.url}?${queryString.join('&')}`
-      } else {
-        request.url = `${request.url}&${queryString.join('&')}`
-      }
-    }
+    Object.keys(this.globalQuery).forEach(param => request.setQueryParameter(param, this.globalQuery[param], true))
 
     // If global credentials are available, apply them.
-    let gHeaders = Object.keys(this.globalHeaders)
-    for (let i = 0; i < gHeaders.length; i++) {
-      request.setHeader(gHeaders[i], this.globalHeaders[gHeaders[i]])
-    }
+    Object.keys(this.globalHeaders).forEach(header => request.setHeader(header, this.globalHeaders[header]))
 
     // If global headers/credentials are available, apply them.
     if (this.globalCredentials.accessToken) {
@@ -339,9 +366,132 @@ export default class NetworkResource extends Network {
       request.password = this.globalCredentials.password
     }
 
-    // Add a cache buster
-    if (this.nocache) {
+    // Force unique URL
+    if (this.unique) {
       request.setQueryParameter('nocache' + (new Date()).getTime().toString() + Math.random().toString().replace('.', ''), null)
     }
+
+    // Request non-cached response
+    if (this.nocache) {
+      request.setHeader('Cache-Control', 'no-cache')
+    }
+
+    // Use custom user agents
+    let useragent = NGN.coalesce(this.useragent)
+    if (this.uniqueagent) {
+      useragent += ` ID#${(new Date()).getTime().toString() + Math.random().toString().replace('.', '')}`
+    }
+
+    if (useragent !== null) {
+      request.setHeader('User-Agent', useragent.trim())
+    }
+  }
+
+  /**
+   * Set a global header. This will be sent on every request.
+   * It is also possible to set multiple global headers at the same time by
+   * providing an object, where each object
+   * key represents the header and each value is the header value.
+   *
+   * For example:
+   *
+   * ```
+   * setHeader({
+   *   'x-header-a': 'value',
+   *   'x-header-b': 'value'
+   * })
+   * ```
+   * @param {string} header
+   * The header name.
+   * @param {string} value
+   * The value of the header.
+   */
+  setHeader (key, value) {
+    if (typeof key === 'object') {
+      for (let [attr, val] of key) {
+        this.globalHeaders[attr] = val
+      }
+
+      return
+    }
+
+    this.globalHeaders[key] = value
+  }
+
+  /**
+   * Remove a global header so it is not sent
+   * on every request. This method accepts multiple
+   * keys, allowing for bulk delete via `removeHeader('a', 'b', '...')`
+   * @param  {string} key
+   * The header key to remove.
+   */
+  removeHeader (key) {
+    if (arguments.length === 1) {
+      delete this.globalHeaders[key]
+      return
+    }
+
+    Array.from(arguments).forEach(key => delete this.globalHeaders[key])
+  }
+
+  /**
+   * Remove all global headers.
+   */
+  clearHeaders () {
+    this.globalHeaders = {}
+  }
+
+  /**
+   * Set a global URL parameter. This will be sent on every request.
+   * It is also possible to set multiple parameters at the same time by
+   * providing an object, where each object
+   * key represents the parameter name and each value is the parameter value.
+   *
+   * For example:
+   *
+   * ```
+   * setParameter({
+   *   'id': 'value',
+   *   'token': 'value'
+   * })
+   * ```
+   * @param {string} queryParameterName
+   * The parameter name.
+   * @param {string} value
+   * The value of the parameter. This will be automatically URI-encoded.
+   */
+  setParameter (name, value) {
+    if (typeof key === 'object') {
+      for (let [attr, val] of key) {
+        this.globalQuery[attr] = val
+      }
+
+      return
+    }
+
+    this.globalQuery[key] = value
+  }
+
+  /**
+   * Remove a global query parameter so it is not sent
+   * on every request. This method accepts multiple
+   * parameters, allowing for bulk delete via `removeParameter('a', 'b', '...')`
+   * @param  {string} queryParameterName
+   * The name of the parameter to remove.
+   */
+  removeParameter () {
+    if (arguments.length === 1) {
+      delete this.globalQuery[key]
+      return
+    }
+
+    Array.from(arguments).forEach(key => delete this.globalQuery[key])
+  }
+
+  /**
+   * Remove all global query parameters.
+   */
+  clearParameters () {
+    this.globalQuery = {}
   }
 }

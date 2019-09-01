@@ -1,3 +1,5 @@
+import NGN from '../core.js'
+
 // This chunk of awful is courtesy the StandardJS library!
 // We love the lib, except for its failure to allow disabling
 // a parsing error's OUTPUT.

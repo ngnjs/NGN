@@ -75,7 +75,7 @@ let NGN = Object.defineProperties({
     enumerable: true,
     writable: false,
     configurable: false,
-    value: '#VERSION#'
+    value: '<#REPLACE_VERSION#>'
   }
 })
 
@@ -123,7 +123,9 @@ Object.defineProperties(NGN, {
    * ```
    * @param  {any} value
    * Any valid JavaScript value (function, boolean, number, string, etc)
-   * used as the value for the object attribute.
+   * used as the value for the object attribute. Private functions defined with
+   * this method are not overridable. To create a private function that is
+   * overridable, use #define with the following arguments: `(false, true, false, value)`.
    * @private
    */
   private: NGN.define(false, false, false, function (value) {
@@ -1431,6 +1433,8 @@ NGN.createException({
 })
 
 // Self reference to make NGN globally accessible in any environment.
+/* non-esm-only */
 NGN.global.NGN = NGN
+/* end-non-esm-only */
 
 export { NGN as default }

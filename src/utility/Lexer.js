@@ -1,3 +1,5 @@
+import NGN from '../core.js'
+
 /**
  * @class NGN.UTILITY.Lexer
  * This class performs scans static text for tokens, based on a grammar.
