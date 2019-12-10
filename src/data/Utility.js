@@ -1,27 +1,4 @@
-// CRC table for checksum (cached)
-let crcTable = null
-
-/**
- * Generate the CRC table for checksums. This is a fairly complex
- * operation that should only be executed once and cached for
- * repeat use.
- */
-const makeCRCTable = function () {
-  let c
-  let crcTable = []
-
-  for (let n = 0; n < 256; n++) {
-    c = n
-
-    for (let k = 0; k < 8; k++) {
-      c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1))
-    }
-
-    crcTable[n] = c
-  }
-
-  return crcTable
-}
+import checksum from '../utility/Checksum'
 
 /**
  * @class NGN.DATA.UTILITY
@@ -41,72 +18,7 @@ export default class Utility { // eslint-disable-line
       str = JSON.stringify(this.serialize(str))
     }
 
-    if (!crcTable) {
-      crcTable = makeCRCTable()
-    }
-
-    let crc = 0 ^ (-1)
-
-    for (let i = 0; i < str.length; i++) {
-      crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF]
-    }
-
-    return (crc ^ (-1)) >>> 0
-  }
-
-  /**
-   * @method UUID
-   * Generate a universally unique identifier (v4).
-   *
-   * This is a "fast" UUID generator, designed to work in the browser.
-   * This will generate a UUID in less than 20ms on Chrome, as of Nov 6, 2017.
-   * Code courtesy of @broofa on StackOverflow.
-   *
-   * While this method cannot absolutely guarantee there will be no collisions
-   * (duplicates), the chances are 1:5.3x10^^36 (1 in over 100 quadrillion).
-   * You are over 30 _octillion_ times more likely to win the Powerball than to
-   * generate two identical "random" UUIDs using the version 4 scheme.
-   * @return {string}
-   * Returns a [V4 GUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29).
-   */
-  static UUID () {
-    /* node-only */
-    return this.GUID()
-    /* end-node-only */
-    /* browser-only */
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => // eslint-disable-line
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16) // eslint-disable-line
-    )
-    /* end-browser-only */
-  }
-
-  /**
-   * @method GUID
-   * Generate a globally unique identifier. A GUID is the Microsoft
-   * implementation of a UUIDv4.
-   *
-   * The likelihood of an ID collision, according to the original author (Jeff
-   * Ward) is 1:3.26x10^15 (1 in 3.26 quadrillion). Results are generated between
-   * approximately 105ms (Desktop) and 726ms (Android) as of May 2016.
-   * @return {string} [description]
-   */
-  static GUID () {
-    let lut = []
-
-    for (let i = 0; i < 256; i++) {
-      lut[i] = (i < 16 ? '0' : '') + (i).toString(16)
-    }
-
-    const d0 = Math.random() * 0xffffffff | 0
-    const d1 = Math.random() * 0xffffffff | 0
-    const d2 = Math.random() * 0xffffffff | 0
-    const d3 = Math.random() * 0xffffffff | 0
-
-    return lut[d0 & 0xff] + lut[d0 >> 8 & 0xff] + lut[d0 >> 16 & 0xff] + lut[d0 >> 24 & 0xff] +
-      '-' + lut[d1 & 0xff] + lut[d1 >> 8 & 0xff] + '-' + lut[d1 >> 16 & 0x0f | 0x40] +
-      lut[d1 >> 24 & 0xff] + '-' + lut[d2 & 0x3f | 0x80] + lut[d2 >> 8 & 0xff] + '-' +
-      lut[d2 >> 16 & 0xff] + lut[d2 >> 24 & 0xff] + lut[d3 & 0xff] + lut[d3 >> 8 & 0xff] +
-      lut[d3 >> 16 & 0xff] + lut[d3 >> 24 & 0xff]
+    return checksum(str)
   }
 
   /**
@@ -211,7 +123,7 @@ export default class Utility { // eslint-disable-line
   }
 
   /**
-   * @method isModel
+   * @method isDataModel
    * Determines whether an object is an instance of NGN.DATA.Model.
    * @param {function} PossibleModel
    * The class or function to be checked.
@@ -318,5 +230,3 @@ export default class Utility { // eslint-disable-line
   //   return bytes
   // }
 }
-
-export { makeCRCTable }

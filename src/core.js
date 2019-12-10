@@ -1,4 +1,7 @@
 import CustomException from './exception'
+/* node-only */
+import os from 'os'
+/* end-node-only */
 
 /**
  * @namespace NGN
@@ -14,15 +17,6 @@ let NGN = Object.defineProperties({
     return window
     /* end-browser-only */
   }
-
-  // get worker () {
-  //   /* node-only */
-  //   return require('worker_threads').Worker
-  //   /* end-node-only */
-  //   /* browser-only */
-  //   return window.worker
-  //   /* end-browser-only */
-  // }
 }, {
   /**
   * @method define
@@ -512,9 +506,9 @@ Object.defineProperties(NGN, {
 
   /**
    * @property {boolean} nodelike
-   * Indicates NGN is running in a node-like environment supporting
-   * the `require` statement. This will detect node, io.js, Electron,
-   * NW.js, and other environments presumably supporting Node.js.
+   * Indicates NGN is running in a node-like environment.
+   * This will detect node, Electron, NW.js, and other environments 
+   * presumably supporting Node.js (or a `global` namespace instead of `window`).
    * @private
    */
   nodelike: NGN.const(NGN.global.process !== undefined),
@@ -1381,7 +1375,7 @@ Object.defineProperties(NGN, {
 
     let release
     /* node-only */
-    release = require('os').release()
+    release = os.release()
     /* end-node-only */
     /* browser-only */
     release = /\((.*)\)/i.exec(navigator.userAgent)[1].split(';')[0].split(/\s+/i).pop()

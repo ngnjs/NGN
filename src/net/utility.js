@@ -1,4 +1,8 @@
 import NGN from '../core.js'
+import os from 'os'
+
+// TODO: Convert the normalizer to use the standard URL API (browser and Node will be a little different)
+// https://developer.mozilla.org/en-US/docs/Web/API/URL
 
 /**
  * @class NGN.NET.Utility
@@ -24,7 +28,7 @@ class NetworkUtilities {
     })
 
     /* node-only */
-    this.hostname = require('os').hostname() // eslint-disable-line comma-style
+    this.hostname = os.hostname() // eslint-disable-line comma-style
     /* end-node-only */
     /* browser-only */
     this.hostname = window.location.host // eslint-disable-line comma-style
@@ -34,7 +38,7 @@ class NetworkUtilities {
       '127.0.0.1'
       , 'localhost' // eslint-disable-line comma-style
       /* node-only */
-      , require('os').hostname() // eslint-disable-line comma-style
+      , os.hostname() // eslint-disable-line comma-style
       /* end-node-only */
       /* browser-only */
       , window.location.host // eslint-disable-line comma-style
@@ -43,7 +47,7 @@ class NetworkUtilities {
 
     /* node-only */
     // Retreive local IP's and hostnames
-    let data = require('os').networkInterfaces()
+    let data = os.networkInterfaces()
     let interfaces = Object.keys(data)
 
     for (let i = 0; i < interfaces.length; i++) {

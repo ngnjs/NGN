@@ -263,40 +263,73 @@ export default class NetworkResource extends Network {
    * ```
    */
   set credentials (credentials) {
-    if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('accessToken') || credentials.hasOwnProperty('token')) {
-      credentials.accessToken = NGN.coalesce(credentials.accessToken, credentials.accesstoken, credentials.token)
+    if (credentials != null) {
+      if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('accessToken') || credentials.hasOwnProperty('token')) {
+        credentials.accessToken = NGN.coalesce(credentials.accessToken, credentials.accesstoken, credentials.token)
 
-      if (credentials.hasOwnProperty('username')) {
-        delete credentials.username
-      }
+        if (credentials.hasOwnProperty('username')) {
+          delete credentials.username
+        }
 
-      if (credentials.hasOwnProperty('password')) {
-        delete credentials.password
+        if (credentials.hasOwnProperty('password')) {
+          delete credentials.password
+        }
+      } else if (!(credentials.hasOwnProperty('username') && credentials.hasOwnProperty('password')) && !credentials.hasOwnProperty('accessToken')) {
+        throw new Error('Invalid credentials. Must contain an access token OR the combination of a username AND password.')
       }
-    } else if (!(credentials.hasOwnProperty('username') && credentials.hasOwnProperty('password')) && !credentials.hasOwnProperty('accessToken')) {
-      throw new Error('Invalid credentials. Must contain an access token OR the combination of a username AND password.')
     }
 
     this.globalCredentials = credentials
 
-    if (credentials.username) {
-      this.username = credentials.username
+    if (credentials !== null) {
+      if (credentials.username) {
+        this.username = credentials.username
+      }
+
+      if (credentials.password) {
+        this.password = credentials.password
+      }
+    }
+  }
+
+  /**
+   * 
+   * @param {string} token
+   * The token value. 
+   * @param {string} [type=bearer] 
+   * The type of token. This is passed to the `Authorization` HTTP header.
+   * The most common type of token is the `bearer` token.
+   * @param {date|number} [expiration]
+   * Specify a date/time or the number of milliseconds until the
+   * token expires/invalidates. Setting this will trigger an
+   * expiration event (`token.expired`) at this time and stops applying 
+   * the token to requests.
+   */
+  setToken (token = null, type = 'bearer', expiration = null) {
+    if (type == 'bearer') {
+      this.credentials = { accessToken: token }
+    } else {
+      this.setHeader('Authorization', `${type} ${token}`)
     }
 
-    if (credentials.password) {
-      this.password = credentials.password
+    if (expiration) {
+      setTimeout(() => {
+        this.removeHeader('Authorization')
+        this.credentials = null
+      })
     }
   }
 
   // Explicitly deny credential reading.
   get credentials () {
-    NGN.WARN('Credentials are write-only. An attempt to read credentials was denied.')
-    return {
-      username: null,
-      secret: null,
-      password: null,
-      accessToken: null
-    }
+    throw new Error('Credentials are write-only. An attempt to read credentials was denied.')
+    // NGN.WARN('Credentials are write-only. An attempt to read credentials was denied.')
+    // return {
+    //   username: null,
+    //   secret: null,
+    //   password: null,
+    //   accessToken: null
+    // }
   }
 
   /**

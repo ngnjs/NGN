@@ -6,8 +6,8 @@ import NGN from '../core.js'
  * In simple terms, it will extract tokens from text. This is accomplished
  * by applying rules with a NGN.UTILITY.Lexer and capturing responses.
  *
- * The NGN.DATA.JQL class is an implementation of a tokenizer. It extracts
- * tokens from JQL queries, splitting them into tokens that can be used in
+ * The NGN.DATA.JSQL class is an implementation of a tokenizer. It extracts
+ * tokens from JSQL queries, splitting them into tokens that can be used in
  * programs.
  */
 export default class NGNTokenizer { // eslint-disable-line no-unused-vars

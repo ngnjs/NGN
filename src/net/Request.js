@@ -266,7 +266,9 @@ export default class Request { // eslint-disable-line no-unused-vars
               this.requestbody = dataString.join('&')
             } else {
               this.requestbody = JSON.stringify(this.requestbody).trim()
+              /* node-only */
               this.setHeader('Content-Length', this.requestbody.length, false)
+              /* end-node-only */
               this.setHeader('Content-Type', NGN.coalesceb(contentType, 'application/json'), false)
               this.responseType = 'json'
             }
