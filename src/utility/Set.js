@@ -17,7 +17,7 @@ export default class NGNSet { // eslint-disable-line
       return false
     }
 
-    let elements = mainset.values()
+    const elements = mainset.values()
     let element = elements.next()
 
     while (!element.done) {
@@ -38,10 +38,10 @@ export default class NGNSet { // eslint-disable-line
    * @return {Set}
    */
   static concat () {
-    let aggregate = new Set(arguments[0])
+    let aggregate = new Set(arguments[0]) // eslint-disable-line prefer-const
 
     for (let i = 1; i < arguments.length; i++) {
-      let elements = arguments[i].values()
+      const elements = arguments[i].values()
       let element = elements.next()
 
       while (!element.done) {
@@ -61,10 +61,10 @@ export default class NGNSet { // eslint-disable-line
    * Returns a Set containing the common elements of setA and setB.
    */
   static intersection (setA, setB) {
-    let intersection = new Set()
-    let a = setA.size < setB.size ? setA : setB
-    let b = setA.size < setB.size ? setB : setA
-    let elements = a.values()
+    let intersection = new Set() // eslint-disable-line prefer-const
+    const a = setA.size < setB.size ? setA : setB
+    const b = setA.size < setB.size ? setB : setA
+    const elements = a.values()
     let element = elements.next()
 
     while (!element.done) {
@@ -86,8 +86,8 @@ export default class NGNSet { // eslint-disable-line
    * Returns a set containing elements that are NOT common between setA and setB.
    */
   static difference (setA, setB) {
-    let diff = new Set(setA)
-    let elements = setB.values()
+    let diff = new Set(setA) // eslint-disable-line prefer-const
+    const elements = setB.values()
     let element = elements.next()
 
     while (!element.done) {

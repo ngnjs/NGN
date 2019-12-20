@@ -1,5 +1,7 @@
 import NGN from '../core.js'
+/* node-only */
 import os from 'os'
+/* end-node-only */
 
 // TODO: Convert the normalizer to use the standard URL API (browser and Node will be a little different)
 // https://developer.mozilla.org/en-US/docs/Web/API/URL
@@ -47,11 +49,11 @@ class NetworkUtilities {
 
     /* node-only */
     // Retreive local IP's and hostnames
-    let data = os.networkInterfaces()
-    let interfaces = Object.keys(data)
+    const data = os.networkInterfaces()
+    const interfaces = Object.keys(data)
 
     for (let i = 0; i < interfaces.length; i++) {
-      let iface = data[interfaces[i]]
+      const iface = data[interfaces[i]]
 
       for (let x = 0; x < iface.length; x++) {
         if (iface[x].family === 'IPv4') {
@@ -81,7 +83,7 @@ class NetworkUtilities {
       url = `http://${this.hostname}/${url}`
       /* end-node-only */
       /* browser-only */
-      let path = window.location.pathname.split('/')
+      const path = window.location.pathname.split('/')
       path.pop()
 
       url = `${window.location.origin}/${path.join('/')}/${url}`
@@ -113,17 +115,17 @@ class NetworkUtilities {
     uri = uri.join('/').replace(/:\/{3,50}/gi, '://')
 
     // Handle query parameter normalization
-    let match = /(.*:\/\/.*)[?](.*)/.exec(uri)
-    let path = match === null ? uri : match[1]
+    const match = /(.*:\/\/.*)[?](.*)/.exec(uri)
+    const path = match === null ? uri : match[1]
     let queryString = match !== null ? match[2] : ''
 
     uri = path
 
     if (queryString.trim().length > 0) {
-      let params = {}
+      const params = {}
 
       queryString.split('&').forEach(attr => {
-        let keypair = attr.split('=')
+        const keypair = attr.split('=')
         params[keypair[0]] = keypair.length > 1 ? keypair[1] : null
       })
 
@@ -159,7 +161,7 @@ class NetworkUtilities {
    */
   parseUri (uri) {
     // URL Pattern Regex
-    let part = uri.match(/^(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/) // eslint-disable-line no-useless-escape
+    const part = uri.match(/^(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/) // eslint-disable-line no-useless-escape
     let protocol
     /* node-only */
     protocol = 'http'
@@ -167,7 +169,7 @@ class NetworkUtilities {
     /* browser-only */
     protocol = window.location.protocol.replace(':', '').toLowerCase()
     /* end-browser-only */
-    let url = {
+    const url = {
       uri,
       protocol: NGN.coalesce(part[2], protocol),
       hostname: NGN.coalesce(part[4], hostname),
@@ -178,7 +180,7 @@ class NetworkUtilities {
 
     // URL contains a username/password.
     if (url.hostname.indexOf('@') > 0) {
-      let credentials = uri.match(/^.*\/{1,2}(.*):(.*)@/i)
+      const credentials = uri.match(/^.*\/{1,2}(.*):(.*)@/i)
 
       url.hostname = url.hostname.split('@').pop()
 
@@ -211,7 +213,7 @@ class NetworkUtilities {
    * @private
    */
   isCrossOrigin (url, altUrl = null) {
-    let uri = this.parseUri(url)
+    const uri = this.parseUri(url)
 
     if (altUrl !== null) {
       altUrl = this.parseUri(altUrl)

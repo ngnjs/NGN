@@ -1,6 +1,6 @@
 import CustomException from './exception'
 /* node-only */
-import os from 'os'
+import operatingsystem from 'os'
 /* end-node-only */
 
 /**
@@ -10,6 +10,7 @@ import os from 'os'
 let NGN = Object.defineProperties({
   // Establish a globally recognized namespace for browser or node-like environment.
   get global () {
+    throw new Error('test')
     /* node-only */
     return global
     /* end-node-only */
@@ -507,7 +508,7 @@ Object.defineProperties(NGN, {
   /**
    * @property {boolean} nodelike
    * Indicates NGN is running in a node-like environment.
-   * This will detect node, Electron, NW.js, and other environments 
+   * This will detect node, Electron, NW.js, and other environments
    * presumably supporting Node.js (or a `global` namespace instead of `window`).
    * @private
    */
@@ -1343,7 +1344,7 @@ Object.defineProperties(NGN, {
    * @property {string} version
    * A version number identifying which release of the operating system is in use.
    */
-   /**
+  /**
    * @property {OperatingSystem} platform
    * Identifies the operating system.
    * @readonly
@@ -1375,7 +1376,7 @@ Object.defineProperties(NGN, {
 
     let release
     /* node-only */
-    release = os.release()
+    release = operatingsystem.release()
     /* end-node-only */
     /* browser-only */
     release = /\((.*)\)/i.exec(navigator.userAgent)[1].split(';')[0].split(/\s+/i).pop()

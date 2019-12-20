@@ -128,7 +128,7 @@ export default class NGNTokenizer { // eslint-disable-line no-unused-vars
 
     this.PROTECTED.activeText = text
 
-    let tokens = {}
+    const tokens = {}
     let token
 
     this.PROTECTED.lexer.input = text
@@ -152,7 +152,7 @@ export default class NGNTokenizer { // eslint-disable-line no-unused-vars
           index: index,
           token: token,
           get detail () {
-            return Object.assign(tokens[this.token][this.index], {token: this.token})
+            return Object.assign(tokens[this.token][this.index], { token: this.token })
           }
         })
       }

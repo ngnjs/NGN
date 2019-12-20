@@ -40,6 +40,4 @@ NGN.BUS.on(NGN.INTERNAL_EVENT, function (eventName, payload) {
   }
 })
 
-/* non-esm-only */
-export default NGN
-/* end-non-esm-only */
+export { NGN as default }

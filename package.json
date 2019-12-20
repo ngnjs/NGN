@@ -15,7 +15,7 @@
     "cover": "npm run coverage && npm run coverage:report",
     "test:syntax": "standard --verbose | snazzy",
     "test:node": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-**/*-*.js --cov --coverage-report=html && standard --verbose | snazzy",
-    "test:node:sanity": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-sanity/**/*.js",
+    "test:node:sanity": "tap -R spec ./test/*-sanity/**/*.js",
     "test:node:basic": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-basic/**/*.js",
     "test:node:events": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-events/**/**.js",
     "test:node:utility": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-utility/**/*.js",
@@ -90,6 +90,7 @@
     "@author.io/metadoc": "0.1.2",
     "@author.io/metadoc-api": "1.1.0",
     "@author.io/metadoc-md": "0.0.5",
+    "babel-eslint": "^10.0.3",
     "browserify-istanbul": "3.0.1",
     "fs-extra": "8.1.0",
     "gzip-size": "5.1.1",
@@ -97,91 +98,8 @@
     "minimatch": "3.0.4",
     "musthave": "1.0.2",
     "productionline": "1.3.12",
-    "rollup": "1.21.4",
-    "rollup-plugin-buble": "0.19.2",
-    "rollup-plugin-replace": "2.0.0",
-    "rollup-plugin-strip-code": "0.2.6",
-    "rollup-plugin-terser": "1.0.1",
-    "rollup-plugin-uglify": "4.0.0",
     "rollupify": "0.5.1",
-    "shortbus": "1.2.8",
-    "snazzy": "7.1.1",
-    "source-map-support": "0.5.10",
-    "standard": "12.0.1",
-    "table": "4.0.3",
-    "tap": "14.2.0",
-    "tap-diff": "0.1.1",
-    "tape": "4.9.1",
-    "uglify-es": "3.3.9"
+    "shortbus": "1.2.8"
   },
-  "standard": {
-    "ignore": [
-      "_*",
-      "_**/*",
-      "test/lib/**/*",
-      "node_modules",
-      "dist/**/*",
-      "gulpfile.js",
-      "src/common/data/WIP/**/*",
-      "src/common/data/current/**/*",
-      "rollup*.js",
-      "karma.conf.js",
-      "build.js",
-      "deploy.js"
-    ],
-    "globals": [
-      "NGN",
-      "NGNX",
-      "window",
-      "global",
-      "MutationObserver",
-      "EventEmitter",
-      "NgnCustomException",
-      "MissingNgnDependencyError",
-      "InvalidConfigurationError",
-      "ReservedWordError",
-      "NGNDuplicateRecordError",
-      "DOMParser",
-      "XMLHttpRequest",
-      "FormData",
-      "btoa",
-      "localStorage",
-      "Network",
-      "Request",
-      "Response",
-      "Headers",
-      "fetch",
-      "Element",
-      "HTMLElement",
-      "NodeFilter",
-      "hostname",
-      "networkInterfaces",
-      "normalizeUrl",
-      "HttpMethods",
-      "request"
-    ]
-  },
-  "nyc": {
-    "exclude": [
-      "test/common"
-    ],
-    "include": [
-      "test/lib"
-    ]
-  },
-  "endpoints": {
-    "options": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
-    "head": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
-    "get": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
-    "redirect": "http://mockbin.org/bin/d676eae8-1626-4515-9835-e279636d52fa",
-    "post": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
-    "put": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
-    "del": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
-    "json": "https://www.chromestatus.com/omaha_data",
-    "jsonp": "http://mockbin.com/bin/4b0e19ee-b7ef-43ac-b657-5acfd174c09a",
-    "x.jsonp": "https://stats.fenixwebserver.com/http/test",
-    "trace": "http://mockbin.org/bin/bfdc4273-ff50-4141-bef6-28810a6291dd"
-  },
-  "dependencies": {},
-  "sourcemaps": "https://cdn.author.io/ngn/{{version}}/source/"
+  "dependencies": {}
 }

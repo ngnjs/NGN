@@ -495,12 +495,12 @@ export default class EventEmitter extends EEmitter {
        * @private
        */
       handleCollectionTrigger: NGN.privateconst(function (eventName, key) {
-        let me = this
+        const me = this
 
         return function () {
           // Use setTimeout to simulate nextTick
           setTimeout(() => {
-            let cq = me.META.collectionQueue
+            const cq = me.META.collectionQueue
 
             if (cq[key]) {
               cq[key].remainingqueue.delete(eventName)
@@ -585,8 +585,8 @@ export default class EventEmitter extends EEmitter {
           throw new Error(`NGN.BUS.funnel expected an array of events, but received a(n) ${NGN.typeof(eventCollection)}`)
         }
 
-        let collection = new Set(eventCollection)
-        let key = this.getInternalCollectionId(this.META.collectionQueue)
+        const collection = new Set(eventCollection)
+        const key = this.getInternalCollectionId(this.META.collectionQueue)
 
         this.META.collectionQueue[key] = {}
 
@@ -631,7 +631,7 @@ export default class EventEmitter extends EEmitter {
        * Provides the key/value configuration of the collection.
        */
       funnelOnce: NGN.const((eventCollection, triggerEventName, payload = null) => {
-        let funnelClosureEvent = `::NGNFUNNEL::${(new Date()).getTime()}::${triggerEventName}`
+        const funnelClosureEvent = `::NGNFUNNEL::${(new Date()).getTime()}::${triggerEventName}`
         // let funnelClosureEvent = Symbol(triggerEventName)
         let collection = this.funnel(eventCollection, funnelClosureEvent, payload)
 
@@ -686,7 +686,7 @@ export default class EventEmitter extends EEmitter {
         }
 
         // let key = `${this.getInternalCollectionId(this.META.thresholdQueue)}${limit.toString()}`
-        let key = this.getInternalCollectionId(this.META.thresholdQueue)
+        const key = this.getInternalCollectionId(this.META.thresholdQueue)
 
         this.META.thresholdQueue[key] = {}
 
@@ -697,7 +697,7 @@ export default class EventEmitter extends EEmitter {
           count: NGN.private(0),
           finalEventName: NGN.const(finalEventName),
           remove: NGN.const(() => {
-            let event = this.META.thresholdQueue[key].eventName
+            const event = this.META.thresholdQueue[key].eventName
 
             delete this.META.thresholdQueue[key]
 
@@ -714,9 +714,9 @@ export default class EventEmitter extends EEmitter {
       }),
 
       thresholdOnce: NGN.const(function (thresholdEventName, limit, finalEventName, payload = null) {
-        let thresholdClosureEvent = `::NGNTHRESHOLD::${(new Date()).getTime()}::${finalEventName}`
+        const thresholdClosureEvent = `::NGNTHRESHOLD::${(new Date()).getTime()}::${finalEventName}`
         let threshold = this.threshold(thresholdEventName, limit, thresholdClosureEvent, payload)
-        let me = this
+        const me = this
 
         this.once(thresholdClosureEvent, function () {
           threshold.remove()
@@ -736,11 +736,11 @@ export default class EventEmitter extends EEmitter {
        * @private
        */
       handleThresholdTrigger: NGN.const(function (key) {
-        let me = this
+        const me = this
         return function () {
           // Use setTimeout to simulate nextTick
           setTimeout(() => {
-            if (me.META.thresholdQueue.hasOwnProperty(key)) {
+            if (me.META.thresholdQueue.hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
               me.META.thresholdQueue[key].count++
               if (me.META.thresholdQueue[key].count === me.META.thresholdQueue[key].limit) {
                 if (NGN.isFn(me.META.thresholdQueue[key].finalEventName)) {
@@ -751,7 +751,7 @@ export default class EventEmitter extends EEmitter {
 
                 // This if statement is required in case the event is removed
                 // during the reset process.
-                if (me.META.thresholdQueue.hasOwnProperty(key)) {
+                if (me.META.thresholdQueue.hasOwnProperty(key)) { // eslint-disable-line no-prototype-builtins
                   me.META.thresholdQueue[key].count = 0
                 }
               }
@@ -819,7 +819,7 @@ export default class EventEmitter extends EEmitter {
    * This is a shortcut for #removeAllListeners.
    */
   clear () {
-    let events = NGN.slice(arguments)
+    const events = NGN.slice(arguments)
 
     if (events.length === 0) {
       this.META.wildcardEvents.clear()
@@ -972,8 +972,8 @@ export default class EventEmitter extends EEmitter {
    */
   emit () {
     if (NGN.typeof(arguments[0]) === 'array') {
-      let args = NGN.slice(arguments)
-      let eventNames = args.shift()
+      const args = NGN.slice(arguments)
+      const eventNames = args.shift()
 
       for (let i = 0; i < eventNames.length; i++) {
         this.emit(eventNames[i], ...args)
@@ -1006,15 +1006,15 @@ export default class EventEmitter extends EEmitter {
      * of these checks pass, the standard event emitter is used, otherwise
      * special wildcard handling is used.
      */
-    let iterator = this.META.wildcardEvents.values()
+    const iterator = this.META.wildcardEvents.values()
+    const args = NGN.slice(arguments)
     let currentEvent = null
-    let args = NGN.slice(arguments)
 
     args.shift()
 
     while (currentEvent === null || !currentEvent.done) {
       if (currentEvent !== null && currentEvent.value !== arguments[0]) {
-        let pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/g, '.*'), 'g')
+        const pattern = new RegExp(currentEvent.value.replace(/\./g, '\\.').replace(/\*/g, '.*'), 'g')
 
         if (pattern.test(arguments[0])) {
           super.emit(currentEvent.value, ...args, typeof arguments[0] !== 'symbol' ? Symbol(arguments[0]) : arguments[0])

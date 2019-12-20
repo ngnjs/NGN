@@ -23,7 +23,7 @@ import GUID from './GUID'
  * @return {string}
  * Returns a [V4 GUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_.28random.29).
  */
-export default const UUID = () {
+const UUID = () => {
   /* node-only */
   return GUID()
   /* end-node-only */
@@ -33,3 +33,5 @@ export default const UUID = () {
   )
   /* end-browser-only */
 }
+
+export { UUID as default }

@@ -245,13 +245,13 @@ export default class Request { // eslint-disable-line no-unused-vars
             this.headers = {}
           }
 
-          let contentType = NGN.coalesceb(this.headers['Content-Type'], this.headers['content-type'], this.headers['Content-type'])
+          const contentType = NGN.coalesceb(this.headers['Content-Type'], this.headers['content-type'], this.headers['Content-type'])
 
           if (typeof this.requestbody === 'object') {
             if (NGN.objectHasExactly(this.requestbody, 'form')) {
-              let form = this.requestbody.form
-              let keys = Object.keys(form)
-              let dataString = []
+              const form = this.requestbody.form
+              const keys = Object.keys(form)
+              const dataString = []
 
               for (let i = 0; i < keys.length; i++) {
                 if (NGN.isFn(form[keys[i]])) {
@@ -396,12 +396,12 @@ export default class Request { // eslint-disable-line no-unused-vars
    * @readonly
    */
   get queryParameters () {
-    let params = this.query.split('&')
-    let resultSet = {}
+    const params = this.query.split('&')
+    const resultSet = {}
 
     for (let i = 0; i < params.length; i++) {
-      let keypair = params[i].split('=')
-      let attr = `__qp__${keypair[0]}__qp__`
+      const keypair = params[i].split('=')
+      const attr = `__qp__${keypair[0]}__qp__`
 
       Object.defineProperty(resultSet, attr, {
         enumerable: false,
@@ -447,8 +447,8 @@ export default class Request { // eslint-disable-line no-unused-vars
 
     // If a relative URL is provided in a browser context, prepend
     // the current browser location to the URI.
-    if (/^.*:\/{2}/i.exec(value) === null && /^\.{1,2}\/.*/.exec(value) !== null && NGN.global.hasOwnProperty('location')) {
-      let loc = NGN.global.location
+    if (/^.*:\/{2}/i.exec(value) === null && /^\.{1,2}\/.*/.exec(value) !== null && NGN.global.hasOwnProperty('location')) { // eslint-disable-line no-prototype-builtins
+      const loc = NGN.global.location
       let href = `${loc.host}${loc.pathname}`
 
       href = href.split('/')
@@ -594,7 +594,7 @@ export default class Request { // eslint-disable-line no-unused-vars
       return undefined
     }
 
-    if (!this.headers.hasOwnProperty(key.toLowerCase())) {
+    if (!this.headers.hasOwnProperty(key.toLowerCase())) { // eslint-disable-line no-prototype-builtins
       return undefined
     }
 
@@ -628,8 +628,8 @@ export default class Request { // eslint-disable-line no-unused-vars
    * the original parameter from being overwritten.
    */
   setQueryParameter (key, value, overwriteExisting = true) {
-    let re = new RegExp("^.*(\\?|&)(" + key + ".*)(&.*)$|^.*(\\?|&)(" + key + ".*)$", 'i') // eslint-disable-line quotes
-    let exists = (re.exec(this.uri) !== null)
+    const re = new RegExp("^.*(\\?|&)(" + key + ".*)(&.*)$|^.*(\\?|&)(" + key + ".*)$", 'i') // eslint-disable-line quotes
+    const exists = (re.exec(this.uri) !== null)
     let match
 
     if (exists) {
@@ -696,7 +696,7 @@ export default class Request { // eslint-disable-line no-unused-vars
         throw new Error('A callback is required when retrieving system files in a node-like environment.')
       }
 
-      let response = {
+      const response = {
         status: require('fs').existsSync(this.uri.replace('file://', '')) ? 200 : 400
       }
 
@@ -707,8 +707,8 @@ export default class Request { // eslint-disable-line no-unused-vars
 
     const http = this.protocol === 'https' ? require('https') : require('http')
 
-    let params = NGN.coalesceb(this.query)
-    let reqOptions = {
+    const params = NGN.coalesceb(this.query)
+    const reqOptions = {
       hostname: this.hostname,
       port: this.port,
       method: this.method,
@@ -804,9 +804,9 @@ export default class Request { // eslint-disable-line no-unused-vars
     req.end()
     /* end-node-only */
     /* browser-only */
-    let xhr = new XMLHttpRequest()
+    const xhr = new XMLHttpRequest()
+    const me = this
     let responded = false
-    let me = this
 
     // Apply readystate change handler
     xhr.onreadystatechange = function () {
@@ -853,7 +853,7 @@ export default class Request { // eslint-disable-line no-unused-vars
 
     // Apply Request Headers
     if (this.headers !== null) {
-      let headers = Object.keys(this.headers)
+      const headers = Object.keys(this.headers)
       for (let i = 0; i < headers.length; i++) {
         xhr.setRequestHeader(headers[i], this.headers[headers[i]])
       }

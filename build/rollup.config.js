@@ -1,7 +1,8 @@
+
 import buble from 'rollup-plugin-buble'
 import {uglify} from 'rollup-plugin-uglify'
 import {terser} from 'rollup-plugin-terser'
-import ngn from './rollup-plugin-ngn'
+import ngn from './rollup-plugin-ngn.js'
 // import replace from 'rollup-plugin-replace'
 // import stripCode from  'rollup-plugin-strip-code'
 import pkg from '../package.json'

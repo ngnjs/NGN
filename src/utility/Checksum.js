@@ -7,8 +7,12 @@ let crcTable = null
  * repeat use.
  */
 const makeCRCTable = function () {
+  if (crcTable !== null) {
+    return crcTable
+  }
+
   let c
-  let crcTable = []
+  crcTable = []
 
   for (let n = 0; n < 256; n++) {
     c = n

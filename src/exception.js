@@ -12,7 +12,7 @@ export default class CustomException extends Error { // eslint-disable-line
     config = typeof config === 'string' ? { message: config } : config
     config.custom = config.custom || {}
 
-    let me = this
+    const me = this
 
     this.name = config.name || 'NgnError'
     this.type = config.type || 'TypeError'
@@ -24,19 +24,19 @@ export default class CustomException extends Error { // eslint-disable-line
     this.name = this.name.replace(/[^a-zA-Z0-9_]/gi, '')
 
     // Add any custom properties
-    for (let attr in config.custom) {
-      if (config.custom.hasOwnProperty(attr)) {
+    for (const attr in config.custom) {
+      if (config.custom.hasOwnProperty(attr)) { // eslint-disable-line no-prototype-builtins
         this[attr] = config.custom[attr]
       }
     }
 
-    this.hasOwnProperty('custom') && delete this.custom
+    this.hasOwnProperty('custom') && delete this.custom // eslint-disable-line no-prototype-builtins
 
     if (NGN.nodelike || Error.prepareStackTrace) {
       // Capture the stack trace on a new error so the detail can be saved as a structured trace.
       Error.prepareStackTrace = function (_, stack) { return stack }
 
-      let _err = new Error()
+      const _err = new Error()
 
       Error.captureStackTrace(_err, this)
 

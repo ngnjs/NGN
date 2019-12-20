@@ -264,17 +264,17 @@ export default class NetworkResource extends Network {
    */
   set credentials (credentials) {
     if (credentials != null) {
-      if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('accessToken') || credentials.hasOwnProperty('token')) {
+      if (credentials.hasOwnProperty('accesstoken') || credentials.hasOwnProperty('accessToken') || credentials.hasOwnProperty('token')) { // eslint-disable-line no-prototype-builtins
         credentials.accessToken = NGN.coalesce(credentials.accessToken, credentials.accesstoken, credentials.token)
 
-        if (credentials.hasOwnProperty('username')) {
+        if (credentials.hasOwnProperty('username')) { // eslint-disable-line no-prototype-builtins
           delete credentials.username
         }
 
-        if (credentials.hasOwnProperty('password')) {
+        if (credentials.hasOwnProperty('password')) { // eslint-disable-line no-prototype-builtins
           delete credentials.password
         }
-      } else if (!(credentials.hasOwnProperty('username') && credentials.hasOwnProperty('password')) && !credentials.hasOwnProperty('accessToken')) {
+      } else if (!(credentials.hasOwnProperty('username') && credentials.hasOwnProperty('password')) && !credentials.hasOwnProperty('accessToken')) { // eslint-disable-line no-prototype-builtins
         throw new Error('Invalid credentials. Must contain an access token OR the combination of a username AND password.')
       }
     }
@@ -293,20 +293,20 @@ export default class NetworkResource extends Network {
   }
 
   /**
-   * 
+   *
    * @param {string} token
-   * The token value. 
-   * @param {string} [type=bearer] 
+   * The token value.
+   * @param {string} [type=bearer]
    * The type of token. This is passed to the `Authorization` HTTP header.
    * The most common type of token is the `bearer` token.
    * @param {date|number} [expiration]
    * Specify a date/time or the number of milliseconds until the
    * token expires/invalidates. Setting this will trigger an
-   * expiration event (`token.expired`) at this time and stops applying 
+   * expiration event (`token.expired`) at this time and stops applying
    * the token to requests.
    */
   setToken (token = null, type = 'bearer', expiration = null) {
-    if (type == 'bearer') {
+    if (type === 'bearer') {
       this.credentials = { accessToken: token }
     } else {
       this.setHeader('Authorization', `${type} ${token}`)
@@ -448,7 +448,7 @@ export default class NetworkResource extends Network {
    */
   setHeader (key, value) {
     if (typeof key === 'object') {
-      for (let [attr, val] of key) {
+      for (const [attr, val] of key) {
         this.globalHeaders[attr] = val
       }
 
@@ -500,9 +500,9 @@ export default class NetworkResource extends Network {
    * @param {string} value
    * The value of the parameter. This will be automatically URI-encoded.
    */
-  setParameter (name, value) {
+  setParameter (key, value) {
     if (typeof key === 'object') {
-      for (let [attr, val] of key) {
+      for (const [attr, val] of key) {
         this.globalQuery[attr] = val
       }
 
@@ -521,7 +521,7 @@ export default class NetworkResource extends Network {
    */
   removeParameter () {
     if (arguments.length === 1) {
-      delete this.globalQuery[key]
+      delete this.globalQuery[arguments[0]]
       return
     }
 

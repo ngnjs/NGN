@@ -21,7 +21,7 @@ export default class Network { // eslint-disable-line
         const me = this
 
         return function () {
-          let args = NGN.slice(arguments)
+          const args = NGN.slice(arguments)
           let callback
 
           if (NGN.isFn(args[args.length - 1])) {
@@ -30,10 +30,8 @@ export default class Network { // eslint-disable-line
 
           args.push(method)
 
-          let request = me.parseRequestConfiguration(...args)
-
           // Send the request
-          me.send(request, callback)
+          me.send(me.parseRequestConfiguration(...args), callback)
         }
       }),
 
@@ -238,14 +236,13 @@ export default class Network { // eslint-disable-line
     }
 
     // Request method is "GET"
-    let request = this.parseRequestConfiguration({url})
+    const request = this.parseRequestConfiguration({ url })
 
     this.preflight(request)
 
     request.send((response) => {
       try {
-        let responseData = JSON.parse(response.responseText)
-        callback(null, responseData)
+        callback(null, JSON.parse(response.responseText))
       } catch (e) {
         e.response = NGN.coalesce(response.responseText)
         callback(e, null)
@@ -285,7 +282,7 @@ export default class Network { // eslint-disable-line
       return callback(null, data)
     }
 
-    let script = document.createElement('script')
+    const script = document.createElement('script')
 
     script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + fn
 

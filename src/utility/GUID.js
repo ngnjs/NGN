@@ -1,6 +1,7 @@
 /**
  * @namespace NGN.UTILITY
  */
+
 /**
  * @method GUID
  * Generate a globally unique identifier. A GUID is the Microsoft
@@ -12,7 +13,7 @@
  * @return {string} [description]
  */
 const GUID = () => {
-  let lut = []
+  const lut = []
 
   for (let i = 0; i < 256; i++) {
     lut[i] = (i < 16 ? '0' : '') + (i).toString(16)

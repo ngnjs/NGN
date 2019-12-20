@@ -349,8 +349,8 @@ export default class Queue extends EventEmitter {
         this.steps[i].run(this.mode)
       }
     } else {
-      let queue = this.steps
-      let listener = new NGN.EventEmitter()
+      const queue = this.steps
+      const listener = new NGN.EventEmitter()
 
       listener.on('taskcomplete', () => {
         if (queue.length > 0) {
@@ -369,7 +369,7 @@ export default class Queue extends EventEmitter {
         }
       })
 
-      let currentStep = queue.shift()
+      const currentStep = queue.shift()
 
       currentStep.on('complete', () => listener.emit('taskcomplete'))
       currentStep.on('start', () => this.emit('taskstart', currentStep))

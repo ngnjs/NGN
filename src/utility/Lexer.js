@@ -43,36 +43,32 @@ import NGN from '../core.js'
  * file/content (token `BOF`) and the end of file content (token `EOF`).
  */
 export default class NGNLexer { // eslint-disable-line no-unused-vars
+  #tokens = []
+  #rules = []
+  #remove = 0
+  #state = 0
+  #index = 0
+  #statement = ''
+  #reject = false
+  #lastLineIndex = 0
+  #currentLength = 0
+  #currentMatch = null
+  #row = 1
+  #unrecognizedCharacters = false
+
   /**
    * Create a new lexer instance.
    * @param  {String} [input='']
    * Initialize with text input.
    */
   constructor (statement = '') {
-    Object.defineProperties(this, {
-      tokens: NGN.private([]),
-      rules: NGN.private([]),
-      remove: NGN.private(0),
-      state: NGN.private(0),
-      index: NGN.private(0),
-      statement: NGN.private(statement),
-      reject: NGN.private(false),
-      lastLineIndex: NGN.private(0),
-      currentLength: NGN.private(0),
-      currentMatch: NGN.private(null),
-      row: NGN.private(1),
-      unrecognizedCharacters: NGN.private(false)
-    })
+    this.#statement = statement
 
     // Identify beginning of file/statement
-    this.addRule(/^/, function () {
-      return 'BOF'
-    })
+    this.addRule(/^/, () => 'BOF')
 
     // Identify end of file/statement
-    this.addRule(/$/, function () {
-      return 'EOF'
-    })
+    this.addRule(/$/, () => 'EOF')
 
     if (statement && statement.length > 0) {
       this.input = statement
@@ -84,17 +80,17 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * The input text to analyze. Changing this automatically resets the lexer.
    */
   set input (value) {
-    this.remove = 0
-    this.state = 0
-    this.index = 0
-    this.currentMatch = null
-    this.tokens = []
-    this.row = 1
-    this.statement = value
+    this.#remove = 0
+    this.#state = 0
+    this.#index = 0
+    this.#currentMatch = null
+    this.#tokens = []
+    this.#row = 1
+    this.#statement = value
   }
 
   get input () {
-    return this.statement
+    return this.#statement
   }
 
   /**
@@ -102,7 +98,7 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * The number of lines in the input text.
    */
   get lines () {
-    return this.statement.split('\n').length
+    return this.#statement.split('\n').length
   }
 
   /**
@@ -112,13 +108,12 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * sets this to `true` when a rule should produce an error.
    */
   get unrecognized () {
-    return this.unrecognizedCharacters
+    return this.#unrecognizedCharacters
   }
 
   set unrecognized (value) {
-    // TODO: NGN.forceBoolean
-    this.reject = true
-    this.unrecognizedCharacters = NGN.forceBoolean(value)
+    this.#reject = true
+    this.#unrecognizedCharacters = NGN.forceBoolean(value)
   }
 
   /**
@@ -127,7 +122,7 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * recognized token).
    */
   get currentLine () {
-    return this.row
+    return this.#row
   }
 
   /**
@@ -136,7 +131,7 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * recognized token).
    */
   get currentColumn () {
-    let col = (this.index - this.lastLineIndex) - this.currentLength
+    const col = (this.#index - this.#lastLineIndex) - this.#currentLength
 
     return col === 0 ? 1 : col
   }
@@ -149,12 +144,12 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    */
   error (message) {
     if (message) {
-      let col = (this.index - this.lastLineIndex) - 1
+      const col = (this.#index - this.#lastLineIndex) - 1
 
-      throw new Error(`${message} at line ${this.currentLine}, column ${col < 1 ? 1 : col}.`)
+      throw new Error(`${message} at line ${this.#row}, column ${col < 1 ? 1 : col}.`)
     }
 
-    this.unrecognized = true
+    this.#unrecognizedCharacters = true
   }
 
   /**
@@ -198,9 +193,7 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
 
     let actionFn
     if (typeof action === 'string') {
-      actionFn = function () {
-        return action
-      }
+      actionFn = () => action
     } else {
       actionFn = action
     }
@@ -209,13 +202,13 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
       throw new Error(`INVALID LEXER ATTRIBUTES: ${pattern.toString()} rule is missing a valid handler function (action) or token name.`)
     }
 
-    let actionString = actionFn.toString()
+    const actionString = actionFn.toString()
 
     if (actionString.indexOf('this.error(') >= 0 && /^\(.*\)\s{0,10}=>\s{0,10}\{/.test(actionString)) {
       throw new Error('Cannot use a non-lexical expression (arrow function) as a lexer rule.')
     }
 
-    this.rules.push({
+    this.#rules.push({
       pattern,
       global: pattern.global,
       action: actionFn,
@@ -239,45 +232,45 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * }
    */
   next () {
-    if (this.tokens.length) {
-      return this.tokens.shift()
+    if (this.#tokens.length) {
+      return this.#tokens.shift()
     }
 
-    this.reject = true
+    this.#reject = true
 
-    while (this.index <= this.statement.length) {
+    while (this.#index <= this.#statement.length) {
       // Count any new line & reset column
-      if (/\n/i.test(this.statement.charAt(this.index))) {
-        this.row++
-        this.lastLineIndex = this.index
+      if (/\n/i.test(this.#statement.charAt(this.#index))) {
+        this.#row++
+        this.#lastLineIndex = this.#index
       }
 
-      let matches = this.scan().splice(this.remove)
-      let index = this.index
+      const matches = this.scan().splice(this.#remove)
+      const index = this.#index
 
       while (matches.length) {
-        if (this.reject) {
-          let match = matches.shift()
-          let result = match.result
-          let length = match.length
+        if (this.#reject) {
+          const match = matches.shift()
+          const result = match.result
+          const length = match.length
 
-          this.index += length
-          this.currentLength = length
-          this.reject = false
-          this.remove++
+          this.#index += length
+          this.#currentLength = length
+          this.#reject = false
+          this.#remove++
           let token = match.action.apply(this, result)
 
-          if (this.reject) {
-            this.index = result.index
+          if (this.#reject) {
+            this.#index = result.index
           } else if (token !== undefined) {
             switch (NGN.typeof(token)) {
               case 'array':
-                this.tokens = token.slice(1)
+                this.#tokens = token.slice(1)
                 token = token[0]
 
               default: // eslint-disable-line no-fallthrough
                 if (length) {
-                  this.remove = 0
+                  this.#remove = 0
                 }
 
                 return token
@@ -288,31 +281,31 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
         }
       }
 
-      let input = this.statement
+      const input = this.#statement
 
       if (index < input.length) {
-        if (this.reject) {
-          this.remove = 0
+        if (this.#reject) {
+          this.#remove = 0
 
-          let token = this.unexpected(input.substr(this.index++, this.index + input.length))
+          const token = this.unexpected(input.substr(this.#index++, this.#index + input.length))
 
           if (token !== undefined) {
             if (NGN.typeof(token) === 'array') {
-              this.tokens = token.slice(1)
+              this.#tokens = token.slice(1)
               return token[0]
             } else {
               return token
             }
           }
         } else {
-          if (this.index !== index) {
-            this.remove = 0
+          if (this.#index !== index) {
+            this.#remove = 0
           }
 
-          this.reject = true
+          this.#reject = true
         }
       } else if (matches.length) {
-        this.reject = true
+        this.#reject = true
       } else {
         break
       }
@@ -324,24 +317,24 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * @private
    */
   scan () {
-    let matches = []
+    const matches = []
     let index = 0
-    let state = this.state
-    let lastIndex = this.index
-    let input = this.statement
+    const state = this.#state
+    const lastIndex = this.#index
+    const input = this.#statement
 
-    for (let i = 0, length = this.rules.length; i < length; i++) {
-      let rule = this.rules[i]
-      let start = rule.start
-      let states = start.length
+    for (let i = 0, length = this.#rules.length; i < length; i++) {
+      const rule = this.#rules[i]
+      const start = rule.start
+      const states = start.length
 
       if (
         (!states || start.indexOf(state) >= 0) ||
           (state % 2 && states === 1 && !start[0])
       ) {
-        let pattern = rule.pattern
+        const pattern = rule.pattern
         pattern.lastIndex = lastIndex
-        let result = pattern.exec(input)
+        const result = pattern.exec(input)
 
         if (result && result.index === lastIndex) {
           let j = matches.push({
@@ -355,10 +348,10 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
           }
 
           while (--j > index) {
-            let k = j - 1
+            const k = j - 1
 
             if (matches[j].length > matches[k].length) {
-              let temple = matches[j]
+              const temple = matches[j]
               matches[j] = matches[k]
               matches[k] = temple
             }
@@ -378,10 +371,10 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
    * @private
    */
   unexpected (str) {
-    if (this.unrecognizedCharacters) {
-      let col = (this.index - this.lastLineIndex) - 1
+    if (this.#unrecognizedCharacters) {
+      const col = (this.#index - this.#lastLineIndex) - 1
 
-      throw new Error(`Unexpected syntax at line ${this.currentLine}, column ${col < 1 ? 1 : col}\nat ${str}\n   ^`)
+      throw new Error(`Unexpected syntax at line ${this.#row}, column ${col < 1 ? 1 : col}\nat ${str}\n   ^`)
     }
   }
 }

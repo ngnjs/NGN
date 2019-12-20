@@ -58,7 +58,7 @@ switch (mode.trim().toLowerCase()) {
 						drop_console: true,
 						passes: 2,
 						warnings: true,
-						ecma: 6
+						ecma: 8
 					}
 				})
 			],

@@ -15,3 +15,4 @@ dist
 out
 docs
 /**/cover.html
+build/tmp

@@ -77,9 +77,10 @@ export default class NGNNameManager extends EventEmitter {
    * The unique name as it will be stored in the name manager.
    */
   create (name = 'Untitled') {
-    let count = 1
+    let count = 0
 
     while (this.map.has(name)) {
+      count++
       name = `${name} (${this.label !== null ? this.label + ' ' : ''}${this.label !== null && count > 1 ? count : ''})`
     }
 
@@ -110,7 +111,7 @@ export default class NGNNameManager extends EventEmitter {
     }
 
     if (this.map.has(name)) {
-      let nm = this.set(newName, this.map.get(name).value)
+      let nm = this.set(newName, this.map.get(name).value) // eslint-disable-line prefer-const
       this.map.delete(name)
 
       return nm

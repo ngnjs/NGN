@@ -1,0 +1,99 @@
+{
+  "name": "ngn-tester",
+  "version": "1.0.0",
+  "description": "Test NGN in different JavaScript runtimes.",
+  "scripts": {
+    "start": "echo look at package",
+    "syntax": "cd ../src && standard --verbose --parser babel-eslint | snazzy"
+  },
+  "author": {
+    "name": "Ecor Ventures",
+    "url": "https://ecorventures.com"
+  },
+  "license": "BSD-3-Clause",
+  "homepage": "https://ngn.js.org",
+  "type": "module",
+  "dependencies": {
+    "@babel/core": "^7.7.5",
+    "snazzy": "8.0.0",
+    "standard": "14.3.1",
+    "table": "5.4.6",
+    "tap": "14.10.5",
+    "tap-diff": "0.1.1",
+    "tape": "4.12.0"
+  },
+  "engines": {
+    "node": ">=12.13.1"
+  },
+  "private": true,
+  "standard": {
+    "parser": "babel-eslint",
+    "ignore": [
+      "_*",
+      "_**/*",
+      "test/lib/**/*",
+      "node_modules",
+      "dist/**/*",
+      "gulpfile.js",
+      "src/common/data/WIP/**/*",
+      "src/common/data/current/**/*",
+      "rollup*.js",
+      "karma.conf.js",
+      "build.js",
+      "deploy.js"
+    ],
+    "globals": [
+      "NGN",
+      "NGNX",
+      "window",
+      "global",
+      "MutationObserver",
+      "EventEmitter",
+      "NgnCustomException",
+      "MissingNgnDependencyError",
+      "InvalidConfigurationError",
+      "ReservedWordError",
+      "NGNDuplicateRecordError",
+      "DOMParser",
+      "XMLHttpRequest",
+      "FormData",
+      "btoa",
+      "localStorage",
+      "Network",
+      "Request",
+      "Response",
+      "Headers",
+      "fetch",
+      "Element",
+      "HTMLElement",
+      "NodeFilter",
+      "hostname",
+      "networkInterfaces",
+      "normalizeUrl",
+      "HttpMethods",
+      "request"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "test/common"
+    ],
+    "include": [
+      "test/lib"
+    ]
+  },
+  "endpoints": {
+    "options": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
+    "head": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
+    "get": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
+    "redirect": "http://mockbin.org/bin/d676eae8-1626-4515-9835-e279636d52fa",
+    "post": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
+    "put": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
+    "del": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
+    "json": "https://www.chromestatus.com/omaha_data",
+    "jsonp": "http://mockbin.com/bin/4b0e19ee-b7ef-43ac-b657-5acfd174c09a",
+    "x.jsonp": "https://stats.fenixwebserver.com/http/test",
+    "trace": "http://mockbin.org/bin/bfdc4273-ff50-4141-bef6-28810a6291dd"
+  },
+  "devDependencies": {}
+}
