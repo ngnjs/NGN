@@ -84,7 +84,7 @@ export default class NGNTransactionLog extends EventEmitter { // eslint-disable-
   }
 
   set cursor (value) {
-    if (value !== null && !this.METADATA.transaction.hasOwnProperty(value)) {
+    if (value !== null && !this.METADATA.transaction.hasOwnProperty(value)) { // eslint-disable-line no-prototype-builtins
       throw new Error('Cannot set cursor for transaction log (does not exist).')
     }
 
@@ -125,7 +125,7 @@ export default class NGNTransactionLog extends EventEmitter { // eslint-disable-
    * Fires a log event with the transaction ID (symbol) for reference.
    */
   commit (value) {
-    let id = typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
+    const id = typeof value === 'symbol' ? Symbol(String(value)) : Symbol(NGN.coalesce(value, NGN.typeof(value)).toString())
 
     this.METADATA.transaction[id] = [
       new Date(),
@@ -138,7 +138,7 @@ export default class NGNTransactionLog extends EventEmitter { // eslint-disable-
     this.METADATA.cursor = id
 
     if (this.METADATA.max > 0 && this.METADATA.changeOrder.length > this.METADATA.max) {
-      let removedId = this.METADATA.changeOrder.shift()
+      const removedId = this.METADATA.changeOrder.shift()
       delete this.METADATA.transaction[removedId]
     }
 
@@ -155,7 +155,7 @@ export default class NGNTransactionLog extends EventEmitter { // eslint-disable-
    * Returns an object with `timestamp` and `value` keys.
    */
   getCommit (id = null) {
-    if (!this.METADATA.transaction.hasOwnProperty(id)) {
+    if (!this.METADATA.transaction.hasOwnProperty(id)) { // eslint-disable-line no-prototype-builtins
       return undefined
     }
 
@@ -173,14 +173,14 @@ export default class NGNTransactionLog extends EventEmitter { // eslint-disable-
       return
     }
 
-    let position = this.METADATA.changeOrder.indexOf(this.METADATA.cursor)
+    const position = this.METADATA.changeOrder.indexOf(this.METADATA.cursor)
 
     // If the whole log is cleared, reset it silently.
     if (position === 0) {
       return
     }
 
-    let removedEntries = this.METADATA.changeOrder.splice(position + 1)
+    const removedEntries = this.METADATA.changeOrder.splice(position + 1)
 
     for (let i = 0; i < removedEntries.length; i++) {
       delete this.METADATA.transaction[removedEntries[i]]

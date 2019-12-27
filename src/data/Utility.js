@@ -89,7 +89,7 @@ export default class Utility { // eslint-disable-line
             break
 
           case 'weakmap':
-          case 'map':
+          case 'map': {
             const mapResult = {}
 
             data[attribute[i]].forEach((value, key) => {
@@ -99,6 +99,7 @@ export default class Utility { // eslint-disable-line
             result[attribute[i]] = mapResult
 
             break
+          }
 
           case 'weakset':
           case 'set':

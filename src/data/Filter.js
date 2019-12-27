@@ -56,7 +56,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
       filteredRecordStores: NGN.private(new Map()),
       clean: NGN.privateconst(function () {
         for (let i = 0; i < arguments.length; i++) {
-          let store = arguments[0]
+          const store = arguments[0]
           if (store instanceof NGN.DATA.Store) {
             me.filteredRecordStores.set(store.OID, store)
             me.filteredRecords[store.OID] = new Set()
@@ -66,10 +66,10 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
         }
       }),
       clearFilter: NGN.privateconst(function () {
-        let stores = arguments.length > 0 ? Array.from(arguments).map(store => store.OID) : Object.keys(me.filteredRecords)
+        const stores = arguments.length > 0 ? Array.from(arguments).map(store => store.OID) : Object.keys(me.filteredRecords)
 
         stores.forEach(storeOID => {
-          let store = me.filteredRecordStores.get(storeOID)
+          const store = me.filteredRecordStores.get(storeOID)
 
           if (store) {
             me.filteredRecords[storeOID].forEach(recordOID => {
@@ -90,7 +90,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
 
         this.filteredRecordStores.forEach(store => {
           this.filteredRecords[store.OID].forEach(recordOID => {
-            let recordIndex = store.indexOf(recordOID)
+            const recordIndex = store.indexOf(recordOID)
 
             if (recordIndex < 0) {
               console.log('Record DNE?')
@@ -153,7 +153,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
         case 'record.delete':
           if (!this.active) {
             this.recordUpdates.get(payload.record.store.OID).add(payload.record.OID)
-          } else if (this.filteredRecords.hasOwnProperty(payload.record.store.OID)) {
+          } else if (this.filteredRecords.hasOwnProperty(payload.record.store.OID)) { // eslint-disable-line no-prototype-builtins
             this.filteredRecords[payload.record.store.OID].delete(payload.record.OID)
           }
           break
@@ -162,8 +162,8 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
           if (!this.active) {
             this.recordUpdates.get(payload.record.store.OID).add(payload.record.OID)
           } else {
-            let filtered = this.filteredRecords[payload.record.store.OID].get(payload.record.OID)
-            let retained = this.exec(payload.record)
+            const filtered = this.filteredRecords[payload.record.store.OID].get(payload.record.OID)
+            const retained = this.exec(payload.record)
 
             if (retained && filtered) {
               this.filteredRecords[payload.record.store.OID].delete(payload.record.OID)
@@ -191,7 +191,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
 
   set name (value) {
     if (value !== this.filterName) {
-      let old = this.filterName
+      const old = this.filterName
       this.filterName = value
       this.emit('renamed', { old, new: value })
     }
@@ -281,14 +281,14 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
       throw new Error('Cannot filter a record which is not part of a store: \n' + JSON.stringify(record.data, null, 2))
     }
 
-    let retain = this.fn(record)
+    const retain = this.fn(record)
 
     if (!retain) {
-      if (!this.filteredRecords.hasOwnProperty(store.OID)) {
+      if (!this.filteredRecords.hasOwnProperty(store.OID)) { // eslint-disable-line no-prototype-builtins
         this.filteredRecords[store.OID] = new Set()
         this.filteredRecordStores.set(store.OID, store)
 
-        let me = this
+        const me = this
         store.on('record.*', function (storeRecord) {
           me.delayEmit(me.STORE_EVENT, 0, {
             event: this.event,
@@ -340,7 +340,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
       return
     }
 
-    let stores = Array.from(arguments).map(store => store.OID)
+    const stores = Array.from(arguments).map(store => store.OID)
 
     stores.forEach(storeOID => {
       delete this.filteredRecords[storeOID]
@@ -351,8 +351,8 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
   destroy () {
     this.clearFilter(...arguments)
 
-    let args = Array.from(arguments)
-    let stores = args.length === 0 ? Array.from(this.filteredRecordStores).map(item => item[1]) : args
+    const args = Array.from(arguments)
+    const stores = args.length === 0 ? Array.from(this.filteredRecordStores).map(item => item[1]) : args
 
     stores.forEach(store => store.METADATA.filters.delete(this.name))
   }

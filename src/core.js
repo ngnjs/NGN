@@ -1,4 +1,3 @@
-import NGN from '../core.js'
 import CustomException from './exception.js'
 /* node-only */
 import operatingsystem from 'os'
@@ -8,14 +7,14 @@ import operatingsystem from 'os'
  * @namespace NGN
  * The NGN namespace.
  */
-let NGN = Object.defineProperties({
+const NGN = Object.defineProperties({
   // Establish a globally recognized namespace for browser or node-like environment.
   get global () {
     /* node-only */
     return global
     /* end-node-only */
     /* browser-only */
-    return window
+    return window // eslint-disable-line no-unreachable
     /* end-browser-only */
   }
 }, {
@@ -340,7 +339,7 @@ Object.defineProperties(NGN, {
       })
 
       const prototype = Object.getOwnPropertyNames(Object.getPrototypeOf(source)).filter((attr) => {
-        return attr.trim().toLowerCase() !== 'constructor' && !dest.hasOwnProperty(attr)
+        return attr.trim().toLowerCase() !== 'constructor' && !dest.hasOwnProperty(attr) // eslint-disable-line no-prototype-builtins
       })
 
       prototype.forEach((attr) => {
@@ -524,7 +523,7 @@ Object.defineProperties(NGN, {
    * @private
    */
   dedupe: NGN.const((array) => {
-    let matches = []
+    const matches = []
 
     // This is more performant than array.filter in most cases.
     for (let i = 0; i < array.length; i++) {
@@ -555,11 +554,11 @@ Object.defineProperties(NGN, {
       return 'null'
     }
 
-    let value = Object.prototype.toString.call(el).split(' ')[1].replace(/[^A-Za-z]/gi, '').toLowerCase()
+    const value = Object.prototype.toString.call(el).split(' ')[1].replace(/[^A-Za-z]/gi, '').toLowerCase()
 
     if (value === 'function' || typeof el === 'function') {
       if (!el.name) {
-        let name = NGN.coalesceb(el.toString().replace(/\n/gi, '').replace(/^function\s|\(.*$/mgi, '').toLowerCase(), 'function')
+        const name = NGN.coalesceb(el.toString().replace(/\n/gi, '').replace(/^function\s|\(.*$/mgi, '').toLowerCase(), 'function')
 
         if (name.indexOf(' ') >= 0) {
           return 'function'
@@ -767,7 +766,7 @@ Object.defineProperties(NGN, {
   stack: NGN.get(function () {
     const originalStack = (new Error).stack.split('\n') // eslint-disable-line
     let stack = (new Error()).stack.split('\n') || []
-    let fnRegex = /at.*\(/gi
+    const fnRegex = /at.*\(/gi
 
     stack = stack.filter((item) => {
       return item.split(':').length > 1
@@ -918,7 +917,7 @@ Object.defineProperties(NGN, {
    * @private
    */
   needs: NGN.private(function () {
-    let missing = NGN.getObjectMissingPropertyNames(NGN, ...arguments)
+    const missing = NGN.getObjectMissingPropertyNames(NGN, ...arguments)
 
     if (missing.length === 0) {
       return
@@ -947,8 +946,8 @@ Object.defineProperties(NGN, {
    * @private
    */
   getObjectMissingPropertyNames: NGN.private(function () {
-    let missing = []
-    let properties = Object.keys(arguments[0])
+    const missing = []
+    const properties = Object.keys(arguments[0])
 
     for (let i = 1; i < arguments.length; i++) {
       if (properties.indexOf(arguments[i]) < 0) {
@@ -976,10 +975,10 @@ Object.defineProperties(NGN, {
    * @private
    */
   getObjectExtraneousPropertyNames: NGN.private(function () {
-    let properties = Object.keys(arguments[0])
+    const properties = Object.keys(arguments[0])
 
     for (let i = 1; i < arguments.length; i++) {
-      let index = properties.indexOf(arguments[i])
+      const index = properties.indexOf(arguments[i])
 
       if (index >= 0) {
         properties.splice(index, 1)
@@ -1014,7 +1013,7 @@ Object.defineProperties(NGN, {
    * @return {Boolean}
    */
   objectHasAll: NGN.const(function () {
-    let properties = Object.keys(arguments[0])
+    const properties = Object.keys(arguments[0])
 
     for (let i = 1; i < arguments.length; i++) {
       if (properties.indexOf(arguments[i]) < 0) {
@@ -1047,7 +1046,7 @@ Object.defineProperties(NGN, {
    * @return {Boolean}
    */
   objectHasAny: NGN.const(function () {
-    let properties = Object.keys(arguments[0])
+    const properties = Object.keys(arguments[0])
 
     for (let i = 1; i < arguments.length; i++) {
       if (properties.indexOf(arguments[i]) >= 0) {
@@ -1087,8 +1086,8 @@ Object.defineProperties(NGN, {
       return false
     }
 
-    let properties = Object.keys(arguments[0])
-    let args = NGN.slice(arguments)
+    const properties = Object.keys(arguments[0])
+    const args = NGN.slice(arguments)
 
     args.shift()
 
@@ -1116,7 +1115,7 @@ Object.defineProperties(NGN, {
    * @throws Error
    */
   objectRequires: NGN.const(function () {
-    let check = this.objectHasAll(...arguments)
+    const check = this.objectHasAll(...arguments)
 
     if (!check) {
       throw new Error(`${arguments[0].constructor.name} is missing the following attributes: ${check.missing.join(', ')}`)

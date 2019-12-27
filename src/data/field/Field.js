@@ -937,8 +937,8 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
           value = value.toString()
           break
 
-        case 'date':
-          const valueType = NGN.typeof(value) // eslint-disable-line no-case-declarations
+        case 'date': {
+          const valueType = NGN.typeof(value)
 
           if (valueType !== 'date') {
             if (valueType === 'number') {
@@ -952,6 +952,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
           }
 
           break
+        }
       }
     } finally {
       return value // eslint-disable-line no-unsafe-finally

@@ -178,7 +178,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
         AUDITABLE: false,
         AUDITLOG: NGN.coalesce(cfg.audit, false) ? new NGN.DATA.TransactionLog() : null,
         AUDIT_HANDLER: function (change) {
-          if (change.hasOwnProperty('cursor')) {
+          if (change.hasOwnProperty('cursor')) { // eslint-disable-line no-prototype-builtins
             me.METADATA.AUDITLOG.commit(me.METADATA.getAuditMap())
           }
         },
@@ -220,7 +220,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
           }
 
           // Prevent reserved words
-          if (this.hasOwnProperty(field) && field.toLowerCase() !== 'id') {
+          if (this.hasOwnProperty(field) && field.toLowerCase() !== 'id') { // eslint-disable-line no-prototype-builtins
             throw new ReservedWordError(`"${field}" cannot be used as a field name (reserved word).`)
           }
 
@@ -348,12 +348,12 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
 
           this.METADATA.AUDITLOG[type === 'undo' ? 'rollback' : 'advance'](count)
 
-          let data = this.METADATA.AUDITLOG.currentValue
+          const data = this.METADATA.AUDITLOG.currentValue
 
           if (data) {
             this.METADATA.auditFieldNames.forEach(fieldname => {
-              let field = this.METADATA.fields[fieldname]
-              let log = field.METADATA.AUDITLOG
+              const field = this.METADATA.fields[fieldname]
+              const log = field.METADATA.AUDITLOG
 
               if (log.cursor !== data[fieldname]) {
                 if (typeof data[fieldname] === 'symbol') {
@@ -376,7 +376,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
          * @private
          */
         getAuditMap: () => {
-          let map = {}
+          const map = {}
 
           this.METADATA.auditFieldNames.forEach(field => {
             map[field] = this.METADATA.fields[field].METADATA.AUDITLOG.cursor
@@ -448,9 +448,9 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
     // this.relay('*', NGN.BUS, 'record.')
 
     // Add data fields.
-    let fields = Object.keys(this.METADATA.fields)
+    const fields = Object.keys(this.METADATA.fields)
     for (let i = 0; i < fields.length; i++) {
-      let name = fields[i]
+      const name = fields[i]
 
       if (this.METADATA.knownFieldNames.has(name)) {
         NGN.WARN(`Duplicate field "${name}" detected.`)
@@ -492,20 +492,21 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
     if (this.METADATA.validators !== null) {
       switch (NGN.typeof(this.METADATA.validators)) {
         // Support key/value objects where the key is the name and value is a function.
-        case 'object':
-          let keys = Object.keys(this.METADATA.validators)
-          let rules = []
+        case 'object': {
+          const keys = Object.keys(this.METADATA.validators)
+          const rules = []
 
           for (let i = 0; i < keys.length; i++) {
             rules.push(new NGN.DATA.Rule(this.METADATA.validators[keys[i]], keys[i], this))
           }
 
           break
+        }
 
         // Support an array of existing data rules.
         case 'array':
           for (let i = 0; i < this.METADATA.validators.length; i++) {
-            if (this.METADATA.validators[i].hasOwnProperty('RULE')) {
+            if (this.METADATA.validators[i].hasOwnProperty('RULE')) { // eslint-disable-line no-prototype-builtins
               this.METADATA.validators[i].RULE.scope = this
             } else {
               throw new Error(`Invalid data rule configuration for ${this.name} model. Rule #${i} is not a valid NGN.DATA.Rule instance.`)
@@ -600,14 +601,14 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
    */
   get changelog () {
     return this.METADATA.AUDITLOG.log.map(entry => {
-      let result = {
+      const result = {
         timestamp: entry.timestamp,
         activeCursor: entry.activeCursor,
         value: {}
       }
 
-      let data = entry.value
-      let field = Object.keys(data)
+      const data = entry.value
+      const field = Object.keys(data)
 
       for (let i = 0; i < field.length; i++) {
         if (typeof data[field[i]] === 'symbol') {
@@ -711,7 +712,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
       return
     }
 
-    let now = new Date()
+    const now = new Date()
 
     if (!isNaN(value) && !(value instanceof Date)) {
       // Handle numeric (millisecond) expiration
@@ -789,12 +790,12 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
       return {}
     }
 
-    let fields = this.METADATA.knownFieldNames.keys()
-    let result = {}
+    const fields = this.METADATA.knownFieldNames.keys()
+    const result = {}
     let fieldname = fields.next()
 
     while (!fieldname.done) {
-      let field = this.METADATA.fields[fieldname.value]
+      const field = this.METADATA.fields[fieldname.value]
 
       // Ignore unserializable fields
       if ((
@@ -949,7 +950,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
    * The raw field.
    */
   getField (name) {
-    if (name.toLowerCase() === 'id' && !this.METADATA.fields.hasOwnProperty(name) && this.METADATA.fields.hasOwnProperty(this.METADATA.IdentificationField)) {
+    if (name.toLowerCase() === 'id' && !this.METADATA.fields.hasOwnProperty(name) && this.METADATA.fields.hasOwnProperty(this.METADATA.IdentificationField)) { // eslint-disable-line no-prototype-builtins
       return this.METADATA.fields[this.METADATA.IdentificationField]
     }
 
@@ -1017,7 +1018,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
       data = this.MAP.applyMap(data)
     }
 
-    let keys = Object.keys(data)
+    const keys = Object.keys(data)
 
     for (let i = 0; i < keys.length; i++) {
       if (this.METADATA.knownFieldNames.has(keys[i])) {
