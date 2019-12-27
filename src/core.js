@@ -1,4 +1,5 @@
-import CustomException from './exception'
+import NGN from '../core.js'
+import CustomException from './exception.js'
 /* node-only */
 import operatingsystem from 'os'
 /* end-node-only */
@@ -10,7 +11,6 @@ import operatingsystem from 'os'
 let NGN = Object.defineProperties({
   // Establish a globally recognized namespace for browser or node-like environment.
   get global () {
-    throw new Error('test')
     /* node-only */
     return global
     /* end-node-only */
@@ -549,7 +549,9 @@ Object.defineProperties(NGN, {
   typeof: NGN.const((el) => {
     if (el === undefined) {
       return 'undefined'
-    } else if (el === null) {
+    }
+
+    if (el === null) {
       return 'null'
     }
 
@@ -563,10 +565,10 @@ Object.defineProperties(NGN, {
           return 'function'
         }
 
-        return name
-      } else {
-        value = NGN.coalesceb(el.name, 'function')
+        return name.toLowerCase()
       }
+
+      return NGN.coalesceb(el.name, 'function').toLowerCase()
     }
 
     return value.toLowerCase()

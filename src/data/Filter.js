@@ -1,4 +1,5 @@
-import EventEmitter from '../emitter/core'
+import NGN from '../core.js'
+import EventEmitter from '../emitter/core.js'
 
 /**
  * @class NGN.DATA.Filter
@@ -92,7 +93,7 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
             let recordIndex = store.indexOf(recordOID)
 
             if (recordIndex < 0) {
-              console.log('Record DNE?');
+              console.log('Record DNE?')
               this.filteredRecords[store.OID].delete(recordOID)
             } else {
               store.PRIVATE.ACTIVERECORDS.set(recordOID, store.indexOf(recordOID))
@@ -298,14 +299,14 @@ export default class NGNDataFilter extends EventEmitter { // eslint-disable-line
 
       // Store references to the filtered records
       this.filteredRecords[store.OID].add(record.OID)
-console.log('DO NOT RETAIN');
+      console.log('DO NOT RETAIN')
       // Add the record to the store's filtered recordset
       store.PRIVATE.FILTEREDRECORDS.set(record.OID, store.indexOf(record.OID))
-console.log(store.PRIVATE.FILTEREDRECORDS);
+      console.log(store.PRIVATE.FILTEREDRECORDS)
       // Remove the filtered record from the store's active record set.
       store.PRIVATE.ACTIVERECORDS.delete(record.OID)
-console.log(store.PRIVATE.ACTIVERECORDS);
-console.log(store.name, store.size);
+      console.log(store.PRIVATE.ACTIVERECORDS)
+      console.log(store.name, store.size)
     }
 
     return retain

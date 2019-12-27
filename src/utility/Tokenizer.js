@@ -11,6 +11,10 @@ import NGN from '../core.js'
  * programs.
  */
 export default class NGNTokenizer { // eslint-disable-line no-unused-vars
+  #lexer = new NGN.UTILITY.Lexer()
+  #activeText = null
+  #orderedList = new Set()
+  #statement = null
   /**
    * Create a new tokenizer. This will return an instance of itself,
    * allowing for methods to be chained like `(new Tokenizker([...])).parse('...')`.
@@ -47,19 +51,12 @@ export default class NGNTokenizer { // eslint-disable-line no-unused-vars
     }
 
     Object.defineProperties(this, {
-      statement: NGN.private(null),
-      rules: NGN.privateconst(grammar),
-
-      PROTECTED: NGN.privateconst({
-        lexer: new NGN.UTILITY.Lexer(),
-        activeText: null,
-        orderedList: new Set()
-      })
+      rules: NGN.privateconst(grammar)
     })
 
     // Add rules
     for (let i = 0; i < this.rules.length; i++) {
-      this.PROTECTED.lexer.addRule(this.rules[i][0], this.rules[i][1])
+      this.#lexer.addRule(this.rules[i][0], this.rules[i][1])
     }
 
     return this
@@ -70,7 +67,7 @@ export default class NGNTokenizer { // eslint-disable-line no-unused-vars
    * The text being "tokenized".
    */
   get text () {
-    return this.PROTECTED.activeText
+    return this.#activeText
   }
 
   /**
@@ -93,7 +90,7 @@ export default class NGNTokenizer { // eslint-disable-line no-unused-vars
    * ```
    */
   get orderedTokenList () {
-    return Array.from(this.PROTECTED.orderedList).map(item => item.detail)
+    return Array.from(this.#orderedList).map(item => item.detail)
   }
 
   /**
@@ -126,29 +123,29 @@ export default class NGNTokenizer { // eslint-disable-line no-unused-vars
       throw new Error('Cannot parse empty string or non-string.')
     }
 
-    this.PROTECTED.activeText = text
+    this.#activeText = text
 
     const tokens = {}
     let token
 
-    this.PROTECTED.lexer.input = text
-    this.PROTECTED.orderedList.clear()
+    this.#lexer.input = text
+    this.#orderedList.clear()
 
-    while (token = this.PROTECTED.lexer.next()) { // eslint-disable-line no-cond-assign
+    while (token = this.#lexer.next()) { // eslint-disable-line no-cond-assign
       if (!ignoreXOF || (token !== 'BOF' && token !== 'EOF')) {
         tokens[token] = NGN.coalesce(tokens[token], [])
 
         tokens[token].push({
-          line: this.PROTECTED.lexer.currentLine,
-          column: this.PROTECTED.lexer.currentColumn,
-          length: this.PROTECTED.lexer.currentLength,
-          index: this.PROTECTED.lexer.index - this.PROTECTED.lexer.currentLength,
-          input: this.PROTECTED.lexer.statement.substr(this.PROTECTED.lexer.index - this.PROTECTED.lexer.currentLength, this.PROTECTED.lexer.currentLength)
+          line: this.#lexer.currentLine,
+          column: this.#lexer.currentColumn,
+          length: this.#lexer.currentLength,
+          index: this.#lexer.index - this.#lexer.currentLength,
+          input: this.#lexer.statement.substr(this.#lexer.index - this.#lexer.currentLength, this.#lexer.currentLength)
         })
 
         const index = tokens[token].length - 1
 
-        this.PROTECTED.orderedList.add({
+        this.#orderedList.add({
           index: index,
           token: token,
           get detail () {

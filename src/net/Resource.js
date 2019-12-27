@@ -1,6 +1,6 @@
 import NGN from '../core.js'
-import Network from './Network'
-import { hostname, normalizeUrl } from './Utility'
+import Network from './Network.js'
+import { hostname, normalizeUrl } from './Utility.js'
 
 /**
  * @class NGN.NET.Resource

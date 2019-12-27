@@ -93,6 +93,18 @@ export default class NGNLexer { // eslint-disable-line no-unused-vars
     return this.#statement
   }
 
+  get statement () {
+    return this.#statement
+  }
+
+  get index () {
+    return this.#index
+  }
+
+  get currentLength () {
+    return this.#currentLength
+  }
+
   /**
    * @property {number} lines
    * The number of lines in the input text.

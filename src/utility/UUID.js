@@ -1,5 +1,5 @@
 /* node-only */
-import GUID from './GUID'
+import GUID from './GUID.js'
 /* end-node-only */
 
 /**

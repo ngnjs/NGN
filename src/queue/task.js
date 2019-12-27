@@ -1,5 +1,5 @@
 import NGN from '../core.js'
-import EventEmitter from '../emitter/core'
+import EventEmitter from '../emitter/core.js'
 
 /**
  * @class NGN.Task

@@ -1,4 +1,5 @@
-import EventEmitter from '../emitter/core'
+import NGN from '../core.js'
+import EventEmitter from '../emitter/core.js'
 
 NGN.createException({
   name: 'NGNDuplicateRecordError',
@@ -488,7 +489,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
                 }
 
                 me.emit('record.expired', arguments[0])
-                return
+                
             }
           })
 
@@ -497,7 +498,6 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
 
           if (me.METADATA.expires > 0) {
             record.expires = me.METADATA.expires
-
           }
 
           return record
@@ -1444,7 +1444,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
     this.METADATA.filters.forEach(filter => store.addFilter(filter))
 
     if (includeData) {
-      store.load(this.METADATA.records)//this.data.slice().concat(this.filtered.slice()))
+      store.load(this.METADATA.records)// this.data.slice().concat(this.filtered.slice()))
     }
 
     return store
@@ -1638,7 +1638,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
         this.PRIVATE.EVENT.DELETE_RECORD,
         this.PRIVATE.EVENT.LOAD_RECORDS,
         this.PRIVATE.EVENT.DELETE_RECORD_FIELD,
-        this.PRIVATE.EVENT.CLEAR_RECORDS,
+        this.PRIVATE.EVENT.CLEAR_RECORDS
       ], this.PRIVATE.INDEX)
     }
 
@@ -2344,7 +2344,7 @@ export default class NGNDataStore extends EventEmitter { // eslint-disable-line
       if (args[0] instanceof NGN.DATA.Entity) {
         filter.exec(args[0])
       } else if (args.length === 0 || args.indexOf(name) >= 0) {
-console.log(`>> Filtering ${this.name} with ${filter.name}:`);
+        console.log(`>> Filtering ${this.name} with ${filter.name}:`)
         this.PRIVATE.ACTIVERECORDS.forEach(index => {
           console.log(`Retain?`, filter.exec(this.PRIVATE.convertStubToRecord(index, this.METADATA.records[index])))
         })

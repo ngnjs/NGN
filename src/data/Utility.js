@@ -1,4 +1,5 @@
-import checksum from '../utility/Checksum'
+import NGN from '../core.js'
+import checksum from '../utility/Checksum.js'
 
 /**
  * @class NGN.DATA.UTILITY
@@ -38,7 +39,7 @@ export default class Utility { // eslint-disable-line
     }
 
     // Force an object for parsing
-    let SERIALIZED_ARRAY_DATA = Symbol('array.data')
+    const SERIALIZED_ARRAY_DATA = Symbol('array.data')
 
     if (NGN.typeof(data) === 'array') {
       data = {
@@ -46,8 +47,8 @@ export default class Utility { // eslint-disable-line
       }
     }
 
-    let result = {}
-    let attribute = Object.keys(data)
+    const result = {}
+    const attribute = Object.keys(data)
 
     for (let i = 0; i < attribute.length; i++) {
       if (data[attribute[i]] !== undefined) {
@@ -89,7 +90,7 @@ export default class Utility { // eslint-disable-line
 
           case 'weakmap':
           case 'map':
-            let mapResult = {}
+            const mapResult = {}
 
             data[attribute[i]].forEach((value, key) => {
               mapResult[key.toString()] = this.serialize(value)
@@ -134,7 +135,7 @@ export default class Utility { // eslint-disable-line
       return true
     }
 
-    if (Model.hasOwnProperty('prototype') && Model.prototype !== null) {
+    if (Model.hasOwnProperty('prototype') && Model.prototype !== null) { // eslint-disable-line no-prototype-builtins
       let currentElement = Model
       let count = 0
 

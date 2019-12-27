@@ -34,16 +34,16 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
    * @warning This is a UI-only method.
    */
   get subscribers () {
-    let subscriberList = {}
+    const subscriberList = {}
 
-    for (let eventName in this.handlers) {
+    for (const eventName in this.handlers) {
       subscriberList[eventName] = {
         handler: this.handlers[eventName].length,
         adhoc: 0
       }
     }
 
-    for (let eventName in this.adhoc) {
+    for (const eventName in this.adhoc) {
       subscriberList[eventName] = subscriberList[eventName] || {
         handler: 0
       }
@@ -100,8 +100,8 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
    * @return {array}
    */
   eventNames () {
-    let handlers = Object.keys(this.handlers)
-    let adhoc = Object.keys(this.adhoc)
+    const handlers = Object.keys(this.handlers)
+    const adhoc = Object.keys(this.adhoc)
     return NGN.dedupe(handlers.concat(adhoc))
   }
 
@@ -113,8 +113,8 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
    * @return {array}
    */
   listeners (eventName) {
-    let handlers = this.handlers[eventName] || []
-    let adhoc = this.adhoc[eventName] || []
+    const handlers = this.handlers[eventName] || []
+    const adhoc = this.adhoc[eventName] || []
     return handlers.concat(adhoc)
   }
 
@@ -232,7 +232,7 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
    * @private
    */
   deleteEventHandler (type, eventName, handlerFn) {
-    let scope = this[type]
+    const scope = this[type]
 
     if (scope[eventName]) {
       if (!handlerFn) {
@@ -240,7 +240,7 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
         return
       }
 
-      let result = []
+      const result = []
       scope[eventName].forEach((handler) => {
         if (handler.toString() !== handlerFn.toString()) {
           result.push(handler)
@@ -288,7 +288,7 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
    * The name of the event to trigger.
    */
   emit () {
-    let args = NGN.slice(arguments)
+    const args = NGN.slice(arguments)
     const eventName = args.shift()
     const events = this.getAllEvents(eventName)
 
@@ -296,19 +296,19 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
       events.push(eventName)
     }
 
-    let scope = {
+    const scope = {
       event: eventName
     }
 
     for (let name = 0; name < events.length; name++) {
-      let adhocEvent = this.adhoc[events[name]]
+      const adhocEvent = this.adhoc[events[name]]
 
       // Adhoc event handling
       if (adhocEvent) {
         delete this.adhoc[events[name]]
 
         while (adhocEvent.length > 0) {
-          let fn = adhocEvent.pop()
+          const fn = adhocEvent.pop()
 
           scope.handler = fn
 
@@ -317,7 +317,7 @@ export default class BrowserEmitter { // eslint-disable-line no-unused-vars
       }
 
       // Regular event handling
-      let handler = this.handlers[events[name]]
+      const handler = this.handlers[events[name]]
 
       if (handler) {
         for (let fn = 0; fn < handler.length; fn++) {

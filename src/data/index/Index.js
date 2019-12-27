@@ -1,4 +1,5 @@
-import EventEmitter from '../../emitter/core'
+import NGN from '../core.js'
+import EventEmitter from '../../emitter/core.js'
 
 /**
  * @class NGN.DATA.Index
@@ -69,7 +70,7 @@ export default class NGNDataIndex extends EventEmitter { // eslint-disable-line
     // clear the unique value index.
     this.on(this.REMOVE_EVENT, (oid, value) => {
       if (this.recordsFor(value).length === 0) {
-        let index = this.indexOf(value)
+        const index = this.indexOf(value)
 
         if (index >= 0) {
           this.knownRecords.splice(index, 1)
@@ -115,7 +116,7 @@ export default class NGNDataIndex extends EventEmitter { // eslint-disable-line
 
     // Add BTree indexing
     if (this.isBTree) {
-      let btreeValue = value instanceof Date ? value.getTime() : value
+      const btreeValue = value instanceof Date ? value.getTime() : value
 
       if (this.BTREE.get(btreeValue) === undefined) {
         this.BTREE.put(btreeValue, valueIndex)
@@ -137,7 +138,7 @@ export default class NGNDataIndex extends EventEmitter { // eslint-disable-line
   remove (oid, value, suppressEvent = false) {
     // If a value is specified, attempt to lookup the OID by value.
     if (value !== undefined) {
-      let index = this.recordsOf(value)
+      const index = this.recordsOf(value)
 
       // If a value index is found, remove the OID
       if (index) {
@@ -227,7 +228,7 @@ export default class NGNDataIndex extends EventEmitter { // eslint-disable-line
    * An set of object ID's or `null` if none exist.
    */
   recordsOf (value) {
-    let valueIndex = this.indexOf(value)
+    const valueIndex = this.indexOf(value)
 
     return valueIndex < 0 ? null : this.knownRecords[valueIndex]
   }
@@ -240,7 +241,7 @@ export default class NGNDataIndex extends EventEmitter { // eslint-disable-line
    * The array contains OID reference values (records).
    */
   recordsFor (value) {
-    let index = this.recordsOf(value)
+    const index = this.recordsOf(value)
 
     if (index === null || index.size === 0) {
       return []

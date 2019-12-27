@@ -1,12 +1,15 @@
 export default class CustomException extends Error { // eslint-disable-line
+  #frameFilter = frame => {
+    /* node-only */
+    return frame.getFileName() !== process.mainModule.filename && frame.getFileName()
+    /* end-node-only */
+    /* browser-only */
+    return frame.getFileName() // eslint-disable-line no-unreachable
+    /* end-browser-only */
+  }
+
   constructor (config) {
     super()
-
-    Object.defineProperty(this, 'frameFilter', NGN.privateconst((frame) => {
-      return NGN.nodelike
-        ? frame.getFileName() !== __filename && frame.getFileName()
-        : frame.getFileName()
-    }))
 
     config = config || {}
     config = typeof config === 'string' ? { message: config } : config
@@ -32,7 +35,7 @@ export default class CustomException extends Error { // eslint-disable-line
 
     this.hasOwnProperty('custom') && delete this.custom // eslint-disable-line no-prototype-builtins
 
-    if (NGN.nodelike || Error.prepareStackTrace) {
+    if (process !== undefined || Error.prepareStackTrace) {
       // Capture the stack trace on a new error so the detail can be saved as a structured trace.
       Error.prepareStackTrace = function (_, stack) { return stack }
 
@@ -42,13 +45,20 @@ export default class CustomException extends Error { // eslint-disable-line
 
       this.rawstack = _err.stack
 
-      Error.prepareStackTrace = function (err, stack) { // eslint-disable-line handle-callback-err
-        me.cause && console.warn(me.cause)
-        me.help && console.info(me.help)
+      const ff = this.#frameFilter
 
-        return `${me.name}: ${me.message}\n` + stack.filter(me.frameFilter).map((el) => {
-          return `    at ${el}`
-        }).join('\n')
+      Error.prepareStackTrace = function (err, stack) { // eslint-disable-line handle-callback-err
+        const msg = [me.message]
+
+        if (me.cause) {
+          msg.push(`Cause: ${me.cause}`)
+        }
+
+        if (me.help) {
+          msg.push(`Help : ${me.help}`)
+        }
+
+        return `${me.name}: ${msg.join('\n').trim()}\n` + stack.filter(ff).map(el => `    at ${el}`).join('\n')
       }
 
       // Enable stack trace
@@ -75,7 +85,7 @@ export default class CustomException extends Error { // eslint-disable-line
    * @readonly
    */
   get trace () {
-    return this.rawstack.filter(this.frameFilter).map((frame) => {
+    return this.rawstack.filter(this.#frameFilter).map((frame) => {
       return {
         filename: frame.getFileName(),
         line: frame.getLineNumber(),

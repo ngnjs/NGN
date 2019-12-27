@@ -6,15 +6,17 @@ import NgnPlugin from './rollup-plugin-ngn.js'
 let ngn = new NgnPlugin()
 let outdir = config.nodeOutput + '/node-ngn'
 let mapfile = `${outdir}/${ngn.name}-${ngn.version}.min.js.map`
+let legacymapfile = `${outdir}-legacy/${ngn.name}-${ngn.version}.min.js.map`
 
 // Read the package file
 let pkgContent = fs.readFileSync('../package.json').toString()
 let pkg = JSON.parse(pkgContent)
 
-// Create the debug package
-console.log('Creating debug npm package for Node.js')
+// ---------------------------------------------
+// Create the modern debug package
+// ---------------------------------------------
+console.log('Creating debug package for modern Node.js')
 fs.mkdirSync(`${outdir}-debug`)
-
 fs.renameSync(mapfile, `${outdir}-debug/${ngn.name}-${ngn.version}.min.js.map`)
 
 // Update the source map URL
@@ -24,15 +26,15 @@ let content = fs.readFileSync(mapfile.replace('.map', ''))
 
 fs.writeFileSync(mapfile.replace('.map', ''), content)
 
-// Copy debug package files
+// Copy modern debug package files
 pkg.name = path.join(config.npmPrefix, `node-${ngn.name}-debug`)
 pkg.description = `${pkg.description} (Debug Mappings)`.trim()
-pkg.dependencies = {}
-pkg.devDependencies = {
+pkg.dependencies = {
   'source-map-support': '^0.5.16'
 }
-pkg.scripts = {}
 pkg.keywords = [ngn.name, 'debug', 'sourcemap']
+delete pkg.scripts
+delete pkg.devDependencies
 fs.writeFileSync(`${outdir}-debug/package.json`, JSON.stringify(pkg, null, 2))
 
 // Add license
@@ -41,13 +43,50 @@ fs.copyFileSync('../LICENSE', `${outdir}-debug/LICENSE`)
 // Add README
 fs.writeFileSync(`${outdir}-debug/README.md`, `# ${pkg.name} ${pkg.version}\n\nPlease see [${pkg.homepage}](${pkg.homepage}).\n\nGenerated on ${(new Date())}.`)
 
-// Create production package for node
-console.log('Creating production npm package for Node.js')
-pkg.name = path.join(config.npmPrefix, `node-${ngn.name}`)
-let prodpkg = Object.assign({}, pkg)
+// ---------------------------------------------
+// Create the legacy debug package
+// ---------------------------------------------
+console.log('Creating debug package for legacy Node.js')
+fs.mkdirSync(`${outdir}-legacy-debug`)
+fs.renameSync(legacymapfile, `${outdir}-legacy-debug/${ngn.name}-${ngn.version}.min.js.map`)
+
+// Update the source map URL
+content = fs.readFileSync(legacymapfile.replace('.map', ''))
+  .toString()
+  .replace(/\/+#\s+?sourceMappingURL=/, '//# sourceMappingURL=../node-ngn-legacy-debug/')
+
+fs.writeFileSync(legacymapfile.replace('.map', ''), content)
+
+// Copy legacy debug package files
+pkg = JSON.parse(pkgContent)
+pkg.name = path.join(config.npmPrefix, `node-${ngn.name}-legacy-debug`)
+pkg.description = `${pkg.description} (Legacy Debug Mappings for Common JS)`.trim()
+pkg.dependencies = {
+  'source-map-support': '^0.5.16'
+}
+pkg.keywords = [ngn.name, 'legacy', 'debug', 'sourcemap']
+delete pkg.scripts
+delete pkg.devDependencies
+delete pkg.type
+fs.writeFileSync(`${outdir}-legacy-debug/package.json`, JSON.stringify(pkg, null, 2))
+
+// Add license
+fs.copyFileSync('../LICENSE', `${outdir}-legacy-debug/LICENSE`)
+
+// Add README
+fs.writeFileSync(`${outdir}-legacy-debug/README.md`, `# ${pkg.name} ${pkg.version} (Legacy CommonJS Variant)\n\nPlease see [${pkg.homepage}](${pkg.homepage}).\n\nGenerated on ${(new Date())}.`)
+
+// ---------------------------------------------
+// Create modern production package for node
+// ---------------------------------------------
+console.log('Creating production package for modern Node.js')
+let prodpkg = Object.assign({}, JSON.parse(pkgContent))
 prodpkg.main = 'index.js'
+prodpkg.name = path.join(config.npmPrefix, `node-${ngn.name}`)
+delete prodpkg.scripts
+prodpkg.dependencies = prodpkg.dependencies || {}
 prodpkg.devDependencies = prodpkg.devDependencies || {}
-prodpkg.devDependencies[`${pkg.name}-debug`] = pkg.version
+prodpkg.devDependencies[`${prodpkg.name}-debug`] = prodpkg.version
 
 fs.writeFileSync(`${outdir}/package.json`, JSON.stringify(prodpkg, null, 2))
 fs.renameSync(mapfile.replace('.map', ''), `${outdir}/index.js`)
@@ -57,3 +96,27 @@ fs.copyFileSync('../LICENSE', `${outdir}/LICENSE`)
 
 // Add README
 fs.writeFileSync(`${outdir}/README.md`, `# ${prodpkg.name} ${prodpkg.version}\n\nPlease see [${pkg.homepage}](${pkg.homepage}).\n\nGenerated on ${new Date()}.`)
+
+// ---------------------------------------------
+// Create legacy production package for node
+// ---------------------------------------------
+console.log('Creating production package for legacy Node.js')
+prodpkg = Object.assign({}, JSON.parse(pkgContent))
+prodpkg.description += ' (Legacy CommonJS Variant)'
+prodpkg.keywords = [ngn.name, 'legacy', 'debug', 'sourcemap']
+prodpkg.main = 'index.js'
+prodpkg.name = path.join(config.npmPrefix, `node-${ngn.name}-legacy`)
+delete prodpkg.scripts
+delete prodpkg.type
+prodpkg.dependencies = prodpkg.dependencies || {}
+prodpkg.devDependencies = prodpkg.devDependencies || {}
+prodpkg.devDependencies[`${prodpkg.name}-debug`] = prodpkg.version
+
+fs.writeFileSync(`${outdir}-legacy/package.json`, JSON.stringify(prodpkg, null, 2))
+fs.renameSync(legacymapfile.replace('.map', ''), `${outdir}-legacy/index.js`)
+
+// Add license
+fs.copyFileSync('../LICENSE', `${outdir}-legacy/LICENSE`)
+
+// Add README
+fs.writeFileSync(`${outdir}-legacy/README.md`, `# ${prodpkg.name} ${prodpkg.version} (Legacy CommonJS Variant)\n\nPlease see [${pkg.homepage}](${pkg.homepage}).\n\nGenerated on ${new Date()}.`)

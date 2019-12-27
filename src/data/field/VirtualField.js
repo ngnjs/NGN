@@ -1,4 +1,5 @@
-import DataField from './Field'
+import NGN from '../core.js'
+import DataField from './Field.js'
 
 /**
  * @class NGN.DATA.VirtualField
@@ -111,12 +112,12 @@ export default class NGNVirtualDataField extends DataField { // eslint-disable-l
       const localFieldPattern = /this(\.(.[^\W]+)|\[['"]{1}(.*)+['"]{1}\])/g
 
       // Returns a Set of fieldnames used in the virtual function.
-      let monitoredFields = new Set()
+      const monitoredFields = new Set()
       let content = handlerFn.toString()
       let iterator = localFieldPattern.exec(content)
 
       while (iterator !== null) {
-        let field = NGN.coalesce(iterator[2], iterator[3])
+        const field = NGN.coalesce(iterator[2], iterator[3])
 
         if (this.model.METADATA.knownFieldNames.has(field)) {
           monitoredFields.add(field)

@@ -21,7 +21,38 @@ Here's how issues are prioritized:
 
 Please be aware of and adhere to the coding practices. Pull requests that do not conform are unlikely to be accepted.
 
-## Source Code
+**NGN is designed to run on multiple JavaScript runtimes**, such as browsers and Node.js, **using a consistent API**. Runtime-specific API features will not be accepted, but runtime-specific implementation features may be.
+
+**_Example: Unacceptable_**
+The following feature is only relevent to browsers:
+
+```javascript
+NGN.getHtmlElement = () => {
+  ...
+}
+```
+
+**_Example: Aacceptable_**
+The following feature is relevant to all runtimes, but the implementation differs by runtime:
+
+```javascript
+Object.defineProperty(NGN, 'platform', NGN.get(() => {
+  let os
+
+  /* node-only */
+  os = process.platform
+  /* end-node-only */
+  /* browser-only */
+  os = navigator.platform
+  /* end-node-only */
+}))
+```
+
+In the example above, creating a getter attribute to identify the current platform is relevant to all runtimes, but each runtime retrieves the data in a different manner. Since all runtimes are supported, this would be an acceptable contribution.
+
+Even if a contribution meets the basic acceptance criteria, it does not mean it will be merged into the project. Introducing new features is a big maintenance consideration. If you want to add a new feature, propose it first and offer to work on it. The NGN team will do it's best to work through the proposal with you and provide guidance if/when necessary. Be mindful that the team has limited capacity, but will do as much as possible to assist.
+
+## Source Code Considerations
 
 As a _general practice_, all code should conform to **ECMAScript Final** features. This means Stage 3 and below will _not be accepted_. Most build/release tooling only supports these features. 
 
@@ -44,12 +75,15 @@ NGN uses the following:
 
 [Travis CI](https://travis-ci.org/ngnjs/NGN) is used for testing. ![NGN Build Status](https://travis-ci.org/ngnjs/NGN.svg?branch=master)
 
-## Distribution Code (Releases)
+## Understanding Releases
 
-NGN must support modern JavaScript runtimes. This includes modern browsers and Node.js.
+All releases are built and released automatically.
 
-At present moment, **only ECMAScript Final code will be released**. _No Stage 3 code will be shipped in a stable release_. If the code base uses any stage 3 features, they must be transpiled.
+At present moment, **only ECMAScript Final source code will be accepted**. _No Stage 3 code will be shipped in a stable release_. If the code base uses any stage 3 features, they must be transpiled.
 
 This project adhere's to [semantic versioning](https://semver.org/).
 
 All releases must be approved by a project administrator.
+
+### Official Releases
+

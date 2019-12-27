@@ -1,5 +1,10 @@
 import NGN from '../core.js'
-import Utility from './Utility'
+import Utility from './Utility.js'
+/* node-only */
+import libhttp from 'http'
+import libhttps from 'https'
+import fs from 'fs'
+/* end-node-only */
 
 /**
  * @class NGN.NET.Request
@@ -697,15 +702,15 @@ export default class Request { // eslint-disable-line no-unused-vars
       }
 
       const response = {
-        status: require('fs').existsSync(this.uri.replace('file://', '')) ? 200 : 400
+        status: fs.existsSync(this.uri.replace('file://', '')) ? 200 : 400
       }
 
-      response.responseText = response.status === 200 ? require('fs').readFileSync(this.uri.replace('file://', '')).toString() : 'File does not exist or could not be found.'
+      response.responseText = response.status === 200 ? fs.readFileSync(this.uri.replace('file://', '')).toString() : 'File does not exist or could not be found.'
 
       return callback(response)
     }
 
-    const http = this.protocol === 'https' ? require('https') : require('http')
+    const http = this.protocol === 'https' ? libhttps : libhttp
 
     const params = NGN.coalesceb(this.query)
     const reqOptions = {

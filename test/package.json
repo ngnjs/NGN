@@ -3,8 +3,25 @@
   "version": "1.0.0",
   "description": "Test NGN in different JavaScript runtimes.",
   "scripts": {
-    "start": "echo look at package",
-    "syntax": "cd ../src && standard --verbose --parser babel-eslint | snazzy"
+    "start": "npm test",
+    "test": "echo look at package.json scripts",
+    "build:browser": "cd ../build && npm run build:browser",
+    "syntax": "node syntax-checker.js --source ../src --config ./package.json --parser babel-eslint --verbose | snazzy",
+    "browser:compatibility": "echo 'Building...' && npm run build:browser && echo 'Testing modern browser compatibility...' && BROWSERSLIST_ENV=current BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc ../build/tmp/browser/browser-ngn/ngn-2.0.0.min.js && echo 'Testing ES6 browser compatibility...' && BROWSERSLIST_ENV=es6 BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc ../build/tmp/browser/browser-ngn/ngn-2.0.0-es6.min.js && echo 'Testing ES5 browser compatibility...' && BROWSERSLIST_ENV=es5 BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc ../build/tmp/browser/browser-ngn/ngn-2.0.0-es5.min.js && echo Done.",
+    "browser:compatibility:current": "npm run build:browser && BROWSERSLIST_ENV=current BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc ../build/tmp/browser/browser-ngn/ngn-2.0.0.min.js",
+    "browser:compatibility:current:json": "npm run build:browser && BROWSERSLIST_ENV=current BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc -f json ../build/tmp/browser/browser-ngn/ngn-2.0.0.min.js > browsercompatibility.json",
+    "browser:compatibility:es6": "npm run build:browser && BROWSERSLIST_ENV=es6 BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc ../build/tmp/browser/browser-ngn/ngn-2.0.0-es6.min.js",
+    "browser:compatibility:es6:json": "npm run build:browser && BROWSERSLIST_ENV=es6 BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc -f json ../build/tmp/browser/browser-ngn/ngn-2.0.0-es6.min.js > browsercompatibility-es6.json",
+    "browser:compatibility:es5": "npm run build:browser && BROWSERSLIST_ENV=es5 BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc ../build/tmp/browser/browser-ngn/ngn-2.0.0-es5.min.js",
+    "browser:compatibility:es5:json": "npm run build:browser && BROWSERSLIST_ENV=es5 BROWSERSLIST_CONFIG=./.browserslistrc eslint -c ./.eslintrc -f json ../build/tmp/browser/browser-ngn/ngn-2.0.0-es5.min.js > browsercompatibility-es5.json",
+    "build:test:node": "cd ../build && npm run test:node && cd ../test",
+    "node:sanity": "npm run build:test:node && tap --no-esm -r source-map-support/register -R spec ./*-sanity/**/*.js",
+    "node:basic": "npm run build:test:node && tap --no-esm -R spec ./*-basic/**/*.js",
+    "node:events": "npm run build:test:node && tap --no-esm -R spec ./*-events/**/*.js",
+    "node:utility": "npm run build:test:node && tap --no-esm -R spec ./*-utility/**/*.js",
+    "node:queue": "npm run build:test:node && tap --no-esm -R spec ./*-queue/**/*.js",
+    "node:net": "npm run build:test:node && tap --no-esm -R spec ./*-net/**/*.js",
+    "node": "npm run build:test:node && tap --no-esm -R spec ./*-*/**/*.js"
   },
   "author": {
     "name": "Ecor Ventures",
@@ -14,8 +31,12 @@
   "homepage": "https://ngn.js.org",
   "type": "module",
   "dependencies": {
+    "@author.io/arg": "^1.0.1",
     "@babel/core": "^7.7.5",
+    "eslint": "^6.7.2",
+    "eslint-plugin-compat": "^3.3.0",
     "snazzy": "8.0.0",
+    "source-map-support": "^0.5.16",
     "standard": "14.3.1",
     "table": "5.4.6",
     "tap": "14.10.5",
@@ -43,8 +64,6 @@
       "deploy.js"
     ],
     "globals": [
-      "NGN",
-      "NGNX",
       "window",
       "global",
       "MutationObserver",
@@ -94,6 +113,5 @@
     "jsonp": "http://mockbin.com/bin/4b0e19ee-b7ef-43ac-b657-5acfd174c09a",
     "x.jsonp": "https://stats.fenixwebserver.com/http/test",
     "trace": "http://mockbin.org/bin/bfdc4273-ff50-4141-bef6-28810a6291dd"
-  },
-  "devDependencies": {}
+  }
 }

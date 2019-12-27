@@ -1,4 +1,4 @@
-import Task from './task'
-import Queue from './queue'
+import Task from './task.js'
+import Queue from './queue.js'
 
 export { Queue, Task }

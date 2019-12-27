@@ -4,15 +4,19 @@ import NGN from '../core.js'
 // We love the lib, except for its failure to allow disabling
 // a parsing error's OUTPUT.
 /* browser-only */
-import EE from './BrowserEmitter'
+import EvtEmitter from './BrowserEmitter.js'
 /* end-browser-only */
-let EEmitter
 /* node-only */
-EEmitter = require('events').EventEmitter
+import events from 'events'
 /* end-node-only */
+
+let EEmitter
 /* browser-only */
-EEmitter = EE
+EEmitter = EvtEmitter
 /* end-browser-only */
+/* node-only */
+EEmitter = events.EventEmitter
+/* end-node-only */
 
 /**
  * @class NGN.EventEmitter
@@ -78,13 +82,13 @@ export default class EventEmitter extends EEmitter {
           return
         }
 
-        let l = this.listeners(eventName)
+        const l = this.listeners(eventName)
 
         if (!NGN.isFn(handlerFn)) {
           return this.clear(eventName)
         }
 
-        let wrappedHandlerFn = this.wrapEventHandlerWithScope(eventName, handlerFn)
+        const wrappedHandlerFn = this.wrapEventHandlerWithScope(eventName, handlerFn)
 
         if (l.indexOf(wrappedHandlerFn) < 0) {
           for (let i = 0; i < l.length; i++) {
@@ -120,7 +124,7 @@ export default class EventEmitter extends EEmitter {
           NGN.WARN(`${deprecatedEventName} is deprecated. ` + (!replacementEventName ? '' : `Use ${replacementEventName} instead.`))
 
           if (replacementEventName) {
-            let args = NGN.slice(arguments)
+            const args = NGN.slice(arguments)
 
             args.shift()
             args.unshift(replacementEventName)
@@ -163,10 +167,10 @@ export default class EventEmitter extends EEmitter {
           prefix = ''
         }
 
-        let pool = {}
+        const pool = {}
 
-        for (let eventName in group) {
-          let topic = `${NGN.coalesce(prefix, '')}${eventName}`
+        for (const eventName in group) {
+          const topic = `${NGN.coalesce(prefix, '')}${eventName}`
 
           if (NGN.isFn(group[eventName])) {
             this.increaseMaxListeners()
@@ -267,9 +271,9 @@ export default class EventEmitter extends EEmitter {
       forward: NGN.const(function (eventName, triggers, payload) {
         triggers = NGN.forceArray(triggers)
 
-        let me = this
-        let listener = function () {
-          let args = NGN.slice(arguments)
+        const me = this
+        const listener = function () {
+          const args = NGN.slice(arguments)
 
           if (payload) {
             args.push(payload)
@@ -314,10 +318,10 @@ export default class EventEmitter extends EEmitter {
        * An optional postfix to append to the eventName.
        */
       relay: NGN.const(function (eventName, targetEmitter, prefix = null, postfix = null) {
-        let eventNameList = NGN.forceArray(eventName)
+        const eventNameList = NGN.forceArray(eventName)
 
         for (let i = 0; i < eventNameList.length; i++) {
-          let eventName = eventNameList[i]
+          const eventName = eventNameList[i]
 
           this.on(eventName, function () {
             if (NGN.typeof(this.event) === 'symbol') {
@@ -361,10 +365,10 @@ export default class EventEmitter extends EEmitter {
        * An optional postfix to append to the eventName.
        */
       relayOnce: NGN.const(function (eventName, targetEmitter, prefix = null, postfix = null) {
-        let eventNameList = NGN.forceArray(eventName)
+        const eventNameList = NGN.forceArray(eventName)
 
         for (let i = 0; i < eventNameList.length; i++) {
-          let eventName = eventNameList[i]
+          const eventName = eventNameList[i]
 
           this.once(eventName, function () {
             if (NGN.typeof(this.event) === 'symbol') {
@@ -458,8 +462,8 @@ export default class EventEmitter extends EEmitter {
        * An optional payload, such as data to be passed to an event handler.
        */
       delayEmit: NGN.const(function (eventName, delay) {
-        if (!this.META.queued.hasOwnProperty(eventName)) {
-          let args = NGN.slice(arguments)
+        if (!this.META.queued.hasOwnProperty(eventName)) { // eslint-disable-line no-prototype-builtins
+          const args = NGN.slice(arguments)
           args.splice(1, 1)
 
           this.META.queued[eventName] = setTimeout(() => {

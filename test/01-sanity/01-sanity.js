@@ -1,5 +1,6 @@
+import 'source-map-support/register.js'
 import test from 'tape'
-import NGN from '../../src/main.js'
+import NGN from '../.node/index.js'
 
 test('Namespace', t => {
   t.ok(NGN !== undefined, 'NGN namespace is recognized.')
@@ -78,13 +79,13 @@ test('Method Existance', t => {
     'version'
   ]
 
-  for (let method of methodList) {
+  for (const method of methodList) {
     t.ok(NGN.hasOwnProperty(method), `NGN.${method} exists.`)
   }
 
-  let keys = Object.getOwnPropertyNames(NGN)
+  const keys = Object.getOwnPropertyNames(NGN)
 
-  for (let key of keys) {
+  for (const key of keys) {
     if (methodList.indexOf(key) < 0) {
       t.fail(`NGN.${key} has no sanity check.`)
     }

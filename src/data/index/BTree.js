@@ -1,4 +1,5 @@
-import EventEmitter from '../../emitter/core'
+import NGN from '../core.js'
+import EventEmitter from '../../emitter/core.js'
 
 /**
  * Inspired by btree.js (c) 2013 Daniel Wirtz <dcode@dcode.io>
@@ -77,7 +78,7 @@ class TreeNode {
 
       let i
       for (i = 1; i < this.leafs.length; i++) {
-        let b = this.leafs[i]
+        const b = this.leafs[i]
 
         if (this.METADATA.compare(b.key, key) === 0) {
           return {
@@ -114,7 +115,7 @@ class TreeNode {
   * Returns `undefined` if no leaf is found.
   */
   get (key) {
-    let result = this.search(key)
+    const result = this.search(key)
     return result.leaf ? result.leaf.value : undefined
   }
 
@@ -126,7 +127,7 @@ class TreeNode {
   * Overwrite existing values.
   */
   put (key, value, overwrite = true) {
-    let result = this.search(key)
+    const result = this.search(key)
 
     // Key already exists
     if (result.leaf) {
@@ -138,8 +139,8 @@ class TreeNode {
       return
     }
 
-    let node = result.node
-    let index = result.index
+    const node = result.node
+    const index = result.index
 
     node.leafs.splice(index, 0, new TreeLeaf(node, key, value))
     node.nodes.splice(index + 1, 0, null)
@@ -160,17 +161,17 @@ class TreeNode {
       return
     }
 
-    let leaf = result.leaf
-    let node = leaf.parent
-    let index = result.index
-    let left = node.nodes[index]
+    const leaf = result.leaf
+    const node = leaf.parent
+    const index = result.index
+    const left = node.nodes[index]
 
     if (left === null) {
       node.leafs.splice(index, 1)
       node.nodes.splice(index, 1)
       node.balance()
     } else {
-      let max = left.leafs[left.leafs.length - 1]
+      const max = left.leafs[left.leafs.length - 1]
 
       left.delete(max.key)
 
@@ -201,9 +202,9 @@ class TreeNode {
       return
     }
 
-    let index = this.parent.nodes.indexOf(this)
-    let left = index > 0 ? this.parent.nodes[index - 1] : null
-    let right = this.parent.nodes.length > index + 1 ? this.parent.nodes[index + 1] : null
+    const index = this.parent.nodes.indexOf(this)
+    const left = index > 0 ? this.parent.nodes[index - 1] : null
+    const right = this.parent.nodes.length > index + 1 ? this.parent.nodes[index + 1] : null
     let sep
     let leaf
     let rest
@@ -294,7 +295,7 @@ class TreeNode {
   * Split the node.
   */
   split () {
-    let index = Math.floor(this.leafs.length / 2)
+    const index = Math.floor(this.leafs.length / 2)
 
     if (this.parent instanceof Tree) {
       this.nodes = [
@@ -304,8 +305,8 @@ class TreeNode {
 
       this.leafs = [this.leafs[index]]
     } else {
-      let leaf = this.leafs[index]
-      let rest = new TreeNode(
+      const leaf = this.leafs[index]
+      const rest = new TreeNode(
         this.parent,
         this.leafs.slice(index + 1),
         this.nodes.slice(index + 1)
@@ -329,7 +330,7 @@ class TreeNode {
     leaf.parent = this
     rest.parent = this
 
-    let a = this.leafs[0]
+    const a = this.leafs[0]
 
     if (this.METADATA.compare(leaf.key, a.key) < 0) {
       this.leafs.unshift(leaf)
@@ -337,7 +338,7 @@ class TreeNode {
     } else {
       let i
       for (i = 1; i < this.leafs.length; i++) {
-        let b = this.leafs[i]
+        const b = this.leafs[i]
 
         if (this.METADATA.compare(leaf.key, b.key) < 0) {
           this.leafs.splice(i, 0, leaf)
@@ -365,7 +366,7 @@ class TreeNode {
   * @private
   */
   toString (includeNodes = false) {
-    let value = []
+    const value = []
     let i
 
     for (i = 0; i < this.leafs.length; i++) {
@@ -555,7 +556,7 @@ export default class Tree extends EventEmitter {
       index = 0
     } else {
       // lookup
-      let result = this.root.search(minKey)
+      const result = this.root.search(minKey)
 
       if (result.leaf) {
         // Minimum key itself exists
@@ -652,7 +653,7 @@ export default class Tree extends EventEmitter {
       index = ptr.leafs.length - 1
     } else {
       // Lookup
-      let result = this.root.search(maxKey)
+      const result = this.root.search(maxKey)
 
       if (result.leaf) {
         // Maximum key exists

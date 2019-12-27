@@ -13,8 +13,10 @@ const BROWSERONLY = {
   end_comment: 'end-node-only'
 }
 
+let supportedBrowsers = null
+
 export default class ngn {
-  constructor(opts = {}) {
+  constructor (opts = {}) {
     this.name = 'ngn'
     this.manifest = null
   }
@@ -41,8 +43,21 @@ export default class ngn {
     return NODEONLY
   }
 
-  get BROWSERONLY() {
+  get BROWSERONLY () {
     return BROWSERONLY
+  }
+
+  supportedBrowsers (sourceFile = './.browserslistrc') {
+    if (supportedBrowsers !== null) {
+      return supportedBrowsers
+    }
+
+    sourceFile = path.join(process.cwd(), sourceFile)
+
+    const match = fs.readFileSync(sourceFile).toString().matchAll(/\[(.*)\]/gim)
+
+    supportedBrowsers = [...match].map(item => item[1])
+    return supportedBrowsers
   }
 
   only (env) {
@@ -57,56 +72,56 @@ export default class ngn {
   }
 }
 
-    // this.worker = new utils.Worker(require.resolve("./transform.js"), {
-    //   numWorkers: userOptions.numWorkers
-    // })
-  // renderChunk (code, chunk, outputOptions) {
-  //   if (!filter(chunk.fileName)) {
-  //     return null;
-  //   }
+// this.worker = new utils.Worker(require.resolve("./transform.js"), {
+//   numWorkers: userOptions.numWorkers
+// })
+// renderChunk (code, chunk, outputOptions) {
+//   if (!filter(chunk.fileName)) {
+//     return null;
+//   }
 
-  //   if (!this.worker) {
-  //     ;
+//   if (!this.worker) {
+//     ;
 
-  //     this.numOfBundles = 0;
-  //   }
+//     this.numOfBundles = 0;
+//   }
 
-  //   this.numOfBundles++;
+//   this.numOfBundles++;
 
-  //   // TODO rewrite with object spread after node6 drop
-  //   const normalizedOptions = Object.assign({}, userOptions, {
-  //     sourceMap: userOptions.sourcemap !== false,
-  //     module: outputOptions.format === "es" || outputOptions.format === "esm"
-  //   });
+//   // TODO rewrite with object spread after node6 drop
+//   const normalizedOptions = Object.assign({}, userOptions, {
+//     sourceMap: userOptions.sourcemap !== false,
+//     module: outputOptions.format === "es" || outputOptions.format === "esm"
+//   });
 
-  //   for (let key of ["include", "exclude", "sourcemap", "numWorkers"]) {
-  //     if (normalizedOptions.hasOwnProperty(key)) {
-  //       delete normalizedOptions[key];
-  //     }
-  //   }
+//   for (let key of ["include", "exclude", "sourcemap", "numWorkers"]) {
+//     if (normalizedOptions.hasOwnProperty(key)) {
+//       delete normalizedOptions[key];
+//     }
+//   }
 
-  //   const serializedOptions = serialize(normalizedOptions);
+//   const serializedOptions = serialize(normalizedOptions);
 
-  //   const result = this.worker
-  //     .transform(code, serializedOptions)
-  //     .catch(error => {
-  //       const { message, line, col: column } = error;
-  //       console.error(
-  //         codeFrameColumns(code, { start: { line, column } }, { message })
-  //       );
-  //       throw error;
-  //     });
+//   const result = this.worker
+//     .transform(code, serializedOptions)
+//     .catch(error => {
+//       const { message, line, col: column } = error;
+//       console.error(
+//         codeFrameColumns(code, { start: { line, column } }, { message })
+//       );
+//       throw error;
+//     });
 
-  //   const handler = () => {
-  //     this.numOfBundles--;
+//   const handler = () => {
+//     this.numOfBundles--;
 
-  //     if (this.numOfBundles === 0) {
-  //       this.worker.end();
-  //       this.worker = 0;
-  //     }
-  //   };
+//     if (this.numOfBundles === 0) {
+//       this.worker.end();
+//       this.worker = 0;
+//     }
+//   };
 
-  //   result.then(handler, handler);
+//   result.then(handler, handler);
 
-  //   return result;
-  // }
+//   return result;
+// }

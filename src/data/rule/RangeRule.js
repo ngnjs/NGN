@@ -1,4 +1,5 @@
-import Rule from './Rule'
+import NGN from '../core.js'
+import Rule from './Rule.js'
 
 /**
  * @class NGN.DATA.RangeRule
@@ -88,12 +89,12 @@ export default class NGNDataRangeValidationRule extends Rule { // eslint-disable
 
     // Create the validation function.
     this.RULE.validator = (value) => {
-      let isString = NGN.typeof(value) === 'string'
-      let range = this.range
+      const isString = NGN.typeof(value) === 'string'
+      const range = this.range
 
       for (let i = 0; i < range.length; i++) {
-        let min = NGN.coalesceb(range[i][0], isString ? value.length : value)
-        let max = NGN.coalesceb(range[i][1], isString ? value.length : value)
+        const min = NGN.coalesceb(range[i][0], isString ? value.length : value)
+        const max = NGN.coalesceb(range[i][1], isString ? value.length : value)
 
         if (
           (isString && value.length >= min && value.length <= max) ||
@@ -141,7 +142,7 @@ export default class NGNDataRangeValidationRule extends Rule { // eslint-disable
    * also acceptable, such as `[[min1, max1], [min2, max2]]`.
    */
   removeRange (value) {
-    let range = this.range
+    const range = this.range
     value = this.RULE.prepareRange(value)
 
     for (let i = 0; i < value.length; i++) {

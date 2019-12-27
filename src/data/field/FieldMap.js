@@ -1,3 +1,5 @@
+import NGN from '../core.js'
+
 /**
  * @class NGN.DATA.FieldMap
  * A field map is a special data transformer that maps field names (keys)
@@ -78,11 +80,11 @@ export default class NGNDataFieldMap { // eslint-disable-line
           return data
         }
 
-        let keys = Object.keys(data)
+        const keys = Object.keys(data)
         map = map === 'map' ? this.inverse : this.map
 
         for (let i = 0; i < keys.length; i++) {
-          if (map.hasOwnProperty(keys[i])) {
+          if (map.hasOwnProperty(keys[i])) { // eslint-disable-line no-prototype-builtins
             data[map[keys[i]]] = data[keys[i]]
             delete data[keys[i]]
           }
@@ -99,7 +101,7 @@ export default class NGNDataFieldMap { // eslint-disable-line
    */
   get map () {
     if (this.sourceMap === null) {
-      let keys = Object.keys(this.originalSource)
+      const keys = Object.keys(this.originalSource)
 
       this.sourceMap = {}
 
@@ -119,7 +121,7 @@ export default class NGNDataFieldMap { // eslint-disable-line
    */
   get inverse () {
     if (this.reverseMap === null) {
-      let keys = Object.keys(this.originalSource)
+      const keys = Object.keys(this.originalSource)
 
       this.reverseMap = {}
 

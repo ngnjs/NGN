@@ -1,4 +1,5 @@
-import EventEmitter from '../../emitter/core'
+import NGN from '../core.js'
+import EventEmitter from '../../emitter/core.js'
 
 /**
  * @class NGN.DATA.Field
@@ -47,7 +48,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
     }
 
     // Validate field configuration values
-    if (cfg.hasOwnProperty('pattern') && NGN.typeof(cfg.pattern) !== 'regexp') {
+    if (cfg.hasOwnProperty('pattern') && NGN.typeof(cfg.pattern) !== 'regexp') { // eslint-disable-line no-prototype-builtins
       throw new Error('Invalid data field configuration. Pattern must be a valid JavaScript regular expression (RegExp).')
     }
 
@@ -400,7 +401,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
        * - For numbers, this implies inclusive ranges. For example, `1-10` means "between 1 and 10, where both 1 and 10 are valid."
        * - For strings, this implies inclusive ranges just like numbers, where the number is the character count.
        */
-      if (cfg.hasOwnProperty('range')) {
+      if (cfg.hasOwnProperty('range')) { // eslint-disable-line no-prototype-builtins
         this.METADATA.rules.unshift(new NGN.DATA.RangeRule('Numeric Range', cfg.range))
       }
 
@@ -461,7 +462,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
        * [1, 2, 'three', 4, 5] // Invalid
        * ```
        */
-      if (cfg.hasOwnProperty('listType')) {
+      if (cfg.hasOwnProperty('listType')) { // eslint-disable-line no-prototype-builtins
         this.METADATA.rules.push(new NGN.DATA.Rule(value => {
           for (let i = 0; i < value.length; i++) {
             if (NGN.typeof(value[i]) !== NGN.typeof(cfg.listType)) {
@@ -474,7 +475,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
       }
 
       // Support enumerations in array values
-      if (cfg.hasOwnProperty('enum')) {
+      if (cfg.hasOwnProperty('enum')) { // eslint-disable-line no-prototype-builtins
         this.METADATA.rules.push(new NGN.DATA.Rule(value => {
           return cfg.enum.indexOf(value) >= 0
         }))
@@ -507,20 +508,20 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
        * the letter `d` or the number `1`. Only the first three items of the
        * array will be checked, but there must be at least 3 items.
        */
-      if (cfg.hasOwnProperty('tuples')) {
+      if (cfg.hasOwnProperty('tuples')) { // eslint-disable-line no-prototype-builtins
         this.METADATA.rules.push(new NGN.DATA.Rule(value => {
           if (value.length < cfg.tuples.length) {
             return false
           }
 
           for (let i = 0; i < cfg.tuples.length; i++) {
-            if (cfg.tuples[i].hasOwnProperty('type')) {
+            if (cfg.tuples[i].hasOwnProperty('type')) { // eslint-disable-line no-prototype-builtins
               if (NGN.typeof(value[i]) !== NGN.typeof(cfg.tuples[i].type)) {
                 return false
               }
             }
 
-            if (cfg.tuples[i].hasOwnProperty('enum')) {
+            if (cfg.tuples[i].hasOwnProperty('enum')) { // eslint-disable-line no-prototype-builtins
               if (cfg.tuples[i].enum.indexOf(value[i]) < 0) {
                 return false
               }
@@ -573,7 +574,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
      * indicates the field could be a string or a numeric value.
      */
     if (cfg.type instanceof Array) {
-      let typeList = cfg.type.map(type => NGN.typeof(type))
+      const typeList = cfg.type.map(type => NGN.typeof(type))
 
       this.METADATA.rules.unshift(
         new NGN.DATA.Rule(
@@ -683,8 +684,8 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
   }
 
   set hidden (value) {
-    let originallyHidden = this.hidden
-    let currentlyHidden = NGN.forceBoolean(value)
+    const originallyHidden = this.hidden
+    const currentlyHidden = NGN.forceBoolean(value)
 
     if (originallyHidden !== currentlyHidden) {
       this.METADATA.hidden = currentlyHidden
@@ -848,7 +849,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
       return
     }
 
-    let id = this.METADATA.AUDITLOG.rollback(count)
+    const id = this.METADATA.AUDITLOG.rollback(count)
 
     // Silently set the value to an older value.
     this.METADATA.setValue(this.METADATA.AUDITLOG.getCommit(id).value, suppressEvents, true)
@@ -875,7 +876,7 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
       return
     }
 
-    let id = this.METADATA.AUDITLOG.advance(count)
+    const id = this.METADATA.AUDITLOG.advance(count)
 
     // Silently set the value to a newer value.
     this.METADATA.setValue(this.METADATA.AUDITLOG.getCommit(id).value, suppressEvents, true)
@@ -937,11 +938,11 @@ export default class NGNDataField extends EventEmitter { // eslint-disable-line
           break
 
         case 'date':
-          let valueType = NGN.typeof(value)
+          const valueType = NGN.typeof(value) // eslint-disable-line no-case-declarations
 
           if (valueType !== 'date') {
             if (valueType === 'number') {
-              let dt = new Date()
+              const dt = new Date()
               dt.setTime(value)
 
               value = dt

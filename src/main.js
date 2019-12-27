@@ -1,9 +1,9 @@
-import NGN from './core'
-import EventEmitter from './emitter/core'
-import * as Queue from './queue/core'
-import * as Utility from './utility/core'
-import * as Network from './net/core'
-import * as Data from './data/core'
+import NGN from './core.js'
+import EventEmitter from './emitter/core.js'
+import * as Queue from './queue/core.js'
+import * as Utility from './utility/core.js'
+import * as Network from './net/core.js'
+import * as Data from './data/core.js'
 
 // Add Event Emitter Class & Global Event Bus
 NGN.extend('EventEmitter', NGN.public(EventEmitter))

@@ -1,6 +1,6 @@
 import NGN from '../core.js'
-import { hostname, normalizeUrl } from './Utility'
-import Request from './Request'
+import { hostname, normalizeUrl } from './Utility.js'
+import Request from './Request.js'
 
 export default class Network { // eslint-disable-line
   constructor () {

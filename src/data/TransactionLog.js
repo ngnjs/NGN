@@ -1,4 +1,5 @@
-import EventEmitter from '../emitter/core'
+import NGN from '../core.js'
+import EventEmitter from '../emitter/core.js'
 
 /**
  * @class NGN.DATA.TransactionLog

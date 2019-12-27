@@ -1,4 +1,5 @@
-import DataField from './Field'
+import NGN from '../core.js'
+import DataField from './Field.js'
 
 /**
  * @class NGN.DATA.Relationship
@@ -51,7 +52,7 @@ import DataField from './Field'
  */
 export default class NGNRelationshipField extends DataField { // eslint-disable-line
   constructor (cfg = {}) {
-    let type = NGN.typeof(cfg.join)
+    const type = NGN.typeof(cfg.join)
 
     // Assure valid configuration
     if (!cfg.join) {
@@ -140,7 +141,7 @@ export default class NGNRelationshipField extends DataField { // eslint-disable-
       const me = this
 
       return function (record, change) {
-        let old = change ? NGN.coalesce(change.old) : me.data
+        const old = change ? NGN.coalesce(change.old) : me.data
 
         if (this.event === 'record.create') {
           old.pop()
@@ -268,13 +269,13 @@ export default class NGNRelationshipField extends DataField { // eslint-disable-
   // Override the default value setter
   set value (value) {
     // Short-circuit if the value hasn't changed.
-    let currentValue = this.METADATA.join
+    const currentValue = this.METADATA.join
 
     if (currentValue === value) {
       return
     }
 
-    let type = NGN.typeof(value)
+    const type = NGN.typeof(value)
 
     if (type === 'array') {
       if (value.length !== 1) {

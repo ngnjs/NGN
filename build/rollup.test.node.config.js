@@ -2,7 +2,6 @@ import path from 'path'
 import fs from 'fs'
 import config from './config.js'
 import NgnPlugin from './rollup-plugin-ngn.js'
-import { terser } from 'rollup-plugin-terser'
 import babel from 'rollup-plugin-babel'
 
 // Install source map support
@@ -16,7 +15,7 @@ const input = path.resolve('../src/main.js')
 const ngn = new NgnPlugin()
 
 // Configure metadata for the build process.
-const rootdir = config.nodeOutput // Main output directory
+const rootdir = path.join(config.testOutput, '.node') // Main output directory
 let outdir = rootdir // Active output directory
 let configuration = [] // Rollup Configurations
 
@@ -30,42 +29,18 @@ const plugins = [
   babel({
     plugins: [['@babel/plugin-proposal-class-properties', { 'loose': false }]],
     externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet']
-  }),
-  terser({
-    module: true,
-    mangle: {
-      properties: true
-    },
-    compress: {
-      drop_console: true,
-      passes: 8,
-      warnings: true,
-      ecma: 6
-    }
   })
 ]
 
 // 2. Build Node Production Package: Standard (Minified/Munged)
-outdir += '/node-ngn'
 configuration.push({
   input,
   plugins,
   output: {
-    file: `${outdir}/${ngn.name}-${ngn.version}.min.js`,
+    file: `${outdir}/index.js`,
     format: 'esm',
-    sourcemap: true
-  },
-  external: config.external
-})
-
-// 3. Build production legacy edition (commonjs/require format)
-configuration.push({
-  input,
-  plugins,
-  output: {
-    file: `${outdir}-legacy/${ngn.name}-${ngn.version}.min.js`,
-    format: 'cjs',
-    sourcemap: true
+    sourcemap: true,
+    name: 'NGN'
   },
   external: config.external
 })

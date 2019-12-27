@@ -1,7 +1,7 @@
-import Request from './Request'
-import Network from './Network'
-import Resource from './Resource'
-import Utility from './Utility'
+import Request from './Request.js'
+import Network from './Network.js'
+import Resource from './Resource.js'
+import Utility from './Utility.js'
 
 /**
  * @namespace NGN.NET

@@ -1,16 +1,17 @@
-import UTILITY from './Utility'
-import BTree from './index/BTree'
-import TransactionLog from './TransactionLog'
-import Rule from './rule/Rule'
-import RangeRule from './rule/RangeRule'
-import Field from './field/Field'
-import VirtualField from './field/VirtualField'
-import Relationship from './field/Relationship'
-import FieldMap from './field/FieldMap'
-import Entity from './Model'
-import Index from './index/Index'
-import Filter from './Filter'
-import Store from './Store'
+import NGN from '../core.js'
+import UTILITY from './Utility.js'
+import BTree from './index/BTree.js'
+import TransactionLog from './TransactionLog.js'
+import Rule from './rule/Rule.js'
+import RangeRule from './rule/RangeRule.js'
+import Field from './field/Field.js'
+import VirtualField from './field/VirtualField.js'
+import Relationship from './field/Relationship.js'
+import FieldMap from './field/FieldMap.js'
+import Entity from './Model.js'
+import Index from './index/Index.js'
+import Filter from './Filter.js'
+import Store from './Store.js'
 
 const Model = function (cfg) {
   if (NGN.typeof(cfg) !== 'object') {
@@ -19,8 +20,8 @@ const Model = function (cfg) {
 
   const me = this
 
-  let Model = function (data, suppressEvents = false) {
-    let Entity = new NGN.DATA.Entity(cfg)
+  const Model = function (data, suppressEvents = false) {
+    const Entity = new NGN.DATA.Entity(cfg)
 
     Object.defineProperty(Entity, 'ENTITY', {
       enumerable: false,
