@@ -6,7 +6,9 @@ test('NGN.UTILITY Sanity Check', function (t) {
   t.ok(typeof NGN.UTILITY.Lexer === 'function', 'NGN.UTILITY.Lexer exists as a class.')
   t.ok(typeof NGN.UTILITY.Tokenizer === 'function', 'NGN.UTILITY.Tokenizer exists as a class.')
   t.ok(typeof NGN.UTILITY.Set === 'function', 'NGN.UTILITY.Set exists as a class (singleton).')
-
+  t.ok(typeof NGN.UTILITY.UUID === 'function', 'NGN.UTILITY.UUID exists as a method.')
+  t.ok(typeof NGN.UTILITY.GUID === 'function', 'NGN.UTILITY.GUID exists as a method.')
+  // TODO: Test NameManager
   t.end()
 })
 
@@ -112,5 +114,20 @@ test('NGN.UTILITY.Set', function (t) {
   t.ok(NGN.UTILITY.Set.equal(NGN.UTILITY.Set.intersection(setA, setC), new Set([3, 4])), 'Intersection restricts set.')
   t.ok(NGN.UTILITY.Set.equal(NGN.UTILITY.Set.difference(setA, setC), new Set([1, 2])), 'Difference restricts set.')
 
+  t.end()
+})
+
+test('NGN.UTILITY ID Creation', t => {
+  // UUID
+  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(NGN.UTILITY.UUID()), 'UUID() returns a properly formatted identifier.')
+
+  // GUID
+  t.ok(/[0-9A-Za-z]{8}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{4}-[0-9A-Za-z]{12}/i.test(NGN.UTILITY.GUID()), 'GUID() returns a properly formatted identifier.')
+
+  t.end()
+})
+
+test('NGN.UTILITY.checksum', t => {
+  t.ok(NGN.UTILITY.checksum('a checksum test string.') === '1780991314', 'Checksum matches.')
   t.end()
 })

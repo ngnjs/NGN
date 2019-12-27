@@ -21,6 +21,7 @@
     "node:utility": "npm run build:test:node && tap --no-esm -R spec ./*-utility/**/*.js",
     "node:queue": "npm run build:test:node && tap --no-esm -R spec ./*-queue/**/*.js",
     "node:net": "npm run build:test:node && tap --no-esm -R spec ./*-net/**/*.js",
+    "node:data": "npm run build:test:node && tap --no-esm -R spec ./*-data/**/*-*.js",
     "node": "npm run build:test:node && tap --no-esm -R spec ./*-*/**/*.js"
   },
   "author": {

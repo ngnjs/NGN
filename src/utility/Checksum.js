@@ -33,6 +33,9 @@ const makeCRCTable = function () {
 /**
  * @method checksum
  * Create the checksum of the specified string.
+ * The checksum is calculated using [CRC](https://en.wikipedia.org/wiki/Cyclic_redundancy_check) (cyclic redundancy check).
+ * It can be used to identify data corruption, though it is a computationally expensive operation.
+ * When used in moderation, performance impact is negligible, but extended use may impact performance.
  * @param  {string} content
  * The content to generate a checksum for.
  * @return {string}
@@ -53,7 +56,7 @@ const checksum = str => {
     crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF]
   }
 
-  return (crc ^ (-1)) >>> 0
+  return ((crc ^ (-1)) >>> 0).toString()
 }
 
 export { checksum as default, makeCRCTable }

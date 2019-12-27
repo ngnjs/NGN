@@ -18,6 +18,23 @@ const ngn = new NgnPlugin()
 const rootdir = path.join(config.testOutput, '.node') // Main output directory
 let outdir = rootdir // Active output directory
 let configuration = [] // Rollup Configurations
+let output = `${outdir}/index.js`
+
+// Pre-process: Check if the build actually needs to be updated.
+// a. Check the timestamp of the last build file and determine if it is outdated.
+const lastbuildtime = fs.statSync(output).mtime.getTime()
+
+// b. Check all source files for last modification dates
+const updatedfiles = ngn.walk(path.dirname(input)).some(filepath => {
+  if (fs.statSync(filepath).mtime.getTime() > lastbuildtime) {
+    return true
+  }
+})
+
+if (!updatedfiles) {
+  console.log('Build is unnecessary (no changes since last build).')
+  process.exit(0)
+}
 
 // 1. Clean prior builds
 fs.rmdirSync(rootdir, { recursive: true })
@@ -37,7 +54,7 @@ configuration.push({
   input,
   plugins,
   output: {
-    file: `${outdir}/index.js`,
+    file: output,
     format: 'esm',
     sourcemap: true,
     name: 'NGN'

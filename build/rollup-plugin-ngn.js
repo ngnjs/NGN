@@ -70,6 +70,25 @@ export default class ngn {
       REPLACE_VERSION: version
     })
   }
+
+  walk (directory) {
+    if (!directory) {
+      return []
+    }
+
+    // Walk the directory without globbing
+    let files = []
+
+    fs.readdirSync(directory).forEach(dir => {
+      if (fs.statSync(path.join(directory, dir)).isDirectory()) {
+        files = files.concat(this.walk(path.join(directory, dir)))
+      } else {
+        files.push(path.join(directory, dir))
+      }
+    })
+
+    return files
+  }
 }
 
 // this.worker = new utils.Worker(require.resolve("./transform.js"), {
