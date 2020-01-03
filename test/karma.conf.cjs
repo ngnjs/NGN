@@ -1,4 +1,117 @@
-const base = require('@author.io/karma-base')
+// This file is written as a commonjs module, because KarmaJS chokes on ES modules.
+const fs = require('fs')
+const config = JSON.parse(fs.readFileSync('../build/config.json'))
+const pkg = JSON.parse(fs.readFileSync('../package.json'))
+const babelify = require('babelify')
+
+const getFiles = () => {
+  const files = []
+
+  files.push({
+    pattern: `./.browser/ngn-${pkg.version}.min.js`,
+    type: 'module',
+    included: true
+  })
+  files.push({
+    pattern: `./.browser/ngn-${pkg.version}.min.js.map`,
+    included: false
+  })
+  files.push({
+    pattern: './.testsuite/browser-test.js',
+    type: 'module'
+  })
+  // files.push(`./.browser/ngn-${pkg.version}.min.js.map`)
+
+  return files
+  // .concat([
+  //   // 'assets/*.js',
+  //   './assets/*.html'
+  // ])
+}
+
+const karmaConfig = {
+  browserDisconnectTimeout: 120000,
+  browserDisconnectTolerance: 10,
+  browserNoActivityTimeout: 120000,
+
+  frameworks: ['tap', 'browserify'],
+
+  // esm: {
+  //   // if you are using 'bare module imports' you will need this option
+  //   nodeResolve: true,
+  //   // set compatibility mode to all
+  //   compatibility: 'all'
+  // },
+
+  browserify: {
+    debug: true,
+    transform: babelify.configure({
+      presets: ['@babel/preset-env']
+    })
+  },
+
+  basePath: '',
+
+  files: getFiles(),
+
+  preprocessors: {
+    './.testsuite/browser-test.js': ['browserify'],
+    '**/*.js': ['sourcemap']
+  },
+
+  babelPreprocessor: {
+    options: {
+      presets: ['@babel/preset-env']
+    }
+  },
+
+  logLevel: config.LOG_VERBOSE,
+  singleRun: true,
+  autoWatch: false,
+
+  specReporter: {
+    maxLogLines: 5, // limit number of lines logged per test
+    suppressErrorSummary: false, // do not print error summary
+    suppressFailed: false, // do not print information about failed tests
+    suppressPassed: true, // do not print information about passed tests
+    suppressSkipped: true, // do not print information about skipped tests
+    showSpecTiming: false // print the time elapsed for each spec
+  },
+
+  browsers: ['Chrome'],
+
+  plugins: [
+    // require('@open-wc/karma-esm'),
+    require('karma-babel-preprocessor'),
+    require('karma-browserify'),
+    require('tape'),
+    require('karma-tap'),
+    require('karma-spec-reporter'),
+    require('karma-chrome-launcher'),
+    require('karma-firefox-launcher'),
+    require('karma-safari-launcher'),
+    require('karma-ie-launcher'),
+    require('karma-ie-launcher'),
+    require('karma-edgium-launcher'),
+    require('karma-sauce-launcher'),
+    require('karma-sourcemap-loader')
+    // require('karma-html2js-preprocessor')
+  ]
+}
+
+Object.defineProperty(karmaConfig, `./.browser/ngn-${pkg.version}.min.js`, {
+  value: ['sourcemap']
+})
+
+module.exports = cfg => cfg.set(karmaConfig)
+//   // plugins: [
+//   //   'karma-jasmine',
+//   //   'karma-mocha-reporter',
+//   //   'karma-sourcemap-loader',
+//   //   'karma-webpack'
+//   // ]
+// }
+// import base from '@author.io/karma-base'
 
 // // Karma configuration
 // require('localenvironment')
@@ -104,48 +217,48 @@ const base = require('@author.io/karma-base')
 //   }))
 // }
 
-base.getFiles = function () {
-  var files = [
-    'ngn.js'
-    // 'core.js',
-    // 'exception.js',
-    // 'eventemitter.js',
-    // 'net/NET.js'
-  ]
+// base.getFiles = function () {
+//   var files = [
+//     'ngn.js'
+//     // 'core.js',
+//     // 'exception.js',
+//     // 'eventemitter.js',
+//     // 'net/NET.js'
+//   ]
 
-  files = files.map(path => {
-    return 'test/lib/' + path
-  })
+//   files = files.map(path => {
+//     return 'test/lib/' + path
+//   })
 
-  // Run all tests by default
-  var testfiles = 'test/common/*.js'
+//   // Run all tests by default
+//   var testfiles = 'test/common/*.js'
 
-  // Only run the requested test set
-  if (process.argv.indexOf('--test') > 1) {
-    testfiles = 'test/common/*-' + process.argv[process.argv.indexOf('--test') + 1] + '/*.js'
-  }
+//   // Only run the requested test set
+//   if (process.argv.indexOf('--test') > 1) {
+//     testfiles = 'test/common/*-' + process.argv[process.argv.indexOf('--test') + 1] + '/*.js'
+//   }
 
-  return files.concat([
-    testfiles,
-    'test/test.html'
-  ])
-}
+//   return files.concat([
+//     testfiles,
+//     'test/test.html'
+//   ])
+// }
 
-module.exports = config => {
-  base.modernOnly = true
-  // base.displayFiles()
+// module.exports = config => {
+//   base.modernOnly = true
+//   // base.displayFiles()
 
-  config.set(Object.assign(base.configuration, {
-    // browserify: {
-    //   transform: [ 'rollupify' ]
-    // },
-    preprocessors: {
-      'test/common/**/*.js': ['browserify'],
-      'test/test.html': 'html2js'
-      // , 'test/lib/**/*.js': 'coverage'
-    }
-  }))
-}
+//   config.set(Object.assign(base.configuration, {
+//     // browserify: {
+//     //   transform: [ 'rollupify' ]
+//     // },
+//     preprocessors: {
+//       'test/common/**/*.js': ['browserify'],
+//       'test/test.html': 'html2js'
+//       // , 'test/lib/**/*.js': 'coverage'
+//     }
+//   }))
+// }
 
 // console.log(tablemaker([[chalk.bold('Included Files')]].concat(getFiles().map(file => { return [file] }))))
 

@@ -11,6 +11,7 @@ test/lib
 !.npmignore
 !.codeclimate.yml
 !.travis.yml
+!.npmrc
 dist
 out
 docs

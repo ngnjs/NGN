@@ -2,8 +2,8 @@ import path from 'path'
 import fs from 'fs'
 import config from './config.js'
 import NgnPlugin from './rollup-plugin-ngn.js'
-import { terser } from 'rollup-plugin-terser'
 import babel from 'rollup-plugin-babel'
+import { terser } from 'rollup-plugin-terser'
 
 // Install source map support
 import { install } from 'source-map-support'
@@ -16,9 +16,29 @@ const input = path.resolve('../src/main.js')
 const ngn = new NgnPlugin()
 
 // Configure metadata for the build process.
-const rootdir = config.browserOutput // Main output directory
+const rootdir = path.join(config.testOutput, '.browser') // Main output directory
 let outdir = rootdir // Active output directory
 let configuration = [] // Rollup Configurations
+
+// Pre-process: Check if the build actually needs to be updated.
+if (fs.existsSync(outdir)) {
+  // a. Check the timestamp of the last build file and determine if it is outdated.
+  const lastbuildtime = fs.statSync(outdir).mtime.getTime()
+
+  // b. Check all source files for last modification dates
+  const updatedfiles = ngn.walk(path.dirname(input)).filter(filepath => {
+    return fs.statSync(path.resolve(filepath)).mtime.getTime() > lastbuildtime
+  })
+
+  if (fs.statSync(__filename).mtime.getTime() > lastbuildtime) {
+    updatedfiles.push(__filename)
+  }
+
+  if (updatedfiles.length === 0) {
+    console.log('Build is unnecessary (no changes since last build).')
+    process.exit(0)
+  }
+}
 
 // 1. Clean prior builds
 fs.rmdirSync(rootdir, { recursive: true })
@@ -30,7 +50,6 @@ const globalplugins = [
 ]
 
 // 2. Build Browser Production Package: Standard (Minified/Munged)
-outdir += '/browser-ngn'
 ngn.supportedBrowsers().forEach(edition => {
   console.log(`Generating ${edition} browser code.`)
   const plugins = globalplugins.slice()

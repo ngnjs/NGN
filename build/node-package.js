@@ -82,6 +82,7 @@ fs.writeFileSync(`${outdir}-legacy-debug/README.md`, `# ${pkg.name} ${pkg.versio
 console.log('Creating production package for modern Node.js')
 let prodpkg = Object.assign({}, JSON.parse(pkgContent))
 prodpkg.main = 'index.js'
+prodpkg.module = 'index.js'
 prodpkg.name = path.join(config.npmPrefix, `node-${ngn.name}`)
 delete prodpkg.scripts
 prodpkg.dependencies = prodpkg.dependencies || {}
@@ -120,3 +121,10 @@ fs.copyFileSync('../LICENSE', `${outdir}-legacy/LICENSE`)
 
 // Add README
 fs.writeFileSync(`${outdir}-legacy/README.md`, `# ${prodpkg.name} ${prodpkg.version} (Legacy CommonJS Variant)\n\nPlease see [${pkg.homepage}](${pkg.homepage}).\n\nGenerated on ${new Date()}.`)
+
+// Apply banner to all JS files
+ngn.walk(config.nodeOutput).forEach(filepath => {
+  if (path.extname(filepath) === '.js') {
+    fs.writeFileSync(filepath, config.banner + '\n' + fs.readFileSync(filepath).toString())
+  }
+})

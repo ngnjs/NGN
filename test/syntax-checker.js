@@ -20,6 +20,8 @@ Args.configure({
   }
 })
 
+Args.enforceRules()
+
 // Normalize the source path and identify which linter to use
 let scanpath = Args.value('source')
 let scanFile = false

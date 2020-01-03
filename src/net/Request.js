@@ -15,46 +15,108 @@ import fs from 'fs'
  * @private
  */
 export default class Request { // eslint-disable-line no-unused-vars
-  constructor (cfg) {
-    cfg = cfg || {}
+  #uri = null
+  #httpmethod = 'GET'
+  #headers = null
+  #requestbody = null
+  #user = null
+  #secret = null
+  #bearerAccessToken = null
 
+  constructor (cfg = {}) {
     // Require URL and HTTP method
     NGN.objectRequires(cfg, 'url')
 
     if (NGN.objectHasAny(cfg, 'form', 'json')) {
-      NGN.WARN('NET.Request', '"form" and "json" configuration properties are not valid. Use "body" instead.')
+      NGN.WARN('NET.Request', '"form" and "json" configuration properties are invalid. Use "body" instead.')
     }
 
+    /**
+     * @cfgproperty {string} url (required)
+     * The complete URL for the request, including query parameters.
+     */
+    /**
+     * @cfg {string} [method=GET]
+     * The HTTP method to invoke when the request is sent. The standard
+     * RFC 2616 HTTP methods include:
+     *
+     * - OPTIONS
+     * - HEAD
+     * - GET
+     * - POST
+     * - PUT
+     * - DELETE
+     * - TRACE
+     * - CONNECT
+     *
+     * There are many additional non-standard methods some remote hosts
+     * will accept, including `PATCH`, `COPY`, `LINK`, `UNLINK`, `PURGE`,
+     * `LOCK`, `UNLOCK`, `VIEW`, and many others. If the remote host
+     * supports these methods, they may be used in an NGN.NET.Request.
+     * Non-standard methods will not be prevented, but NGN will trigger
+     * a warning event if a non-standard request is created.
+     */
+    /**
+     * @cfg {object} [headers]
+     * Optionally supply custom headers for the request. Most standard
+     * headers will be applied automatically (when appropriate), such
+     * as `Content-Type`, `Content-Length`, and `Authorization`.
+     * In Node-like environments, a `User-Agent` will be applied containing
+     * the `hostname` of the system making the request. Any custom headers
+     * supplied will override headers managed by NGN.NET.
+     */
+    this.#headers = NGN.coalesceb(cfg.headers, {})
+
+    /**
+     * @cfg {object|string|binary} [body]
+     * The body configuration supports text, an object, or a data URL or
+     * binary content. **For multi-part form data (file uploads), use
+     * the #files configuration _instead_ of this attribute.**
+     *
+     * It is also possible to construct a simple form submission
+     * (x-www-form-urlencoded) from a specially formatted key/value object
+     * conforming to the following syntax:
+     *
+     * ```json
+     * {
+     *   form: {
+     *     form_field_1: "value",
+     *     form_field_2: "value",
+     *     form_field_3: "value",
+     *   }
+     * }
+     * ```
+     * The object above will be automatically converted & url-encoded as:
+     *
+     * ```js
+     * form_field_1=value&form_field_2=value&form_field_3=value
+     * ```
+     *
+     * The appropriate request headers are automatically applied.
+     */
+    this.#requestbody = NGN.coalesce(cfg.body)
+
+    /**
+     * @cfgproperty {string} username
+     * A username to authenticate the request with (basic auth).
+     */
+    this.#user = NGN.coalesceb(cfg.username)
+
+    /**
+     * @cfgproperty {string} password
+     * A password to authenticate the request with (basic auth).
+     * @readonly
+     */
+    this.#secret = NGN.coalesceb(cfg.password)
+
+    /**
+     * @cfgproperty {string} accessToken
+     * An access token to authenticate the request with (Bearer auth).
+     * If this is configured, it will override any basic auth settings.
+     */
+    this.#bearerAccessToken = NGN.coalesceb(cfg.accessToken)
+
     Object.defineProperties(this, {
-      /**
-       * @cfgproperty {string} url (required)
-       * The complete URL for the request, including query parameters.
-       */
-      uri: NGN.private(null),
-
-      /**
-       * @cfg {string} [method=GET]
-       * The HTTP method to invoke when the request is sent. The standard
-       * RFC 2616 HTTP methods include:
-       *
-       * - OPTIONS
-       * - HEAD
-       * - GET
-       * - POST
-       * - PUT
-       * - DELETE
-       * - TRACE
-       * - CONNECT
-       *
-       * There are many additional non-standard methods some remote hosts
-       * will accept, including `PATCH`, `COPY`, `LINK`, `UNLINK`, `PURGE`,
-       * `LOCK`, `UNLOCK`, `VIEW`, and many others. If the remote host
-       * supports these methods, they may be used in an NGN.NET.Request.
-       * Non-standard methods will not be prevented, but NGN will trigger
-       * a warning event if a non-standard request is created.
-       */
-      httpmethod: NGN.private(null),
-
       /**
        * @cfg {boolean} [enforceMethodSafety=true]
        * According to [RFC 2616](https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html),
@@ -68,47 +130,7 @@ export default class Request { // eslint-disable-line no-unused-vars
        * prevent NGN.NET from enforcing idempotence/safety.
        */
       enforceMethodSafety: NGN.private(NGN.coalesce(cfg.enforceMethodSafety, cfg.enforcemethodsafety, true)),
-
-      /**
-       * @cfg {object} [headers]
-       * Optionally supply custom headers for the request. Most standard
-       * headers will be applied automatically (when appropriate), such
-       * as `Content-Type`, `Content-Length`, and `Authorization`.
-       * In Node-like environments, a `User-Agent` will be applied containing
-       * the `hostname` of the system making the request. Any custom headers
-       * supplied will override headers managed by NGN.NET.
-       */
-      headers: NGN.public(NGN.coalesceb(cfg.headers)),
-
-      /**
-       * @cfg {object|string|binary} [body]
-       * The body configuration supports text, an object, or a data URL or
-       * binary content. **For multi-part form data (file uploads), use
-       * the #files configuration _instead_ of this attribute.**
-       *
-       * It is also possible to construct a simple form submission
-       * (x-www-form-urlencoded) from a specially formatted key/value object
-       * conforming to the following syntax:
-       *
-       * ```json
-       * {
-       *   form: {
-       *     form_field_1: "value",
-       *     form_field_2: "value",
-       *     form_field_3: "value",
-       *   }
-       * }
-       * ```
-       * The object above will be automatically converted & url-encoded as:
-       *
-       * ```js
-       * form_field_1=value&form_field_2=value&form_field_3=value
-       * ```
-       *
-       * The appropriate request headers are automatically applied.
-       */
-      requestbody: NGN.public(NGN.coalesce(cfg.body)),
-
+      
       /**
        * @cfg {string} [responseType=text]
        * Specifies the type of data expected in the response.
@@ -116,26 +138,6 @@ export default class Request { // eslint-disable-line no-unused-vars
        * See [MDN: XMLHttpRequest.responseType](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/responseType)
        */
       responseType: NGN.public(NGN.coalesce(cfg.responseType, '')),
-
-      /**
-       * @cfgproperty {string} username
-       * A username to authenticate the request with (basic auth).
-       */
-      user: NGN.private(NGN.coalesceb(cfg.username)),
-
-      /**
-       * @cfgproperty {string} password
-       * A password to authenticate the request with (basic auth).
-       * @readonly
-       */
-      secret: NGN.private(NGN.coalesceb(cfg.password)),
-
-      /**
-       * @cfgproperty {string} accessToken
-       * An access token to authenticate the request with (Bearer auth).
-       * If this is configured, it will override any basic auth settings.
-       */
-      bearerAccessToken: NGN.private(NGN.coalesceb(cfg.accessToken)),
 
       /**
        * @cfgproperty {boolean} [withCredentials=false]
@@ -189,10 +191,10 @@ export default class Request { // eslint-disable-line no-unused-vars
        * @private
        */
       applyAuthorizationHeader: NGN.privateconst(() => {
-        if (NGN.coalesceb(this.bearerAccessToken) !== null) {
-          this.setHeader('Authorization', `Bearer ${this.bearerAccessToken}`, true)
-        } else if (NGN.coalesceb(this.user) && NGN.coalesceb(this.secret)) {
-          this.setHeader('Authorization', this.basicAuthToken(this.user, this.secret), true)
+        if (NGN.coalesceb(this.#bearerAccessToken) !== null) {
+          this.setHeader('Authorization', `Bearer ${this.#bearerAccessToken}`, true)
+        } else if (NGN.coalesceb(this.#user) && NGN.coalesceb(this.#secret)) {
+          this.setHeader('Authorization', this.basicAuthToken(this.#user, this.#secret), true)
         }
       }),
 
@@ -245,16 +247,12 @@ export default class Request { // eslint-disable-line no-unused-vars
 
       prepareBody: NGN.private(() => {
         // Request body management
-        if (this.requestbody !== null) {
-          if (this.headers === null) {
-            this.headers = {}
-          }
+        if (this.#requestbody !== null) {
+          const contentType = NGN.coalesceb(this.getHeader('content-type'))
 
-          const contentType = NGN.coalesceb(this.headers['Content-Type'], this.headers['content-type'], this.headers['Content-type'])
-
-          if (typeof this.requestbody === 'object') {
-            if (NGN.objectHasExactly(this.requestbody, 'form')) {
-              const form = this.requestbody.form
+          if (typeof this.#requestbody === 'object') {
+            if (NGN.objectHasExactly(this.#requestbody, 'form')) {
+              const form = this.#requestbody.form
               const keys = Object.keys(form)
               const dataString = []
 
@@ -268,47 +266,47 @@ export default class Request { // eslint-disable-line no-unused-vars
                 }
               }
 
-              this.requestbody = dataString.join('&')
+              this.#requestbody = dataString.join('&')
             } else {
-              this.requestbody = JSON.stringify(this.requestbody).trim()
+              this.#requestbody = JSON.stringify(this.#requestbody).trim()
               /* node-only */
-              this.setHeader('Content-Length', this.requestbody.length, false)
+              this.setHeader('Content-Length', this.#requestbody.length, false)
               /* end-node-only */
               this.setHeader('Content-Type', NGN.coalesceb(contentType, 'application/json'), false)
               this.responseType = 'json'
             }
           }
 
-          if (typeof this.requestbody === 'string') {
+          if (typeof this.#requestbody === 'string') {
             if (contentType !== null) {
               // Check for form data
-              let match = /([^=]+)=([^&]+)/.exec(this.requestbody)
+              let match = /([^=]+)=([^&]+)/.exec(this.#requestbody)
 
-              if (match !== null && this.requestbody.trim().substr(0, 5).toLowerCase() !== 'data:' && this.requestbody.trim().substr(0, 1).toLowerCase() !== '<') {
+              if (match !== null && this.#requestbody.trim().substr(0, 5).toLowerCase() !== 'data:' && this.#requestbody.trim().substr(0, 1).toLowerCase() !== '<') {
                 this.setHeader('Content-Type', 'application/x-www-form-urlencoded', false)
               } else {
                 this.setHeader('Content-Type', 'text/plain')
 
-                if (this.requestbody.trim().substr(0, 5).toLowerCase() === 'data:') {
+                if (this.#requestbody.trim().substr(0, 5).toLowerCase() === 'data:') {
                   // Crude Data URL mimetype detection
-                  match = /^data:(.*);/gi.exec(this.requestbody.trim())
+                  match = /^data:(.*);/gi.exec(this.#requestbody.trim())
 
                   if (match !== null) {
                     this.setHeader('Content-Type', match[1])
                   }
-                } else if (/^<\?xml.*/gi.test(this.requestbody.trim())) {
+                } else if (/^<\?xml.*/gi.test(this.#requestbody.trim())) {
                   // Crude XML Detection
                   this.setHeader('Content-Type', 'application/xml')
-                } else if (/^<html.*/gi.test(this.requestbody.trim())) {
+                } else if (/^<html.*/gi.test(this.#requestbody.trim())) {
                   // Crude HTML Detection
                   this.setHeader('Content-Type', 'text/html')
                 }
               }
             }
 
-            this.setHeader('Content-Type', this.requestbody.length, false)
+            this.setHeader('Content-Type', this.#requestbody.length, false)
           } else {
-            NGN.WARN('NET.Request.body', `The request body must cannot be ${typeof this.requestbody}. Please provide a string, object, or binary value for the body.`)
+            NGN.WARN('NET.Request.body', `The request body must cannot be ${typeof this.#requestbody}. Please provide a string, object, or binary value for the body.`)
           }
         }
       })
@@ -324,7 +322,7 @@ export default class Request { // eslint-disable-line no-unused-vars
     this.prepareBody()
 
     // Apply authorization if applicable
-    if (NGN.coalesce(this.user, this.secret, this.bearerAccessToken) !== null) {
+    if (NGN.coalesce(this.#user, this.#secret, this.#bearerAccessToken) !== null) {
       this.applyAuthorizationHeader()
     }
   }
@@ -495,11 +493,11 @@ export default class Request { // eslint-disable-line no-unused-vars
   }
 
   get body () {
-    return this.requestbody
+    return this.#requestbody
   }
 
   set body (value) {
-    this.requestbody = value
+    this.#requestbody = value
     this.prepareBody()
   }
 
@@ -517,16 +515,16 @@ export default class Request { // eslint-disable-line no-unused-vars
    * The username that will be used in any basic authentication operations.
    */
   get username () {
-    return NGN.coalesce(this.user)
+    return NGN.coalesceb(this.#user)
   }
 
   set username (user) {
     user = NGN.coalesceb(user)
 
-    if (this.user !== user) {
-      this.user = user
+    if (this.#user !== user) {
+      this.#user = user
 
-      if (NGN.coalesceb(this.secret) !== null) {
+      if (NGN.coalesceb(this.#secret) !== null) {
         this.applyAuthorizationHeader()
       }
     }
@@ -541,10 +539,10 @@ export default class Request { // eslint-disable-line no-unused-vars
   set password (secret) {
     secret = NGN.coalesceb(secret)
 
-    if (this.secret !== secret) {
-      this.secret = secret
+    if (this.#secret !== secret) {
+      this.#secret = secret
 
-      if (NGN.coalesceb(this.user) !== null) {
+      if (NGN.coalesceb(this.#user) !== null) {
         this.applyAuthorizationHeader()
       }
     }
@@ -558,10 +556,18 @@ export default class Request { // eslint-disable-line no-unused-vars
   set accessToken (token) {
     token = NGN.coalesceb(token)
 
-    if (this.bearerAccessToken !== token) {
-      this.bearerAccessToken = token
+    if (this.#bearerAccessToken !== token) {
+      this.#bearerAccessToken = token
       this.applyAuthorizationHeader()
     }
+  }
+
+  get headers () {
+    return this.#headers
+  }
+
+  set headers (value = null) {
+    this.#headers = NGN.coalesceb(value, {})
   }
 
   /**
@@ -578,12 +584,8 @@ export default class Request { // eslint-disable-line no-unused-vars
   setHeader (key, value, overwriteExisting = true) {
     key = key.replace(/'|"/gi, '').toLowerCase()
 
-    if (this.headers === null || this.headers[key] === undefined || overwriteExisting) {
-      if (this.headers === null) {
-        this.headers = {}
-      }
-
-      this.headers[key] = value
+    if (this.#headers[key] === undefined || overwriteExisting) {
+      this.#headers[key] = value
     }
   }
 
@@ -595,15 +597,11 @@ export default class Request { // eslint-disable-line no-unused-vars
    * Returns the current value of the specified header.
    */
   getHeader (key) {
-    if (this.headers === null) {
+    if (!this.#headers.hasOwnProperty(key.toLowerCase())) { // eslint-disable-line no-prototype-builtins
       return undefined
     }
 
-    if (!this.headers.hasOwnProperty(key.toLowerCase())) { // eslint-disable-line no-prototype-builtins
-      return undefined
-    }
-
-    return this.headers[key.toLowerCase()]
+    return this.#headers[key.toLowerCase()]
   }
 
   /**
@@ -614,10 +612,8 @@ export default class Request { // eslint-disable-line no-unused-vars
    * The header to remove.
    */
   removeHeader (key) {
-    if (this.headers !== null) {
-      delete this.headers[key.toLowerCase()]
-      delete this.headers[key]
-    }
+    delete this.#headers[key.toLowerCase()]
+    delete this.#headers[key]
   }
 
   /**
@@ -717,7 +713,7 @@ export default class Request { // eslint-disable-line no-unused-vars
       hostname: this.hostname,
       port: this.port,
       method: this.method,
-      headers: this.headers,
+      headers: this.#headers,
       path: this.path
     }
 
@@ -857,15 +853,37 @@ export default class Request { // eslint-disable-line no-unused-vars
     xhr.withCredentials = this.withCredentials
 
     // Apply Request Headers
-    if (this.headers !== null) {
-      const headers = Object.keys(this.headers)
+    if (this.#headers !== null) {
+      const headers = Object.keys(this.#headers)
       for (let i = 0; i < headers.length; i++) {
-        xhr.setRequestHeader(headers[i], this.headers[headers[i]])
+        xhr.setRequestHeader(headers[i], this.#headers[headers[i]])
       }
     }
 
     // Write the body (which may be null) & send the request
     xhr.send(body)
+
+    // // Create the request configuration
+    // let req = {
+    //   method: this.method,
+    //   mode: 'cors' //TODO: Make a configuration property for this.
+    // }
+
+    // // Apply Request Headers
+    // if (this.#headers !== null) {
+    //   req = new Headers()
+    //   Object.keys(this.#headers).forEach(header => req.headers.append(header, this.#headers[header]))
+    // }
+
+    // // Apply request body (if applicable)
+    // if (this.#requestbody !== null) {
+    //   req.body = this.#requestbody
+    // }
+
+
+
+    // // Execute the request
+    // WindowOrWorkerGlobalScope.fetch(this.url, requestConfig)
     /* end-browser-only */
   }
 }

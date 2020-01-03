@@ -75,8 +75,7 @@ test('NGN.NET.Request', function (t) {
   t.ok(request.port === (request.protocol === 'https' ? 443 : 80), 'Proper port identified.')
 
   request.parseUri('http://user:passwd@test.com:7788/path/to/file.html')
-
-  t.ok(request.username === 'user', 'Properly parsed basic auth string')
+  t.ok(request.username === 'user', `Properly parsed basic auth string ("${request.username}" === "user")`)
   t.ok(request.isCrossOrigin, 'CORS recognition correctly identifies cross origin request.')
 
   request.url = 'http://test.com:7788/path/to/to/../file.html'

@@ -41,6 +41,9 @@
     "type": "git",
     "url": "https://github.com/ngnjs/ngn.git"
   },
+  "bugs": {
+    "url": "https://github.com/ngnjs/ngn/issues"
+  },
   "keywords": [
     "chassis",
     "http",
@@ -56,13 +59,13 @@
     "orchestration"
   ],
   "author": {
-    "name": "Ecor Ventures",
-    "url": "https://ecorventures.com"
+    "name": "Corey Butler",
+    "url": "http://coreybutler.com"
   },
   "contributors": [
     {
-      "name": "Corey Butler",
-      "url": "http://coreybutler.com"
+      "name": "Ecor Ventures",
+      "url": "https://ecorventures.com"
     },
     {
       "name": "Graham Butler",
@@ -77,23 +80,7 @@
       "url": "https://github.com/theteejers"
     }
   ],
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "homepage": "https://ngn.js.org",
-  "type": "module",
-  "devDependencies": {
-    "@author.io/metadoc": "0.1.2",
-    "@author.io/metadoc-api": "1.1.0",
-    "@author.io/metadoc-md": "0.0.5",
-    "babel-eslint": "^10.0.3",
-    "browserify-istanbul": "3.0.1",
-    "fs-extra": "8.1.0",
-    "gzip-size": "5.1.1",
-    "localenvironment": "1.0.2",
-    "minimatch": "3.0.4",
-    "musthave": "1.0.2",
-    "productionline": "1.3.12",
-    "rollupify": "0.5.1",
-    "shortbus": "1.2.8"
-  },
-  "dependencies": {}
+  "type": "module"
 }

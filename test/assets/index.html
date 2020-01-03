@@ -1,0 +1,249 @@
+<html>
+  <head>
+    <title>NGN Manual Testing</title>
+    <!-- <script src="{{script}}" type="module"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.19.0/min/vs/loader.js"></script>
+    <style>
+      body {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-self: stretch;
+        align-items: stretch;
+        padding: 0;
+        margin: 0;
+        background-color: #1e1e1e;
+        color: rgba(255,255,255,.5);
+        /* background-color: #efefef;
+        color: rgba(0,0,0,.5); */
+      }
+
+      main {
+        display: flex;
+        height: 97vh;
+        flex-direction: column;
+      }
+
+      footer {
+        display: flex;
+        height: 3vh;
+        display: flex;
+      }
+
+      .toolbar {
+        display: flex;
+        flex: 1;
+        flex-direction: row;
+        align-items: center;
+        padding: 0 1vw;
+        background-color: rgba(0,0,0, .15);
+        font-family: Helvetica, Arial;
+      }
+
+      .toolbar label {
+        display: flex;
+        font-weight: 100;
+      }
+
+      .toolbar nav {
+        display: flex;
+        flex: 1;
+        justify-content: flex-end;
+      }
+
+      .toolbar nav button.run {
+        position: relative;
+        background-color: green;
+        color: ghostwhite;
+        font-family: Arial;
+        font-weight: 100;
+        font-size: 16px;
+        border: 0;
+        padding: .35em 1.89em;
+        border-radius: 3px;
+        opacity: .8;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .toolbar button.run:hover:before {
+        content: 'shift+enter';
+        color: rgba(255,255,255,.2);
+        top: -3.5vh;
+        background-color: rgba(0,0,0,.2);
+        padding: .39em .89em;
+        margin-right: .5vw;
+        border: 0;
+        border-radius: 3px;
+        position: absolute;
+        right: -.19em;
+        font-weight: 100;
+        font-family: Helvetica, Arial;
+        outline: none;
+      }
+
+      #editor {
+        height: 100%;
+        border-top: 1px solid rgba(0,0,0, .25);
+        border-bottom: 1px solid rgba(0,0,0, .25);
+        padding-top: 6px;
+        overflow:hidden;
+      }
+
+      #included select {
+        font-family: Menlo, Monaco, "Courier New", monospace;
+        border: 0;
+        background-color: transparent;
+        color: #999;
+        font-size: 16px;
+        padding: 0;
+        margin: 0 0 0 -8px;
+        outline: none;
+      }
+
+      #included > div, #included > div:before {
+        font-size: 16px;
+        line-height: 18px;
+      }
+
+      #included > div, #included > select {
+        display: flex;
+        align-self: stretch;
+        counter-increment: linecount;
+        padding-left: 74px;
+        /* font-family: Menlo, Monaco, "Courier New", monospace; */
+        /* color: rgba(0,0,0,.75); */
+        opacity: .5;
+      }
+
+      #included > div:before, #included > select:before {
+        content: counter(linecount);
+        font-family: Menlo, Monaco, "Courier New", monospace;
+        width: 48px;
+        position: absolute;
+        left: 0;
+        text-align: right;
+      }
+
+      #included > div:first-of-type {
+        padding-top: 6px;
+      }
+
+      #included > div:last-of-type {
+        padding-bottom: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="included">
+        <div class="line">
+          <select id="source_import">
+            <option value="{{script}}">import NGN from '{{script}}' (Transpiled)</option>
+            <option value="./src/main.js">import NGN from './src/main.js' (Raw Source)</option>
+          </select>
+        </div>
+      </div>
+      <div id="editor"></div>
+    </main>
+    <footer>
+      <nav class="toolbar">
+        <label>Output in DevTools Console</label>
+        <nav>
+          <button class="run">&#9658; Run</button>
+        </nav>
+      </nav>
+    </footer>
+    <script type="text/javascript">
+      require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.19.0/min/vs' } });
+
+      // Before loading vs/editor/editor.main, define a global MonacoEnvironment that overwrites
+      // the default worker url location (used when creating WebWorkers). The problem here is that
+      // HTML5 does not allow cross-domain web workers, so we need to proxy the instantiation of
+      // a web worker through a same-domain script
+      window.MonacoEnvironment = {
+        getWorkerUrl: function (workerId, label) {
+          return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+            self.MonacoEnvironment = {
+              baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.19.0/min/'
+            };
+            importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.19.0/min/vs/base/worker/workerMain.js');`
+          )}`;
+        }
+      };
+
+      require(["vs/editor/editor.main"], function () {
+        const offset = document.querySelectorAll('#included > div').length
+        const ide = monaco.editor.create(document.getElementById("editor"), {
+          value: "console.log(NGN)",
+          language: "javascript",
+          fontFamily: '"Fira Code", Menlo, Monaco, "Courier New", monospace',
+          fontSize: '16px',
+          lineNumbers: line => {
+            line += offset
+            return line
+          },
+          theme: 'vs-dark'
+        })
+
+        ide.getModel().updateOptions({ tabSize: 2 })
+        // ide.setTheme('dark')
+
+        ide.addAction({
+          // An unique identifier of the contributed action.
+          id: 'execute-script',
+
+          // A label of the action that will be presented to the user.
+          label: 'Execute Code',
+
+          // An optional array of keybindings for the action.
+          keybindings: [
+            monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+          ],
+
+          // Method that will be executed when the action is triggered.
+          // @param editor The editor instance is passed in as a convinience
+          run: () => window.run()
+        })
+
+        ide.onDidChangeModelContent(event => localStorage.setItem('ngn_test_code', ide.getValue()))
+
+        const section = document.querySelector('#console section') 
+        const output = document.querySelector('#console .output')
+        let executionCount = 0
+        
+        window.run = function () {
+          executionCount++
+
+          Function(`import(document.getElementById('source_import').value).then(__NGN__ => {
+            let NGN = __NGN__.default\n
+            ${ide.getValue()}
+          }).catch(e => {
+            const msg = new String(e.stack.toString())
+            console.warn('Original Error:\\n' + msg)
+            throw e
+          })`)()
+        }
+
+        let code = localStorage.getItem('ngn_test_code')
+        let imp = localStorage.getItem('ngn_test_import')
+
+        if (code !== null) {
+          ide.setValue(code)
+        }
+
+        if (imp !== null) {
+          let el = document.querySelector(`#source_import option[value='${imp}']`)
+
+          if (el) {
+            el.setAttribute('selected', true)
+          }
+        }
+
+        document.querySelector('button.run').addEventListener('click', window.run)
+        document.querySelector('#source_import').addEventListener('change', e => localStorage.setItem('ngn_test_import', document.getElementById('source_import').value))
+      })
+    </script>
+  </body>
+</html>

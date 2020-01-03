@@ -21,19 +21,23 @@ let configuration = [] // Rollup Configurations
 let output = `${outdir}/index.js`
 
 // Pre-process: Check if the build actually needs to be updated.
-// a. Check the timestamp of the last build file and determine if it is outdated.
-const lastbuildtime = fs.statSync(output).mtime.getTime()
+if (fs.existsSync(output)) {
+  // a. Check the timestamp of the last build file and determine if it is outdated.
+  const lastbuildtime = fs.statSync(output).mtime.getTime()
 
-// b. Check all source files for last modification dates
-const updatedfiles = ngn.walk(path.dirname(input)).some(filepath => {
-  if (fs.statSync(filepath).mtime.getTime() > lastbuildtime) {
-    return true
+  // b. Check all source files for last modification dates
+  const updatedfiles = ngn.walk(path.dirname(input)).filter(filepath => {
+    return fs.statSync(path.resolve(filepath)).mtime.getTime() > lastbuildtime
+  })
+
+  if (fs.statSync(__filename).mtime.getTime() > lastbuildtime) {
+    updatedfiles.push(__filename)
   }
-})
 
-if (!updatedfiles) {
-  console.log('Build is unnecessary (no changes since last build).')
-  process.exit(0)
+  if (updatedfiles.length === 0) {
+    console.log('Build is unnecessary (no changes since last build).')
+    process.exit(0)
+  }
 }
 
 // 1. Clean prior builds
@@ -44,8 +48,12 @@ const plugins = [
   ngn.only('node'),
   ngn.applyVersion(ngn.version),
   babel({
-    plugins: [['@babel/plugin-proposal-class-properties', { 'loose': false }]],
-    externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet']
+    // presets: [['@babel/preset-env', { targets: { node: true }, debug: true }]],
+    plugins: [
+      ['@babel/plugin-proposal-class-properties', { 'loose': false }],
+      ['@babel/plugin-proposal-private-methods', { 'loose': false }]
+    ],
+    externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet', 'classPrivateMethods']
   })
 ]
 

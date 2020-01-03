@@ -28,8 +28,12 @@ const plugins = [
   ngn.only('node'),
   ngn.applyVersion(ngn.version),
   babel({
-    plugins: [['@babel/plugin-proposal-class-properties', { 'loose': false }]],
-    externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet']
+    presets: [['@babel/preset-env', { targets: { node: true } }]],
+    plugins: [
+      ['@babel/plugin-proposal-class-properties', { 'loose': false }],
+      ['@babel/plugin-proposal-private-methods', { 'loose': false }]
+    ],
+    externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet', 'classPrivateMethods']
   }),
   terser({
     module: true,
@@ -51,6 +55,7 @@ configuration.push({
   input,
   plugins,
   output: {
+    // banner: config.banner,
     file: `${outdir}/${ngn.name}-${ngn.version}.min.js`,
     format: 'esm',
     sourcemap: true
@@ -63,6 +68,7 @@ configuration.push({
   input,
   plugins,
   output: {
+    // banner: config.banner,
     file: `${outdir}-legacy/${ngn.name}-${ngn.version}.min.js`,
     format: 'cjs',
     sourcemap: true

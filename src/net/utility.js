@@ -12,10 +12,13 @@ import os from 'os'
  * @private
  */
 class NetworkUtilities {
+  #hostname = null
+  #networkInterfaces = []
+  
   constructor () {
     Object.defineProperties(this, {
-      hostname: NGN.private(null),
-      networkInterfaces: NGN.private([]),
+      // hostname: NGN.private(null),
+      // networkInterfaces: NGN.private([]),
       UrlPattern: NGN.const(/^(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/), // eslint-disable-line no-useless-escape
       HttpMethods: NGN.const([ // eslint-disable-line no-unused-vars
         'OPTIONS',
@@ -30,13 +33,13 @@ class NetworkUtilities {
     })
 
     /* node-only */
-    this.hostname = os.hostname() // eslint-disable-line comma-style
+    this.#hostname = os.hostname() // eslint-disable-line comma-style
     /* end-node-only */
     /* browser-only */
-    this.hostname = window.location.host // eslint-disable-line comma-style
+    this.#hostname = window.location.host // eslint-disable-line comma-style
     /* end-browser-only */
 
-    this.networkInterfaces = [
+    this.#networkInterfaces = [
       '127.0.0.1'
       , 'localhost' // eslint-disable-line comma-style
       /* node-only */
@@ -57,13 +60,21 @@ class NetworkUtilities {
 
       for (let x = 0; x < iface.length; x++) {
         if (iface[x].family === 'IPv4') {
-          this.networkInterfaces.push(iface[x].address)
+          this.#networkInterfaces.push(iface[x].address)
         }
       }
     }
     /* end-node-only */
 
-    this.networkInterfaces = NGN.dedupe(this.networkInterfaces)
+    this.#networkInterfaces = NGN.dedupe(this.#networkInterfaces)
+  }
+
+  get networkInterfaces () {
+    return this.#networkInterfaces
+  }
+
+  get hostname () {
+    return this.#hostname
   }
 
   /**
@@ -80,7 +91,7 @@ class NetworkUtilities {
 
     if (/^(\.|\/|\\).+/.test(url)) {
       /* node-only */
-      url = `http://${this.hostname}/${url}`
+      url = `http://${this.#hostname}/${url}`
       /* end-node-only */
       /* browser-only */
       const path = window.location.pathname.split('/')
@@ -184,8 +195,8 @@ class NetworkUtilities {
 
       url.hostname = url.hostname.split('@').pop()
 
-      this.user = credentials[1]
-      this.secret = credentials[2]
+      this.username = credentials[1]
+      this.password = credentials[2]
       // this.applyAuthorizationHeader()
     }
 
@@ -222,12 +233,12 @@ class NetworkUtilities {
     }
 
     /* node-only */
-    if (this.networkInterfaces.indexOf(uri.hostname) < 0) {
+    if (this.#networkInterfaces.indexOf(uri.hostname) < 0) {
       return true
     }
     /* end-node-only */
 
-    return uri.hostname !== this.hostname
+    return uri.hostname !== this.#hostname
   }
 }
 

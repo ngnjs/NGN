@@ -466,7 +466,7 @@ export default class NGNDataEntity extends EventEmitter { // eslint-disable-line
 
       Object.defineProperty(this.METADATA, 'IdentificationValue', NGN.get(() => {
         if (autoIdValue === null) {
-          autoIdValue = NGN.DATA.UTILITY.UUID()
+          autoIdValue = NGN.UTILITY.UUID()
         }
 
         return autoIdValue
