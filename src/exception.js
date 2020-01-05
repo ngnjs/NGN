@@ -35,7 +35,8 @@ export default class CustomException extends Error { // eslint-disable-line
 
     this.hasOwnProperty('custom') && delete this.custom // eslint-disable-line no-prototype-builtins
 
-    if (process !== undefined || Error.prepareStackTrace) {
+    /* browser-only */
+    if (Error.prepareStackTrace) {
       // Capture the stack trace on a new error so the detail can be saved as a structured trace.
       Error.prepareStackTrace = function (_, stack) { return stack }
 
@@ -64,6 +65,7 @@ export default class CustomException extends Error { // eslint-disable-line
       // Enable stack trace
       Error.captureStackTrace(this)
     }
+    /* end-browser-only */
   }
 
   /*

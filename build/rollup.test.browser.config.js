@@ -58,18 +58,36 @@ ngn.supportedBrowsers().forEach(edition => {
   plugins.push(babel({
     presets: [['@babel/env']],
     plugins: [
+      ['@babel/plugin-transform-flow-strip-types'],
       ['@babel/plugin-proposal-class-properties', { 'loose': false }],
       ['@babel/plugin-proposal-private-methods', { 'loose': false }]
     ]
     // externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet']
   }))
 
+  // toplevel: true,
+  //   output: {
+  //   ascii_only: true
+  // },
+  // compress: {
+  //   pure_funcs: ['makeMap']
+  // }
+
   plugins.push(terser({
     module: true,
-    mangle: {
-      properties: true
-    },
+    // mangle: {
+    //   toplevel: true
+    //   // properties: {
+    //   //   keep_fnames: true
+    //   // }
+    // },
+    // output: {
+    //   ascii_only: true
+    // },
     compress: {
+      module: true,
+      keep_fnames: true,
+      keep_classnames: true,
       drop_console: true,
       passes: 10,
       warnings: true

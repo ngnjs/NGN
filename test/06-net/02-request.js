@@ -9,7 +9,7 @@ const uri = JSON.parse(fs.readFileSync(path.resolve('./package.json')).toString(
 const hostname = (new RegExp('://(.*?)/', 'i')).exec(uri.get)[1]
 
 NGN.BUS.on(NGN.WARNING_EVENT, function (msg) {
-  console.log('\n\n\n\n:::WARNING:::', msg)
+  console.warn('\n\n\n\n:::WARNING:::', msg)
 })
 
 test('NGN.NET.Request', function (t) {

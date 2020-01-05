@@ -64,6 +64,7 @@ export default class NGNRelationshipField extends DataField { // eslint-disable-
         NGN.typeof(cfg.join[0]) !== 'model'
       )
     ) {
+      console.log('>>>>>>>>>', cfg.type)
       throw new InvalidConfigurationError(`The join specified is not a valid NGN.DATA.Model, NGN.DATA.Store, or collection. It is a ${NGN.typeof(cfg.join)}"`)
     }
 

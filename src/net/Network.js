@@ -47,19 +47,19 @@ export default class Network { // eslint-disable-line
         cfg.url = NGN.coalesceb(cfg.url, hostname) // eslint-disable-line no-undef
 
         return new NGN.NET.Request(cfg)
-      }),
-
-      // Helper aliases (undocumented)
-      OPTIONS: NGN.privateconst(this.options.bind(this)),
-      HEAD: NGN.privateconst(this.head.bind(this)),
-      GET: NGN.privateconst(this.get.bind(this)),
-      POST: NGN.privateconst(this.post.bind(this)),
-      PUT: NGN.privateconst(this.put.bind(this)),
-      DELETE: NGN.privateconst(this.delete.bind(this)),
-      TRACE: NGN.privateconst(this.trace.bind(this)),
-      JSON: NGN.privateconst(this.json.bind(this)),
-      JSONP: NGN.privateconst(this.jsonp.bind(this))
+      })
     })
+
+    // Helper aliases (undocumented)
+    NGN.createAlias(this, 'OPTIONS', this.options)
+    NGN.createAlias(this, 'HEAD', this.head)
+    NGN.createAlias(this, 'GET', this.get)
+    NGN.createAlias(this, 'POST', this.post)
+    NGN.createAlias(this, 'PUT', this.put)
+    NGN.createAlias(this, 'DELETE', this.delete)
+    NGN.createAlias(this, 'TRACE', this.trace)
+    NGN.createAlias(this, 'JSON', this.json)
+    NGN.createAlias(this, 'JSONP', this.jsonp)
   }
 
   get Request () {
@@ -257,6 +257,11 @@ export default class Network { // eslint-disable-line
    * the DOM. However; this may work with some headless browsers.
    * @param {string} url
    * The URL of the JSONP endpoint.
+   * @param {string} [callbackParameter=callback]
+   * Optionally specify an alternative callback parameter name. This will be
+   * appended to the URL query parameters when the request is made.
+   * For example:
+   * `https://domain.com?[callbackParameter]=generated_function_name`
    * @param {function} callback
    * Handles the response.
    * @param {Error} callback.error
@@ -266,12 +271,17 @@ export default class Network { // eslint-disable-line
    * The response.
    * @environment browser
    */
-  jsonp (url, callback) {
+  jsonp (url, callbackParameter = 'callback', callback) {
     /* node-only */
     NGN.WARN('NET.Request', 'An unsupported JSONP request was made.')
     callback(new Error('JSONP unsupported in Node-like environments.'))
     /* end-node-only */
     /* browser-only */
+    if (NGN.isFn(callbackParameter)) {
+      callback = callbackParameter
+      callbackParameter = 'callback'
+    }
+
     const fn = 'jsonp_callback_' + Math.round(100000 * Math.random())
 
     window[fn] = (data) => {

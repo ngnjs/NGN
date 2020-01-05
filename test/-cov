@@ -1,0 +1,77 @@
+TAP version 13
+ok 1 - ./01-sanity/01-sanity.js # time=457.827ms {
+    # Namespace
+    ok 1 NGN namespace is recognized.
+    ok 2 NGN missing dependency error is recognized.
+    # Method Existance
+    ok 3 NGN.global exists.
+    ok 4 NGN.define exists.
+    ok 5 NGN.public exists.
+    ok 6 NGN.private exists.
+    ok 7 NGN.const exists.
+    ok 8 NGN.privateconst exists.
+    ok 9 NGN.get exists.
+    ok 10 NGN.set exists.
+    ok 11 NGN.getset exists.
+    ok 12 NGN.extend exists.
+    ok 13 NGN.inherit exists.
+    ok 14 NGN.slice exists.
+    ok 15 NGN.splice exists.
+    ok 16 NGN.nullIf exists.
+    ok 17 NGN.nullif exists.
+    ok 18 NGN.converge exists.
+    ok 19 NGN.coalesce exists.
+    ok 20 NGN.coalesceb exists.
+    ok 21 NGN.nodelike exists.
+    ok 22 NGN.dedupe exists.
+    ok 23 NGN.typeof exists.
+    ok 24 NGN.forceArray exists.
+    ok 25 NGN.forceBoolean exists.
+    ok 26 NGN.forceNumber exists.
+    ok 27 NGN.processStackItem exists.
+    ok 28 NGN.stack exists.
+    ok 29 NGN.isFn exists.
+    ok 30 NGN.wrap exists.
+    ok 31 NGN.wrapClass exists.
+    ok 32 NGN.deprecate exists.
+    ok 33 NGN.deprecateClass exists.
+    ok 34 NGN.getObjectMissingPropertyNames exists.
+    ok 35 NGN.getObjectExtraneousPropertyNames exists.
+    ok 36 NGN.objectHasAll exists.
+    ok 37 NGN.objectHasAny exists.
+    ok 38 NGN.objectHasExactly exists.
+    ok 39 NGN.objectRequires exists.
+    ok 40 NGN.needs exists.
+    ok 41 NGN.createAlias exists.
+    ok 42 NGN.createException exists.
+    ok 43 NGN.getType exists.
+    ok 44 NGN.platform exists.
+    ok 45 NGN.LEDGER_EVENT exists.
+    ok 46 NGN.WARNING_EVENT exists.
+    ok 47 NGN.INFO_EVENT exists.
+    ok 48 NGN.ERROR_EVENT exists.
+    ok 49 NGN.INTERNAL_EVENT exists.
+    ok 50 NGN.WARN exists.
+    ok 51 NGN.INFO exists.
+    ok 52 NGN.ERROR exists.
+    ok 53 NGN.INTERNAL exists.
+    ok 54 NGN.LABELS exists.
+    ok 55 NGN.EventEmitter exists.
+    ok 56 NGN.BUS exists.
+    ok 57 NGN.NET exists.
+    ok 58 NGN.DATA exists.
+    ok 59 NGN.Task exists.
+    ok 60 NGN.Tasks exists.
+    ok 61 NGN.Queue exists.
+    ok 62 NGN.UTILITY exists.
+    ok 63 NGN.version exists.
+    
+    1..63
+    # tests 63
+    # pass  63
+    
+    # ok
+}
+
+1..1
+# time=560.846ms

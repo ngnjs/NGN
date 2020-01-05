@@ -5,6 +5,7 @@ import multi from '@rollup/plugin-multi-entry'
 
 const config = JSON.parse(fs.readFileSync('../build/config.json'))
 const pkg = JSON.parse(fs.readFileSync('../package.json'))
+const testpkg = JSON.parse(fs.readFileSync('./package.json'))
 const file = path.resolve(path.join(config.testOutput, '.testsuite', 'browser-test.js'))
 
 // if (fs.existsSync(path.dirname(file))) {
@@ -44,9 +45,12 @@ external.push('../../.node/index.js')
 // external.push('../.browser/index.js')
 // external.push('../../.browser/index.js')
 
+const tests = new Set(process.argv.filter((val, i, args) => i > 0 && /-+test/i.test(args[i - 1])).map(i => i.toLowerCase()))
+const input = tests.size === 0 ? ['./0*-*/*-*.js'] : Array.from(tests).map(test => `./*-${test}/*-*.js`)
+
 async function build () {
   const bundle = await rollup.rollup({
-    input: path.resolve('./*-*/*-*.js'),
+    input,
     external,
     plugins: [multi()]
   })
@@ -56,14 +60,24 @@ async function build () {
   await bundle.write(outputOptions)
 
   // Override the sourcemapping to work w/ CJS
-  const content = /* `import NGN from './ngn-${pkg.version}.min.js'\n` + */fs.readFileSync(file)
+  const content = /* `import NGN from './.browser/ngn-${pkg.version}.min.js'\n` + */fs.readFileSync(file)
     .toString()
-    .replace("require('source-map-support/register.js');", '\n')
-    .replace(/var NGN\s+=\s+_interop.*\n?/gi, '')
-    // .replace('.node/index.js', `.browser/ngn-${pkg.version}.min.js`)
-    // .replace("require('source-map-support/register.js');", "var sourcemap = require('source-map-support');\nsourcemap.install();\n")
+    .replace("require('source-map-support/register.js');", '\n') // Not supported by browserify
+    .replace(/var NGN\s+=\s+_interop.*require.*\n?/i, '') // Remove NGN reference so it can be included from the appropriate build file at runtime.
+    .replace(/const\s+(.*)\s+?=\s+?JSON.parse\(fs.readFileSync\(.*endpoints/gi, 'const $1 = __ENDPOINTS__;') // This replacement is done to add the appropriate endpoints from package.json. Browserify cannot resolve the file at runtime, so it must be prebuilt (see prep script below).
 
-  fs.writeFileSync(file, content)
+  // .replace(/(var NGN\s+=\s+_interop.*require\(['|"])(.*)(['|"].*\n?)/, `$1./.browser/ngn-${pkg.version}.min.js$3`)
+  // .replace('.node/index.js', `.browser/ngn-${pkg.version}.min.js`)
+  // .replace("require('source-map-support/register.js');", "var sourcemap = require('source-map-support');\nsourcemap.install();\n")
+
+  // The setTimeout is used to force Karma to wait for NGN to be loaded by the prep script.
+  fs.writeFileSync(file, `setTimeout(function () {\n${content}\n}, 600)`)
 }
 
 build()
+
+fs.writeFileSync('./.testsuite/test-prep.js', `
+import NGN from '../.browser/ngn-${pkg.version}.min.js'
+window.NGN = NGN;
+window.__ENDPOINTS__ = ${JSON.stringify(testpkg.endpoints)};
+`)

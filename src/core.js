@@ -1429,8 +1429,8 @@ NGN.createException({
 })
 
 // Self reference to make NGN globally accessible in any environment.
-/* non-esm-only */
-NGN.global.NGN = NGN
-/* end-non-esm-only */
+// /* non-esm-only */
+// NGN.global.NGN = NGN
+// /* end-non-esm-only */
 
 export { NGN as default }

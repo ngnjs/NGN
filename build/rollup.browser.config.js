@@ -37,10 +37,11 @@ ngn.supportedBrowsers().forEach(edition => {
 
   process.env.BROWSERSLIST_ENV = edition
   plugins.push(babel({
-    presets: [['@babel/env']],
+    // presets: [['@babel/env', { targets: { node: true } }]],
     plugins: [
-      ['@babel/plugin-proposal-class-properties', { 'loose': false }],
-      ['@babel/plugin-proposal-private-methods', { 'loose': false }]
+      ['@babel/plugin-transform-flow-strip-types'],
+      ['@babel/plugin-proposal-class-properties'/*, { 'loose': false } */],
+      ['@babel/plugin-proposal-private-methods'/*, { 'loose': false } */]
     ]
     // externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet']
   }))
@@ -52,7 +53,7 @@ ngn.supportedBrowsers().forEach(edition => {
     },
     compress: {
       drop_console: true,
-      passes: 10,
+      passes: 2,
       warnings: true
     }
   }))

@@ -43,6 +43,8 @@ test('NGN.EventEmitter Sanity Checks', function (t) {
 test('NGN.EventEmitter Basic Events', function (t) {
   const tasks = new Tasks()
 
+  t.timeoutAfter(60000)
+
   tasks.add('clear()', function (next) {
     NGN.BUS.clear()
     NGN.BUS.on('test', () => {})
@@ -414,6 +416,9 @@ test('NGN.EventEmitter Basic Events', function (t) {
   tasks.on('complete', function () {
     t.end()
   })
+
+  tasks.on('timeout', x => console.log(x))
+  tasks.on('aborted', x => console.log('ABORTED', x))
 
   tasks.on('steptimeout', function (step) {
     t.fail(step + ' timed out.')
