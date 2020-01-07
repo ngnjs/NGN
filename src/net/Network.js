@@ -240,12 +240,12 @@ export default class Network { // eslint-disable-line
 
     this.preflight(request)
 
-    request.send((response) => {
+    request.send(response => {
       try {
         callback(null, JSON.parse(response.responseText))
       } catch (e) {
         e.response = NGN.coalesce(response.responseText)
-        callback(e, null)
+        callback(e)
       }
     })
   }

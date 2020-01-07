@@ -22,6 +22,12 @@ export default class Request { // eslint-disable-line no-unused-vars
   #user = null
   #secret = null
   #bearerAccessToken = null
+  #cacheMode = 'default'
+  #corsMode = 'cors'
+  referrer = null
+  #referrerPolicy = 'unsafe-url'
+  sri = null
+  #controller
 
   constructor (cfg = {}) {
     // Require URL and HTTP method
@@ -115,6 +121,33 @@ export default class Request { // eslint-disable-line no-unused-vars
      * If this is configured, it will override any basic auth settings.
      */
     this.#bearerAccessToken = NGN.coalesceb(cfg.accessToken)
+
+    /**
+     * @cfgproperty {string} [cacheMode=default] (default, no-store, reload, no-cache, force-cache, only-if-cached)
+     * The [caching mechanism](https://developer.mozilla.org/en-US/docs/Web/API/Request/cache) applied to the request.
+     */
+    this.cacheMode = NGN.coalesce(cfg.cacheMode, 'default')
+    
+    /**
+     * @cfgproperty {string} [referrer]
+     * The referrer URL to send to the destination. By default, this will be the current URL
+     * of the page or the hostname of the process.
+     * See the [MDN overview of referrers](https://hacks.mozilla.org/2016/03/referrer-and-cache-control-apis-for-fetch/) for details.
+     */
+    this.referrer = NGN.coalesceb(cfg.referrer)
+
+    /**
+     * @cfgproperty {string} [referrerPolicy=unsafe-url] (no-referrer, no-referrer-when-downgrade, same-origin, origin, strict-origin, origin-when-cross-origin, strict-origin-when-cross-origin, unsafe-url)
+     * Specify the [referrer policy](https://w3c.github.io/webappsec-referrer-policy/#referrer-policies). This can be empty/null.
+     */
+    this.referrerPolicy = NGN.coalesce(cfg.referrerPolicy)
+
+    /**
+     * @cfgproperty {string} [sri]
+     * The [subresource integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) value of the request.
+     * Example: `sha256-BpfBw7ivV8q2jLiT13fxDYAe2tJllusRSZ273h2nFSE=`
+     */
+    this.sri = NGN.coalesceb(cfg.sri, cfg.integrity)
 
     Object.defineProperties(this, {
       /**
@@ -323,6 +356,69 @@ export default class Request { // eslint-disable-line no-unused-vars
     if (NGN.coalesce(this.#user, this.#secret, this.#bearerAccessToken) !== null) {
       this.applyAuthorizationHeader()
     }
+  }
+
+  get cacheMode () {
+    return this.#cacheMode
+  }
+
+  set cacheMode (value) {
+    if (value === null || value === undefined || typeof value !== 'string') {
+      throw new Error(`Cache mode must be default, no-store, reload, no-cache, force-cache, or only-if-cached. "${value}" is invalid.`)
+    }
+
+    value = value.trim().toLowerCase()
+
+    if (['default', 'no-store', 'reload', 'no-cache', 'force-cache', 'only-if-cached'].indexOf(value) < 0) {
+      throw new Error(`"${value}" is an unrecognized cache mode.Must be one of: default, no-store, reload, no-cache, force-cache, or only-if-cached.`)
+    } else {
+      this.#cacheMode = value
+    }
+
+    if (value === 'only-if-cached' && this.#corsMode !== 'same-origin') {
+      this.#corsMode = 'same-origin'
+      NGN.WARN('Request\'s CORS mode automatically set to "same-origin" for caching mode of "only-if-cached".')
+    }
+  }
+
+  get corsMode () {
+    return this.#corsMode
+  }
+
+  set corsMode (value) {
+    if (value === null || value === undefined || typeof value !== 'string') {
+      throw new Error(`CORS mode must be cors, no-cors, or same-origin. "${value}" is invalid.`)
+    }
+
+    if (this.#cacheMode !== 'only-if-cached') {
+      value = value.trim().toLowerCase()
+      if (['cors', 'no-cors', 'same-origin'].indexOf(value) < 0) {
+        throw new Error(`"${value} is an invalid CORS mode. Must be one of: cors, no-cors, same-origin.`)
+      }
+    }
+  }
+
+  get referrerPolicy() {
+    return this.#referrerPolicy
+  }
+
+  set referrerPolicy(value) {
+    if (NGN.coalesceb(value) === null) {
+      this.#referrerPolicy = null
+      return
+    }
+
+    if (value === null || value === undefined || typeof value !== 'string') {
+      throw new Error(`Referrer Policy mode must be no-referrer, no-referrer-when-downgrade, same-origin, origin, strict-origin, origin-when-cross-origin, strict-origin-when-cross-origin, unsafe-url, null, or an empty/blank string. "${value}" is invalid.`)
+    }
+
+    value = value.trim().toLowerCase()
+
+    if (['no-referrer', 'no-referrer-when-downgrade', 'same-origin', 'origin', 'strict-origin', 'origin-when-cross-origin', 'strict-origin-when-cross-origin', 'unsafe-url'].indexOf(value) < 0) {
+      throw new Error(`"${value}" is an invalid referrer policy. Must be one of: no-referrer, no-referrer-when-downgrade, same-origin, origin, strict-origin, origin-when-cross-origin, strict-origin-when-cross-origin, unsafe-url, null, or an empty/blank string.`)
+    }
+
+    this.#referrerPolicy = value
   }
 
   get maxRedirects () {
@@ -655,10 +751,16 @@ export default class Request { // eslint-disable-line no-unused-vars
     this.url = this.uri.replace(new RegExp(`${key}=(.[^&]+)|\\?${key}|&${key}`, 'gi'), '')
   }
 
+  abort () {
+    if (this.#controller !== null && !this.#controller.signal.aborted) {
+      this.#controller.abort()
+    }
+  }
+
   startMonitor () {
     if (this.timer === null) {
       this.timer = setTimeout(() => {
-        throw new Error('Timed out retrieving ' + this.url)
+        throw new Error('Timed out requesting ' + this.url)
       }, this.timeout)
     }
   }
@@ -706,6 +808,31 @@ export default class Request { // eslint-disable-line no-unused-vars
 
     const http = this.protocol === 'https' ? libhttps : libhttp
 
+    if (this.referrer !== null && this.referrer.trim().length > 0) {
+      let shouldSendReferral = true
+      let shouldStripReferral = true // strip of username:password, scheme, fragment
+
+      switch (this.referrerPolicy) {
+        case 'no-referrer':
+          shouldSendReferral = false
+          break
+        case 'same-origin':
+          shouldSendReferral = this.isCrossOrigin(this.url)
+          break
+        // case ''
+      }
+      
+      if (shouldSendReferral) {
+        let referrer = this.referrer
+
+        if (shouldStripReferral) {
+          
+        }
+
+        this.setHeader('referer', referrer, true)
+      }
+    }
+
     const params = NGN.coalesceb(this.query)
     const reqOptions = {
       hostname: this.hostname,
@@ -722,10 +849,8 @@ export default class Request { // eslint-disable-line no-unused-vars
     const req = http.request(reqOptions, (response) => {
       response.setEncoding('utf8')
 
-      let body = ''
-      response.on('data', (chunk) => {
-        body += chunk
-      })
+      let resbody = ''
+      response.on('data', (chunk) => { resbody += chunk })
 
       response.on('end', () => {
         switch (response.statusCode) {
@@ -770,8 +895,8 @@ export default class Request { // eslint-disable-line no-unused-vars
             return callback({ // eslint-disable-line standard/no-callback-literal
               status: response.statusCode,
               statusText: NGN.coalesce(response.statusText),
-              responseText: body,
-              responseXML: body,
+              responseText: resbody,
+              responseXML: resbody,
               readyState: 4
             })
         }
@@ -796,92 +921,114 @@ export default class Request { // eslint-disable-line no-unused-vars
 
     this.startMonitor()
 
-    if (this.body) {
-      req.write(this.body)
+    if (body) {
+      req.write(body)
     }
 
     req.end()
     /* end-node-only */
     /* browser-only */
-    const xhr = new XMLHttpRequest()
-    const me = this
-    let responded = false
-
-    // Apply readystate change handler
-    xhr.onreadystatechange = function () {
-      if (responded) {
-        return
-      }
-
-      if (xhr.readyState === XMLHttpRequest.DONE) {
-        responded = true
-
-        if (xhr.status === 0) {
-          NGN.WARN(`Request Error: ${me.method} ${me.url} (likely a CORS issue).`)
-        }
-
-        if (NGN.isFn(callback)) {
-          callback(xhr)
-        }
-      }
+    // Create the request configuration
+    let init = {
+      method: this.method,
+      // CORS mode must be same-origin if the cache mode is "only-if-cached": https://developer.mozilla.org/en-US/docs/Web/API/Request/cache
+      mode: this.#cacheMode === 'only-if-cached' ? 'same-origin' : this.#corsMode,
+      cache: this.#cacheMode,
+      redirect: 'follow',
+      referrer: NGN.coalesce(this.referrer, window.location.href),
+      referrerPolicy: NGN.coalesceb(this.#referrerPolicy, 'unsafe-url')
     }
-
-    // Apply error handler
-    xhr.onerror = function (e) {
-      NGN.WARN('NET.error', e)
-
-      if (!responded && NGN.isFn(callback)) {
-        callback(xhr)
-      }
-
-      responded = true
-    }
-
-    xhr.ontimeout = function (e) {
-      responded = true
-      callback(xhr)
-    }
-
-    xhr.timeout = this.timeout
-
-    // Open the request
-    xhr.open(this.method, this.url, true)
-
-    // Apply withCredentials
-    xhr.withCredentials = this.withCredentials
 
     // Apply Request Headers
     if (this.#headers !== null) {
-      const headers = Object.keys(this.#headers)
-      for (let i = 0; i < headers.length; i++) {
-        xhr.setRequestHeader(headers[i], this.#headers[headers[i]])
-      }
+      init.headers = new Headers()
+      Object.keys(this.#headers).forEach(header => init.headers.append(header, this.#headers[header]))
     }
 
-    // Write the body (which may be null) & send the request
-    xhr.send(body)
+    // Apply request body (if applicable)
+    if (this.#requestbody !== null && ['HEAD', 'GET'].indexOf(init.method) < 0) {
+      init.body = this.#requestbody
+    }
 
-    // // Create the request configuration
-    // let req = {
-    //   method: this.method,
-    //   mode: 'cors' //TODO: Make a configuration property for this.
-    // }
+    // Apply timer
+    if (this.timeout > 0) {
+      this.#controller = new AbortController()
+      
+      init.signal = this.#controller.signal
+      init.signal.addEventListener('abort', e => {
+        // Reset the controller for the next request.
+        this.#controller = null
+      })
+      
+      setTimeout(this.abort, this.timeout)
+    }
 
-    // // Apply Request Headers
-    // if (this.#headers !== null) {
-    //   req = new Headers()
-    //   Object.keys(this.#headers).forEach(header => req.headers.append(header, this.#headers[header]))
-    // }
+    // Apply credentials
+    init.credentials = this.withCredentials ? 'include' : 'same-origin'
 
-    // // Apply request body (if applicable)
-    // if (this.#requestbody !== null) {
-    //   req.body = this.#requestbody
-    // }
+    // Apply subresource identity
+    if (NGN.coalesceb(this.sri, this.integrity)) {
+      this.integrity = NGN.coalesce(this.sri, this.integrity)
+    }
 
+    // Execute the request
+    let result
+    fetch(this.url, init)
+      .then(response => {
+        result = {
+          ok: response.ok,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          redirected: response.redirected,
+          type: response.type,
+          url: response.url,
+          body,
+          responseText: ''
+        }
 
+        switch (this.responseType) {
+          case 'arraybuffer':
+            return response.arrayBuffer()
+          case 'document':
+          case 'blob':
+            return response.blob()
+          // case 'json':
+          //   return response.json()
+        }
 
-    // // Execute the request
-    // WindowOrWorkerGlobalScope.fetch(this.url, requestConfig)
+        return response.text()
+      })
+      .then(responseBody => {
+        switch (this.responseType) {
+          case 'document':
+            if (/^text\/.*/.test(responseBody.type)) {
+              responseBody.text()
+                .then(data => {
+                  request.responseText = data
+                  callback(request)
+                })
+                .catch(callback)
+              return
+            }
+          case 'arraybuffer':
+          case 'blob':
+            request.body = new Blob(responseBody.slice(), { type: NGN.coalesce(result.headers['content-type']) })
+            break
+
+          default:
+            result.responseText = responseBody
+        }
+        
+        callback(result)
+      })
+      .catch(e => {
+        if (e.name === 'AbortError') {
+          callback(new Error(`Timed out after ${this.timeout}ms.`))
+        } else {
+          callback(e)
+        }
+      })
     /* end-browser-only */
   }
 }

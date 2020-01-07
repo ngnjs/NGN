@@ -81,16 +81,11 @@
     "ignore": [
       "_*",
       "_**/*",
-      "test/lib/**/*",
+      ".**/*",
       "node_modules",
-      "dist/**/*",
-      "gulpfile.js",
-      "src/common/data/WIP/**/*",
-      "src/common/data/current/**/*",
-      "rollup*.js",
       "karma.conf.js",
-      "build.js",
-      "deploy.js"
+      "karma.conf.cjs",
+      "build.js"
     ],
     "globals": [
       "window",
@@ -139,7 +134,7 @@
     "post": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
     "put": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
     "del": "http://mockbin.org/bin/3c48cfa8-fc16-4bb6-87c2-9e3fe817444f",
-    "json": "https://www.chromestatus.com/omaha_data",
+    "json": "https://jsonplaceholder.typicode.com/todos/1",
     "jsonp": "http://www.mocky.io/v2/5e112bd235000058001e6a1c",
     "x.jsonp": "https://stats.fenixwebserver.com/http/test",
     "trace": "http://mockbin.org/bin/bfdc4273-ff50-4141-bef6-28810a6291dd"

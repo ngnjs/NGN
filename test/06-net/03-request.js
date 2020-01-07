@@ -125,6 +125,7 @@ test('NGN.NET Basic Requests', function (t) {
     try {
       NGN.NET.OPTIONS(uri.options, function (res) {
         t.pass('NGN.NET.OPTIONS alias points to NGN.NET.options')
+        console.log(res)
         t.ok(res.status === 200, 'NGN.NET.OPTIONS sends and receives. Received: ' + res.status)
         next()
       })
@@ -211,9 +212,10 @@ test('NGN.NET Basic Requests', function (t) {
   })
 
   reqs.add('JSON', function (next) {
+    t.comment(uri.json)
     NGN.NET.JSON(uri.json, function (err, data) {
       t.pass('NGN.NET.JSON alias points to NGN.NET.json')
-      t.ok(err === null, 'NGN.NET.JSON sends and receives.' + (err !== null ? err.message : ''))
+      t.ok(err === null, 'NGN.NET.JSON sends and receives. ' + (err !== null ? err.message : ''))
       next()
     })
   })

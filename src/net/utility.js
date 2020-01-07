@@ -186,7 +186,9 @@ class NetworkUtilities {
       hostname: NGN.coalesce(part[4], hostname),
       path: NGN.coalesceb(part[5], '/'),
       query: NGN.coalesceb(part[7]),
-      hash: NGN.coalesceb(part[9])
+      hash: NGN.coalesceb(part[9]),
+      username: '',
+      password: ''
     }
 
     // URL contains a username/password.
@@ -197,10 +199,16 @@ class NetworkUtilities {
 
       this.username = credentials[1]
       this.password = credentials[2]
+      url.username = credentials[1]
+      url.password = credentials[2].replace(/./gi, '*')
       // this.applyAuthorizationHeader()
     }
 
     url.port = NGN.coalesce(url.hostname.match(/:([0-9]{1,6})/), url.protocol === 'https' ? 443 : 80)
+
+    if (Array.isArray(url.port)) {
+      url.port = url.port.pop()
+    }
 
     if (url.hostname.indexOf(':') > 0) {
       url.hostname = url.hostname.split(':')[0]

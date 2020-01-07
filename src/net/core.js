@@ -1,3 +1,4 @@
+import URL from './URL.js'
 import Request from './Request.js'
 import Network from './Network.js'
 import Resource from './Resource.js'
@@ -14,9 +15,10 @@ import Utility from './Utility.js'
 Network.prototype.Resource = Resource
 Network.prototype.Plugin = Network
 Network.prototype.Utility = Utility
+Network.prototype.URL = URL
 
 const normalizeUrl = Utility.normalizeUrl
 const networkInterfaces = Utility.networkInterfaces
 const Library = new Network()
 
-export { Library, normalizeUrl, networkInterfaces, Request, Resource }
+export { Library, normalizeUrl, networkInterfaces, Request, Resource, URL }

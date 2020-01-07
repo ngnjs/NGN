@@ -11,6 +11,7 @@ test('NGN.NET Sanity Checks', function (t) {
   t.ok(typeof NGN.NET.Plugin === 'function', 'NGN.NET.Plugin class available for extension.')
   t.ok(typeof NGN.NET.Resource === 'function', 'NGN.NET.Resource class available.')
   t.ok(typeof NGN.NET.Request === 'function', 'NGN.NET.Request class available.')
+  t.ok(typeof NGN.NET.URL === 'function', 'NGN.NET.URL class available.')
   t.ok(typeof NGN.NET.request === 'function', 'NGN.NET.request method available.')
   t.ok(typeof NGN.NET.send === 'function', 'NGN.NET.send method available.')
   t.ok(typeof NGN.NET.preflight === 'function', 'NGN.NET.preflight method available.')

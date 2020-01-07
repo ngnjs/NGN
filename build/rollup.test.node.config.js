@@ -5,8 +5,7 @@ import NgnPlugin from './rollup-plugin-ngn.js'
 import babel from 'rollup-plugin-babel'
 
 // Install source map support
-import { install } from 'source-map-support'
-install()
+import 'source-map-support/register.js'
 
 // Identify source file
 const input = path.resolve('../src/main.js')
@@ -48,12 +47,11 @@ const plugins = [
   ngn.only('node'),
   ngn.applyVersion(ngn.version),
   babel({
-    // presets: [['@babel/preset-env', { targets: { node: true }, debug: true }]],
+    presets: [['@babel/preset-env', { targets: { node: true } }]],
     plugins: [
       ['@babel/plugin-proposal-class-properties', { 'loose': false }],
       ['@babel/plugin-proposal-private-methods', { 'loose': false }]
-    ],
-    externalHelpersWhitelist: ['classPrivateFieldSet', 'classPrivateFieldGet', 'classPrivateMethods']
+    ]
   })
 ]
 
