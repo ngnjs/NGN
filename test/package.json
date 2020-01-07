@@ -138,5 +138,8 @@
     "jsonp": "http://www.mocky.io/v2/5e112bd235000058001e6a1c",
     "x.jsonp": "https://stats.fenixwebserver.com/http/test",
     "trace": "http://mockbin.org/bin/bfdc4273-ff50-4141-bef6-28810a6291dd"
+  },
+  "devDependencies": {
+    "watchify": "^3.11.1"
   }
 }

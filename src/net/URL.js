@@ -20,12 +20,11 @@ export default class URL extends EventEmitter {
   #port = 80
   #path
   #querystring
-  #query
-  query
-  #queryObject = null
+  #queryObject = {}
   #hash = null
   #parsed = false
   #parse (force = false) {
+    console.log('.\n\nPREPARSE\n\n.')
     if (this.#parsed && !force) {
       return
     }
@@ -40,7 +39,7 @@ export default class URL extends EventEmitter {
     this.#port = NGN.forceNumber(parts.port)
     this.#username = parts.username
     this.#password = parts.password
-    this.#query = this.#deserializeQueryParameters(this.#querystring)
+    this.#queryObject = this.#deserializeQueryParameters(this.#querystring)
     this.#parsed = true
   }
 
@@ -91,19 +90,7 @@ export default class URL extends EventEmitter {
   constructor (uri = null) {
     super()
 
-    this.#originalURI = uri
-
-    if (uri === null) {
-      uri = 
-        /* node-only */
-        `http://${this.#hostname}`
-        /* node-only */
-        /* browser-only */
-        window.location.href
-        /* end-browser-only */
-    }
-
-    this.#uri = Utility.normalizeUrl(uri)
+    this.url = uri
 
     /**
      * @property {object} query
@@ -111,39 +98,47 @@ export default class URL extends EventEmitter {
      */
     // Proxy query parameters and handle change events.
     this.query = new Proxy({}, {
-      get (obj, prop) {
-        return this.#query.get(prop)
+      get: (obj, prop) => {
+        !this.#parsed && this.#parse()
+        return this.#queryObject.get(prop)
       },
-      
-      set (obj, prop, value) {
-        const oldParamVal = obj.get(prop)
 
-        if(oldParamVal === value) {
-          return
+      set: (obj, prop, value) => {
+        const oldParamVal = this.#queryObject.get(prop)
+
+        if (oldParamVal === value) {
+          return false
         }
 
-        const old = Object.freeze(Object.from(obj))
-        obj.set(prop, value)
-        const newValue = Object.freeze(Object.from(obj))
+        const old = Object.freeze(Object.fromEntries(this.#queryObject))
+        this.#queryObject.set(prop, value)
+        const newValue = Object.freeze(Object.fromEntries(this.#queryObject))
 
-        this.#querystring = Array.from(x).map(items => `${items[0]}=${items[1]}`).join('&')
+        this.#querystring = Array.from(this.#queryObject).map(items => `${items[0]}=${items[1]}`).join('&')
         this.emit('updated.query', { old, new: newValue, parameter: { name: prop, old: oldParamVal, new: value } })
+        return true
       },
 
-      has (obj, prop) {
-        return this.#query.has(prop)
+      has: (obj, prop) => this.#queryObject.has(prop),
+
+      deleteProperty: (obj, prop) => this.#queryObject.delete(prop),
+
+      ownKeys: obj => Array.from(this.#queryObject.keys()),
+
+      defineProperty: (obj, prop, descriptor) => {
+        if (NGN.coalesce(descriptor.enumerable, true)) {
+          this.#queryObject.add(prop, NGN.coalesce(descriptor.value, descriptor.get))
+        }
       },
 
-      deleteProperty(obj, prop) {
-        return this.#query.delete(prop)
-      },
-
-      ownKeys (obj) {
-        return Array.from(this.#query.keys())
-      },
-
-      defineProperty(obj, prop, descriptor) {
-        return Reflect.defineProperty(this.#query)
+      getOwnPropertyDescriptor: (obj, prop) => {
+        const val = this.#queryObject.get(prop)
+        return {
+          enumerable: val !== undefined,
+          configurable: true,
+          writable: val !== undefined,
+          value: val
+        }
       }
     })
 
@@ -183,10 +178,12 @@ export default class URL extends EventEmitter {
   }
 
   set password (value) {
-    if (value.length > 0 && value !== this.#password) {
+    value = NGN.coalesceb(value)
+
+    if ((value === null || value.length > 0) && value !== this.#password) {
       const old = this.#password.replace(/./g, '*')
       this.#password = value
-      this.emit('update.password', { old, new: value.replace(/./g, '*') })
+      this.emit('update.password', { old, new: !value ? null : value.replace(/./g, '*') })
     }
   }
 
@@ -271,7 +268,7 @@ export default class URL extends EventEmitter {
     if (value !== this.#querystring) {
       const old = this.#querystring
       this.#querystring = value
-      this.#deserializeQueryParameters()
+      this.#queryObject = this.#deserializeQueryParameters(value)
       this.emit('update.querystring', { old, new: value })
     }
   }
@@ -306,33 +303,191 @@ export default class URL extends EventEmitter {
 
   /**
    * @property {string}
-   * Returns the value of #toString()
+   * The full URL represented by this object.
    */
-  get value () {
+  get url () {
     return this.toString()
+  }
+
+  set url (uri) {
+    if (uri === this.#originalURI) {
+      return
+    }
+
+    this.#originalURI = uri
+
+    if (!uri) {
+      uri =
+        /* node-only */
+        `http://${this.#hostname}`
+        /* node-only */
+        /* browser-only */
+        window.location.href
+        /* end-browser-only */
+    }
+
+    this.#uri = Utility.normalizeUrl(uri)
+    this.#parsed = false
+    this.#parse()
   }
 
   /**
    * The canonical URL as a string.
-   * @param {boolean} [displayKnownPort=false]
+   * @param {object} [cfg]
+   * There are a number of flags that can be used to change
+   * the result of this method. The refer to the following:
+   * 
+   * http://username@password:domain.com/path/to/file.html?optionA=a&optionB=b#demo
+   * |__|   |______| |______| |________||________________| |_________________| |__|
+   *  1      2        3        4         5                  6                   7
+   * 
+   * 1. Protocol/Scheme
+   * 1. Username
+   * 1. Password
+   * 1. Domain/Authority
+   * 1. Path
+   * 1. Querystring
+   * 1. Hash
+   * @param {boolean} [cfg.protocol=true]
+   * Generate the protocol/scheme (i.e. `http://`)
+   * @param { boolean } [cfg.hostname = true]
+   * Generate the hostname.
+   * @param { boolean } [cfg.username = false]
+   * Generate the username. Example: `https://username@hostname.com`.
+   * Setting this to `true` will force the hostname to also be generated,
+   * (even if hostname is set to `false`).
+   * @param { boolean} [cfg.password = false]
+   * Generate the password. Example: `https://username:pasword@domain.com`.
+   * This requires the `username` option to be `true`, and it will only be generated
+   * if a username exists.
+   * @param {boolean} [cfg.forcePort=false]
    * By default, no port is output in the string for known
    * protocols/schemes. Set this to `true` to force the
    * output to contain the port. This is ignored for URL's
    * with a `file` protocol.
+   * @param {boolean} [cfg.path=true]
+   * Generate the path.
+   * @param {boolean} [cfg.querystring=true]
+   * Generate the query string
+   * @param {boolean} [cfg.shrinkQuerystring=false]
+   * This unique flag can shrink boolean flags by stripping off `true` values and eliminating `false` parameters entirely. For
+   * example, a query string of `?a=true&b=false&c=demo` would become `?a&c=demo`.
+   * This is designed for interacting with API's that use "parameter presence" to toggle/filter responses,
+   * especially when there are many boolean query parameters in the URL.
+   * @param {boolean} [cfg.hash]
+   * Generate the hash value.
+   * @param { boolean } [cfg.urlencode=true]
+   * Generate the query parameters with URL encoding.
+   * @warning Displaying the password in plain text is a security vulnerability.
    */
-  toString (forcePort = false) {
+  toString (cfg = null) {
     !this.#parsed && this.#parse()
 
-    return (
-      `${this.#protocol}://`
-      + (this.#protocol === 'file' ? '' : this.#hostname + (
-          NGN.coalesce(this.#port, this.#defaultPort[this.#protocol]) === this.#defaultPort[this.#protocol] && !forcePort
+    cfg = NGN.coalesce(cfg, {})
+    const username = NGN.coalesce(cfg.username, false)
+    const password = NGN.coalesce(cfg.password, false)
+
+    let result = ''
+    // Protocol
+    if (NGN.coalesce(cfg.protocol, cfg.scheme, true)) {
+      result += `${this.#protocol}://`
+    }
+
+    if (this.#protocol !== 'file') {
+      if (NGN.coalesce(cfg.hostname, true) || username) {
+        // Username
+        if ((username || password) && this.#username.trim().length > 0) {
+          result += this.#username
+
+          // Password
+          if (password && this.#password !== null && this.#password.trim().length > 0) {
+            result += `:${this.#password.trim()}`
+          }
+
+          result += '@'
+        }
+
+        // Hostname
+        result += this.#hostname + (
+          NGN.coalesce(this.#port, this.#defaultPort[this.#protocol]) === this.#defaultPort[this.#protocol] && !NGN.coalesce(cfg.forcePort, false)
             ? ''
             : `:${NGN.coalesce(this.#port, this.#defaultPort[this.#protocol], 80)}`
-        ))
-      + this.#path.replace(/\/+/g, '/')
-      + (this.#query.size > 0 ? `?${this.#querystring}` : '')
-      + (NGN.coalesce(this.#hash, '').trim().length > 0 ? `#${this.hash}` : '')
-    ).trim().replace(/:\/{3,}/, '/')
+        )
+      }
+    }
+
+    // Path
+    if (NGN.coalesce(cfg.path, true)) {
+      result += this.#path.replace(/\/+/g, '/')
+    }
+
+    // Querystring
+    if (this.#protocol !== 'file' && NGN.coalesce(cfg.querystring, true)) {
+      let qs = []
+      const shrink = NGN.coalesce(cfg.shrinkQuerystring, false)
+      
+      this.#queryObject.forEach((value, key) => {
+        // Shrink
+        if (typeof value === 'boolean' && shrink) {
+          if (value) {
+            qs.push(key)
+          }
+        } else {
+          qs.push(`${key}=${value}`)
+        }
+      })
+
+      if (qs.length > 0) {
+        result += `?${qs.join('&')}`
+      }
+    }
+
+    if (NGN.coalesce(cfg.hash, true) && NGN.coalesce(this.#hash, '').trim().length > 0) {
+      result += `#${ this.hash }`
+    }
+
+    result = result.trim().replace(/:\/{3,}/, '/')
+
+    if (NGN.coalesce(cfg.urlencodeQuerystring, true)) {
+      result = encodeURI(result)
+    }
+
+    return result
+  }
+
+  /**
+   * Uses a find/replace strategy to generate a custom URL string.
+   * All variables surrounded in double brackets will be replaced
+   * by the URL equivalent.
+   * 
+   * - `{{protocol}}` is the URL protocol, such as `http`, `https`, or `file`.
+   * - `{{separator}}` is what separates the protocol from everything else. Default is `://`.
+   * - `{{username}}` is the username.
+   * - `{{password}}` is the ** plain text ** password.
+   * - `{{hostname}}` is the domain/authority.
+   * - `{{port}}` is the port number, prefixed by `:` (i.e. `:port`).
+   * - `{{path}}` is the path.
+   * - `{{querystring}}` is the querystring prefixed by `?` (i.e. `?a=1&b=2`).
+   * - `{{hash}}` is the hash, prefixed by `#` (i.e. `#myhash`)
+   * @param {string} [template={{protocol}}://{{hostname}}{{port}}{{path}}{{querystring}}{{hash}}]
+   * The template to use for constructing the output.
+   * @param {string} [separator=://]
+   * The optional separator is defined dynamically, but defaults to `://`.
+   * @returns {string}
+   */
+  formatString (template = '{{protocol}}://{{hostname}}{{port}}{{path}}{{querystring}}{{hash}}', separator = '://') {
+    return template
+      .replace(/{+protocol}+/gi, this.#protocol)
+      .replace(/{+scheme}+/gi, this.#protocol)
+      .replace(/{+username}+/gi, this.#username)
+      .replace(/{+password}+/gi, this.#password)
+      .replace(/{+hostname}+/gi, this.#hostname)
+      .replace(/{+host}+/gi, this.#hostname)
+      .replace(/{+port}+/gi, ':' + this.#port)
+      .replace(/{+path}+/gi, this.#path)
+      .replace(/{+querystring}+/gi, '?' + this.#querystring)
+      .replace(/{+query}+/gi, '?' + this.#querystring)
+      .replace(/{+hash}+/gi, '#' + this.#hash)
+      .replace(/{+separator}+/gi, separator)
   }
 }

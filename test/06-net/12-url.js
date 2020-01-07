@@ -4,7 +4,10 @@ import NGN from '../.node/index.js'
 
 NGN.BUS.on(NGN.WARNING_EVENT, msg => console.log('\n\n\n\n:::WARNING:::', msg))
 
-test('NGN.NET.URL Parsing Checks', t => {
+// TODO: Credentials
+// TODO: Paths w/o domain/protocol/path/qs/hash
+
+test('NGN.NET.URL Basic Parsing', t => {
   let url = new NGN.NET.URL()
 
   t.ok(url.path === '/', 'Recognizes current root as base path when no root is specified.')
@@ -31,7 +34,7 @@ test('NGN.NET.URL Parsing Checks', t => {
   t.end()
 })
 
-test('NGN.NET.URL Modifications', t => {
+test('NGN.NET.URL Basic Modifications', t => {
   const url = new NGN.NET.URL('https://domain.com:4443/path/to/file.html?min=0&max=1&safe#h1')
 
   url.port = 'default'
@@ -55,15 +58,62 @@ test('NGN.NET.URL Modifications', t => {
 
   url.clearPort()
   t.ok(url.port === null, 'Port successfully cleared.')
-  t.ok(url.toString() === 'https://domain.com/path/to/file.html?min=0&max=1&safe#h1', 'Port not displayed after being cleared with a well known protocol.')
-  t.ok(url.toString(true) === 'https://domain.com:443/path/to/file.html?min=0&max=1&safe#h1', 'Port still displayed after being cleared with a well known protocol (forcing port in toString).')
+  t.comment(url.toString())
+  t.ok(url.toString() === 'https://domain.com/path/to/file.html?min=0&max=1&safe=true#h1', 'Port not displayed after being cleared with a well known protocol.')
+  t.ok(url.toString({ forcePort: true }) === 'https://domain.com:443/path/to/file.html?min=0&max=1&safe=true#h1', 'Port still displayed after being cleared with a well known protocol (forcing port in toString).')
 
-  // TODO: query param tests
-  // TODO: query param modification tests
-  // TODO: querystring overwrite/modifications
-  // TODO: hash CRUD
-  // TODO: Credentials
-  // TODO: Paths w/o domain/protocol
+  t.end()
+})
+
+test('NGN.NET.URL Query Parameters', t => {
+  const url = new NGN.NET.URL('https://domain.com:4443/path/to/file.html?min=0&max=1&safe#h1')
+  t.ok(Object.keys(url.query).length === 3, 'Query object enumerates values correctly.')
+  t.ok(url.query.min === 0, `Identify numeric attributes. Expected value of 0, received value of ${url.query.min}`)
+  t.ok(url.query.safe === true, `Identify boolean attributes. Expected value of true, received value of ${url.query.safe}`)
+
+  delete url.query.max
+  t.ok(Object.keys(url.query).length === 2, 'Query object enumerates values correctly after deletion.')
+
+  url.query.test = 'value'
+  t.ok(url.query.test === 'value', 'Adding new query parameter is reflected in query object.')
+  t.ok(url.querystring === 'min=0&safe=true&test=value', `Querystring modifications reflect query object. Expected "min=0&safe=true&test=value", received "${url.querystring}"`)
+  t.ok(url.toString() === 'https://domain.com:4443/path/to/file.html?min=0&safe=true&test=value#h1')
+
+  url.querystring = 'a=a&b&c=c'
+  t.ok(url.toString({ shrinkQuerystring: true }) === 'https://domain.com:4443/path/to/file.html?a=a&b&c=c#h1', `Overwriting querystring generates appropriate URL. Expected "https://domain.com:4443/path/to/file.html?a=a&b&c=c#h1", received "${url.toString()}".`)
+  t.ok(url.query.b === true, 'Overwritten query object returns appropriate new default values.')
+  url.query.b = false
+  t.ok(url.toString() === 'https://domain.com:4443/path/to/file.html?a=a&b=false&c=c#h1', `Overwriting querystring generates appropriate URL. Expected "https://domain.com:4443/path/to/file.html?a=a&b=false&c=c#h1", received "${url.toString()}".`)
+  t.ok(url.query.a === 'a' && url.query.b === false && url.query.c === 'c', 'Overwritten query string is properly reflected in query object.')
+  t.end()
+})
+
+test('NGN.NET.URL Hash', t => {
+  const url = new NGN.NET.URL('https://domain.com:4443/path/to/file.html?min=0&max=1&safe#h1')
+
+  t.ok(url.hash === 'h1', 'Properly parsed hash.')
+  url.hash = 'h2'
+  t.ok(url.hash === 'h2', 'Properly updated hash.')
+  t.ok(url.toString() === 'https://domain.com:4443/path/to/file.html?min=0&max=1&safe=true#h2', 'Hash update reflected in URL.')
+  t.ok(url.toString({ hash: false }) === 'https://domain.com:4443/path/to/file.html?min=0&max=1&safe=true', 'Hash successfully ignored.')
+
+  url.hash = null
+  t.ok(url.toString() === 'https://domain.com:4443/path/to/file.html?min=0&max=1&safe=true', 'Hash successfully removed.')
+
+  t.end()
+})
+
+test('NGN.NET.URL Credentials', t => {
+  const url = new NGN.NET.URL('https://admin:supersecret@domain.com:4443/path/to/file.html?min=0&max=1&safe#h1')
+
+  t.ok(url.username === 'admin', 'Successfully parsed username.')
+  t.ok(url.password === '***********', 'Successfully parsed and hid password.')
+  t.ok(url.toString() === 'https://domain.com:4443/path/to/file.html?min=0&max=1&safe=true#h1', 'Credentials are not generated in toString by default.')
+  t.ok(url.toString({ username: true, password: true }) === 'https://admin:supersecret@domain.com:4443/path/to/file.html?min=0&max=1&safe=true#h1', 'Credentials are generated in toString when requested.')
+  t.ok(url.toString({ password: true }) === 'https://admin:supersecret@domain.com:4443/path/to/file.html?min=0&max=1&safe=true#h1', 'Credentials are generated in toString when password is requested.')
+  t.ok(url.toString({ username: true }) === 'https://admin@domain.com:4443/path/to/file.html?min=0&max=1&safe=true#h1', 'Username is generated in toString when requested.')
+  url.password = null
+  t.ok(url.toString({ username: true, password: true }) === 'https://admin@domain.com:4443/path/to/file.html?min=0&max=1&safe=true#h1', 'Username is generated in toString when credentials are requested but only a username exists.')
 
   t.end()
 })

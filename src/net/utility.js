@@ -200,7 +200,7 @@ class NetworkUtilities {
       this.username = credentials[1]
       this.password = credentials[2]
       url.username = credentials[1]
-      url.password = credentials[2].replace(/./gi, '*')
+      url.password = credentials[2] //.replace(/./gi, '*')
       // this.applyAuthorizationHeader()
     }
 
