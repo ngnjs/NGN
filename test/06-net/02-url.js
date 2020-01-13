@@ -4,13 +4,10 @@ import NGN from '../.node/index.js'
 
 NGN.BUS.on(NGN.WARNING_EVENT, msg => console.log('\n\n\n\n:::WARNING:::', msg))
 
-// TODO: Credentials
-// TODO: Paths w/o domain/protocol/path/qs/hash
-
 test('NGN.NET.URL Basic Parsing', t => {
   let url = new NGN.NET.URL()
 
-  t.ok(url.path === '/', 'Recognizes current root as base path when no root is specified.')
+  t.ok(url.path === '/', `Recognizes current root as base path when no root is specified. "/" === "${url.path}"`)
   t.ok(url.protocol === 'http', 'Defaults to HTTP protocol.')
   t.ok(url.scheme === 'http', 'Scheme alias returns appropriate protocol.')
 
@@ -56,8 +53,8 @@ test('NGN.NET.URL Basic Modifications', t => {
     t.pass('Settting the port below 1 throws an error.')
   }
 
-  url.clearPort()
-  t.ok(url.port === null, 'Port successfully cleared.')
+  url.resetPort()
+  t.ok(url.port === 443, 'Port successfully cleared.')
   t.comment(url.toString())
   t.ok(url.toString() === 'https://domain.com/path/to/file.html?min=0&max=1&safe=true#h1', 'Port not displayed after being cleared with a well known protocol.')
   t.ok(url.toString({ forcePort: true }) === 'https://domain.com:443/path/to/file.html?min=0&max=1&safe=true#h1', 'Port still displayed after being cleared with a well known protocol (forcing port in toString).')
@@ -115,5 +112,44 @@ test('NGN.NET.URL Credentials', t => {
   url.password = null
   t.ok(url.toString({ username: true, password: true }) === 'https://admin@domain.com:4443/path/to/file.html?min=0&max=1&safe=true#h1', 'Username is generated in toString when credentials are requested but only a username exists.')
 
+  t.end()
+})
+
+test('NGN.NET.URL Formatting', t => {
+  const url = new NGN.NET.URL('https://admin:supersecret@domain.com:443/path/to/file.html?min=0&max=1&safe#h1')
+
+  t.ok(url.formatString() === 'https://domain.com/path/to/file.html?min=0&max=1&safe#h1', `Standard formatting works. Expected "https://domain.com/path/to/file.html?min=0&max=1&safe=true#h1", received "${url.formatString()}".`)
+  t.ok(url.formatString('{{protocol}}://{{hostname}}') === 'https://domain.com', 'Basic formatting works.')
+  t.ok(url.formatString('{{protocol}}://{{hostname}}/{{hash}}') === 'https://domain.com/#h1', 'Basic formatting works.')
+
+  t.ok(url.toString({ querystring: false, hash: false }) === 'https://domain.com/path/to/file.html', `Configuration options in toString works properly. Expected "https://domain.com/path/to/file.html", received "${url.toString({ querystring: false, hash: false })}"`)
+  t.end()
+})
+
+test('NGN.NET.URL Special Protocols', t => {
+  const url = new NGN.NET.URL('mailto://john@doe.com')
+
+  url.setDefaultProtocolPort('mailto', 587)
+  t.ok(url.port === 587, `Successfully mapped a custom protocol to a default port. 587 === ${url.port}`)
+
+  url.setDefaultProtocolPort({
+    snmp: 162,
+    ssh: 2222
+  })
+
+  url.href = 'ssh:user@domain.com'
+  t.ok(url.port === 2222, 'Overriding a default port is successful.')
+
+  url.unsetDefaultProtocolPort('ssh', 'mailto')
+  t.ok(url.port === 2222, 'Unsetting a default port does not change the current value of the port.')
+  url.resetPort()
+  t.ok(url.port === 80, 'Resetting a port with a removed default protocol defaults to port 80.')
+
+  t.end()
+})
+
+test('NGN.NET.URL Local Path Parsing', t => {
+  const tmpurl = new NGN.NET.URL('path/to/file.html')
+  t.ok(tmpurl.path === '/path/to/file.html', 'Properly handles local paths.')
   t.end()
 })

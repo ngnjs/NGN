@@ -106,9 +106,9 @@ test('NGN.NET.Resource', function (t) {
   t.ok(req.headers.hasOwnProperty('authorization'), 'Authorization header present for secure requests (basic auth).')
   t.ok(breq.headers.hasOwnProperty('authorization'), 'Authorization header present for secure requests (token auth).')
   t.ok(breq.headers.authorization === 'Bearer 12345', 'Authorization token correctly assigned to header.')
-  t.ok(req.queryParameters.hasOwnProperty('nonce'), 'Proper query parameter appended to URL.')
+  t.ok(req.query.hasOwnProperty('nonce'), 'Proper query parameter appended to URL.')
   t.ok(req.headers.hasOwnProperty('cache-control'), 'Nocache query parameter applied to request.')
-  t.ok(Object.keys(req.queryParameters).length === 2, 'Unique query parameter applied to request.')
+  t.ok(req.queryParameterCount === 2, 'Unique query parameter applied to request.')
 
   t.ok(req.headers['x-ngn-test'] === 'test', 'Header reference retrieves correct headers.')
 

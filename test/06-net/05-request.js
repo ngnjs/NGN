@@ -16,7 +16,7 @@ test('NGN.NET.Request', function (t) {
   var request = new NGN.NET.Request({
     username: 'test',
     password: 'test',
-    url: uri.get,
+    url: uri.get + '?a=1',
     body: {
       test: 'test'
     }
@@ -27,7 +27,7 @@ test('NGN.NET.Request', function (t) {
   t.ok(request.getHeader('X-NGN') === 'test', 'Request.getHeader returns proper value.')
   t.ok(request.password === undefined, 'Password is not exposed.')
   t.ok(request.hostname === hostname, 'Properly parsed hostname: ' + request.hostname)
-  t.ok(request.protocol === uri.get.split(':')[0], 'Properly parsed protocol.')
+  t.ok(request.protocol === uri.get.split(':')[0], `Properly parsed protocol. ${request.protocol} === ${uri.get.split(':')[0]}`)
   t.ok(request.method === 'GET', 'Defaults to GET method.')
   t.ok(request.headers.hasOwnProperty('x-ngn'), 'Custom header applied.')
   t.ok(request.headers.hasOwnProperty('content-length'), 'Content-Length header present for secure requests (basic auth).')
@@ -37,7 +37,7 @@ test('NGN.NET.Request', function (t) {
   t.ok(request.headers['content-length'] === 15, 'Content-Type correctly identifies length of JSON string.')
   t.ok(request.headers['x-ngn'] === 'test', 'Custom header contains appropriate value.')
   t.ok(request.headers.authorization.indexOf('Basic ') === 0, 'Authorization basic auth digest correctly assigned to header.')
-  t.ok(request.hash === '', 'Correct hash identified.')
+  t.ok(request.hash === '', `Correct hash identified. Expected an empty value, received "${request.hash}"`)
 
   t.ok(request.maxRedirects === 10, 'Default to a maximum of 10 redirects.')
   request.maxRedirects = 30
@@ -52,29 +52,34 @@ test('NGN.NET.Request', function (t) {
   t.ok(request.headers.hasOwnProperty('authorization'), 'Authorization header present for secure requests (token).')
   t.ok(request.headers.authorization === 'Bearer 12345', 'Authorization token correctly assigned to header.')
   t.ok(request.crossOriginRequest, 'Correctly identifies request as a cross-domain request.')
-
-  var params = request.queryParameters
-  t.ok(Object.keys(params).length === 1, 'Correctly identifies and parses query parameters.')
+  t.ok(request.queryParameterCount === 1, 'Correctly identifies and parses query parameters.')
 
   request.removeHeader('X-NGN')
   t.ok(!request.headers.hasOwnProperty('x-ngn'), 'Removed header no longer part of request.')
 
   request.setQueryParameter('mytest', 'ok')
-  t.ok(request.queryParameters.hasOwnProperty('mytest'), 'Added query parameter key.')
-  t.ok(request.queryParameters.mytest === 'ok', 'Added correct query parameter value.')
+  t.ok(request.query.hasOwnProperty('mytest'), 'Added query parameter key.')
+  t.ok(request.query.mytest === 'ok', 'Added correct query parameter value.')
 
-  request.queryParameters.mytest = 'done'
-  t.ok(request.queryParameters.hasOwnProperty('mytest'), 'Modification of existing query parameter does not remove key.')
-  t.ok(request.queryParameters.mytest === 'done', 'Inline update of query parameter correctly identifies new value.')
+  try {
+    request.query.mytest = 'done'
+    t.fail('Query parameters were updated directly (not allowed).')
+  } catch (e) {
+    t.pass('Request query attribute is readonly.')
+  }
+
+  request.setQueryParameter('mytest', 'done')
+  t.ok(request.query.hasOwnProperty('mytest'), 'Modification of existing query parameter does not remove key.')
+  t.ok(request.query.mytest === 'done', 'Inline update of query parameter correctly identifies new value.')
 
   request.removeQueryParameter('mytest')
-  t.ok(!request.queryParameters.hasOwnProperty('mytest'), 'Removing query parameter yields a URL without the parameter.')
+  t.ok(!request.query.hasOwnProperty('mytest'), 'Removing query parameter yields a URL without the parameter.')
 
   request.method = 'post'
   t.ok(request.method === 'POST', 'Dynamically setting method returns proper HTTP method.')
   t.ok(request.port === (request.protocol === 'https' ? 443 : 80), 'Proper port identified.')
 
-  request.parseUri('http://user:passwd@test.com:7788/path/to/file.html')
+  request.url = 'http://user:passwd@test.com:7788/path/to/file.html'
   t.ok(request.username === 'user', `Properly parsed basic auth string ("${request.username}" === "user")`)
   t.ok(request.isCrossOrigin, 'CORS recognition correctly identifies cross origin request.')
 
@@ -111,10 +116,6 @@ test('NGN.NET.Request', function (t) {
   })
 
   t.ok(request.maxRedirects === 7, 'Maximum redirects can be set via configuration.')
-
-  var tmpurl = request.parseUri('path/to/file.html')
-  t.ok(tmpurl.path === '/path/to/file.html', 'Properly handles local paths.')
-
   t.end()
 })
 
@@ -125,7 +126,6 @@ test('NGN.NET Basic Requests', function (t) {
     try {
       NGN.NET.OPTIONS(uri.options, function (res) {
         t.pass('NGN.NET.OPTIONS alias points to NGN.NET.options')
-        console.log(res)
         t.ok(res.status === 200, 'NGN.NET.OPTIONS sends and receives. Received: ' + res.status)
         next()
       })
@@ -212,10 +212,10 @@ test('NGN.NET Basic Requests', function (t) {
   })
 
   reqs.add('JSON', function (next) {
-    t.comment(uri.json)
     NGN.NET.JSON(uri.json, function (err, data) {
+      t.comment(uri.json)
       t.pass('NGN.NET.JSON alias points to NGN.NET.json')
-      t.ok(err === null, 'NGN.NET.JSON sends and receives. ' + (err !== null ? err.message : ''))
+      t.ok(err === null, 'NGN.NET.JSON request receives parsed JSON response (i.e. object). ' + (err !== null ? err.message : ''))
       next()
     })
   })

@@ -1,6 +1,7 @@
 import NGN from '../core.js'
+import URL from './URL.js'
 import Network from './Network.js'
-import { hostname, normalizeUrl } from './Utility.js'
+import { hostname } from './Utility.js'
 
 /**
  * @class NGN.NET.Resource
@@ -370,10 +371,10 @@ export default class NetworkResource extends Network {
    */
   prepareUrl (uri) {
     if (uri.indexOf('://') < 0) {
-      uri = normalizeUrl(`${this.baseUrl}/${uri}`)
+      return new URL(`${this.baseUrl}/${uri}`).toString({ username: true, password: true, urlencode: false })
     }
 
-    return uri.replace(/\/{2,5}/gi, '/').replace(/:\/{1}/i, '://')
+    return new URL(uri).toString({ username: true, password: true, urlencode: false })
   }
 
   /**
@@ -403,7 +404,7 @@ export default class NetworkResource extends Network {
 
     // Force unique URL
     if (this.unique) {
-      request.setQueryParameter('nocache' + (new Date()).getTime().toString() + Math.random().toString().replace('.', ''), null)
+      request.setQueryParameter('nocache' + (new Date()).getTime().toString() + Math.random().toString().replace('.', ''), '')
     }
 
     // Request non-cached response

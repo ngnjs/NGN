@@ -17,8 +17,7 @@ Network.prototype.Plugin = Network
 Network.prototype.Utility = Utility
 Network.prototype.URL = URL
 
-const normalizeUrl = Utility.normalizeUrl
 const networkInterfaces = Utility.networkInterfaces
 const Library = new Network()
 
-export { Library, normalizeUrl, networkInterfaces, Request, Resource, URL }
+export { Library, networkInterfaces, Request, Resource, URL }

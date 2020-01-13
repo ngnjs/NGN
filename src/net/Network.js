@@ -1,6 +1,7 @@
 import NGN from '../core.js'
-import { hostname, normalizeUrl } from './Utility.js'
+import { hostname } from './Utility.js'
 import Request from './Request.js'
+import URL from './URL.js'
 
 export default class Network { // eslint-disable-line
   constructor () {
@@ -14,7 +15,7 @@ export default class Network { // eslint-disable-line
        * @return {string}
        * The normalized URL.
        */
-      normalizeUrl: NGN.privateconst(normalizeUrl),
+      normalizeUrl: NGN.privateconst(url => (new URL(url)).toString({ username: true, password: true, urlencode: false })),
 
       // Returns a scoped method for sending the request, after preparing it.
       makeRequest: NGN.private((method) => {
@@ -257,11 +258,6 @@ export default class Network { // eslint-disable-line
    * the DOM. However; this may work with some headless browsers.
    * @param {string} url
    * The URL of the JSONP endpoint.
-   * @param {string} [callbackParameter=callback]
-   * Optionally specify an alternative callback parameter name. This will be
-   * appended to the URL query parameters when the request is made.
-   * For example:
-   * `https://domain.com?[callbackParameter]=generated_function_name`
    * @param {function} callback
    * Handles the response.
    * @param {Error} callback.error
@@ -269,9 +265,14 @@ export default class Network { // eslint-disable-line
    * be null.
    * @param {object|array} callback.response
    * The response.
+   * @param {string} [callbackParameter=callback]
+   * Optionally specify an alternative callback parameter name. This will be
+   * appended to the URL query parameters when the request is made.
+   * For example:
+   * `https://domain.com?[callbackParameter]=generated_function_name`
    * @environment browser
    */
-  jsonp (url, callbackParameter = 'callback', callback) {
+  jsonp (url, callback, callbackParameter = 'callback') {
     /* node-only */
     NGN.WARN('NET.Request', 'An unsupported JSONP request was made.')
     callback(new Error('JSONP unsupported in Node-like environments.'))

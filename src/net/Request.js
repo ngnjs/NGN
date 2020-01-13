@@ -1,9 +1,14 @@
 import NGN from '../core.js'
 import Utility from './Utility.js'
+import URL from './URL.js'
 /* node-only */
 import libhttp from 'http'
 import libhttps from 'https'
 import fs from 'fs'
+import SRI from './polyfills/SRI.js'
+import NodeReferralPolicy from './polyfills/ReferrerPolicy.js'
+import NodeHttpCache from './polyfills/Cache.js'
+import { Transport } from 'stream'
 /* end-node-only */
 
 /**
@@ -23,6 +28,9 @@ export default class Request { // eslint-disable-line no-unused-vars
   #secret = null
   #bearerAccessToken = null
   #cacheMode = 'default'
+  /* node-only */
+  #cache = null
+  /* end-node-only */
   #corsMode = 'cors'
   referrer = null
   #referrerPolicy = 'unsafe-url'
@@ -40,7 +48,12 @@ export default class Request { // eslint-disable-line no-unused-vars
     /**
      * @cfgproperty {string} url (required)
      * The complete URL for the request, including query parameters.
+     * This value is automatically normalized.
      */
+    // Use the setter to configure the URL
+    // The setter will configure the private URL attribute (NGN.NET.URL instance)
+    this.url = cfg.url
+
     /**
      * @cfg {string} [method=GET]
      * The HTTP method to invoke when the request is sent. The standard
@@ -125,9 +138,24 @@ export default class Request { // eslint-disable-line no-unused-vars
     /**
      * @cfgproperty {string} [cacheMode=default] (default, no-store, reload, no-cache, force-cache, only-if-cached)
      * The [caching mechanism](https://developer.mozilla.org/en-US/docs/Web/API/Request/cache) applied to the request.
+     * Node-like environments do not have a native HTTP cache. NGN provides
+     * a limited HTTP cache for Node-like environments, adhering to the principles
+     * defined in the [MDN HTTP Cache Documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching).
+     * The most noticeable differences are:
+     * 1. Incomplete results (HTTP Status 206 / Partial Content) won't be cached.
+     * 1. Redirects are handled differently (internally only, results are the same).
      */
-    this.cacheMode = NGN.coalesce(cfg.cacheMode, 'default')
+    this.cacheMode = NGN.coalesce(cfg.cacheMode, NGN.nodelike ? 'no-store' : 'default')
     
+    /* node-only */
+    // Apply a global HTTP cache for Node-like environments (polyfills browser functionality)
+    if (!NGN.global.__NodeHttpCache__) {
+      NGN.global.__NodeHttpCache__ = new NodeHttpCache(NGN.coalesce(process.env.HTTP_CACHE_DIR, 'memory'))
+    }
+    
+    this.#cache = NGN.coalesce(cfg.cache, NGN.global.__NodeHttpCache__)
+    /* end-node-only */
+
     /**
      * @cfgproperty {string} [referrer]
      * The referrer URL to send to the destination. By default, this will be the current URL
@@ -147,7 +175,7 @@ export default class Request { // eslint-disable-line no-unused-vars
      * The [subresource integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) value of the request.
      * Example: `sha256-BpfBw7ivV8q2jLiT13fxDYAe2tJllusRSZ273h2nFSE=`
      */
-    this.sri = NGN.coalesceb(cfg.sri, cfg.integrity)
+    this.sri = NGN.coalesceb(cfg.sri, cfg.integrity, cfg.subresourceintegrity, cfg.subresourceIntegrity)
 
     Object.defineProperties(this, {
       /**
@@ -213,9 +241,7 @@ export default class Request { // eslint-disable-line no-unused-vars
        * @returns {boolean}
        * @private
        */
-      isCrossOrigin: NGN.privateconst(function (url) {
-        return Utility.isCrossOrigin(url)
-      }),
+      isCrossOrigin: NGN.privateconst(url => !this.#uri.isSameOrigin(url)),
 
       /**
        * @method applyAuthorizationHeader
@@ -246,29 +272,6 @@ export default class Request { // eslint-disable-line no-unused-vars
         return 'Basic ' + NGN.global.btoa(`${user}:${secret}`) // eslint-disable-line no-unreachable
         /* end-browser-only */
       }),
-
-      /**
-       * @method parseUri
-       * Parses the URI into composable parts.
-       * @param {string} URL
-       * The URI/URL to parse.
-       * @return {Object}
-       * Returns a key/value object:
-       *
-       * ```js
-       * {
-       *   protocol: 'http',
-       *   hostname: 'domain.com',
-       *   path: '/path/to/file.html',
-       *   query: 'a=1&b=2',
-       *   hash: null
-       * }
-       * ```
-       * @private
-       */
-      parseUri: NGN.privateconst(Utility.parseUri),
-
-      uriParts: NGN.private(null),
 
       /**
        * @cfgproperty {Number} [maxRedirects=10]
@@ -347,7 +350,6 @@ export default class Request { // eslint-disable-line no-unused-vars
       this.maxRedirects = cfg.maxRedirects
     }
 
-    this.url = cfg.url
     this.method = NGN.coalesceb(cfg.method, 'GET')
 
     this.prepareBody()
@@ -357,6 +359,20 @@ export default class Request { // eslint-disable-line no-unused-vars
       this.applyAuthorizationHeader()
     }
   }
+
+  /* node-only */
+  static get ReferralPolicy () {
+    return NodeReferralPolicy
+  }
+
+  static get SRI () {
+    return SRI
+  }
+
+  get HttpCache () {
+    return this.#cache
+  }
+  /* end-node-only */
 
   get cacheMode () {
     return this.#cacheMode
@@ -443,19 +459,30 @@ export default class Request { // eslint-disable-line no-unused-vars
    * @readonly
    */
   get protocol () {
-    return NGN.coalesce(this.uriParts.protocol, 'http')
+    return this.#uri.protocol
   }
 
   /**
    * @property {string} host
-   * The hostname/domain of the request.
+   * The hostname/domain of the request (includes port if applicable).
    */
   get host () {
-    return NGN.coalesce(this.uriParts.hostname)
+    return this.#uri.toString({
+      protocol: false,
+      username: false,
+      password: false,
+      urlencode: false,
+      hash: false,
+      querystring: false
+    })
   }
 
+  /**
+   * @property {string} host
+   * The hostname/domain of the request (does not include port).
+   */
   get hostname () {
-    return this.host
+    return this.#uri.hostname
   }
 
   /**
@@ -463,7 +490,7 @@ export default class Request { // eslint-disable-line no-unused-vars
    * The port of the remote host.
    */
   get port () {
-    return this.uriParts.port
+    return this.#uri.port
   }
 
   /**
@@ -471,62 +498,36 @@ export default class Request { // eslint-disable-line no-unused-vars
    * The pathname of the URL.
    */
   get path () {
-    return NGN.coalesce(this.uriParts.path, '/')
+    return this.#uri.path
   }
 
   /**
-   * @property {string} query
+   * @property {string} querystring
    * The raw query string of the URI. To retrieve a key/value list,
    * use #queryParameters instead.
    */
-  get query () {
-    return NGN.coalesce(this.uriParts.query, '')
+  get querystring () {
+    this.#uri.querystring
   }
 
   /**
-   * @property {object} queryParameters
+   * @property {object} query
    * Returns a key/value object containing the URL query parameters of the
    * request, as defined in the #url. The paramter values (represented as keys
-   * in this object) may be modified, but not removed (use removeQueryParameter
-   * to delete a query parameter). No new query parameters can be added (use
-   * setQueryParameter instead).
+   * in this object) may not be modified or removed (use setQueryParameter or removeQueryParameter
+   * to modify/delete a query parameter).
    * @readonly
    */
-  get queryParameters () {
-    const params = this.query.split('&')
-    const resultSet = {}
-
-    for (let i = 0; i < params.length; i++) {
-      const keypair = params[i].split('=')
-      const attr = `__qp__${keypair[0]}__qp__`
-
-      Object.defineProperty(resultSet, attr, {
-        enumerable: false,
-        configurable: false,
-        writable: true,
-        value: NGN.coalesceb(keypair[1])
-      })
-
-      Object.defineProperty(resultSet, keypair[0], {
-        enumerable: true,
-        configurable: false,
-        get: () => { return resultSet[attr] },
-        set: (value) => {
-          resultSet[attr] = value
-          this.setQueryParameter(keypair[0], value, true)
-        }
-      })
-    }
-
-    return resultSet
+  get query () {
+    return Object.freeze(Object.assign({}, this.#uri.query))
   }
 
   /**
-   * @property hash
+   * @property {string} hash
    * The hash part of the URL (i.e. everything after the trailing `#`).
    */
   get hash () {
-    return NGN.coalesce(this.uriParts.hash, '')
+    return NGN.coalesceb(this.#uri.hash) || ''
   }
 
   /**
@@ -534,34 +535,17 @@ export default class Request { // eslint-disable-line no-unused-vars
    * The URL where the request will be sent.
    */
   get url () {
-    return this.uri
+    return this.#uri.toString()
   }
 
   set url (value) {
     if (NGN.coalesceb(value) === null) {
-      NGN.WARN('NET.Request.url', 'A blank URL was identified for a request.')
+      NGN.WARN('NET.Request.url', 'A blank URL was identified for a request. Using current URL instead.')
     }
 
-    // If a relative URL is provided in a browser context, prepend
-    // the current browser location to the URI.
-    if (/^.*:\/{2}/i.exec(value) === null && /^\.{1,2}\/.*/.exec(value) !== null && NGN.global.hasOwnProperty('location')) { // eslint-disable-line no-prototype-builtins
-      const loc = NGN.global.location
-      let href = `${loc.host}${loc.pathname}`
-
-      href = href.split('/')
-
-      if (href[href.length - 1].indexOf('.') >= 0) {
-        href.pop()
-      }
-
-      href = href.join('/')
-      href = href.substring(0, href.lastIndexOf('/') + 1)
-
-      value = `${NGN.global.location.protocol}//${href}/${value}`.replace(/\/{2,1000000}/i, '/')
-    }
-
-    this.uri = Utility.normalizeUrl(value.trim())
-    this.uriParts = this.parseUri(this.uri)
+    this.#uri = new URL(value)
+    this.#user = NGN.coalesceb(this.#uri.username, this.#user)
+    this.#secret = NGN.coalesceb(this.#uri.password, this.#secret)
   }
 
   get method () {
@@ -569,21 +553,19 @@ export default class Request { // eslint-disable-line no-unused-vars
   }
 
   set method (value) {
-    if (this.httpmethod === value) {
-      return
+    if (this.httpmethod !== value) {
+      if (NGN.coalesceb(value) === null) {
+        NGN.WARN('NET.Request.method', 'No HTTP method specified.')
+      }
+
+      value = value.trim().toUpperCase()
+
+      if (Utility.HttpMethods.indexOf(value) < 0) {
+        NGN.WARN('NET.Request.method', `A non-standard HTTP method was recognized in a request: ${value}.`)
+      }
+
+      this.httpmethod = value
     }
-
-    if (NGN.coalesceb(value) === null) {
-      NGN.WARN('NET.Request.method', 'No HTTP method specified.')
-    }
-
-    value = value.trim().toUpperCase()
-
-    if (Utility.HttpMethods.indexOf(value) < 0) {
-      NGN.WARN('NET.Request.method', `A non-standard HTTP method was recognized in a request: ${value}.`)
-    }
-
-    this.httpmethod = value
   }
 
   get body () {
@@ -601,7 +583,7 @@ export default class Request { // eslint-disable-line no-unused-vars
    * one hosting the request.
    */
   get crossOriginRequest () {
-    return this.isCrossOrigin(this.uri)
+    return this.#uri.isSameOrigin('./')
   }
 
   /**
@@ -630,7 +612,7 @@ export default class Request { // eslint-disable-line no-unused-vars
    * but it is not possible to read a password.
    * @writeonly
    */
-  set password (secret) {
+  set password (secret) {  
     secret = NGN.coalesceb(secret)
 
     if (this.#secret !== secret) {
@@ -723,23 +705,11 @@ export default class Request { // eslint-disable-line no-unused-vars
    * the original parameter from being overwritten.
    */
   setQueryParameter (key, value, overwriteExisting = true) {
-    const re = new RegExp("^.*(\\?|&)(" + key + ".*)(&.*)$|^.*(\\?|&)(" + key + ".*)$", 'i') // eslint-disable-line quotes
-    const exists = (re.exec(this.uri) !== null)
-    let match
-
-    if (exists) {
-      if (!overwriteExisting) {
-        return
-      }
-
-      match = re.exec(this.uri)
-
-      if (match !== null) {
-        this.url = this.uri.replace(`${NGN.coalesceb(match[5], match[2])}`, `${key}${value !== null ? '=' + encodeURIComponent(value) : ''}`)
-      }
-    } else {
-      this.url = `${this.uri}${this.query.length === 0 ? '?' : '&'}${key}${value !== null ? '=' + encodeURIComponent(value) : ''}`
+    if (!overwriteExisting && this.#uri.query.has(key)) {
+      return
     }
+
+    this.#uri.query[key] = value
   }
 
   /**
@@ -748,7 +718,15 @@ export default class Request { // eslint-disable-line no-unused-vars
    * @param {string} key
    */
   removeQueryParameter (key) {
-    this.url = this.uri.replace(new RegExp(`${key}=(.[^&]+)|\\?${key}|&${key}`, 'gi'), '')
+    delete this.#uri.query[key]
+  }
+
+  get queryParameterCount() {
+    return this.#uri.queryParameterCount
+  }
+
+  get hasQueryParameters() {
+    return this.#uri.hasQueryParameters
   }
 
   abort () {
@@ -760,6 +738,7 @@ export default class Request { // eslint-disable-line no-unused-vars
   startMonitor () {
     if (this.timer === null) {
       this.timer = setTimeout(() => {
+        this.emit('timedout', 'Timed out requesting ' + this.url)
         throw new Error('Timed out requesting ' + this.url)
       }, this.timeout)
     }
@@ -797,63 +776,58 @@ export default class Request { // eslint-disable-line no-unused-vars
         throw new Error('A callback is required when retrieving system files in a node-like environment.')
       }
 
+      const filepath = this.#uri.toString().replace('file://', '')
       const response = {
-        status: fs.existsSync(this.uri.replace('file://', '')) ? 200 : 400
+        status: fs.existsSync(filepath) ? 200 : 400
       }
 
-      response.responseText = response.status === 200 ? fs.readFileSync(this.uri.replace('file://', '')).toString() : 'File does not exist or could not be found.'
+      response.responseText = response.status === 200 ? fs.readFileSync(filepath).toString() : 'File does not exist or could not be found.'
+
+      if (this.sri) {
+        const integrity = SRI.verify(this.sri, response.responseText)
+        if (!integrity.valid) {
+          return callback(new Error(integrity.reason))
+        }
+      }
 
       return callback(response)
     }
 
     const http = this.protocol === 'https' ? libhttps : libhttp
 
-    if (this.referrer !== null && this.referrer.trim().length > 0) {
-      let shouldSendReferral = true
-      let shouldStripReferral = true // strip of username:password, scheme, fragment
+    let referrer = NGN.coalesceb(this.referrer, `http://${Utility.hostname}/`)
 
-      switch (this.referrerPolicy) {
-        case 'no-referrer':
-          shouldSendReferral = false
-          break
-        case 'same-origin':
-          shouldSendReferral = this.isCrossOrigin(this.url)
-          break
-        // case ''
-      }
-      
-      if (shouldSendReferral) {
-        let referrer = this.referrer
-
-        if (shouldStripReferral) {
-          
-        }
-
-        this.setHeader('referer', referrer, true)
-      }
-    }
-
-    const params = NGN.coalesceb(this.query)
+    // const agent = new http.Agent()
     const reqOptions = {
       hostname: this.hostname,
       port: this.port,
       method: this.method,
       headers: this.#headers,
-      path: this.path
+      path: this.#uri.formatString('{{path}}{{querystring}}{{hash}}')
     }
 
-    if (params !== null) {
-      reqOptions.path = `${this.path}?${params}`
-    }
-
-    const req = http.request(reqOptions, (response) => {
+    const req = http.request(reqOptions, response => {
       response.setEncoding('utf8')
 
       let resbody = ''
-      response.on('data', (chunk) => { resbody += chunk })
+      response.on('data', chunk => { resbody = resbody + chunk })
 
       response.on('end', () => {
         switch (response.statusCode) {
+          case 412:
+          case 304:
+            // Respond from cache (no modifications)
+            const res = this.#cache.get(request)
+            if (res) {
+              return callback(res)
+            } else {
+              return callback({
+                headers: response.headers,
+                status: 500,
+                statusText: 'Internal Server Error',
+                responseText: 'Failed to retrieve cached response.'
+              })
+            }
           case 301:
           case 302:
           case 307:
@@ -863,45 +837,55 @@ export default class Request { // eslint-disable-line no-unused-vars
 
               this.stopMonitor()
 
-              return callback({ // eslint-disable-line standard/no-callback-literal
+              return callback(this.#cache.put(req, { // eslint-disable-line standard/no-callback-literal
+                headers: response.headers,
                 status: 500,
                 statusText: 'Too many redirects',
-                responseText: 'Too many redirects',
-                responseXML: 'Too many redirects',
-                readyState: 4
-              })
+                responseText: 'Too many redirects'
+              }, this.#cacheMode))
             }
 
             if (response.headers.location === undefined) {
               this.stopMonitor()
 
-              return callback({ // eslint-disable-line standard/no-callback-literal
+              return callback(this.#cache.put(req, { // eslint-disable-line standard/no-callback-literal
+                headers: response.headers,
                 status: 502,
                 statusText: 'Bad Gateway',
-                responseText: 'Bad Gateway',
-                responseXML: 'Bad Gateway',
-                readyState: 4
-              })
+                responseText: 'Bad Gateway'
+              }, this.#cacheMode, response))
             }
 
             this.redirectAttempts++
             this.url = response.headers.location
 
-            return this.send(callback)
+            return this.send(res => callback(this.#cache.put(req, res, this.#cacheMode, response)))
 
           default:
             this.stopMonitor()
 
-            return callback({ // eslint-disable-line standard/no-callback-literal
+            if (this.sri) {
+              const integrity = SRI.verify(this.sri, resbody)
+              if (!integrity.valid) {
+                throw new Error(integrity.reason)
+              }
+            }
+            
+            return callback(this.#cache.put(req, { // eslint-disable-line standard/no-callback-literal
+              headers: response.headers,
               status: response.statusCode,
-              statusText: NGN.coalesce(response.statusText),
+              statusText: NGN.coalesce(response.statusMessage, response.statusText),
               responseText: resbody,
-              responseXML: resbody,
-              readyState: 4
-            })
+            }, this.#cacheMode, response))
         }
       })
     })
+
+    // Check the cache
+    let cachedResponse = this.#cache.get(req)
+    if (cachedResponse) {
+      return callback(cachedResponse)
+    }
 
     req.on('error', (err) => {
       this.stopMonitor()
@@ -911,8 +895,8 @@ export default class Request { // eslint-disable-line no-unused-vars
           status: 400,
           statusText: err.message,
           responseText: err.message,
-          responseXML: err.message,
-          readyState: 0
+          // responseXML: err.message,
+          // readyState: 0
         })
       } else {
         throw err
@@ -924,6 +908,8 @@ export default class Request { // eslint-disable-line no-unused-vars
     if (body) {
       req.write(body)
     }
+
+    this.#cache.capture(req, this.#cacheMode)
 
     req.end()
     /* end-node-only */
@@ -960,7 +946,10 @@ export default class Request { // eslint-disable-line no-unused-vars
         this.#controller = null
       })
       
-      setTimeout(this.abort, this.timeout)
+      setTimeout(() => {
+        this.abort()
+        this.emit('timeout', `Timed out after ${this.timeout}ms.`)
+      }, this.timeout)
     }
 
     // Apply credentials
@@ -973,7 +962,7 @@ export default class Request { // eslint-disable-line no-unused-vars
 
     // Execute the request
     let result
-    fetch(this.url, init)
+    fetch(this.#uri.toString(), init)
       .then(response => {
         result = {
           ok: response.ok,

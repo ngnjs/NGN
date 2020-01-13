@@ -46,7 +46,9 @@ external.push('../../.node/index.js')
 // external.push('../../.browser/index.js')
 
 const tests = new Set(process.argv.filter((val, i, args) => i > 0 && /-+test/i.test(args[i - 1])).map(i => i.toLowerCase()))
-const input = tests.size === 0 ? ['./0*-*/*-*.js'] : Array.from(tests).map(test => `./*-${test}/*-*.js`)
+const input = tests.size === 0 ? ['./0*-*/*-*.js'] : Array.from(tests)
+
+console.log('\nTest Files:', Array.from(tests).join(', '))
 
 async function build () {
   const bundle = await rollup.rollup({
