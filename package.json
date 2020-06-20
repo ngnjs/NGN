@@ -1,63 +1,27 @@
 {
   "name": "ngn",
   "version": "2.0.0",
-  "description": "A JavaScript-based systems and software authoring library.",
+  "description": "A JavaScript library for building systems and frameworks.",
+  "main": "src/index.js",
+  "directories": {
+    "lib": "src/lib"
+  },
   "scripts": {
-    "test": "gulp test",
-    "test:build": "gulp test:clean && gulp test:build",
-    "xtest:node": "npm run test:build && nyc tape ./test/common/*.js --coverage | tap-spec && standard --verbose | tap-nyc | snazzy && npm run cover",
-    "test:browser": "npm run test:build && karma start karma.conf.js ",
-    "test:browser:data": "npm run test:build && karma start karma.conf.js --test data",
-    "test:browser:events": "npm run test:build && karma start karma.conf.js --test eventemitter",
-    "test:browser:utility": "npm run test:build && karma start karma.conf.js --test utility",
-    "coverage": "nyc tape ./test/common/*.js | tap-nyc",
-    "coverage:report": "nyc report --reporter=html",
-    "cover": "npm run coverage && npm run coverage:report",
-    "test:syntax": "standard --verbose | snazzy",
-    "test:node": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-**/*-*.js --cov --coverage-report=html && standard --verbose | snazzy",
-    "test:node:sanity": "tap -R spec ./test/*-sanity/**/*.js",
-    "test:node:basic": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-basic/**/*.js",
-    "test:node:events": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-events/**/**.js",
-    "test:node:utility": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-utility/**/*.js",
-    "test:node:queue": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-queue/**/*.js",
-    "test:node:data": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/**/*.js",
-    "test:node:data:rules": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/*-rules.js",
-    "test:node:data:utility": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/*-utility.js",
-    "test:node:data:store": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-data/*-store.js",
-    "test:node:net": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*-net/**/*.js",
-    "test:node:integration": "rollup -c ./rollup.testnode.config.js && tap -R spec ./test/common/*integration/**/*.js",
-    "test:browser:sanity": "rollup -c ./rollup.testbrowser.config.js && karma start karma.conf.js --test sanity",
-    "test:local:browser:sanity": "rollup -c ./rollup.testbrowser.config.js && karma start karma.conf.js --local --test sanity",
-    "build": "rollup -c",
-    "build:graham": "rollup -c ./build/rollup.release.config.js",
-    "documentation": "rollup -c ./rollup.documentation.config.js && node build.js --docs",
-    "metadoc": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP --maxfiles 1",
-    "metadoc:api": "metadoc --source ./src --output ./docs --warnskippedevents --warnnocode --ignore ./src/data/WIP | metadoc-api --root https://ngnapi.author.io/",
-    "deploy": "node ./deploy.js ./docs",
-    "build:test:node": "MODE=test ENVIRONMENT=node rollup -c ./build/rollup.config.js",
-    "newtest:sanity": "npm run build:test:node && tap -R spec ./test/*-**/*-**.js"
+    "start": "echo Not executable.",
+    "build": "cd ./build && npm start",
+    "test": "cd ./test && npm start",
+    "test:node": "cd ./test && npm run node",
+    "reset": "echo Resetting test environments && cd ./test && npm run clean && cd ../build && npm run clean",
+    "manually": "cd ./test && npm run browser:manual:open",
+    "manual:setup": "cd ./test && npm run browser:manual:create",
+    "again": "cd ./test && npm run browser:manual",
+    "setup": "echo \"Installing build and test dependencies...\" && cd ./build && npm i --no-package-lock && cd ../test && npm i --no-package-lock && echo Template Setup Complete.",
+    "resetup": "node -e \"let fs=require('fs'),path=require('path');fs.rmdirSync(path.resolve('./build/node_modules'), { recursive: true });fs.rmdirSync(path.resolve('./test/node_modules'), { recursive: true });\" && npm run setup",
+    "report:compat": "cd ./test && npm run compat",
+    "report:syntax": "cd ./test && npm run syntax",
+    "report:preview": "npm pack --dry-run && echo \"==============================\" && echo \"This report shows what will be published to the module registry. Pay attention to the tarball contents and assure no sensitive files will be published.\""
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ngnjs/ngn.git"
-  },
-  "bugs": {
-    "url": "https://github.com/ngnjs/ngn/issues"
-  },
-  "keywords": [
-    "chassis",
-    "http",
-    "ajax",
-    "data",
-    "store",
-    "collection",
-    "bus",
-    "event",
-    "queue",
-    "api",
-    "NGN",
-    "orchestration"
-  ],
+  "type": "module",
   "author": {
     "name": "Corey Butler",
     "url": "http://coreybutler.com"
@@ -80,7 +44,14 @@
       "url": "https://github.com/theteejers"
     }
   ],
+  "private": true,
   "license": "MIT",
   "homepage": "https://ngn.js.org",
-  "type": "module"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ngnjs/ngn.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ngnjs/ngn/issues"
+  }
 }

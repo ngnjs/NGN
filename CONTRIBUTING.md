@@ -1,27 +1,8 @@
-# Filing an Issue
-
-**Code of Conduct:** Be courteous. Focus on the code.
-
-**_Please search for your issue_ before submitting a new one.** It's amazing how many people skip this step. If you actually have a question, consider searching [stackoverflow.com](https://stackoverflow.com) as well.
-
-The goal is to close every issue and answer every question, but backlog happens. 
-
-Here's how issues are prioritized:
-
-1. **Customers First** - If you're a client, sponsoring a maintainer, or have a support contract, your issue receives top priority.*
-1. **Regression Tested** - If you create a pull request with a regression test illustrating the problem, it will receive higher priority. This takes the guess work out of an issue, allowing efforts to be focused on a fix.
-1. **Clearly Defined Issues** - Clearly defined issues with instructions for recreating the problem help reach the "fix" faster.
-1. Everything else.
-
-*If you have access to a support Slack channel, feel free to ask general questions there. If you have encountered a problem, please create an issue here. Issues filed by sponsors are automatically submitted through Slack.
-
----
-
 # Contributing to NGN
 
 Please be aware of and adhere to the coding practices. Pull requests that do not conform are unlikely to be accepted.
 
-**NGN is designed to run on multiple JavaScript runtimes**, such as browsers and Node.js, **using a consistent API**. Runtime-specific API features will not be accepted, but runtime-specific implementation features may be.
+**NGN is designed to run on multiple JavaScript runtimes with a consistent API**. In other words, the same API should work in the browser, Node.js, and other supported runtimes. Runtime-specific API _features_ will not be accepted, but runtime-specific _implementations_ may be.
 
 **_Example: Unacceptable_**
 The following feature is only relevent to browsers:
@@ -32,7 +13,7 @@ NGN.getHtmlElement = () => {
 }
 ```
 
-**_Example: Aacceptable_**
+**_Example: Acceptable_**
 The following feature is relevant to all runtimes, but the implementation differs by runtime:
 
 ```javascript
@@ -50,7 +31,7 @@ Object.defineProperty(NGN, 'platform', NGN.get(() => {
 
 In the example above, creating a getter attribute to identify the current platform is relevant to all runtimes, but each runtime retrieves the data in a different manner. Since all runtimes are supported, this would be an acceptable contribution.
 
-Even if a contribution meets the basic acceptance criteria, it does not mean it will be merged into the project. Introducing new features is a big maintenance consideration. If you want to add a new feature, propose it first and offer to work on it. The NGN team will do it's best to work through the proposal with you and provide guidance if/when necessary. Be mindful that the team has limited capacity, but will do as much as possible to assist.
+Technical compliance is not the only requirement. Even if a contribution meets the basic acceptance criteria, it does not mean it will be merged into the project. Introducing new features is a big maintenance consideration. If you want to add a new feature, propose it first and offer to work on it. The NGN team will do it's best to work through the proposal with you and provide guidance if/when necessary. Be mindful that the team has limited capacity, but will do as much as possible to assist.
 
 ## Source Code Considerations
 
@@ -63,7 +44,7 @@ As a _general practice_, all code should conform to **ECMAScript Final** feature
 > **Example Exception:**
 > The proposed Stage 3 public/private attributes can be used in NGN. NGN heavily utilizes private attributes/methods, which require significant boilerplate code to implement without the new proposal. Use of these new attributes are projected to reduce the code base size by 40%. This proposal was already implemented in V8 at the time (Chrome, Opera, Edge, Node.js) with no negative remarks from Mozilla (Firefox) or Apple (Safari).
 
-Be mindful that the use of Stage 3 code may require modifications to the build process. This can be a very non-trivial effort for the NGN maintainers.
+Be mindful that the use of Stage 3 code may require modifications to the build process. This can be a very non-trivial effort for the NGN maintainers and may impact acceptance of a contribution.
 
 ## Unit Testing, Code Coverage, & Syntax
 
@@ -73,7 +54,7 @@ NGN uses the following:
 - [tape](https://github.com/substack/tape)/[tap](https://en.wikipedia.org/wiki/Test_Anything_Protocol) for testing. [tap-diff](https://github.com/axross/tap-diff) is used for producing human-readable results.
 - [nyc](https://github.com/istanbuljs/nyc) is used to produce code coverage reports.
 
-[Travis CI](https://travis-ci.org/ngnjs/NGN) is used for testing. ![NGN Build Status](https://travis-ci.org/ngnjs/NGN.svg?branch=master)
+[Travis CI](https://travis-ci.org/ngnjs/NGN) is used for testing. ![NGN Build Status](https://travis-ci.org/ngnjs/NGN.svg?branch=master).
 
 ## Understanding Releases
 
