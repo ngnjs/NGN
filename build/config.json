@@ -1,7 +1,20 @@
 {
+  "output": "../.dist",
   "nodeOutput": "../.dist/node",
   "browserOutput": "../.dist/browser",
   "testOutput": "../test",
-  "npmPrefix": "@author.io",
-  "external": ["os", "fs", "http", "https", "events"]
+  "npmOrganization": "",
+  "external": ["os", "fs", "http", "https", "events"],
+  "terser": {
+    "compress": {
+      "keep_fnames": true,
+      "keep_classnames": true,
+      "drop_console": true,
+      "passes": 20,
+      "warnings": true,
+      "module": true
+    },
+    "mangle": false,
+    "module": true
+  }
 }
