@@ -17,4 +17,6 @@ out
 docs
 /**/cover.html
 build/tmp
+build/package-lock.json
+test/package-lock.json
 /**/browsercompat*.json
