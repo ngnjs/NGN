@@ -16,8 +16,8 @@ const input = path.resolve(`../${build.pkg.main}`)
 
 // Configure metadata for the build process.
 const rootdir = path.resolve(config.output) // Main output directory
-let outdir = path.join(rootdir, build.name) // Active output directory
-let configuration = [] // Rollup Configurations
+const outdir = path.join(rootdir, build.name) // Active output directory
+const configuration = [] // Rollup Configurations
 let output = `${outdir}/index.js`
 
 // Pre-process: Check if the build actually needs to be updated.
@@ -36,10 +36,10 @@ process.env.BROWSERSLIST_ENV = 'current'
 const plugins = [
   babel({
     // presets: [['@babel/preset-env', { targets: { node: true } }]],
-    presets: [['@babel/env']],
+    presets: [['@babel/env', { targets: { node: true } }]],
     plugins: [
-      ['@babel/plugin-proposal-class-properties', { 'loose': false }],
-      ['@babel/plugin-proposal-private-methods', { 'loose': false }]
+      ['@babel/plugin-proposal-class-properties', { loose: false }],
+      ['@babel/plugin-proposal-private-methods', { loose: false }]
     ]
   })
 ]
@@ -47,7 +47,7 @@ const plugins = [
 // 2. Build Node Production Package: Standard (Minified/Munged)
 const onwarn = build.ignoreCircularDependency('../src/internal.js')
 
-let terserCfg = config.terser
+const terserCfg = config.terser
 terserCfg.module = true
 terserCfg.compress.module = true
 terserCfg.compress.drop_console = false
