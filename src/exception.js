@@ -1,23 +1,18 @@
 import { register, ERROR } from './internal.js'
 
+const PARSER = new Map([
+  ['PROTOCOL', /(\w+:\/\/?.*):([0-9]+):([0-9]+)(?!=[^0-9])/i],
+  ['NO_PROTOCOL', /\((.+):([0-9]+):([0-9]+)\)/i],
+  ['NO_PARENTHESIS', /\s(?!\()([^\s]+):([0-9]+):([0-9]+)(?!=[^0-9])(?!\))/i],
+  ['OLD_STACK', /Line\s+([0-9]+).+\s(\w+:\/\/?[^\s|:]+):?/i]
+])
+
 class Exception extends Error { // eslint-disable-line
   #id
   #custom
-  #stack
-  #verbose
-  // #frameFilter = frame => {
-  //   if (globalThis.process && globalThis.process.argv) {
-  //     let args = process.argv.filter(i => i.indexOf(process.cwd()) === 0)
-  //     if (args.length > 0) {
-  //       return frame.getFileName() !== args[0] && frame.getFileName()
-  //     }
-  //   }
-    
-  //   return frame.getFileName() // eslint-disable-line no-unreachable
-  // }
-
+  
   constructor (config = {}) {
-    super()
+    super ()
 
     config = typeof config === 'string' ? { message: config } : config
 
@@ -41,37 +36,9 @@ class Exception extends Error { // eslint-disable-line
       ? config.id
       : this.#custom.id) || this.name
 
-    const verbose = typeof this.#custom.log === 'boolean' ? this.#custom.log : false
-    
-    if (Error.prepareStackTrace) {
-      // Capture the stack trace on a new error so the detail can be saved as a structured trace.
-      Error.prepareStackTrace = function (_, stack) { return stack }
-
-      const _err = new Error()
-
-      Error.captureStackTrace(_err, this)
-
-      this.#stack = _err.stack
-
-      // const ff = this.#frameFilter
-
-      Error.prepareStackTrace = function (err, stack) { // eslint-disable-line handle-callback-err
-        // Slicing the stack prevents the library files from being included in the trace.
-        stack = stack.slice(2).map(el => `    at ${el}`).join('\n')
-        // Provide extended help within the Ledger
-        ERROR(me.name, me)
-        
-        let prefix = ''
-        if (verbose) {
-          prefix = [me.cause, me.help].filter(i => i !== null)
-          prefix = prefix.length === 0 ? '' : '\n' + prefix.join('\n\n').trim() + '\n\n'
-        }
-
-        return `${prefix}${me.name}: ${me.message}\n` + stack
-      }
-
-      // Enable stack trace
-      Error.captureStackTrace(this)
+    // Enable stack trace
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, Exception)
     }
 
     if (!(typeof config.DO_NOT_REGISTER === 'boolean' && !config.DO_NOT_REGISTER)) {
@@ -93,39 +60,39 @@ class Exception extends Error { // eslint-disable-line
 
   /**
    * @property {Array} trace
-   * The structured data of the stacktrace. Each array element is a JSON object corresponding to
-   * the full stack trace:
+   * The structured file references of the stacktrace. Each array element is a 
+   * JSON object corresponding to the traceable location where the action originated.
+   * The trace only provides file information. `eval`, `<anonymous>`, `console`, and
+   * in-memory execution is ignored.
+   * 
+   * Use this attribute to identify the root of an error or breakpoint within a source file.
+   * For full details, use the raw stacktrace (`.stack` in most runtimes).
    *
    * ```js
    * {
-   *   filename: String,
+   *   path: String,
    *   line: Number,
-   *   column: Number,
-   *   functionname: String,
-   *   native: Boolean,
-   *   eval: Boolean,
-   *   type: String
+   *   column: Number
    * }
    * ```
    * @readonly
    */
   get trace () {
-    // return this.#stack.filter(this.#frameFilter).map(frame => {
-    return this.#stack.map(frame => {
-      return {
-        path: frame.getFileName(),
-        file: frame.getFileName().split(/\/|\\/).pop().replace('<anonymous>', 'console'),
-        line: frame.getLineNumber(),
-        column: frame.getColumnNumber(),
-        functionname: frame.getFunctionName(),
-        native: frame.isNative(),
-        eval: frame.isEval(),
-        type: frame.getTypeName(),
-        async: frame.isAsync(),
-        raw: frame.toString(),
-        object: frame
+    return this.stack.split('\n').reduce((result, line) => {
+      for (const [name, pattern] of PARSER) {
+        let match = pattern.exec(line)
+        if (match !== null) {
+          if (name !== 'OLD_STACK') {
+            result.push({ path: match[1], line: match[2], column: match[3] })
+          } else {
+            result.push({ path: match[2], line: match[1], column: 0 })
+          }
+          break
+        }
       }
-    })
+
+      return result
+    }, [])
   }
 }
 
@@ -153,20 +120,17 @@ const define = function (config = {}) {
  *
  * ```js
  * [
- *   { path: 'node.js:348:7', file: 'node.js', line: 348, column: 7 },
- *   { path: 'module.js:575:10',
- *     file: 'module.js',
+ *   { path: 'node.js', line: 348, column: 7 },
+ *   { path: 'module.js',
  *     line: 575,
  *     column: 10 },
- *   { path: 'module.js:550:10',
- *     file: 'module.js',
+ *   { path: 'module.js',
  *     line: 550,
  *     column: 10 },
- *   { path: 'module.js:541:32',
- *     file: 'module.js',
+ *   { path: 'module.js',
  *     line: 541,
  *     column: 32 },
- *   { path: '/_test.js:8:14', file: '/_test.js', line: 8, column: 14 }
+ *   { path: /_test.js', line: 8, column: 14 }
  * ]
  * ```
  *
@@ -175,13 +139,12 @@ const define = function (config = {}) {
  * accessing a normal stacktrace.
  * @private
  * @returns {array}
- * Returns an array of objects. Each object contains the file, line, column,
- * and path within the stack. For example:
+ * Returns an array of objects. Each object contains the file, line, and column
+ * within the stack. For example:
  *
  * ```
  * {
- *   path: 'path/to/file.js:127:14'
- *   file: 'path/to/file.js',
+ *   path: 'path/to/file.js',
  *   line: 127,
  *   column: 14
  * }
@@ -193,13 +156,12 @@ const define = function (config = {}) {
  * ```js
  * {
  *   path: 'unknown',
- *   file: 'unknown',
  *   line: 0,
  *   column: 0
  * }
  * ```
  */
-const stack = () => (new Exception({ DO_NOT_REGISTER: true })).trace.slice(2)
+const stack = () => (new Exception({ DO_NOT_REGISTER: true })).trace
 
 export {
   Exception as default,

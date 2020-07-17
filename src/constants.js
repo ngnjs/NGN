@@ -1,19 +1,30 @@
 // The real version is injected by the build process
 const version = '<#REPLACE_VERSION#>'
 
+const NODELIKE = globalThis.process !== undefined
+
 /**
  * Indicates NGN is running in a node-like environment.
  * This will detect node, Electron, NW.js, and other environments
  * presumably supporting Node.js (or a `global` namespace instead of `window`).
  * @private
  */
-const NODELIKE = globalThis.process !== undefined
+const RUNTIME = NODELIKE
+  ? 'node'
+  : (
+    globalThis.hasOwnProperty('Deno')
+    ? 'deno'
+    : 'browser'
+  )
 
 /**
  * The name of the operating system.
  * @readonly
  */
-const OS = (globalThis[NODELIKE ? 'process' : 'navigator'].platform || 'unknown').toLowerCase()
+const OS = (RUNTIME === 'deno' 
+  ? globalThis.Deno.build.os 
+  : ((NODELIKE ? globalThis.process : globalThis.window.navigator).platform
+     || 'unknown').toLowerCase())
 // TODO: Once optional chaining is supported in minifiers,
 // modify this to be globalThis.process?.platform || globalThis.navigator?.platform
 
@@ -45,7 +56,7 @@ const PLATFORM = () => {
 const PLATFORM_RELEASE = async () => {
   return NODELIKE
     ? (await import('os')).release()
-    : new Promise(resolve => resolve(/\((.*)\)/i.exec(globalThis.navigator.userAgent)[1].split(';')[0].split(/\s+/i).pop()))
+    : new Promise(resolve => resolve(RUNTIME === 'deno' ? 'unknown' : /\((.*)\)/i.exec(globalThis.navigator.userAgent)[1].split(';')[0].split(/\s+/i).pop()))
 }
 
 /**
@@ -82,6 +93,7 @@ const ERROR_EVENT = Symbol('NGN.ERROR')
 const INTERNAL_EVENT = Symbol('NGN.INTERNAL')
 
 const all = {
+  RUNTIME,
   NODELIKE,
   OS,
   PLATFORM,
@@ -97,6 +109,7 @@ export {
   all as default,
   version,
   NODELIKE,
+  RUNTIME,
   OS,
   PLATFORM,
   PLATFORM_RELEASE,

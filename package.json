@@ -7,19 +7,25 @@
     "lib": "src/lib"
   },
   "scripts": {
-    "start": "echo Not executable.",
-    "build": "cd ./build && npm start",
-    "test": "cd ./test && npm start",
-    "test:node": "cd ./test && npm run node",
-    "reset": "echo Resetting test environments && cd ./test && npm run clean && cd ../build && npm run clean",
-    "manually": "cd ./test && npm run browser:manual:open",
-    "manual:setup": "cd ./test && npm run browser:manual:create",
-    "again": "cd ./test && npm run browser:manual",
-    "setup": "echo \"Installing build and test dependencies...\" && cd ./build && npm i --no-package-lock && cd ../test && npm i --no-package-lock && echo Template Setup Complete.",
-    "resetup": "node -e \"let fs=require('fs'),path=require('path');fs.rmdirSync(path.resolve('./build/node_modules'), { recursive: true });fs.rmdirSync(path.resolve('./test/node_modules'), { recursive: true });\" && npm run setup",
-    "report:compat": "cd ./test && npm run compat",
-    "report:syntax": "cd ./test && npm run syntax",
+    "start": "dev workspace",
+    "test": "npm run test:node && npm run test:deno && npm run test:browser && npm run report:syntax && npm run report:size",
+    "test:node": "dev test -rt node tests/*.js",
+    "test:node:base": "dev test -rt node tests/02-base.js",
+    "test:browser": "dev test -rt browser tests/*.js",
+    "test:browser:sanity": "dev test -rt browser tests/01-sanity.js",
+    "test:browser:base": "dev test -rt browser tests/02-base.js",
+    "test:deno": "dev test -rt deno tests/*.js",
+    "test:deno:sanity": "dev test -rt deno tests/01-sanity.js",
+    "manually": "dev test -rt manual tests/*.js",
+    "build": "dev build",
+    "report:syntax": "dev report syntax --pretty --verbose",
+    "report:size": "dev report size ./.dist/**/*.js ./.dist/**/*.js.map",
+    "report:compat": "dev report compatibility ./src/**/*.js",
+
     "report:preview": "npm pack --dry-run && echo \"==============================\" && echo \"This report shows what will be published to the module registry. Pay attention to the tarball contents and assure no sensitive files will be published.\""
+  },
+  "dev": {
+    "ignorecircular": ["src/internal.js"]
   },
   "type": "module",
   "author": {
@@ -53,5 +59,8 @@
   },
   "bugs": {
     "url": "https://github.com/ngnjs/ngn/issues"
+  },
+  "devDependencies": {
+    "@author.io/dev": "^1.0.11"
   }
 }
