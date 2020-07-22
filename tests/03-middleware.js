@@ -1,5 +1,5 @@
 import test from 'tappedout'
-import { Middleware } from '/app/.dist/ngn/index.js'
+import { Middleware } from 'ngn'
 
 test('Sync Middleware', t => {
   const mw = new Middleware()

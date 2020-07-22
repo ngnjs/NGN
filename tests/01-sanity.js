@@ -1,5 +1,5 @@
 import test from 'tappedout'
-import NGN from '/app/.dist/ngn/index.js'
+import NGN from 'ngn'
 
 test('Namespace', t => {
   t.ok(NGN !== undefined, 'NGN namespace is recognized.')

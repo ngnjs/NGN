@@ -1,5 +1,4 @@
 import Core from '../class.js'
-import base from '../base.js'
 
 export default class EventListener extends Core {
   #event
@@ -25,14 +24,13 @@ export default class EventListener extends Core {
     this.#dynamic = eventName instanceof RegExp || (typeof eventName === 'string' && eventName.indexOf('*') >= 0)
 
     // Object.defineProperty(this, 'execute', base.privateconstant.value(function (event) {
-      
     // }))
 
     this.register('EventHandler', this)
   }
 
   execute (event) {
-    let scope = {
+    const scope = {
       event,
       get emitter () {
         return this.parent
@@ -56,8 +54,9 @@ export default class EventListener extends Core {
 
       scope.handler = fn
       scope.remove = () => me.remove(oid)
+
       try {
-      fn.apply(scope, args)
+        fn.apply(scope, args)
       } catch (e) {
         console.log(e.message)
         console.log((new Error()).stack)
@@ -85,7 +84,7 @@ export default class EventListener extends Core {
       console.log(arguments)
       throw new TypeError(`The ${typeof handler} argument (${handler.toString()}) provided as a "${this.name}" event handler must be a function.`)
     }
-    
+
     const OID = Symbol(this.#event.toString())
 
     if (prepend) {
@@ -93,7 +92,7 @@ export default class EventListener extends Core {
     } else {
       this.#handlers.set(OID, handler)
     }
-    
+
     if (this.#handlers.size > this.#maxListeners) {
       throw new RangeError(`Maximum call stack exceeeded (${this.parent.name} emitter limit ${this.#maxListeners}).`)
     }
@@ -108,7 +107,7 @@ export default class EventListener extends Core {
 
   // Insert or update a handlers
   // upsert (oid, handler) {
-  //   this.#handlers.set(oid, handler)   
+  //   this.#handlers.set(oid, handler)
   // }
 
   // has (oid) {
@@ -118,7 +117,7 @@ export default class EventListener extends Core {
   // Remove a specific handler or all handlers.
   remove (handler) {
     const type = typeof handler
-    
+
     if (type === 'symbol') {
       this.#handlers.delete(handler)
     } else if (type === 'function') {

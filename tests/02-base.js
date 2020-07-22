@@ -1,5 +1,5 @@
 import test from 'tappedout'
-import NGN from '/app/.dist/ngn/index.js'
+import NGN from 'ngn'
 
 const isEnumerable = (obj, property) => Object.keys(obj).indexOf(property) >= 0
 const EmptyFn = function () { }

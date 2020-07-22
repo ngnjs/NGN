@@ -9,22 +9,13 @@ const NODELIKE = globalThis.process !== undefined
  * presumably supporting Node.js (or a `global` namespace instead of `window`).
  * @private
  */
-const RUNTIME = NODELIKE
-  ? 'node'
-  : (
-    globalThis.hasOwnProperty('Deno')
-    ? 'deno'
-    : 'browser'
-  )
+const RUNTIME = NODELIKE ? 'node' : (globalThis.hasOwnProperty('Deno') ? 'deno' : 'browser') // eslint-disable-line no-prototype-builtins
 
 /**
  * The name of the operating system.
  * @readonly
  */
-const OS = (RUNTIME === 'deno' 
-  ? globalThis.Deno.build.os 
-  : ((NODELIKE ? globalThis.process : globalThis.window.navigator).platform
-     || 'unknown').toLowerCase())
+const OS = (RUNTIME === 'deno' ? globalThis.Deno.build.os : ((NODELIKE ? globalThis.process : globalThis.window.navigator).platform || 'unknown').toLowerCase())
 // TODO: Once optional chaining is supported in minifiers,
 // modify this to be globalThis.process?.platform || globalThis.navigator?.platform
 

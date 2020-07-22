@@ -71,7 +71,7 @@ export default class Middleware extends Core {
     }
 
     this.go = (stack => (...args) => {
-      let next = args.pop()
+      const next = args.pop()
       stack(...args, () => {
         method.apply(this, [...args, next.bind(null, ...args)])
       })

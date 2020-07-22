@@ -1,5 +1,5 @@
 import test from 'tappedout'
-import { NGN, EventEmitter } from '/app/.dist//ngn/index.js'
+import { NGN, EventEmitter } from 'ngn'
 
 let ee
 

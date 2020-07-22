@@ -1,5 +1,5 @@
 import test from 'tappedout'
-import NGN from '/app/.dist//ngn/index.js'
+import NGN from 'ngn'
 
 // To add a regression test:
 // 1. Copy the placheolder test and rename it with a meaningful name.

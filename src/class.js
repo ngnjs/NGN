@@ -1,5 +1,5 @@
 import base from './base.js'
-import { WARN, register } from './internal.js'
+import { register } from './internal.js'
 
 export default class Core {
   #name
@@ -81,7 +81,7 @@ export default class Core {
       rename: base.private.value((old, name, fn = null) => {
         if (!fn) {
           const me = this
-          fn = function () { 
+          fn = function () {
             return typeof me[name] === 'function'
               ? me[name](...arguments)
               : me[name]

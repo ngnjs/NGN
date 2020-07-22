@@ -17,8 +17,8 @@ export default class EventEmitter extends Core {
 
   constructor (cfg = {}) {
     super(...arguments)
-    
-    if (cfg.hasOwnProperty('defaultMaxListeners')) {
+
+    if (cfg.hasOwnProperty('defaultMaxListeners')) { // eslint-disable-line no-prototype-builtins
       this.#maxListeners = cfg.defaultMaxListeners
     }
 
@@ -27,7 +27,7 @@ export default class EventEmitter extends Core {
     this.alias('removeListener', this.off)
     this.alias('removeEventListener', this.off)
     this.alias('clear', this.removeAllListeners)
-  
+
     this.register('EventEmitter')
   }
 
@@ -48,7 +48,7 @@ export default class EventEmitter extends Core {
     if (isNaN(value)) {
       throw new TypeError(`The TTL value supplied to the ${this.name} event emitter must be an integer, not ${typeof value}.`)
     }
-    
+
     if (value === 0) {
       value = -1
     }
@@ -138,10 +138,10 @@ export default class EventEmitter extends Core {
     let listener = this.#listeners.get(name)
     if (!listener) {
       listener = new Listener(name, this.#maxListeners)
-      
+
       // ID the parent emitter
       listener.parent = this
-      
+
       // When the listener has no handlers, remove it.
       listener.flush = () => {
         this.#listeners.delete(name)
@@ -179,7 +179,7 @@ export default class EventEmitter extends Core {
    * Returns a unique ID (a [Symbol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol))
    * which can be used to retrieve/delete the listener.
    */
-  prependListener(name, handler, ttl = null) {
+  prependListener (name, handler, ttl = null) {
     return this.on(name, handler, ttl, true)
   }
 
@@ -208,7 +208,7 @@ export default class EventEmitter extends Core {
    * @param  {Function} handler
    * The method responsible for responding to the event.
    */
-  prependOnceListener(name, handler, ttl = null) {
+  prependOnceListener (name, handler, ttl = null) {
     this.once(name, handler, ttl, true)
   }
 
@@ -238,9 +238,8 @@ export default class EventEmitter extends Core {
       WARN(`Failed to remove event listener(s). The "${this.name}" event emitter has no listeners for the "${name.toString()}" event.`)
     } else {
       listeners.forEach(name => {
-        let listener = this.#listeners.get(name)
+        const listener = this.#listeners.get(name)
         listener.remove(handler)
-        
         this.emit('removeListener', name)
       })
     }
@@ -250,7 +249,7 @@ export default class EventEmitter extends Core {
    * @method removeAllListeners
    * Remove all event handlers from the EventEmitter (both regular and adhoc).
    */
-  removeAllListeners(name = null) {
+  removeAllListeners (name = null) {
     if (arguments.length > 1) {
       (new Set([...arguments])).forEach(arg => this.removeAllListeners(arg))
       return
@@ -259,7 +258,7 @@ export default class EventEmitter extends Core {
     if (name !== null) {
       this.off(name)
     } else {
-      let events = this.listeners()
+      const events = this.listeners()
       this.#listeners = new Map()
       events.forEach(eventName => this.emit('removeListener', eventName))
     }
@@ -316,7 +315,7 @@ export default class EventEmitter extends Core {
       name.forEach(eventName => this.emit(eventName, ...args))
       return
     }
-    
+
     this.#forEachListener(name, listener => listener.execute(name, ...args))
   }
 
@@ -326,7 +325,7 @@ export default class EventEmitter extends Core {
    * @return {array}
    */
   eventNames () {
-    return this.listeners()//.filter(name => !this.#isDynamicEventName(name))
+    return this.listeners() // .filter(name => !this.#isDynamicEventName(name))
   }
 
   /**
@@ -373,7 +372,7 @@ export default class EventEmitter extends Core {
       } else if (typeof group[eventName] === 'object') {
         this.pool(`${topic}.`, group[eventName])
       } else if (typeof group[eventName] === 'string') {
-        // Forward strings 
+        // Forward strings
         pool[eventName] = this.on(topic, function () {
           me.emit(group[eventName], ...arguments)
         })

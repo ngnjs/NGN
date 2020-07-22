@@ -1,5 +1,3 @@
-import { INFO, WARN } from '../internal.js'
-
 /**
  * @method All
  * Determines whether the specified object has _all_ of the provided properties.
@@ -131,14 +129,14 @@ const Exactly = function () {
   }
 
   // Check for extra properties on the object
-  for (let property of properties) {
+  for (const property of properties) {
     if (!args.has(property)) {
       return false
     }
   }
 
   // Make sure there are enough properties.
-  for (let arg of args) {
+  for (const arg of args) {
     if (!properties.has(arg)) {
       return false
     }

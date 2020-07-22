@@ -8,7 +8,7 @@ globalThis[REFERENCE_ID].set('REFERENCE_ID', REFERENCE_ID)
 globalThis[REFERENCE_ID].set('VERSION', version)
 
 if (!globalThis[globalId]) {
-  globalThis[globalId] = new Array()
+  globalThis[globalId] = []
 }
 
 globalThis[globalId].push(REFERENCE_ID)
@@ -18,10 +18,10 @@ const register = (key, value) => {
     // Disallow the override of an instance
     if (key === 'INSTANCE') {
       if (!globalThis[REFERENCE_ID].has('INSTANCE')) {
-        globalThis[REFERENCE_ID].set(key, value)  
+        globalThis[REFERENCE_ID].set(key, value)
       }
-      
-      return 
+
+      return
     }
 
     const meta = globalThis[REFERENCE_ID].get(key) || new Map()

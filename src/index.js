@@ -39,10 +39,8 @@ Object.defineProperties(NGN, {
   INTERNAL: NGN.privateconstant(internal.INTERNAL),
 
   // Stack Methods
-  stack: NGN.get(stack)
-})
+  stack: NGN.get(stack),
 
-Object.defineProperties(NGN, {
   /**
    * @method defineException
    * Create a custom global exception (custom error).
@@ -174,7 +172,7 @@ const {
   INFO,
   ERROR,
   INTERNAL,
-  
+
   wrapClass,
   deprecateClass,
   wrap,

@@ -1,7 +1,7 @@
 import base from '../base.js'
 import { NODELIKE } from '../constants.js'
 import { WARN, INFO } from '../internal.js'
-import { coalesce, typeOf } from '../methods/operator.js'
+import { coalesce } from '../methods/operator.js'
 import { Force as forceArray } from '../methods/array.js'
 import EventEmitter from './core.js'
 
@@ -20,7 +20,7 @@ class EnhancedEventEmitter extends EventEmitter {
    */
   #funnel = (key, name, trigger, args = [], once = false) => {
     const queue = this.#collections.get(key)
-    
+
     if (!queue) {
       return
     }
@@ -63,21 +63,21 @@ class EnhancedEventEmitter extends EventEmitter {
 
     const handlers = new Set()
     collection.forEach(event => handlers.add(this[once ? 'once' : 'on'](event, () => this.#funnel(key, event, trigger, Array.from(arguments).slice(3)))))
-    
+
     // If the funnel is not an adhoc/one-time funnel,
     // store the collection of events so the funnel can be reset.
     this.#funnels.set(key, collection)
 
     return Object.defineProperty({}, 'remove', base.constant.value(() => {
       this.#collections.delete(key)
-      const activeHandlers = Array.from(handlers)
+      // const activeHandlers = Array.from(handlers)
       Array.from(collection).forEach((event, i) => this.off(event, handlers[i]))
     }))
   }
 
   #afterEvent = function (once, event, limit, target) {
     const oid = Symbol(`after.${limit}.${event}`)
-
+console.log(arguments)
     this.#after.set(oid, {
       remaining: limit,
       limit,
@@ -88,7 +88,7 @@ class EnhancedEventEmitter extends EventEmitter {
     const me = this
     const OID = this.on(event, function () {
       const meta = me.#after.get(oid)
-console.log('==>', this.event, '<==')
+console.log('==>', this.event, '<==', arguments)
       if (!meta) {
         return
       }
@@ -123,7 +123,6 @@ console.log('==>', this.event, '<==')
   constructor () {
     super(...arguments)
 
-    const me = this
     this.rename('funnel', 'reduce')
     this.rename('funnelOnce', 'reduceOnce')
     this.rename('threshold', 'after')
@@ -150,7 +149,7 @@ console.log('==>', this.event, '<==')
     })
   }
 
-  emit(name) {
+  emit (name) {
     // Do not emit events that are queued/delayed.
     if ((typeof name === 'string' || typeof name === 'symbol') && this.#queued.has(name)) {
       return
@@ -242,7 +241,7 @@ console.log('==>', this.event, '<==')
 
       // Discard the delay value when emitting the event.
       args.splice(1, 1)
-      
+
       this.#queued.set(name, setTimeout(() => {
         this.#queued.delete(name)
         this.emit(...args)
@@ -453,9 +452,10 @@ console.log('==>', this.event, '<==')
     }
 
     name = forceArray(name)
-    
+
     this.maxListeners += name.length
 
+    const me = this
     name.forEach(event => {
       this[once ? 'once' : 'on'](event, function () {
         if (typeof event === 'string') {
@@ -575,12 +575,12 @@ console.log('==>', this.event, '<==')
    * @param {string|symbol} [replacementEventName]
    * The name of the new event.
    */
-  deprecate(event, replacementName) {
+  deprecate (event, replacementName) {
     const me = this
-    
+
     this.on(event, function () {
       WARN('DEPRECATED.EVENT', `${event} is deprecated. ` + (!replacementName ? '' : `Use ${replacementName} instead.`))
-    
+
       if (replacementName) {
         const args = Array.from(arguments).slice(1)
         args.unshift(replacementName)

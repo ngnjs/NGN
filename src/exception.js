@@ -1,4 +1,4 @@
-import { register, ERROR } from './internal.js'
+import { register } from './internal.js'
 
 const PARSER = new Map([
   ['PROTOCOL', /(\w+:\/\/?.*):([0-9]+):([0-9]+)(?!=[^0-9])/i],
@@ -10,13 +10,11 @@ const PARSER = new Map([
 class Exception extends Error { // eslint-disable-line
   #id
   #custom
-  
+
   constructor (config = {}) {
-    super ()
+    super()
 
     config = typeof config === 'string' ? { message: config } : config
-
-    const me = this
 
     this.name = config.name || 'NgnError'
     this.type = config.type || 'Error'
@@ -32,7 +30,7 @@ class Exception extends Error { // eslint-disable-line
     // Add any custom properties
     this.#custom = config.custom || {}
 
-    this.#id = (config.id 
+    this.#id = (config.id
       ? config.id
       : this.#custom.id) || this.name
 
@@ -60,11 +58,11 @@ class Exception extends Error { // eslint-disable-line
 
   /**
    * @property {Array} trace
-   * The structured file references of the stacktrace. Each array element is a 
+   * The structured file references of the stacktrace. Each array element is a
    * JSON object corresponding to the traceable location where the action originated.
    * The trace only provides file information. `eval`, `<anonymous>`, `console`, and
    * in-memory execution is ignored.
-   * 
+   *
    * Use this attribute to identify the root of an error or breakpoint within a source file.
    * For full details, use the raw stacktrace (`.stack` in most runtimes).
    *
@@ -80,7 +78,7 @@ class Exception extends Error { // eslint-disable-line
   get trace () {
     return this.stack.split('\n').reduce((result, line) => {
       for (const [name, pattern] of PARSER) {
-        let match = pattern.exec(line)
+        const match = pattern.exec(line)
         if (match !== null) {
           if (name !== 'OLD_STACK') {
             result.push({ path: match[1], line: match[2], column: match[3] })
