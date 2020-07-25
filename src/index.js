@@ -179,9 +179,26 @@ const {
   deprecate
 } = NGN
 
+const NGNP = new Proxy(NGN, {
+  get (target, property) {
+    if (target[property] !== undefined) {
+      return target[property]
+    }
+
+    const ref = globalThis[constant.REFERENCE_ID]
+    if (ref instanceof Map) {
+      if (ref.has('PLUGINS') && ref.get('PLUGINS').has(property)) {
+        return ref.get('PLUGINS').get(property)
+      }
+    }
+
+    return undefined
+  }
+})
+
 export {
-  NGN as default,
-  NGN,
+  NGNP as default,
+  NGNP as NGN,
   EventEmitter,
   Middleware,
   Exception,

@@ -77,7 +77,6 @@ class EnhancedEventEmitter extends EventEmitter {
 
   #afterEvent = function (once, event, limit, target) {
     const oid = Symbol(`after.${limit}.${event}`)
-console.log(arguments)
     this.#after.set(oid, {
       remaining: limit,
       limit,
@@ -88,14 +87,14 @@ console.log(arguments)
     const me = this
     const OID = this.on(event, function () {
       const meta = me.#after.get(oid)
-console.log('==>', this.event, '<==', arguments)
+
       if (!meta) {
         return
       }
 
       meta.remaining--
 
-      if (meta.remaining !== 0) {
+      if (meta.remaining === 0) {
         if (meta.once) {
           me.#after.delete(oid)
           me.off(event, OID)
