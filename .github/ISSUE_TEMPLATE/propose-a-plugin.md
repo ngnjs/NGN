@@ -2,7 +2,7 @@
 name: Propose a Plugin
 about: Propose a new official NGN plugin.
 title: "[PROPOSAL-PLUGIN]"
-labels: enhancement, proposal, plugin
+labels: enhancement, plugin, proposal
 assignees: ''
 
 ---
