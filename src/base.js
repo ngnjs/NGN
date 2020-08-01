@@ -1,6 +1,5 @@
 import { REFERENCE_ID, WARN_EVENT } from './constants.js'
 
-const enumerable = false
 const allFalse = [false, false, false]
 const config = function (enumerable, writable, configurable, value) {
   return { enumerable, writable, configurable, value }
@@ -174,7 +173,7 @@ export default {
    */
   get: config(...allFalse, fn => {
     return {
-      enumerable,
+      enumerable: false,
       get: fn
     }
   }),
@@ -205,7 +204,7 @@ export default {
    */
   set: config(...allFalse, fn => {
     return {
-      enumerable,
+      enumerable: false,
       set: fn
     }
   }),
@@ -222,7 +221,7 @@ export default {
    */
   getset: config(...allFalse, (getterFn, setterFn) => {
     return {
-      enumerable,
+      enumerable: false,
       get: getterFn,
       set: setterFn
     }
