@@ -179,7 +179,8 @@ const {
   deprecate
 } = NGN
 
-const NGNP = new Proxy(NGN, {
+// Proxy NGN so plugins can be identified within the namespace.
+const NGNProxy = new Proxy(NGN, {
   get (target, property) {
     if (target[property] !== undefined) {
       return target[property]
@@ -197,8 +198,8 @@ const NGNP = new Proxy(NGN, {
 })
 
 export {
-  NGNP as default,
-  NGNP as NGN,
+  NGNProxy as default,
+  NGNProxy as NGN,
   EventEmitter,
   Middleware,
   Exception,

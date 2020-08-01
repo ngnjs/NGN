@@ -4,38 +4,6 @@ import NGN from 'ngn'
 const isEnumerable = (obj, property) => Object.keys(obj).indexOf(property) >= 0
 const EmptyFn = function () { }
 
-test('NGN.define', function (t) {
-  const obj = {}
-
-  Object.defineProperty(obj, 'test', NGN.define(true, true, true, 'value'))
-  t.ok(isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.define creates an enumerable property.')
-
-  obj.test = 'changed'
-  t.ok(obj.test === 'changed', 'NGN.define writable property can be changed.')
-
-  delete obj.test
-  t.ok(!obj.hasOwnProperty('test'), 'NGN.define configurable property can be deleted.')
-
-  Object.defineProperty(obj, 'test', NGN.define(false, true, true, 'value'))
-  t.ok(!isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.define creates non-enumerable (semi-private) property.')
-
-  delete obj.test
-
-  Object.defineProperty(obj, 'test', NGN.define(true, false, true, 'value'))
-  try { obj.test = 'changed' } catch (e) { }
-
-  t.ok(obj.test === 'value', 'NGN.define read-only property does not change when a value is set.')
-
-  delete obj.test
-
-  Object.defineProperty(obj, 'test', NGN.define(true, true, false, 'value'))
-  try { delete obj.test } catch (e) { }
-
-  t.ok(obj.hasOwnProperty('test'), 'NGN.define non-configurable property cannot be deleted.')
-
-  t.end()
-})
-
 test('NGN.public', function (t) {
   const obj = {}
 

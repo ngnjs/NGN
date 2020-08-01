@@ -8,7 +8,7 @@ test('Namespace', t => {
 
 test('Method Existence', t => {
   const methodList = new Set([
-    'define',
+    // 'define',
     'public',
     'private',
     'constant',

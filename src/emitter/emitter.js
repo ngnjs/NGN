@@ -1,9 +1,9 @@
 import base from '../base.js'
 import { NODELIKE } from '../constants.js'
 import { WARN, INFO } from '../internal.js'
-import { coalesce } from '../methods/operator.js'
-import { Force as forceArray } from '../methods/array.js'
 import EventEmitter from './core.js'
+
+const forceArray = value => value === null ? [] : (Array.isArray(value) ? value : [value])
 
 class EnhancedEventEmitter extends EventEmitter {
   // Delayed event queue
@@ -275,7 +275,7 @@ class EnhancedEventEmitter extends EventEmitter {
    * Returns a function that will automatically be associated with an event.
    */
   attach (eventName, preventDefaultAction) {
-    preventDefaultAction = coalesce(preventDefaultAction, false)
+    preventDefaultAction = typeof preventDefaultAction === 'boolean' ? preventDefaultAction : false
 
     return e => {
       if (preventDefaultAction && !NODELIKE) {
@@ -458,7 +458,7 @@ class EnhancedEventEmitter extends EventEmitter {
     name.forEach(event => {
       this[once ? 'once' : 'on'](event, function () {
         if (typeof event === 'string') {
-          target.emit(`${coalesce(prefix, '')}${this.event}${coalesce(postfix, '')}`, ...arguments)
+          target.emit(`${prefix || ''}${this.event}${postfix || ''}`, ...arguments)
           return
         } else if (prefix !== null || postfix !== null) {
           INFO('RELAY', `Cannot relay a pre/postfixed "${this.event.toString()}" event (${typeof this.event}) from ${me.name} event emitter to ${target instanceof EventEmitter ? target.name : 'target event emitter'}.`)

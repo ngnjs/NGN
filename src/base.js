@@ -55,42 +55,6 @@ const typeContains = function () {
 
 export default {
   /**
-  * @method define
-  * Create an object definition for a property.
-  * For example:
-  *
-  * ```
-  * Object.defineProperty('attr', NGN.define(true, false, true, 'value'))
-  *
-  * // The snippet above is the same as:
-  * Object.defineProperty(this, 'attr', {
-  *  enumberable: true,
-  *  writable: false,
-  *  configurable: true,
-  *  value: 'value'
-  * })
-  * ```
-  * @param  {boolean} enumerable
-  * Determines if the attribute is considered an accessible part of the object.
-  * Making an attribute enumerable will make it show up as a key in an object,
-  * which can be iterated over (ex: `Object.keys()`). A non-enumerable asset is
-  * treated as a private attribute.
-  * @param  {boolean} writable
-  * Determines whether the value can be changed.
-  * @param  {boolean} configurable
-  * Determines whether the attribute can be removed from the object.
-  * @param  {any} value
-  * The actual value of the attribute.
-  * @private
-  */
-  define: {
-    enumerable,
-    writable: false,
-    configurable: false,
-    value: config
-  },
-
-  /**
    * @method public
    * Create a `public` property definition for an object.
    * Example:
