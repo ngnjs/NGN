@@ -1,5 +1,8 @@
-// The real version is injected by the build process
-const version = '<#REPLACE_VERSION#>'
+/**
+* @property {string} version
+* Identifies the NGN version number.
+*/
+const version = '<#REPLACE_VERSION#>' // The real version is injected by the build process
 
 const NODELIKE = globalThis.process !== undefined
 

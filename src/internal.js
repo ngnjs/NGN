@@ -13,7 +13,7 @@ if (!globalThis[globalId]) {
 
 globalThis[globalId].push(REFERENCE_ID)
 
-const register = (key, value) => {
+export const register = (key, value) => {
   if (key !== 'REFERENCE_ID' && key !== 'LEDGER' && key !== 'version') {
     // Disallow the override of an instance
     if (key === 'INSTANCE') {
@@ -30,7 +30,13 @@ const register = (key, value) => {
   }
 }
 
-const LEDGER = new EventEmitter({
+export const plugins = new Proxy(globalThis[REFERENCE_ID], {
+  get (target, property) {
+    return !target.has('PLUGINS') ? undefined : target.get('PLUGINS').get(property)
+  }
+})
+
+export const LEDGER = new EventEmitter({
   name: 'NGN Ledger',
   description: 'A ledger of events, outputs, and information produced by the system.'
 })
@@ -42,7 +48,7 @@ const LEDGER = new EventEmitter({
 globalThis[REFERENCE_ID].set('LEDGER', LEDGER)
 
 // A generic wrapper to fire a background event.
-const LEDGER_EVENT = EVENT => function () {
+export const LEDGER_EVENT = EVENT => function () {
   LEDGER.emit(EVENT, ...arguments)
 }
 
@@ -60,7 +66,7 @@ const LEDGER_EVENT = EVENT => function () {
  * See NGN.EventEmitter#emit for detailed parameter usage.
  * @private
  */
-const WARN = function () { LEDGER_EVENT(WARN_EVENT)(...arguments) }
+export const WARN = function () { LEDGER_EVENT(WARN_EVENT)(...arguments) }
 
 /**
  * @method INFO
@@ -76,7 +82,7 @@ const WARN = function () { LEDGER_EVENT(WARN_EVENT)(...arguments) }
  * See NGN.EventEmitter#emit for detailed parameter usage.
  * @private
  */
-const INFO = function () { LEDGER_EVENT(INFO_EVENT)(...arguments) }
+export const INFO = function () { LEDGER_EVENT(INFO_EVENT)(...arguments) }
 
 /**
  * @method ERROR
@@ -93,7 +99,7 @@ const INFO = function () { LEDGER_EVENT(INFO_EVENT)(...arguments) }
  * See NGN.EventEmitter#emit for detailed parameter usage.
  * @private
  */
-const ERROR = function () { LEDGER_EVENT(ERROR_EVENT)(...arguments) }
+export const ERROR = function () { LEDGER_EVENT(ERROR_EVENT)(...arguments) }
 
 /**
  * @method INTERNAL
@@ -111,13 +117,4 @@ const ERROR = function () { LEDGER_EVENT(ERROR_EVENT)(...arguments) }
  * @private
  * @ignore
  */
-const INTERNAL = function () { LEDGER_EVENT(INTERNAL_EVENT)(...arguments) }
-
-export {
-  WARN,
-  INFO,
-  ERROR,
-  INTERNAL,
-  LEDGER,
-  register
-}
+export const INTERNAL = function () { LEDGER_EVENT(INTERNAL_EVENT)(...arguments) }

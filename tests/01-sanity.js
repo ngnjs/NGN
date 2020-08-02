@@ -49,11 +49,14 @@ test('Method Existence', t => {
     // Extras
     'version',
     'BUS',
-    'LEDGER'
+    'LEDGER',
+
+    // Plugins
+    'plugins'
   ])
 
   for (const method of methodList) {
-    t.ok(NGN.hasOwnProperty(method), `NGN.${method} exists.`)
+    t.ok(NGN[method] !== undefined, `NGN.${method} exists.`)
   }
 
   const keys = Object.getOwnPropertyNames(NGN)
