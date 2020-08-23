@@ -25,29 +25,7 @@ export const {
   stack
 } = NGN
 
-// Proxy NGN so plugins can be identified within the namespace.
-// const proxy = new Proxy(NGN, {
-//   get (target, property) {
-//     if (target[property] !== undefined) {
-//       return target[property]
-//     }
-
-//     const ref = globalThis[REFERENCE_ID]
-//     if (ref instanceof Map) {
-//       if (ref.has('PLUGINS') && ref.get('PLUGINS').has(property)) {
-//         return ref.get('PLUGINS').get(property)
-//       }
-//     }
-
-//     return undefined
-//   }
-// })
-
 // Register the instance so it can be detected by plugins
 register('INSTANCE', NGN)
 
-// export {
-//   proxy as default,
-//   proxy as NGN
-// }
 export { NGN as default, NGN }

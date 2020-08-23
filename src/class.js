@@ -40,10 +40,9 @@ export default class Core {
     Object.defineProperties(this, {
       /**
        * @method alias
-       * A helper method to alias a value on an object. This is the equivalent of:
+       * A helper method to alias a value of an object. This is the equivalent of:
        * ```js
        * Object.defineProperty(this, name, {
-       *   enumerable: false,
        *   get: () => { return value }
        * })
        * ```
