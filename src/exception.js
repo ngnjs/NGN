@@ -7,7 +7,7 @@ const PARSER = new Map([
   ['OLD_STACK', /Line\s+([0-9]+).+\s(\w+:\/\/?[^\s|:]+):?/i]
 ])
 
-class Exception extends Error { // eslint-disable-line
+export default class Exception extends Error { // eslint-disable-line
   #id
   #custom
 
@@ -94,7 +94,57 @@ class Exception extends Error { // eslint-disable-line
   }
 }
 
-const define = function (config = {}) {
+/**
+ * @method defineException
+ * Create a custom global exception (custom error).
+ * @param {Object} config
+ * The configuration of the new error.
+ * @param {String} [config.name=NgnError]
+ * The pretty name of the exception. Alphanumeric characters only (underscore is acceptable).
+ * @param {String} [config.type=TypeError]
+ * The type of error. This is commonly `TypeError` or `ReferenceError`, but
+ * it can be any custom value.
+ * @param {String} [config.severity=minor]
+ * A descriptive "level" indicating how critical the error is.
+ * @param {String} [config.message=Unknown Error]
+ * The default message to output when none is specified.
+ * @param {Object} [config.custom]
+ * Provide a key/value object of custom attributes for the error.
+ * There are three "special" custom attributes: `help`, `cause`, and `log`.
+ * When provided, help/cause will always be written to the NGN.LEDGER
+ * when the error is thrown. When `log` is set to `true`, the help/cause
+ * will also be written to stdout.
+ *
+ * For example:
+ *
+ * ```js
+ * NGN.createException({
+ *   name: 'Test Problem',
+ *   message: 'An example error.',
+ *   custom: {
+ *     log: true,
+ *     help: 'Remove the throw statement.',
+ *     cause: 'Testing the error output.'
+ *   }
+ * });
+ *
+ * throw TestProblem()
+ * ```
+ * The code above generates the following console output:
+ *
+ * ```sh
+ * Testing the error output.
+ * Tip: Remove the throw statement.
+ * /path/to/test.js:12
+ *    throw TestProblem();
+ *    ^
+ *
+ * TestProblem: An example error.
+ *    at null._onTimeout (/path/to/test.js:12:11)
+ *    at Timer.listOnTimeout (timers.js:92:15)
+ * ```
+ */
+export function defineException (config = {}) {
   // Define the error globally
   globalThis[config.name || 'NGNError'] = function () {
     if (arguments.length > 0) {
@@ -159,11 +209,4 @@ const define = function (config = {}) {
  * }
  * ```
  */
-const stack = () => (new Exception({ DO_NOT_REGISTER: true })).trace
-
-export {
-  Exception as default,
-  Exception,
-  define,
-  stack
-}
+export const stack = () => (new Exception({ DO_NOT_REGISTER: true })).trace

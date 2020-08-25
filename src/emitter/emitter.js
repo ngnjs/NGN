@@ -458,7 +458,7 @@ class EnhancedEventEmitter extends EventEmitter {
     name.forEach(event => {
       this[once ? 'once' : 'on'](event, function () {
         if (typeof event === 'string') {
-          target.emit(`${prefix || ''}${this.event}${postfix || ''}`, ...arguments)
+          target.emit(`${prefix ? prefix + '.' : ''}${this.event}${postfix ? '.' + postfix : ''}`.replace(/\.{2,}/gi, '.'), ...arguments)
           return
         } else if (prefix !== null || postfix !== null) {
           INFO('RELAY', `Cannot relay a pre/postfixed "${this.event.toString()}" event (${typeof this.event}) from ${me.name} event emitter to ${target instanceof EventEmitter ? target.name : 'target event emitter'}.`)

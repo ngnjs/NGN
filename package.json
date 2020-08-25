@@ -10,6 +10,7 @@
     "start": "dev workspace",
     "test": "npm run test:node && npm run test:deno && npm run test:browser && npm run report:syntax && npm run report:size",
     "test:node": "dev test -rt node tests/*.js",
+    "test:node:sanity": "dev test -rt node tests/01-sanity.js",
     "test:node:base": "dev test -rt node tests/02-base.js",
     "test:browser": "dev test -rt browser tests/*.js",
     "test:browser:sanity": "dev test -rt browser tests/01-sanity.js",
