@@ -1,9 +1,6 @@
-_*
-*.md
+build
+test
+examples
 .*
 *.log
-*.yml
-*.sh
-typescript
-examples
-test
+*.md

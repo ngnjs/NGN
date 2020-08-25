@@ -1,58 +1,84 @@
 {
   "name": "ngn",
-  "version": "0.3.31",
-  "description": "A distributed services platform (core).",
-  "main": "./NGN.js",
-  "scripts": {
-    "test": "tape test/**/*.js | tap-spec && snazzy --verbose",
-    "test:tunnel": "tape test/**/04-sshtunnel.js | tap-spec && snazzy --verbose"
+  "version": "2.0.0",
+  "description": "A JavaScript library for building systems and frameworks.",
+  "main": "src/index.js",
+  "directories": {
+    "lib": "src/lib"
   },
+  "scripts": {
+    "start": "dev workspace",
+    "test": "npm run test:node && npm run test:deno && npm run test:browser && npm run report:syntax && npm run report:size",
+    "test:node": "dev test -rt node tests/*.js",
+    "test:node:sanity": "dev test -rt node tests/01-sanity.js",
+    "test:node:base": "dev test -rt node tests/02-base.js",
+    "test:browser": "dev test -rt browser tests/*.js",
+    "test:browser:sanity": "dev test -rt browser tests/01-sanity.js",
+    "test:browser:base": "dev test -rt browser tests/02-base.js",
+    "test:deno": "dev test -rt deno tests/*.js",
+    "test:deno:sanity": "dev test -rt deno tests/01-sanity.js",
+    "manually": "dev test -rt manual tests/*.js",
+    "build": "dev build",
+    "report:syntax": "dev report syntax --pretty --verbose",
+    "report:size": "dev report size ./.dist/**/*.js ./.dist/**/*.js.map",
+    "report:compat": "dev report compatibility ./src/**/*.js",
+    "report:preview": "npm pack --dry-run && echo \"==============================\" && echo \"This report shows what will be published to the module registry. Pay attention to the tarball contents and assure no sensitive files will be published.\""
+  },
+  "dev": {
+    "ignorecircular": [
+      "src/internal.js"
+    ],
+    "replace": {
+      "<#REPLACE_VERSION#>": "package.version"
+    },
+    "alias": {
+      "ngn": "/app/.dist/ngn/index.js",
+      "ngn-debug": "/app/.dist/ngn-debug/index.js.map"
+    }
+  },
+  "type": "module",
+  "author": {
+    "name": "Corey Butler",
+    "url": "http://coreybutler.com"
+  },
+  "contributors": [
+    {
+      "name": "Ecor Ventures",
+      "url": "https://ecorventures.com"
+    },
+    {
+      "name": "Graham Butler",
+      "url": "http://grahambutler.com"
+    },
+    {
+      "name": "Kevin Moritz",
+      "url": "https://github.com/mayorbyrne"
+    },
+    {
+      "name": "TJ Loughry",
+      "url": "https://github.com/theteejers"
+    }
+  ],
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://ngn.js.org",
   "repository": {
     "type": "git",
     "url": "https://github.com/ngnjs/ngn.git"
   },
-  "keywords": [
-    "NGN"
-  ],
-  "preferGlobal": false,
-  "engines": {
-    "node": ">= 6.0.0"
-  },
-  "author": "Corey Butler (http://ngn.js.org)",
-  "homepage": "http://ngn.js.org",
-  "license": "BSD-3-Clause",
-  "dependencies": {
-    "colors": "1.1.2",
-    "eventsource": "0.2.1",
-    "ngn-rpc": "0.1.6",
-    "ssh2": "0.5.0"
+  "bugs": {
+    "url": "https://github.com/ngnjs/ngn/issues"
   },
   "devDependencies": {
-    "babel-eslint": "6.1.0",
-    "buffer-equal-constant-time": "1.0.1",
-    "del": "^2.2.1",
-    "gulp": "^3.9.1",
-    "gulp-concat": "^2.6.0",
-    "gulp-header": "^1.8.7",
-    "gulp-strip-comments": "^2.4.3",
-    "ngn-sse": "0.0.3",
-    "snazzy": "4.0.0",
-    "standard": "7.1.2",
-    "standard-tap": "1.0.1",
-    "tap-spec": "4.1.1",
-    "tape": "4.6.0"
+    "@author.io/dev": "^1.0.15",
+    "ngn-debug": "^2.0.0"
   },
+  "dependencies": {},
   "standard": {
-    "parser": "babel-eslint",
-    "ignore": [
-      "_*",
-      "_**/*"
-    ],
     "globals": [
-      "NGN",
-      "ngn",
-      "LoggingMethodError",
-      "DuplicateLoggingMethodError"
+      "globalThis",
+      "window",
+      "global"
     ]
   }
 }
