@@ -13,7 +13,7 @@ jobs:
     name: 'Run Tests'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@2
+      - uses: actions/checkout@v2
         name: Checkout Code
 
       - uses: actions/setup-node@v1
@@ -55,5 +55,5 @@ jobs:
       - name: Test
         if: success()
         run: |
-          npm i @author.io/dev
+          npm i -g @author.io/dev
           npm test
