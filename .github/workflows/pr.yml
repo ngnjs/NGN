@@ -16,6 +16,11 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout Code
 
+      - name: Troubleshooting Data
+        run: |
+          pwd
+          ls -l
+
       - uses: actions/setup-node@v1
         name: Setup Node.js
         with:
@@ -33,7 +38,7 @@ jobs:
       - name: Setup Dev Tooling
         id: setup
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login https://docker.pkg.github.com -u coreybutler --password-stdin
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login https://docker.pkg.github.com -u ${{ github.actor }} --password-stdin
           base=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-base/tags?page_size=1'|jq '."results"[]["name"]')
           base=$(sed -e 's/^"//' -e 's/"$//' <<<"$base")
           docker pull docker.pkg.github.com/author/dev/dev-base:$base
