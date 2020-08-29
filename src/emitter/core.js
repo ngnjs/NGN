@@ -62,7 +62,7 @@ export default class EventEmitter extends Core {
   }
 
   set maxListeners (value) {
-    if (typeof value !== 'number') {
+    if (isNaN(value)) {
       if (value !== Infinity) {
         value = -1
       } else {
@@ -75,7 +75,7 @@ export default class EventEmitter extends Core {
     }
 
     this.#maxListeners = value
-    this.#forEachListener(l => { l.maxListeners = value })
+    this.#forEachListener(null, l => { l.maxListeners = value })
   }
 
   /**

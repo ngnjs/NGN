@@ -1,6 +1,9 @@
 name: Test Suite
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     branches:
       - master
@@ -10,26 +13,47 @@ jobs:
     name: 'Run Tests'
     runs-on: ubuntu-latest
     steps:
-        # Checkout updated source code
-      - uses: actions/checkout@v2
-    
+      - uses: actions/checkout@2
+        name: Checkout Code
+
+      - uses: actions/setup-node@v1
+        name: Setup Node.js
+        with:
+          node-version: '14'
+
+      - uses: actions/cache@v2
+        name: Setup npm Cache
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
         # If the version has changed, create a new git tag for it.
       - name: Setup Dev Tooling
         id: setup
         run: |
-          docker pull docker.pkg.github.com/author/dev/dev-base:1.17.2
-          docker pull docker.pkg.github.com/author/dev/dev-node:14.8.0
-          docker pull docker.pkg.github.com/author/dev/dev-deno:1.3.1
-          docker pull docker.pkg.github.com/author/dev/dev-browser:5.2.1
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login https://docker.pkg.github.com -u coreybutler --password-stdin
+          base=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-base/tags?page_size=1'|jq '."results"[]["name"]')
+          base=$(sed -e 's/^"//' -e 's/"$//' <<<"$base")
+          docker pull docker.pkg.github.com/author/dev/dev-base:$base
+          
+          deno=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-deno/tags?page_size=1'|jq '."results"[]["name"]')
+          deno=$(sed -e 's/^"//' -e 's/"$//' <<<"$deno")
+          docker pull docker.pkg.github.com/author/dev/dev-deno:$deno
+          
+          browser=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-browser/tags?page_size=1'|jq '."results"[]["name"]')
+          browser=$(sed -e 's/^"//' -e 's/"$//' <<<"$browser")
+          docker pull docker.pkg.github.com/author/dev/dev-browser:$browser
+          
+          node=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-node/tags?page_size=1'|jq '."results"[]["name"]')
+          node=$(sed -e 's/^"//' -e 's/"$//' <<<"$node")
+          docker pull docker.pkg.github.com/author/dev/dev-node:$node
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-      - uses: actions/setup-node@v1
-        if: steps.create_release.outputs.id != ''
-        with:
-          node-version: '14'
 
       - name: Test
         if: success()
         run: |
-          npm test
+          npm i @author.io/dev
+          npm run test

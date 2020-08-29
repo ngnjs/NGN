@@ -10,3 +10,4 @@ old_*
 env.json
 /**/env.json
 node_modules
+act.sh
