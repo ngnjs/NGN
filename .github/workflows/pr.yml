@@ -38,7 +38,7 @@ jobs:
       - name: Setup Dev Tooling
         id: setup
         run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | docker login https://docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+          echo ${{ secrets.GH_DOCKER_TOKEN }} | docker login https://docker.pkg.github.com -u ${{ secrets.GH_DOCKER_USER }} --password-stdin
           base=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-base/tags?page_size=1'|jq '."results"[]["name"]')
           base=$(sed -e 's/^"//' -e 's/"$//' <<<"$base")
           echo Retrieving author/dev/dev-base:$base
