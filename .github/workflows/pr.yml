@@ -27,37 +27,57 @@ jobs:
           node-version: '14'
 
       - uses: actions/cache@v2
-        name: Setup npm Cache
+        name: Establish npm Cache
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-        # If the version has changed, create a new git tag for it.
-      - name: Setup Dev Tooling
+      - uses: actions/cache@v2
+        name: Establish Docker Cache
+        id: cache
+        with:
+          path: docker-cache
+          key: ${{ runner.os }}-docker-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
+      
+      - name: Load cached Docker layers
+        run: |
+          if [ -d "docker-cache" ]; then
+            cat docker-cache/x* > my-image.tar
+            docker load < my-image.tar
+            rm -rf docker-cache
+          fi
+
+      - name: Download Dev Tooling
         id: setup
         run: |
           echo ${{ secrets.GH_DOCKER_TOKEN }} | docker login https://docker.pkg.github.com -u ${{ secrets.GH_DOCKER_USER }} --password-stdin
           base=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-base/tags?page_size=1'|jq '."results"[]["name"]')
           base=$(sed -e 's/^"//' -e 's/"$//' <<<"$base")
           echo Retrieving author/dev/dev-base:$base
-          docker pull docker.pkg.github.com/author/dev/dev-base:$base
+          docker pull author/dev-base:$base
+          # docker pull docker.pkg.github.com/author/dev/dev-base:$base
           
           deno=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-deno/tags?page_size=1'|jq '."results"[]["name"]')
           deno=$(sed -e 's/^"//' -e 's/"$//' <<<"$deno")
           echo Retrieving author/dev/dev-deno:$deno
-          docker pull docker.pkg.github.com/author/dev/dev-deno:$deno
+          # docker pull docker.pkg.github.com/author/dev/dev-deno:$deno
+          docker pull author/dev-deno:$deno
           
           browser=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-browser/tags?page_size=1'|jq '."results"[]["name"]')
           browser=$(sed -e 's/^"//' -e 's/"$//' <<<"$browser")
           echo Retrieving author/dev/dev-browser:$browser
-          docker pull docker.pkg.github.com/author/dev/dev-browser:$browser
+          # docker pull docker.pkg.github.com/author/dev/dev-browser:$browser
+          docker pull author/dev-browser:$browser
           
           node=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-node/tags?page_size=1'|jq '."results"[]["name"]')
           node=$(sed -e 's/^"//' -e 's/"$//' <<<"$node")
           echo Retrieving author/dev/dev-node:$node
-          docker pull docker.pkg.github.com/author/dev/dev-node:$node
+          # docker pull docker.pkg.github.com/author/dev/dev-node:$node
+          docker pull author/dev-node:$node
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
