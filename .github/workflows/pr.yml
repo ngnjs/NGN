@@ -56,4 +56,4 @@ jobs:
         if: success()
         run: |
           npm i @author.io/dev
-          npm run test
+          npm test
