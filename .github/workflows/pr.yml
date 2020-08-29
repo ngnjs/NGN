@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout Code
 
-      - name: Troubleshooting Data
+      - name: List Directory Contents (for Troubleshooting)
         run: |
           pwd
           ls -l
