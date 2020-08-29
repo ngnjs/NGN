@@ -41,18 +41,22 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | docker login https://docker.pkg.github.com -u ${{ github.actor }} --password-stdin
           base=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-base/tags?page_size=1'|jq '."results"[]["name"]')
           base=$(sed -e 's/^"//' -e 's/"$//' <<<"$base")
+          echo Retrieving author/dev/dev-base:$base
           docker pull docker.pkg.github.com/author/dev/dev-base:$base
           
           deno=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-deno/tags?page_size=1'|jq '."results"[]["name"]')
           deno=$(sed -e 's/^"//' -e 's/"$//' <<<"$deno")
+          echo Retrieving author/dev/dev-deno:$deno
           docker pull docker.pkg.github.com/author/dev/dev-deno:$deno
           
           browser=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-browser/tags?page_size=1'|jq '."results"[]["name"]')
           browser=$(sed -e 's/^"//' -e 's/"$//' <<<"$browser")
+          echo Retrieving author/dev/dev-browser:$browser
           docker pull docker.pkg.github.com/author/dev/dev-browser:$browser
           
           node=$(curl -L -s 'https://registry.hub.docker.com/v2/repositories/author/dev-node/tags?page_size=1'|jq '."results"[]["name"]')
           node=$(sed -e 's/^"//' -e 's/"$//' <<<"$node")
+          echo Retrieving author/dev/dev-node:$node
           docker pull docker.pkg.github.com/author/dev/dev-node:$node
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
