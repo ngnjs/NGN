@@ -33,12 +33,22 @@ test('pool() with forwarding', t => {
       ee.emit('test.b', ...arguments)
     },
 
-    b: 'done'
+    b: 'done',
+    c: {
+      d: {
+        e: 'fin.ish'
+      }
+    }
   })
 
   ee.once('done', payload => {
     t.pass('Event pool forwarding works.')
     t.ok(typeof payload === 'object' && payload.data, 'Forwarded events from a pool apply payloads.')
+    ee.emit('test.c.d.e')
+  })
+
+  ee.once('fin.ish', () => {
+    t.pass('Nested pooling events forwarded.')
     t.end()
   })
 
