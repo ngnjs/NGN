@@ -114,7 +114,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: ${{ steps.autotagger.outputs.tagname }}
 
-      - name: Publish
+      - name: Publish to npm
         id: publish_npm
         if: steps.autotagger.outputs.tagname != ''
         uses: author/action-publish@stable
