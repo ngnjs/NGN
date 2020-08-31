@@ -13,11 +13,6 @@ jobs:
       - uses: actions/checkout@v2
         name: Checkout Code
 
-      - name: List Directory Contents (for Troubleshooting)
-        run: |
-          pwd
-          ls -l
-
       - uses: actions/setup-node@v1
         name: Setup Node.js
         with:
@@ -102,6 +97,11 @@ jobs:
           body: ${{ steps.autotagger.outputs.tagmessage }}
           draft: false
           prerelease: env.IS_PRERELEASE != ''
+
+      - name: List Directory Contents (for Troubleshooting)
+        run: |
+          pwd
+          ls -l
 
         # Build tarballs of the module code.
       - name: Build Release Artifacts
