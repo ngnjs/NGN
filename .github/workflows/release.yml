@@ -98,16 +98,14 @@ jobs:
           draft: false
           prerelease: env.IS_PRERELEASE != ''
 
-      - name: List Directory Contents (for Troubleshooting)
-        run: |
-          pwd
-          ls -l
-
         # Build tarballs of the module code.
       - name: Build Release Artifacts
         id: build_release
         if: steps.create_release.outputs.id != ''
         run: |
+          npm run build
+          pwd
+          ls -l
           for d in .dist/*/*/ ; do tar -cvzf ${d%%/}-${{ steps.autotagger.outputs.version }}.tar.gz ${d%%}*; done;
 
         # Upload tarballs to the release.
