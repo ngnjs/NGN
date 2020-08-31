@@ -106,9 +106,9 @@ jobs:
           npm run build
           pwd
           ls -l ./.dist
-          for d in ./.dist/*/*/ ; do tar -cvzf ${d%%/}-${{ steps.autotagger.outputs.version }}.tar.gz ${d%%}*; done;
+          for d in .dist/*/ ; do tar -cvzf ${d%%/}-${{ steps.autotagger.outputs.version }}.tar.gz ${d%%}*; done;
 
-        # Upload tarballs to the release.
+          # Upload tarballs to the release.
       - name: Upload Release Artifacts
         uses: AButler/upload-release-assets@v2.0
         if: steps.create_release.outputs.id != ''
