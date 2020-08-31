@@ -63,7 +63,7 @@ jobs:
           echo Retrieving author/dev/dev-node:$node
           docker pull author/dev-node:$node
 
-          node -e "const p=new Set(Object.keys(require('./package.json').peerDependencies));p.delete('@author.io/dev');console.log('npm i ' + Array.from(p).join(' '))"
+          # node -e "const p=new Set(Object.keys(require('./package.json').peerDependencies));p.delete('@author.io/dev');console.log('npm i ' + Array.from(p).join(' '))"
           version=$(npm show @author.io/dev version)
           echo $version
           npm i -g @author.io/dev@$version
