@@ -104,6 +104,7 @@ jobs:
         if: steps.create_release.outputs.id != ''
         run: |
           dev build --pack
+          cp -rf .dist ./dist
 
         # Upload tarballs to the release.
       - name: Upload Release Artifacts
@@ -119,7 +120,7 @@ jobs:
         if: steps.autotagger.outputs.tagname != ''
         uses: author/action-publish@stable
         with:
-          scan: .dist
+          scan: ./dist
         env:
           REGISTRY_TOKEN: ${{ secrets.NPM_REGISTRY_TOKEN }}
 
