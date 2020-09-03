@@ -4,6 +4,7 @@
   "description": "A JavaScript library for building systems and frameworks.",
   "main": "src/index.js",
   "module": "index.js",
+  "browser": "./index.js",
   "directories": {
     "lib": "src/lib"
   },
