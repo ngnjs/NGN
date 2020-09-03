@@ -52,7 +52,7 @@ export default class Core {
        * The value to return.
        * @private
        */
-      alias: base.private.value((name, value) => {
+      alias: base.hidden.value((name, value) => {
         Object.defineProperty(this, name, base.get.value(() => value))
       }),
 
@@ -77,7 +77,7 @@ export default class Core {
        * the newName attribute of the relevant class.
        * @private
        */
-      rename: base.private.value((old, name, fn = null) => {
+      rename: base.hidden.value((old, name, fn = null) => {
         if (!fn) {
           const me = this
           fn = function () {
@@ -87,13 +87,13 @@ export default class Core {
           }
         }
 
-        Object.defineProperty(this, old, base.private.value(base.deprecate.value(fn, `${this.name} ${old} is now "${name}".`)))
+        Object.defineProperty(this, old, base.hidden.value(base.deprecate.value(fn, `${this.name} ${old} is now "${name}".`)))
       }),
 
       typeof: base.typeof,
       allowParameterType: base.acceptableType,
       disallowParameterType: base.unacceptableType,
-      register: base.privateconstant.value(type => register(type, this))
+      register: base.hiddenconstant.value(type => register(type, this))
     })
   }
 

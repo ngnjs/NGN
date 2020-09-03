@@ -23,7 +23,7 @@ export default class EventListener extends Core {
     this.#maxListeners = maxListeners
     this.#dynamic = eventName instanceof RegExp || (typeof eventName === 'string' && eventName.indexOf('*') >= 0)
 
-    // Object.defineProperty(this, 'execute', base.privateconstant.value(function (event) {
+    // Object.defineProperty(this, 'execute', base.hiddenconstant.value(function (event) {
     // }))
 
     this.register('EventHandler', this)

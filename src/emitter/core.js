@@ -22,6 +22,15 @@ export default class EventEmitter extends Core {
       this.#maxListeners = cfg.defaultMaxListeners
     }
 
+    /**
+     * @cfg {number} TTL
+     * The amount of time before handlers expire.
+     * _(Time-To-Live)_
+     */
+    if (cfg.TTL || cfg.ttl) {
+      this.TTL = cfg.TTL || cfg.ttl
+    }
+
     this.alias('addListener', this.on)
     this.alias('addEventListener', this.on)
     this.alias('removeListener', this.off)

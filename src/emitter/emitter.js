@@ -135,7 +135,7 @@ class EnhancedEventEmitter extends EventEmitter {
        * The number of events the max listener account will be increased by.
        * @private
        */
-      increaseMaxListeners: base.private.value((count = 1) => { this.maxListeners += count }),
+      increaseMaxListeners: base.hidden.value((count = 1) => { this.maxListeners += count }),
 
       /**
        * @method decreaseMaxListeners
@@ -144,7 +144,7 @@ class EnhancedEventEmitter extends EventEmitter {
        * The number of events the max listener account will be decreased by.
        * @private
        */
-      decreaseMaxListeners: base.private.value((count = 1) => { this.maxListeners = this.maxListeners - count })
+      decreaseMaxListeners: base.hidden.value((count = 1) => { this.maxListeners = this.maxListeners - count })
     })
   }
 

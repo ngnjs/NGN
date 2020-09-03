@@ -10,9 +10,9 @@ test('Method Existence', t => {
   const methodList = new Set([
     // 'define',
     'public',
-    'private',
+    'hidden',
     'constant',
-    'privateconstant',
+    'hiddenconstant',
     'get',
     'set',
     'getset',

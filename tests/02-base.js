@@ -23,21 +23,21 @@ test('NGN.public', function (t) {
   t.end()
 })
 
-test('NGN.private', function (t) {
+test('NGN.hidden', function (t) {
   const obj = {}
 
-  Object.defineProperty(obj, 'test', NGN.private('value'))
-  t.ok(!isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.public creates an enumerable property.')
+  Object.defineProperty(obj, 'test', NGN.hidden('value'))
+  t.ok(!isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.hidden creates an enumerable property.')
 
   obj.test = 'changed'
-  t.ok(obj.test === 'changed', 'NGN.private property can be changed.')
+  t.ok(obj.test === 'changed', 'NGN.hidden property can be changed.')
 
   try { delete obj.test } catch (e) { }
-  t.ok(obj.hasOwnProperty('test'), 'NGN.private property cannot be deleted.')
+  t.ok(obj.hasOwnProperty('test'), 'NGN.hidden property cannot be deleted.')
 
-  Object.defineProperty(obj, 'testFn', NGN.private(EmptyFn))
+  Object.defineProperty(obj, 'testFn', NGN.hidden(EmptyFn))
   try { obj.testFn = 'nothing' } catch (e) { }
-  t.ok(typeof obj.testFn === 'function', 'NGN.private function is non-writable.')
+  t.ok(typeof obj.testFn === 'function', 'NGN.hidden function is non-writable.')
 
   t.end()
 })
@@ -57,17 +57,17 @@ test('NGN.constant', function (t) {
   t.end()
 })
 
-test('NGN.privateconstant', function (t) {
+test('NGN.hiddenconstant', function (t) {
   const obj = {}
 
-  Object.defineProperty(obj, 'test', NGN.privateconstant('value'))
-  t.ok(!isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.privateconstant creates an non-enumerable property.')
+  Object.defineProperty(obj, 'test', NGN.hiddenconstant('value'))
+  t.ok(!isEnumerable(obj, 'test') && obj.test === 'value', 'NGN.hiddenconstant creates an non-enumerable property.')
 
   try { obj.test = 'changed' } catch (e) { }
-  t.ok(obj.test !== 'changed', 'NGN.privateconstant property cannot be changed.')
+  t.ok(obj.test !== 'changed', 'NGN.hiddenconstant property cannot be changed.')
 
   try { delete obj.test } catch (e) { }
-  t.ok(obj.hasOwnProperty('test'), 'NGN.privateconstant property cannot be deleted.')
+  t.ok(obj.hasOwnProperty('test'), 'NGN.hiddenconstant property cannot be deleted.')
 
   t.end()
 })

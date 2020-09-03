@@ -14,22 +14,22 @@ Object.defineProperties(NGN, {
   // Constants
   version: NGN.constant(constant.version),
   OS: NGN.constant(constant.OS),
-  nodelike: NGN.privateconstant(constant.NODELIKE),
-  runtime: NGN.privateconstant(constant.RUNTIME),
+  nodelike: NGN.hiddenconstant(constant.NODELIKE),
+  runtime: NGN.hiddenconstant(constant.RUNTIME),
   platform: NGN.get(constant.PLATFORM),
   platformVersion: NGN.get(constant.PLATFORM_RELEASE),
 
   // Internal Events
-  WARN_EVENT: NGN.privateconstant(constant.WARN_EVENT),
-  INFO_EVENT: NGN.privateconstant(constant.INFO_EVENT),
-  ERROR_EVENT: NGN.privateconstant(constant.ERROR_EVENT),
-  INTERNAL_EVENT: NGN.privateconstant(constant.INTERNAL_EVENT),
+  WARN_EVENT: NGN.hiddenconstant(constant.WARN_EVENT),
+  INFO_EVENT: NGN.hiddenconstant(constant.INFO_EVENT),
+  ERROR_EVENT: NGN.hiddenconstant(constant.ERROR_EVENT),
+  INTERNAL_EVENT: NGN.hiddenconstant(constant.INTERNAL_EVENT),
 
   // Internal event logging methods
-  WARN: NGN.privateconstant(internal.WARN),
-  INFO: NGN.privateconstant(internal.INFO),
-  ERROR: NGN.privateconstant(internal.ERROR),
-  INTERNAL: NGN.privateconstant(internal.INTERNAL),
+  WARN: NGN.hiddenconstant(internal.WARN),
+  INFO: NGN.hiddenconstant(internal.INFO),
+  ERROR: NGN.hiddenconstant(internal.ERROR),
+  INTERNAL: NGN.hiddenconstant(internal.INTERNAL),
 
   // Stack Methods
   stack: NGN.get(stack),

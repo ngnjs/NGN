@@ -77,12 +77,12 @@ export default {
   public: config(...allFalse, value => config(true, typeof value !== 'function', false, value)),
 
   /**
-   * @method private
-   * Create a `private` property definition for an object.
+   * @method hidden
+   * Create a `hidden` property definition for an object.
    * Example:
    *
    * ```
-   * Object.defineProperty(this, 'attr', NGN.private('somevalue'))
+   * Object.defineProperty(this, 'attr', NGN.hidden('somevalue'))
    *
    * // Longhand equivalent
    * Object.defineProperty(this, 'attr', {
@@ -95,11 +95,11 @@ export default {
    * @param  {any} value
    * Any valid JavaScript value (function, boolean, number, string, etc)
    * used as the value for the object attribute. Private functions defined with
-   * this method are not overridable. To create a private function that is
+   * this method are not overridable. To create a hidden function that is
    * overridable, use #define with the following arguments: `(false, true, false, value)`.
    * @private
    */
-  private: config(false, true, false, value => config(false, typeof value !== 'function', false, value)),
+  hidden: config(false, true, false, value => config(false, typeof value !== 'function', false, value)),
 
   /**
    * @method const
@@ -125,12 +125,12 @@ export default {
   constant: config(...allFalse, value => config(true, false, false, value)),
 
   /**
-   * @method privateconst
-   * Create a `private` constant property definition for an object.
+   * @method hiddenconst
+   * Create a `hidden` constant property definition for an object.
    * Example:
    *
    * ```
-   * Object.defineProperty(this, 'attr', NGN.privateconst('somevalue'))
+   * Object.defineProperty(this, 'attr', NGN.hiddenconst('somevalue'))
    *
    * // Longhand equivalent
    * Object.defineProperty(this, 'attr', {
@@ -145,7 +145,7 @@ export default {
    * used as the value for the object attribute.
    * @private
    */
-  privateconstant: config(...allFalse, value => config(...allFalse, value)),
+  hiddenconstant: config(...allFalse, value => config(...allFalse, value)),
 
   /**
    * @method get
