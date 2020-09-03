@@ -1,6 +1,6 @@
 {
   "name": "ngn",
-  "version": "2.0.0-alpha.4",
+  "version": "2.0.0-alpha.5",
   "description": "A JavaScript library for building systems and frameworks.",
   "main": "src/index.js",
   "module": "index.js",

@@ -106,7 +106,7 @@ class EnhancedEventEmitter extends EventEmitter {
         if (typeof target === 'function') {
           target(...args.slice(4))
         } else {
-          me.delayEmit(target, 0, ...arguments)
+          me.emit(target, ...arguments)
         }
       } else {
         me.#after.set(oid, meta)
