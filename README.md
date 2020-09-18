@@ -1,4 +1,4 @@
-# NGN
+<h1 align="center">NGN<br/><img src="https://img.shields.io/npm/v/ngn?label=%40ngn&logo=npm&style=social"/></h1>
 
 NGN is a JavaScript library for building systems and frameworks. Version 1.x.x was first released in 2012. Since then, the JavaScript language, runtimes, and communities have seen a continental shift. NGN 2.0.0 has been re-engineered to take advantage of modern JavaScript capabilities.
 
