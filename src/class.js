@@ -1,11 +1,17 @@
 import base from './base.js'
 import { register } from './internal.js'
 
+const RELATIONSHIPS = {
+  parents: [],
+  children: [],
+  siblings: []
+}
+
 export default class Core {
   #name
   #description
   #oid
-  #parent
+  #related = RELATIONSHIPS
 
   constructor (cfg = {}) {
     /**
@@ -34,8 +40,54 @@ export default class Core {
      * introspection.
      */
     if (cfg.parent) {
-      this.#parent = cfg.parent
+      this.#related.parents = [cfg.parent]
     }
+
+    /**
+     * @cfgproperty {any[]} [parents]
+     * A reference to other objects or classes, indicating
+     * a parent-child relationship between the elements.
+     */
+    if (cfg.parents) {
+      this.#related.parents = Array.from(new Set(this.#related.parents.concat(cfg.parents)))
+    }
+
+    /**
+     * @cfgproperty {any} [child]
+     * A reference to another object or class, indicating
+     * a child-parent relationship between the elements.
+     */
+    if (cfg.child) {
+      this.#related.children = [cfg.child]
+    }
+
+    /**
+     * @cfgproperty {any[]} [children]
+     * A reference to other objects or classes, indicating
+     * a child-parent relationship between the elements.
+     */
+    if (cfg.children) {
+      this.#related.children = Array.from(new Set(this.#related.children.concat(cfg.children)))
+    }
+
+    /**
+     * @cfgproperty {any} [sibling]
+     * A reference to another object or class, indicating
+     * a sibling relationship between the elements.
+     */
+    if (cfg.sibling) {
+      this.#related.siblings = [cfg.sibling]
+    }
+
+    /**
+     * @cfgproperty {any[]} [siblings]
+     * A reference to other objects or classes, indicating
+     * a sibling relationship between the elements.
+     */
+    if (cfg.siblings) {
+      this.#related.siblings = Array.from(new Set(this.#related.siblings.concat(cfg.siblings)))
+    }
+
 
     Object.defineProperties(this, {
       /**
@@ -98,6 +150,22 @@ export default class Core {
   }
 
   /**
+   * @property {object} related
+   * Related entities and objects.
+   *
+   * Example:
+   *
+   * ```
+   * {
+   *   parents: [...],
+   *   children: [...],
+   *   siblings: [...]
+   * }
+   * ```
+   */
+  get related () {}
+
+  /**
    * @property {Symbol} OID
    * A guaranteed unique ID representing the class.
    */
@@ -110,7 +178,7 @@ export default class Core {
   }
 
   get name () {
-    return this.#name || 'Unknown'
+    return this.#name || this.constructor.name || 'Unknown'
   }
 
   set name (value) {
@@ -125,11 +193,89 @@ export default class Core {
     this.#description = value
   }
 
+  /**
+   * Returns the parent entity. In the case where multiple
+   * parent entities exist, only the first is returned as
+   * the "primary" parent.
+   */
   get parent () {
-    return this.#parent || null
+    return this.#related.parents.length > 0 ? this.#related.parents[0] : null
   }
 
   set parent (value) {
-    this.#parent = value
+    this.#related.parents = this.#related.parents || []
+    this.#related.parents.unshift(value)
+  }
+
+  /**
+   * Returns the child entity. In the case where multiple
+   * children entities exist, only the first is returned as
+   * the "primary" child.
+   */
+  get child () {
+    return this.#related.children.length > 0 ? this.#related.children[0] : null
+  }
+
+  set child (value) {
+    this.#related.children = this.#related.children || []
+    this.#related.children.unshift(value)
+  }
+
+  /**
+   * Returns the child entity. In the case where multiple
+   * children entities exist, only the first is returned as
+   * the "primary" child.
+   */
+  get sibling () {
+    return this.#related.children.length > 0 ? this.#related.children[0] : null
+  }
+
+  set sibling (value) {
+    this.#related.siblings = this.#related.siblings || []
+    this.#related.siblings.unshift(value)
+  }
+
+  /**
+   * @property {array}
+   * Returns the parent entities. In the case where multiple
+   * parent entities exist, only the first is returned as
+   * the "primary" parent.
+   */
+  get parents () {
+    return this.#related.parents
+  }
+
+  set parents (value) {
+    this.#related.parents = Array.isArray(value) ? value : [value]
+  }
+
+  /**
+   * Returns the child entity. In the case where multiple
+   * children entities exist, only the first is returned as
+   * the "primary" child.
+   */
+  get children () {
+    return this.#related.children.length > 0 ? this.#related.children[0] : null
+  }
+
+  set children (value) {
+    this.#related.children = Array.isArray(value) ? value : [value]
+  }
+
+  /**
+   * Returns the child entity. In the case where multiple
+   * children entities exist, only the first is returned as
+   * the "primary" child.
+   */
+  get siblings () {
+    return this.#related.children.length > 0 ? this.#related.children[0] : null
+  }
+
+  set siblings (value) {
+    this.#related.siblings = Array.isArray(value) ? value : [value]
+  }
+
+  clearRelationships () {
+    this.#related = RELATIONSHIPS
   }
 }

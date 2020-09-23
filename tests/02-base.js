@@ -251,17 +251,20 @@ test('NGN.defineException', function (t) {
 
   t.ok(typeof TestError === 'function', 'Create a global exception.')
 
-  t.throws(() => {
-    throw new TestError() // eslint-disable-line no-undef
-  }, 'Throwing a custom global exception functions the same way a standard error functions.')
-
   var e = new TestError()
 
   t.ok(Array.isArray(e.trace), 'Exception trace returns an array.')
   t.ok(e.name === 'TestError', 'Recognized custom error name.')
   t.ok(e.message === 'A test message', 'Recognized custom error message.')
 
-  t.end()
+  NGN.LEDGER.on(NGN.ERROR_EVENT, err => {
+    t.expect('TestError', err.name, 'Custom exception recognized by NGN Ledger.')
+    t.end()
+  })
+
+  t.throws(() => {
+    throw new TestError() // eslint-disable-line no-undef
+  }, 'Throwing a custom global exception functions the same way a standard error functions.')
 })
 
 test('NGN.typeof', t => {

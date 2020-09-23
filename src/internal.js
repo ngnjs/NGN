@@ -1,5 +1,5 @@
 import { EventEmitter } from './emitter/emitter.js'
-import { REFERENCE_ID, WARN_EVENT, INFO_EVENT, ERROR_EVENT, INTERNAL_EVENT, version } from './constants.js'
+import { REFERENCE_ID, WARN_EVENT, INFO_EVENT, ERROR_EVENT, INTERNAL_EVENT, RUNTIME, version } from './constants.js'
 
 // Expose a hidden attribute for dev tooling
 const globalId = Symbol.for('NGN')
@@ -118,3 +118,17 @@ export const ERROR = function () { LEDGER_EVENT(ERROR_EVENT)(...arguments) }
  * @ignore
  */
 export const INTERNAL = function () { LEDGER_EVENT(INTERNAL_EVENT)(...arguments) }
+
+// Track all errors and warnings in the ledger
+if (RUNTIME === 'node') {
+  process.on('uncaughtException', e => {
+    if (typeof e.OID === 'symbol') {
+      ERROR(e)
+    }
+  })
+  process.on('unhandledRejection', ERROR)
+  process.on('warning', WARN)
+} else if (globalThis.window !== undefined) {
+  globalThis.window.addEventListener('error', ERROR)
+  globalThis.window.addEventListener('unhandledrejection', ERROR)
+}

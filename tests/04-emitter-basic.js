@@ -6,34 +6,34 @@ let ee
 test('EventEmitter Sanity Check', t => {
   ee = new EventEmitter()
 
-  t.ok(typeof ee === 'object', `Instantiate an EventEmitter class. Expected a object, received ${typeof ee}`)
-  t.ok(ee.name === 'Unknown', `A default emitter has an "Unknown" name. Received "${ee.name}".`)
-  t.ok(ee.description === 'No description available.', `A default emitter has an "No description available." name. Received "${ee.description}".`)
+  t.expect('object', typeof ee, `Instantiate an EventEmitter class. Expected a object, received ${typeof ee}`)
+  t.expect('EnhancedEventEmitter', ee.name, `EventEmitter receives appropriate descriptive name by default.`)
+  t.expect('No description available.', ee.description, `A default emitter has an "No description available." name. Received "${ee.description}".`)
 
   ee = new EventEmitter({
     name: 'Test Emitter',
     description: 'The unit test event emitter.'
   })
-  t.ok(ee.name === 'Test Emitter', `A named event emitter called "Test Emitter" is recognized. Name is "${ee.name}".`)
-  t.ok(ee.description === 'The unit test event emitter.', `A named event emitter respects custom descriptions. Expected "The unit test event emitter.". Received "${ee.description}".`)
+  t.expect('Test Emitter', ee.name, `A named event emitter called "Test Emitter" is recognized. Name is "${ee.name}".`)
+  t.expect('The unit test event emitter.', ee.description, `A named event emitter respects custom descriptions. Expected "The unit test event emitter.". Received "${ee.description}".`)
 
   // Nodelike methods
-  t.ok(typeof ee.addListener === 'function', 'EventEmitter.addListener() method recognized.')
-  t.ok(typeof ee.addEventListener === 'function', 'EventEmitter.addEventListener() method recognized.')
-  t.ok(typeof ee.removeListener === 'function', 'EventEmitter.removeListener() method recognized.')
-  t.ok(typeof ee.emit === 'function', 'EventEmitter.emit() method recognized.')
-  t.ok(typeof ee.eventNames === 'function', 'EventEmitter.eventNames() method recognized.')
-  t.ok(typeof ee.getMaxListeners === 'function', 'EventEmitter.getMaxListeners() method recognized.')
-  t.ok(typeof ee.setMaxListeners === 'function', 'EventEmitter.setMaxListeners() method recognized.')
-  t.ok(typeof ee.listenerCount === 'function', 'EventEmitter.listenerCount() method recognized.')
-  t.ok(typeof ee.listeners === 'function', 'EventEmitter.listeners() method recognized.')
-  t.ok(typeof ee.on === 'function', 'EventEmitter.on() method recognized.')
-  t.ok(typeof ee.once === 'function', 'EventEmitter.once() method recognized.')
-  t.ok(typeof ee.prependListener === 'function', 'EventEmitter.prependListener() method recognized.')
-  t.ok(typeof ee.prependOnceListener === 'function', 'EventEmitter.prependOnceListener() method recognized.')
-  t.ok(typeof ee.removeAllListeners === 'function', 'EventEmitter.removeAllListeners() method recognized.')
-  t.ok(typeof ee.clear === 'function', 'NGN.EventEmitter.clear() method recognized.')
-  t.ok(typeof ee.off === 'function', 'NGN.EventEmitter.off() method recognized.')
+  t.expect('function', typeof ee.addListener, 'EventEmitter.addListener() method recognized.')
+  t.expect('function', typeof ee.addEventListener, 'EventEmitter.addEventListener() method recognized.')
+  t.expect('function', typeof ee.removeListener, 'EventEmitter.removeListener() method recognized.')
+  t.expect('function', typeof ee.emit, 'EventEmitter.emit() method recognized.')
+  t.expect('function', typeof ee.eventNames, 'EventEmitter.eventNames() method recognized.')
+  t.expect('function', typeof ee.getMaxListeners, 'EventEmitter.getMaxListeners() method recognized.')
+  t.expect('function', typeof ee.setMaxListeners, 'EventEmitter.setMaxListeners() method recognized.')
+  t.expect('function', typeof ee.listenerCount, 'EventEmitter.listenerCount() method recognized.')
+  t.expect('function', typeof ee.listeners, 'EventEmitter.listeners() method recognized.')
+  t.expect('function', typeof ee.on, 'EventEmitter.on() method recognized.')
+  t.expect('function', typeof ee.once, 'EventEmitter.once() method recognized.')
+  t.expect('function', typeof ee.prependListener, 'EventEmitter.prependListener() method recognized.')
+  t.expect('function', typeof ee.prependOnceListener, 'EventEmitter.prependOnceListener() method recognized.')
+  t.expect('function', typeof ee.removeAllListeners, 'EventEmitter.removeAllListeners() method recognized.')
+  t.expect('function', typeof ee.clear, 'NGN.EventEmitter.clear() method recognized.')
+  t.expect('function', typeof ee.off, 'NGN.EventEmitter.off() method recognized.')
 
   t.end()
 })
@@ -47,7 +47,7 @@ test('Basic Event: on()', t => {
     count++
     if (count === 2) {
       t.pass('Handler triggered on every emission.')
-      t.ok(payload.data === 'test', 'EventEmitter.once() receives payload.')
+      t.expect('test', payload.data, 'EventEmitter.once() receives payload.')
       return t.end()
     }
 
@@ -95,7 +95,7 @@ test('One-time Event: once()', t => {
     }
 
     t.pass('EventEmitter.once() handler triggered on event.')
-    t.ok(payload.data === 'test', 'EventEmitter.once() receives payload.')
+    t.expect('test', payload.data, 'EventEmitter.once() receives payload.')
     t.end()
   })
 
@@ -118,11 +118,11 @@ test('Wildcard Listener', t => {
   ee.emit('testing.something')
 
   setTimeout(function () {
-    t.ok(ct === 3, `Fired 3 events, recognized ${ct}.`)
-    t.ok(ee.eventNames().length === 1, 'Standard and adhoc events triggered and removed appropriately.')
+    t.expect(3, ct, `Fired 3 events, recognized ${ct}.`)
+    t.expect(1, ee.eventNames().length, 'Standard and adhoc events triggered and removed appropriately.')
 
     ee.off('test.*')
-    t.ok(ee.eventNames().length === 0, 'Removed wildcard events successfully.')
+    t.expect(0, ee.eventNames().length, 'Removed wildcard events successfully.')
 
     t.end()
   }, 500)
@@ -139,13 +139,13 @@ test('Clear Events', t => {
   ee.on('test3', () => { console.log('yo') })
 
   ee.clear('test3')
-  t.ok(ee.eventNames().length === 3, 'All named events successfully removed.')
+  t.expect(3, ee.eventNames().length, 'All named events successfully removed.')
 
   ee.clear('test1', 'test2')
-  t.ok(ee.eventNames().length === 1, 'Multiple named events successfully removed.')
+  t.expect(1, ee.eventNames().length, 'Multiple named events successfully removed.')
 
   ee.clear()
-  t.ok(ee.eventNames().length === 0, 'All events successfully removed.')
+  t.expect(0, ee.eventNames().length, 'All events successfully removed.')
 
   t.end()
 })
@@ -159,7 +159,7 @@ test('Expiration: Single Event Handler', t => {
   ee.on('ttl.test', () => ct += 1, 300)
 
   setTimeout(() => {
-    t.ok(ct === 1, 'Successfully removed event handler after TTL elapsed.')
+    t.expect(1, ct, 'Successfully removed event handler after TTL elapsed.')
     t.end()
   }, 900)
 
@@ -172,7 +172,7 @@ test('Expiration: All Handlers', t => {
   ee = new EventEmitter()
 
   ee.TTL = 0
-  t.ok(ee.TTL === -1, 'Setting TTL to 0 fails')
+  t.expect(-1, ee.TTL, 'Setting TTL to 0 fails')
 
   ee.TTL = 300
 
@@ -182,7 +182,7 @@ test('Expiration: All Handlers', t => {
 
   setTimeout(() => {
     ee.TTL = -1
-    t.ok(ct === 1, 'Successfully removed event handler after TTL elapsed.')
+    t.expect(1, ct, 'Successfully removed event handler after TTL elapsed.')
     t.end()
   }, 900)
 

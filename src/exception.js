@@ -1,4 +1,4 @@
-import { register } from './internal.js'
+import { register, ERROR } from './internal.js'
 
 const PARSER = new Map([
   ['PROTOCOL', /(\w+:\/\/?.*):([0-9]+):([0-9]+)(?!=[^0-9])/i],
@@ -10,6 +10,7 @@ const PARSER = new Map([
 export default class Exception extends Error { // eslint-disable-line
   #id
   #custom
+  #oid
 
   constructor (config = {}) {
     super()
@@ -34,6 +35,8 @@ export default class Exception extends Error { // eslint-disable-line
       ? config.id
       : this.#custom.id) || this.name
 
+    this.#oid = Symbol(this.name)
+
     // Enable stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, Exception)
@@ -42,6 +45,12 @@ export default class Exception extends Error { // eslint-disable-line
     if (!(typeof config.DO_NOT_REGISTER === 'boolean' && !config.DO_NOT_REGISTER)) {
       register('Exception', this)
     }
+
+    ERROR(this)
+  }
+
+  get OID () {
+    return this.#oid
   }
 
   get help () {
