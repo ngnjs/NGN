@@ -14,6 +14,7 @@
     "test:node": "dev test -rt node tests/*.js",
     "test:node:sanity": "dev test -rt node tests/01-sanity.js",
     "test:node:base": "dev test -rt node tests/02-base.js",
+    "test:node:relationships": "dev test -rt node tests/06-relationships.js",
     "test:browser": "dev test -rt browser tests/*.js",
     "test:browser:sanity": "dev test -rt browser tests/01-sanity.js",
     "test:browser:base": "dev test -rt browser tests/02-base.js",
