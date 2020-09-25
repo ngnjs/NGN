@@ -6,6 +6,8 @@ import Core from './class.js'
 import Middleware from './middleware.js'
 import { defineException, stack } from './exception.js'
 import EventEmitter from './emitter/emitter.js'
+import Relationship from './relationships/relationship.js'
+import Relationships from './relationships/manager.js'
 
 // The NGN namespace.
 const NGN = Object.defineProperties({}, Object.assign({}, base, type))
@@ -45,6 +47,8 @@ Object.defineProperties(NGN, {
   Class: NGN.public(Core),
   Middleware: NGN.public(Middleware),
   EventEmitter: NGN.public(EventEmitter),
+  Relationships: NGN.public(Relationships),
+  Relationship: NGN.public(Relationship),
 
   // Plugin access
   plugins: NGN.constant(internal.plugins)
