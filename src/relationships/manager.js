@@ -21,11 +21,13 @@ export default class Relationships {
         }
       }),
       destroy: BASE.hiddenconstant.value(rel => {
-        const other = rel.base === this.#base ? rel.related : rel.base
-        rel.destroy()
-        this.#related.remove(rel)
-        if (other.related && other.related instanceof Relationships) {
-          other.related.destroy(rel)
+        if (this.#related.has(rel)) {
+          const other = rel.base === this.#base ? rel.related : rel.base
+          rel.destroy()
+          this.#related.delete(rel)
+          if (other.related && other.related instanceof Relationships) {
+            other.related.destroy(rel)
+          }
         }
       })
     })
@@ -46,6 +48,11 @@ export default class Relationships {
   }
 
   set parent (value) {
+    if (!value) {
+      this.parents = null
+      return
+    }
+
     const p = this.parent
 
     if (p !== value) {
@@ -83,17 +90,19 @@ export default class Relationships {
   }
 
   set parents (value) {
-    value = new Set(Array.from(value))
+    value = new Set(Array.from(value || []))
 
-    this.parents.forEach(rel => {
-      if (value.has(rel.base)) {
-        value.delete(rel)
-      } else {
-        this.destroy(rel)
+    for (const rel of this.#related) {
+      if (rel.type === 'parent' && rel.related === this.#base) {
+        if (!value.has(rel.base)) {
+          this.destroy(rel)
+        } else {
+          value.delete(rel.base)
+        }
       }
-    })
+    }
 
-    value.forEach(parent => this.add(parent, this.#base))
+    this.addParent(...value)
   }
 
   get child () {
@@ -107,6 +116,11 @@ export default class Relationships {
   }
 
   set child (value) {
+    if (!value) {
+      this.children = null
+      return
+    }
+
     const p = this.child
 
     if (p !== value) {
@@ -138,17 +152,19 @@ export default class Relationships {
   }
 
   set children (value) {
-    value = new Set(Array.from(value))
+    value = new Set(Array.from(value || []))
 
-    this.children.forEach(rel => {
-      if (value.has(rel.related)) {
-        value.delete(rel)
-      } else {
-        this.destroy(rel)
+    for (const rel of this.#related) {
+      if (rel.type === 'parent' && rel.base === this.#base) {
+        if (!value.has(rel.related)) {
+          this.destroy(rel)
+        } else {
+          value.delete(rel.related)
+        }
       }
-    })
+    }
 
-    value.forEach(child => this.add(this.#base, child))
+    this.addChild(...value)
   }
 
   addChild () {
@@ -168,6 +184,11 @@ export default class Relationships {
   }
 
   set sibling (value) {
+    if (!value) {
+      this.siblings = null
+      return
+    }
+
     const p = this.sibling
 
     if (p !== value) {
@@ -198,9 +219,26 @@ export default class Relationships {
     return Array.from(result)
   }
 
+  set siblings (value) {
+    value = new Set(Array.from(value || []))
+
+    for (const rel of this.#related) {
+      if (rel.type === 'sibling') {
+        if (!value.has(rel.related) && !value.has(rel.base)) {
+          this.destroy(rel)
+        } else {
+          value.delete(rel.related)
+          value.delete(rel.base)
+        }
+      }
+    }
+
+    this.addSibling(...value)
+  }
+
   addSibling () {
-    for (const child of arguments) {
-      this.add(this.#base, child)
+    for (const sibling of arguments) {
+      this.add(this.#base, sibling, 'sibling')
     }
   }
 
@@ -213,14 +251,26 @@ export default class Relationships {
   }
 
   clearParents () {
-    this.parents.forEach(this.destroy)
+    for (const rel of this.#related) {
+      if (rel.type === 'parent' && rel.related === this.#base) {
+        this.destroy(rel)
+      }
+    }
   }
 
   clearChildren () {
-    this.children.forEach(this.destroy)
+    for (const rel of this.#related) {
+      if (rel.type === 'parent' && rel.base === this.#base) {
+        this.destroy(rel)
+      }
+    }
   }
 
   clearSiblings () {
-    this.siblings.forEach(this.destroy)
+    for (const rel of this.#related) {
+      if (rel.type === 'sibling') {
+        this.destroy(rel)
+      }
+    }
   }
 }
