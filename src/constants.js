@@ -18,7 +18,7 @@ const RUNTIME = NODELIKE ? 'node' : (globalThis.hasOwnProperty('Deno') ? 'deno' 
  * The name of the operating system.
  * @readonly
  */
-const OS = (RUNTIME === 'deno' ? globalThis.Deno.build.os : ((NODELIKE ? globalThis.process : globalThis.window.navigator).platform || 'unknown').toLowerCase())
+const OS = (RUNTIME === 'deno' ? globalThis.Deno.build.os : ((NODELIKE ? globalThis.process : globalThis.navigator).platform || 'unknown').toLowerCase())
 // TODO: Once optional chaining is supported in minifiers,
 // modify this to be globalThis.process?.platform || globalThis.navigator?.platform
 
