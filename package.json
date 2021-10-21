@@ -1,13 +1,19 @@
 {
   "name": "ngn",
-  "version": "2.0.0-alpha.8",
+  "version": "2.0.0-alpha.9",
   "description": "A JavaScript library for building systems and frameworks.",
-  "main": "src/index.js",
+  "main": "./src/index.js",
   "module": "index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js"
+    }
+  },
   "browser": "./index.js",
   "directories": {
     "lib": "src/lib"
   },
+  "sideEffects": false,
   "scripts": {
     "start": "dev workspace",
     "test": "npm run test:node && npm run test:deno && npm run test:browser && npm run report:syntax && npm run report:size",
