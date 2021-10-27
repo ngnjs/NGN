@@ -15,6 +15,14 @@ const NODELIKE = globalThis.process !== undefined
 const RUNTIME = NODELIKE ? 'node' : (globalThis.hasOwnProperty('Deno') ? 'deno' : 'browser') // eslint-disable-line no-prototype-builtins
 
 /**
+ * The version number of the runtime. This cannot be
+ * reliably detected in browsers (will return `unknown`).
+ */
+const RUNTIME_VERSION = RUNTIME === 'node'
+  ? (process.versions.node)
+  : (RUNTIME === 'deno' ? Deno.version.deno : 'unknown')
+
+/**
  * The name of the operating system.
  * @readonly
  */
@@ -88,6 +96,7 @@ const INTERNAL_EVENT = Symbol('NGN.INTERNAL')
 
 const all = {
   RUNTIME,
+  RUNTIME_VERSION,
   NODELIKE,
   OS,
   PLATFORM,
@@ -104,6 +113,7 @@ export {
   version,
   NODELIKE,
   RUNTIME,
+  RUNTIME_VERSION,
   OS,
   PLATFORM,
   PLATFORM_RELEASE,

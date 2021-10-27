@@ -18,6 +18,7 @@ Object.defineProperties(NGN, {
   OS: NGN.constant(constant.OS),
   nodelike: NGN.hiddenconstant(constant.NODELIKE),
   runtime: NGN.hiddenconstant(constant.RUNTIME),
+  runtime_version: NGN.hiddenconstant(constant.RUNTIME_VERSION),
   platform: NGN.get(constant.PLATFORM),
   platformVersion: NGN.get(constant.PLATFORM_RELEASE),
 

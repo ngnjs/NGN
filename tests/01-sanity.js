@@ -29,6 +29,7 @@ test('Method Existence', t => {
     'stack',
     'defineException',
     'runtime',
+    'runtime_version',
     'platform',
     'platformVersion',
     'OS',

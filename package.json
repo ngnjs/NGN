@@ -87,7 +87,8 @@
     "globals": [
       "globalThis",
       "window",
-      "global"
+      "global",
+      "Deno"
     ]
   }
 }
