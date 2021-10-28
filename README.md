@@ -18,6 +18,10 @@ The library consists of numerous integrated ES modules, designed and tested to w
     - HTTP Client (Promise & Callback-Based)
     - Network Resource Feature
     - Enhanced URL
+1. **[Cryptography](https://github.com/ngnjs/crypto)** (crypto)
+    - Generate Keypairs
+    - Sign & Verify Content
+    - Encrypt/Decrypt
 1. **[Plugin Engine](https://github.com/ngnjs/plugin)**
     - Create Plugins
     - Extend Core Modules & Plugins
