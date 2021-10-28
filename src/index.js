@@ -1,6 +1,9 @@
 import NGN from './ngn.js'
 import { register } from './internal.js'
 
+// Register the instance so it can be detected by plugins
+register('INSTANCE', NGN)
+
 export const {
   EventEmitter,
   Middleware,
@@ -10,6 +13,8 @@ export const {
   nodelike,
   platform,
   platformVersion,
+  runtime,
+  runtimeVersion,
   WARN_EVENT,
   INFO_EVENT,
   ERROR_EVENT,
@@ -24,8 +29,5 @@ export const {
   deprecate,
   stack
 } = NGN
-
-// Register the instance so it can be detected by plugins
-register('INSTANCE', NGN)
 
 export { NGN as default, NGN }
