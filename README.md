@@ -1,10 +1,11 @@
-# NGN
+<h1 align="center">NGN<br/><img src="https://img.shields.io/npm/v/ngn?label=ngn&logo=npm&style=social"/></h1>
+<br/>
 
 NGN is a suite of JavaScript libraries for building systems and frameworks. Version 1.x.x was first released in 2012. Since then, the JavaScript language, runtimes, and communities have seen a continental shift. NGN 2.0.0 has been re-engineered to take advantage of modern JavaScript capabilities.
 
 The library consists of numerous integrated ES modules, designed and tested to work together in any modern JavaScript runtime. Over 1000 combined unit tests are run against Chromium, Node.js 14+ (12+ using ES Module flag), and Deno.
 
-1. **Core** (This repo)
+1. **Core** (this repo) - [Live Examples on Codepen](https://codepen.io/collection/Dpqymr)
    - Event Emitter
    - Middleware Engine
    - Custom Exceptions (Errors)
@@ -35,6 +36,6 @@ NGNX, the extension system, has been dropped in 2.0.0. The libraries, such as th
 
 ## Development Status
 
-NGN 2.0.0 is currently in an alpha state. We are battle testing it with select [Butler Logic](https://butlerlogic.com) clients, but we're really putting it through rigorous production testing as we build https://metadoc.io on NGN 2.
+NGN 2.0.0 is currently in an alpha state. We are battle testing it with select [Butler Logic](https://butlerlogic.com) clients, but we're really putting it through rigorous production testing as we build [https://metadoc.io](metadoc.io) and [https://enabledb.com](enabledb.com) on NGN 2, [JET](https://github.com/jet-ngn) and [Chassis](https://github.com/ngn-chassis).
 
-NGN 2.0.0 documentation will be forthcoming, with an early release of Metadoc. In the meantime, a series of code examples are available at https://codepen.io/collection/Dpqymr
+NGN 2.0.0 documentation will be forthcoming, with an early release of [Metadoc](https://metadoc.io). In the meantime, a series of code examples are available [here, on Codepen](https://codepen.io/collection/Dpqymr).
