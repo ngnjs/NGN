@@ -36,6 +36,6 @@ NGNX, the extension system, has been dropped in 2.0.0. The libraries, such as th
 
 ## Development Status
 
-NGN 2.0.0 is currently in an alpha state. We are battle testing it with select [Butler Logic](https://butlerlogic.com) clients, but we're really putting it through rigorous production testing as we build [https://metadoc.io](metadoc.io) and [https://enabledb.com](enabledb.com) on NGN 2, [JET](https://github.com/jet-ngn) and [Chassis](https://github.com/ngn-chassis).
+NGN 2.0.0 is currently in an alpha state. We are battle testing it with select [Butler Logic](https://butlerlogic.com) clients, but we're really putting it through rigorous production testing as we build [metadoc.io](https://metadoc.io) and [enabledb.com](https://enabledb.com) on NGN 2, [JET](https://github.com/jet-ngn) and [Chassis](https://github.com/ngn-chassis).
 
 NGN 2.0.0 documentation will be forthcoming, with an early release of [Metadoc](https://metadoc.io). In the meantime, a series of code examples are available [here, on Codepen](https://codepen.io/collection/Dpqymr).
