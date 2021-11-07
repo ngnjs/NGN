@@ -28,7 +28,7 @@ In addition, the following libraries are available:
 
 - _[libdata](https://github.com/ngnjs/libdata)_: Common data manipulation methods.
 - _[libnet-node](https://github.com/ngnjs/libnet-node)_: Polyfill network features Node doesn't have (Request Caching, ReferralPolicy, Subresource Integrity)
-- _[libcrypto](https://github.com/ngnjs/libcrypto)_: Simple cryptography features (Generate Keypairs, Sign/Verify Content, Encrypt/Decrypt)
+- _[libcrypto](https://github.com/ngnjs/libcrypto)_: Simple cryptography features (Generate Keypairs, Sign/Verify Content, Encrypt/Decrypt). The [crypto plugin](https://github.com/ngnjs/crypto) can be used to enable simple crypto for any NGN plugin.
 
 We are still working on the **data module**, which is the most powerful, but also most complex library in NGN. The data module supports data modeling, data stores, events, indexing, has it's own query language, and is often described as a small cross-runtime database.
 
