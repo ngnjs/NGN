@@ -36,7 +36,69 @@ export const plugins = new Proxy(globalThis[REFERENCE_ID], {
   }
 })
 
-export const LEDGER = new EventEmitter({
+class LedgerEventEmitter extends EventEmitter {
+  #events = new Map()
+
+  /**
+   * Create a custom ledger event type and reference method.
+   *
+   * ```
+   * // Create the event type and method name
+   * const [EXAMPLE_EVENT_TYPE, fireCustomEvent] = NGN.LEDGER.createEventType('Custom Event Name')
+   *
+   * // Listen for the new event type
+   * NGN.LEDGER.on(EXAMPLE_EVENT_TYPE, function (payloadData) {
+   *   console.log(`Event: "${this.event}"`)
+   *   console.log(payloadData)
+   * })
+   *
+   * // Emit an event to the ledger
+   * fireCustomEvent('my.custom.event', { payload: 'data' })
+   * ```
+   * @param {string} eventName
+   * Name of the event reference, such as `EXAMPLE_EVENT`.
+   */
+  registerEventType (eventName) {
+    if (this.#events.has(eventName)) {
+      throw new Error(`"${eventName}" already exists.`)
+    }
+
+    const CUSTOM_EVENT = Symbol(eventName)
+    const emitterFn = function () {
+      LEDGER_EVENT(CUSTOM_EVENT)(...arguments)
+    }
+    this.#events.set(eventName, emitterFn)
+
+    return [CUSTOM_EVENT, emitterFn]
+  }
+
+  /**
+   * @property {object} events
+   * A collection of ledger events (built-in & custom)
+   */
+  get events () {
+    return Object.assign({
+      INFO_EVENT,
+      WARN_EVENT,
+      ERROR_EVENT,
+      INTERNAL_EVENT
+    }, Object.fromEntries(this.#events))
+  }
+
+  /**
+   * @property {object} emitters
+   * A collection of ledger event emitters (by event type).
+   */
+  get emitters () {
+    const methods = { INFO, WARN, ERROR, INTERNAL }
+    for (const [name, fn] of Object.entries(this.#events)) {
+      methods[name] = fn
+    }
+    return methods
+  }
+}
+
+export const LEDGER = new LedgerEventEmitter({
   name: 'NGN Ledger',
   description: 'A ledger of events, outputs, and information produced by the system.'
 })

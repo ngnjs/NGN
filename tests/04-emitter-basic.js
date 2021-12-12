@@ -297,6 +297,22 @@ test('NGN.BUS Special Events', t => {
   NGN.WARN('message')
 })
 
+test('NGN.LEDGER Custom Events', t => {
+  const [EXAMPLE_EVENT, customLedgerEventEmitter] = NGN.LEDGER.registerEventType('EXAMPLE_EVENT')
+
+  t.expect('symbol', typeof EXAMPLE_EVENT, 'Registered custom event type')
+  t.expect('function', typeof customLedgerEventEmitter, 'Registered ledger custom event emitter')
+
+  NGN.LEDGER.once(EXAMPLE_EVENT, function (label, payload) {
+    t.pass('EXAMPLE_EVENT custom ledger event recognized')
+    t.expect('my.event', label, 'Developer-specified custom label recognized')
+    t.expect('object', typeof payload, 'Payload recognized')
+    t.end()
+  })
+
+  customLedgerEventEmitter('my.event', { payload: true })
+})
+
 test('pool()', t => {
   ee = new EventEmitter()
   let count = 0
