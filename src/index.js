@@ -9,6 +9,7 @@ export const {
   Middleware,
   Exception,
   Class,
+  version,
   OS,
   nodelike,
   platform,
@@ -27,7 +28,13 @@ export const {
   deprecateClass,
   wrap,
   deprecate,
-  stack
+  stack,
+  defineException,
+  BUS,
+  LEDGER,
+  Relationship,
+  Relationships,
+  plugins
 } = NGN
 
 export { NGN as default, NGN }
