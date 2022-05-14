@@ -5,6 +5,7 @@ import * as constant from './constants.js'
 import Core from './class.js'
 import Middleware from './middleware.js'
 import { defineException, stack } from './exception.js'
+import BaseEventEmitter from './emitter/core.js'
 import EventEmitter from './emitter/emitter.js'
 import Relationship from './relationships/relationship.js'
 import Relationships from './relationships/manager.js'
@@ -47,6 +48,7 @@ Object.defineProperties(NGN, {
   // Classes
   Class: NGN.public(Core),
   Middleware: NGN.public(Middleware),
+  BaseEventEmitter: NGN.public(BaseEventEmitter),
   EventEmitter: NGN.public(EventEmitter),
   Relationships: NGN.public(Relationships),
   Relationship: NGN.public(Relationship),
