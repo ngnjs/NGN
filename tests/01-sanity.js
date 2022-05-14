@@ -45,6 +45,7 @@ test('Method Existence', t => {
     // Classes
     'Class',
     'Middleware',
+    'BaseEventEmitter',
     'EventEmitter',
     'Relationships',
     'Relationship',
