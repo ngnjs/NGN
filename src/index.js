@@ -5,6 +5,7 @@ import { register } from './internal.js'
 register('INSTANCE', NGN)
 
 export const {
+  BaseEventEmitter,
   EventEmitter,
   Middleware,
   Exception,
